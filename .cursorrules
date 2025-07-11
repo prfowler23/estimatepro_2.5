@@ -1,0 +1,470 @@
+# EstimatePro - Building Services Estimation Platform
+# Comprehensive Cursor AI Rules and Guidelines
+
+## PROJECT OVERVIEW
+EstimatePro is a professional building services estimation platform with:
+- 10 service calculators (Glass Restoration, Window Cleaning, Pressure Washing, etc.)
+- AI-powered facade analysis and assistant
+- 3D building visualization
+- Weather intelligence and drone integration
+- Quote management and analytics
+- Multi-tenant enterprise features
+
+## TECHNOLOGY STACK
+- Frontend: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- Backend: Next.js API Routes, Supabase (PostgreSQL)
+- AI: OpenAI GPT-4, Claude API integration
+- 3D: Three.js, React Three Fiber
+- State: Zustand, React Query
+- Forms: React Hook Form + Zod validation
+- UI: shadcn/ui components, Lucide icons
+- Testing: Jest, Playwright, React Testing Library
+- Deployment: Vercel, Supabase hosting
+
+## CODE STYLE & CONVENTIONS
+
+### TypeScript Standards
+- Use strict TypeScript configuration
+- Define explicit types for all props, state, and API responses
+- Use interface for object shapes, type for unions/primitives
+- Prefer type-only imports: `import type { User } from '@/types'`
+- Use satisfies operator for complex type assertions
+- Never use `any` - use `unknown` if type is uncertain
+
+### React Patterns
+- Use functional components with hooks exclusively
+- Prefer custom hooks for reusable logic
+- Use forwardRef for components that need ref forwarding
+- Implement proper error boundaries
+- Use Suspense for data loading states
+- Prefer composition over inheritance
+
+### Component Structure
+```typescript
+'use client' // Only if needed for client components
+
+import { useState, useEffect } from 'react'
+import type { ComponentProps } from '@/types'
+import { cn } from '@/lib/utils'
+
+interface ComponentNameProps {
+  // Required props first
+  title: string
+  onSubmit: (data: FormData) => void
+  // Optional props with defaults
+  variant?: 'primary' | 'secondary'
+  className?: string
+  children?: React.ReactNode
+}
+
+export function ComponentName({ 
+  title, 
+  onSubmit,
+  variant = 'primary',
+  className,
+  children 
+}: ComponentNameProps) {
+  // Hooks first
+  const [state, setState] = useState<StateType>()
+  
+  // Event handlers
+  const handleSubmit = () => {
+    // Implementation
+  }
+  
+  // Early returns
+  if (!title) return null
+  
+  // Main render
+  return (
+    <div className={cn('base-classes', className)}>
+      {/* Component content */}
+    </div>
+  )
+}
+```
+
+### Naming Conventions
+- Components: PascalCase (e.g., `ServiceCalculator`)
+- Files: kebab-case (e.g., `service-calculator.tsx`)
+- Functions: camelCase (e.g., `calculatePrice`)
+- Constants: SCREAMING_SNAKE_CASE (e.g., `SERVICE_TYPES`)
+- Types/Interfaces: PascalCase (e.g., `CalculationResult`)
+- Folders: kebab-case (e.g., `quote-management`)
+
+### File Organization
+```
+app/
+├── (dashboard)/           # Route groups
+│   ├── dashboard/
+│   └── quotes/
+├── api/                   # API routes
+├── globals.css
+└── layout.tsx
+
+components/
+├── ui/                    # shadcn/ui components
+├── calculator/            # Calculator components
+├── quotes/               # Quote management
+├── analytics/            # Analytics components
+└── navigation/           # Navigation components
+
+lib/
+├── calculations/         # Calculation engines
+├── supabase/            # Database clients
+├── utils/               # Utility functions
+├── config/              # Configuration
+├── ai/                  # AI integrations
+└── validations/         # Zod schemas
+
+types/
+├── calculations.ts       # Calculation types
+├── database.ts          # Database types
+├── supabase.ts          # Supabase types
+└── index.ts             # Shared types
+```
+
+## CALCULATION ENGINE GUIDELINES
+
+### Service Calculator Pattern
+- Each service has its own calculator class extending BaseCalculator
+- Use dependency injection for rates and configurations
+- Implement validation at input and output levels
+- Return consistent CalculationResult interface
+- Handle edge cases and minimum charges
+
+### Calculator Structure
+```typescript
+import { BaseCalculator } from './base-calculator'
+import type { CalculationInput, CalculationResult } from '@/types'
+
+export class ServiceCalculator extends BaseCalculator {
+  calculate(input: CalculationInput): CalculationResult {
+    // Validate input
+    const validatedInput = this.validateInput(input)
+    
+    // Calculate components
+    const laborHours = this.calculateLaborHours(validatedInput)
+    const materialCost = this.calculateMaterialCost(validatedInput)
+    const equipmentCost = this.calculateEquipmentCost(validatedInput)
+    
+    // Apply multipliers
+    const result = this.applyMultipliers({
+      laborHours,
+      materialCost,
+      equipmentCost
+    })
+    
+    // Validate and return
+    return this.validateResult(result)
+  }
+}
+```
+
+### Rate Management
+- Use constants from `lib/calculations/constants.ts`
+- Implement location-based rate selection
+- Apply multipliers in consistent order
+- Document rate sources and update procedures
+
+## DATABASE PATTERNS
+
+### Supabase Integration
+- Use server components for data fetching when possible
+- Implement proper RLS (Row Level Security) policies
+- Use type-safe database queries with TypeScript
+- Handle authentication state properly
+
+### Database Queries
+```typescript
+// Server component
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+
+export default async function QuotesPage() {
+  const supabase = createServerComponentClient({ cookies })
+  
+  const { data: quotes, error } = await supabase
+    .from('quotes')
+    .select('*')
+    .order('created_at', { ascending: false })
+    
+  if (error) {
+    throw new Error('Failed to fetch quotes')
+  }
+  
+  return <QuotesList quotes={quotes} />
+}
+```
+
+### Type Safety
+- Generate types from Supabase schema
+- Use Database generic types for queries
+- Implement proper error handling
+- Use transactions for complex operations
+
+## UI/UX GUIDELINES
+
+### Design System
+- Use shadcn/ui components as base
+- Implement consistent spacing with Tailwind
+- Follow accessibility best practices
+- Use semantic HTML elements
+- Implement proper focus management
+
+### Form Patterns
+```typescript
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+const formSchema = z.object({
+  customerName: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  buildingHeight: z.number().min(1).max(60)
+})
+
+type FormData = z.infer<typeof formSchema>
+
+export function QuoteForm() {
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      customerName: '',
+      email: '',
+      buildingHeight: 1
+    }
+  })
+  
+  const onSubmit = (data: FormData) => {
+    // Handle form submission
+  }
+  
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        {/* Form fields */}
+      </form>
+    </Form>
+  )
+}
+```
+
+### State Management
+- Use Zustand for global state
+- Use React Query for server state
+- Keep component state local when possible
+- Use context sparingly for theme/auth
+
+## AI INTEGRATION GUIDELINES
+
+### OpenAI Integration
+- Use streaming responses for better UX
+- Implement proper error handling and fallbacks
+- Use structured prompts for consistent results
+- Implement rate limiting and cost controls
+
+### AI Assistant Pattern
+```typescript
+import { OpenAI } from 'openai'
+import { z } from 'zod'
+
+const analysisSchema = z.object({
+  buildingType: z.string(),
+  windowCount: z.number(),
+  facadeComplexity: z.enum(['simple', 'standard', 'complex', 'ornate']),
+  recommendedServices: z.array(z.string())
+})
+
+export async function analyzeBuilding(imageUrl: string) {
+  const openai = new OpenAI()
+  
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4-vision-preview',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a building analysis expert...'
+      },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Analyze this building facade' },
+          { type: 'image_url', image_url: { url: imageUrl } }
+        ]
+      }
+    ],
+    functions: [
+      {
+        name: 'analyze_building',
+        description: 'Analyze building facade and provide structured data',
+        parameters: analysisSchema
+      }
+    ]
+  })
+  
+  return analysisSchema.parse(response.choices[0].function_call?.arguments)
+}
+```
+
+## TESTING STANDARDS
+
+### Unit Testing
+- Test calculation logic thoroughly
+- Mock external dependencies
+- Use data-driven tests for rate calculations
+- Test edge cases and error conditions
+
+### Integration Testing
+- Test API endpoints with real database
+- Test authentication flows
+- Test form submissions and validation
+- Test AI integrations with mock responses
+
+### E2E Testing
+- Test complete user workflows
+- Test calculator accuracy
+- Test quote generation process
+- Test multi-tenant features
+
+## PERFORMANCE GUIDELINES
+
+### Optimization Strategies
+- Use Next.js Image optimization
+- Implement proper caching strategies
+- Use React.memo for expensive components
+- Optimize database queries with proper indexes
+- Use streaming for large datasets
+
+### Loading States
+- Implement skeleton loading for better UX
+- Use Suspense boundaries appropriately
+- Show progress indicators for long operations
+- Implement optimistic updates where appropriate
+
+## SECURITY CONSIDERATIONS
+
+### Authentication & Authorization
+- Implement proper session management
+- Use RLS for database security
+- Validate all user inputs
+- Implement rate limiting on API endpoints
+
+### Data Protection
+- Encrypt sensitive data at rest
+- Use HTTPS for all communications
+- Implement proper CORS policies
+- Sanitize user inputs and outputs
+
+## ERROR HANDLING
+
+### Error Boundaries
+```typescript
+import { ErrorBoundary } from 'react-error-boundary'
+
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <div role="alert" className="error-container">
+      <h2>Something went wrong:</h2>
+      <pre>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Try again</button>
+    </div>
+  )
+}
+
+export function App() {
+  return (
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <MainApp />
+    </ErrorBoundary>
+  )
+}
+```
+
+### API Error Handling
+- Return consistent error responses
+- Log errors for debugging
+- Provide user-friendly error messages
+- Implement retry logic for transient errors
+
+## DEPLOYMENT & MONITORING
+
+### Environment Configuration
+- Use environment variables for configuration
+- Implement proper secrets management
+- Use different configs for different environments
+- Document all required environment variables
+
+### Monitoring
+- Implement proper logging
+- Monitor API performance
+- Track user interactions
+- Monitor calculation accuracy
+
+## CONTRIBUTION GUIDELINES
+
+### Code Review
+- All code must be reviewed before merging
+- Run linting and tests before committing
+- Write descriptive commit messages
+- Keep PRs focused and small
+
+### Documentation
+- Document all public APIs
+- Keep README files updated
+- Document calculation formulas
+- Maintain changelog for releases
+
+## SPECIFIC RULES FOR CURSOR AI
+
+1. **Always use TypeScript**: Never write JavaScript files
+2. **Import organization**: Group imports (React, third-party, local)
+3. **Component exports**: Use named exports, not default exports
+4. **Error handling**: Always implement proper error boundaries
+5. **Performance**: Consider React.memo and useCallback for expensive operations
+6. **Accessibility**: Always include proper ARIA labels and semantic HTML
+7. **Testing**: Write tests for all calculation logic
+8. **Security**: Never expose sensitive data in client-side code
+9. **Validation**: Use Zod for all form and API validation
+10. **State management**: Use the right tool for the job (local state vs Zustand vs React Query)
+
+## CALCULATION-SPECIFIC RULES
+
+1. **Rate sources**: Always reference where rates come from
+2. **Validation**: Validate all inputs before calculations
+3. **Minimums**: Always check and apply minimum charges
+4. **Rounding**: Round monetary values to 2 decimal places
+5. **Edge cases**: Handle zero values, negative inputs, and extreme values
+6. **Documentation**: Document all calculation formulas
+7. **Testing**: Test calculations with known good values
+8. **Consistency**: Use consistent units throughout (hours, sq ft, etc.)
+9. **Multipliers**: Apply multipliers in documented order
+10. **Error reporting**: Provide clear error messages for invalid inputs
+
+## COMMON PATTERNS TO AVOID
+
+- Don't use `any` type
+- Don't mutate props directly
+- Don't use inline styles (use Tailwind classes)
+- Don't hardcode values (use constants)
+- Don't skip error handling
+- Don't use useEffect for calculations
+- Don't put business logic in components
+- Don't forget to handle loading states
+- Don't skip input validation
+- Don't use console.log in production code
+
+## PREFERRED PATTERNS
+
+- Use custom hooks for reusable logic
+- Use composition over inheritance
+- Use proper TypeScript generics
+- Use meaningful variable names
+- Use early returns to reduce nesting
+- Use proper error boundaries
+- Use React Query for server state
+- Use Zod for validation
+- Use constants for magic numbers
+- Use proper loading and error states
+
+This file should be updated as the project evolves and new patterns emerge.

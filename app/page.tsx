@@ -1,103 +1,179 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { 
+  Calculator, 
+  FileText, 
+  BarChart3, 
+  Users, 
+  Shield, 
+  Zap,
+  ArrowRight,
+  Building2,
+  CheckCircle
+} from 'lucide-react'
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div>
+      {/* Hero Section */}
+      <section className='bg-primary text-white py-20'>
+        <div className='container mx-auto px-4'>
+          <div className='max-w-4xl mx-auto text-center'>
+            <h1 className='text-5xl font-bold mb-6'>
+              Professional Building Services Estimating
+            </h1>
+            <p className='text-xl mb-8 text-primary-foreground/80'>
+              Create accurate quotes for window cleaning, pressure washing, and restoration services in minutes
+            </p>
+            <div className='flex gap-4 justify-center'>
+              <Link href='/calculator'>
+                <Button size='lg' className='bg-secondary hover:bg-secondary/90'>
+                  <Calculator className='mr-2 h-5 w-5' />
+                  Start New Quote
+                </Button>
+              </Link>
+              <Link href='/dashboard'>
+                <Button size='lg' variant='outline' className='text-white border-white hover:bg-white/10'>
+                  View Dashboard
+                  <ArrowRight className='ml-2 h-5 w-5' />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </section>
+
+      {/* Features Section */}
+      <section className='py-20 bg-white'>
+        <div className='container mx-auto px-4'>
+          <h2 className='text-3xl font-bold text-center mb-12'>Why Choose EstimatePro?</h2>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+            <Card>
+              <CardHeader>
+                <Calculator className='h-10 w-10 text-accent mb-4' />
+                <CardTitle>Accurate Calculations</CardTitle>
+                <CardDescription>
+                  Industry-specific formulas for precise estimates
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className='space-y-2'>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Labor hours calculation</span>
+                  </li>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Equipment requirements</span>
+                  </li>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Material costs</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <Zap className='h-10 w-10 text-accent mb-4' />
+                <CardTitle>Fast & Efficient</CardTitle>
+                <CardDescription>
+                  Create professional quotes in minutes, not hours
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className='space-y-2'>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Quick service selection</span>
+                  </li>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Auto-calculations</span>
+                  </li>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>PDF generation</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <Shield className='h-10 w-10 text-accent mb-4' />
+                <CardTitle>Secure & Reliable</CardTitle>
+                <CardDescription>
+                  Your data is safe with enterprise-grade security
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className='space-y-2'>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Encrypted storage</span>
+                  </li>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Regular backups</span>
+                  </li>
+                  <li className='flex items-start gap-2'>
+                    <CheckCircle className='h-5 w-5 text-secondary mt-0.5' />
+                    <span className='text-sm'>Access controls</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className='py-20 bg-muted'>
+        <div className='container mx-auto px-4'>
+          <h2 className='text-3xl font-bold text-center mb-12'>Supported Services</h2>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto'>
+            <div className='bg-white p-6 rounded-lg border border-border'>
+              <Building2 className='h-8 w-8 text-accent mb-3' />
+              <h3 className='font-semibold mb-2'>Glass Restoration</h3>
+              <p className='text-sm text-muted-foreground'>Mineral deposit removal</p>
+            </div>
+            <div className='bg-white p-6 rounded-lg border border-border'>
+              <Building2 className='h-8 w-8 text-accent mb-3' />
+              <h3 className='font-semibold mb-2'>Window Cleaning</h3>
+              <p className='text-sm text-muted-foreground'>Commercial & residential</p>
+            </div>
+            <div className='bg-white p-6 rounded-lg border border-border'>
+              <Building2 className='h-8 w-8 text-accent mb-3' />
+              <h3 className='font-semibold mb-2'>Pressure Washing</h3>
+              <p className='text-sm text-muted-foreground'>Facades & surfaces</p>
+            </div>
+            <div className='bg-white p-6 rounded-lg border border-border'>
+              <Building2 className='h-8 w-8 text-accent mb-3' />
+              <h3 className='font-semibold mb-2'>And More...</h3>
+              <p className='text-sm text-muted-foreground'>11 service types total</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className='py-20'>
+        <div className='container mx-auto px-4 text-center'>
+          <h2 className='text-3xl font-bold mb-6'>Ready to Streamline Your Estimating?</h2>
+          <p className='text-xl text-muted-foreground mb-8 max-w-2xl mx-auto'>
+            Join hundreds of building service contractors who trust EstimatePro for accurate, professional quotes
+          </p>
+          <Link href='/calculator'>
+            <Button size='lg' className='bg-secondary hover:bg-secondary/90'>
+              Create Your First Quote
+              <ArrowRight className='ml-2 h-5 w-5' />
+            </Button>
+          </Link>
+        </div>
+      </section>
     </div>
-  );
+  )
 }
