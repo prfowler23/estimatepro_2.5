@@ -51,7 +51,7 @@ export function calculateEquipmentCost(
     [EQUIPMENT_TYPES.GROUND]: { daily: 0, weekly: 0, monthly: 0 },
   }
   
-  const rate = rates[equipmentType]
+  const rate = rates[equipmentType as keyof typeof rates]
   if (!rate) return 0
   
   // Special pricing for scaffold

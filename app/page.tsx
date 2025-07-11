@@ -17,7 +17,7 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero Section */}
-      <section className='bg-primary text-white py-20'>
+      <section className='bg-primary-action text-white py-20'>
         <div className='container mx-auto px-4'>
           <div className='max-w-4xl mx-auto text-center'>
             <h1 className='text-5xl font-bold mb-6'>
@@ -34,7 +34,7 @@ export default function HomePage() {
                 </Button>
               </Link>
               <Link href='/dashboard'>
-                <Button size='lg' variant='outline' className='text-white border-white hover:bg-white/10'>
+                <Button size='lg' variant='outline' className='text-white border-white hover:bg-bg-base/10'>
                   View Dashboard
                   <ArrowRight className='ml-2 h-5 w-5' />
                 </Button>
@@ -45,7 +45,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className='py-20 bg-white'>
+      <section className='py-20 bg-bg-base'>
         <div className='container mx-auto px-4'>
           <h2 className='text-3xl font-bold text-center mb-12'>Why Choose EstimatePro?</h2>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
@@ -135,22 +135,22 @@ export default function HomePage() {
         <div className='container mx-auto px-4'>
           <h2 className='text-3xl font-bold text-center mb-12'>Supported Services</h2>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto'>
-            <div className='bg-white p-6 rounded-lg border border-border'>
+            <div className='bg-bg-base p-6 rounded-lg border border-border'>
               <Building2 className='h-8 w-8 text-accent mb-3' />
               <h3 className='font-semibold mb-2'>Glass Restoration</h3>
               <p className='text-sm text-muted-foreground'>Mineral deposit removal</p>
             </div>
-            <div className='bg-white p-6 rounded-lg border border-border'>
+            <div className='bg-bg-base p-6 rounded-lg border border-border'>
               <Building2 className='h-8 w-8 text-accent mb-3' />
               <h3 className='font-semibold mb-2'>Window Cleaning</h3>
               <p className='text-sm text-muted-foreground'>Commercial & residential</p>
             </div>
-            <div className='bg-white p-6 rounded-lg border border-border'>
+            <div className='bg-bg-base p-6 rounded-lg border border-border'>
               <Building2 className='h-8 w-8 text-accent mb-3' />
               <h3 className='font-semibold mb-2'>Pressure Washing</h3>
               <p className='text-sm text-muted-foreground'>Facades & surfaces</p>
             </div>
-            <div className='bg-white p-6 rounded-lg border border-border'>
+            <div className='bg-bg-base p-6 rounded-lg border border-border'>
               <Building2 className='h-8 w-8 text-accent mb-3' />
               <h3 className='font-semibold mb-2'>And More...</h3>
               <p className='text-sm text-muted-foreground'>11 service types total</p>

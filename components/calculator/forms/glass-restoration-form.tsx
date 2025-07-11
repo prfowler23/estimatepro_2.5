@@ -54,7 +54,8 @@ export function GlassRestorationForm({ onSubmit, onCancel }: GlassRestorationFor
 
   // Auto-calculate when form values change
   useEffect(() => {
-    if (form.formState.isValid && watchedValues.glassArea > 0) {
+    // Check if we have the minimum required values
+    if (watchedValues.glassArea && watchedValues.glassArea > 0) {
       setIsCalculating(true)
       
       // Simulate calculation delay
@@ -65,14 +66,17 @@ export function GlassRestorationForm({ onSubmit, onCancel }: GlassRestorationFor
           setCalculation(result)
         } catch (error) {
           console.error('Calculation error:', error)
+          setCalculation(null)
         } finally {
           setIsCalculating(false)
         }
       }, 500)
 
       return () => clearTimeout(timer)
+    } else {
+      setCalculation(null)
     }
-  }, [watchedValues, form.formState.isValid])
+  }, [watchedValues])
 
   const handleSubmit = () => {
     if (calculation) {

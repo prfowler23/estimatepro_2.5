@@ -18,65 +18,28 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        // Custom color system
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
           action: 'var(--color-primary-action)',
           hover: 'var(--color-primary-hover)',
           active: 'var(--color-primary-active)',
           disabled: 'var(--color-primary-disabled)',
+          DEFAULT: 'var(--color-primary-action)',
+          foreground: 'var(--color-text-inverted)',
         },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-          action: 'var(--color-secondary-action)',
-          hover: 'var(--color-secondary-hover)',
-          active: 'var(--color-secondary-active)',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        // Custom color palette
-        'navy-blue': '#1A237E',
-        'charcoal': '#333333',
-        'steel-blue': '#4682B4',
-        'silver': '#C0C0C0',
-        'deep-green': '#2E7D32',
-        // NEW SEMANTIC COLOR SYSTEM
         text: {
           primary: 'var(--color-text-primary)',
           secondary: 'var(--color-text-secondary)',
+          inverted: 'var(--color-text-inverted)',
         },
         bg: {
           base: 'var(--color-bg-base)',
           elevated: 'var(--color-bg-elevated)',
         },
         border: {
-          DEFAULT: 'hsl(var(--border))',
           primary: 'var(--color-border-primary)',
           focus: 'var(--color-border-focus)',
+          DEFAULT: 'var(--color-border-primary)',
         },
         feedback: {
           success: 'var(--color-feedback-success)',
@@ -84,6 +47,30 @@ const config: Config = {
           warning: 'var(--color-feedback-warning)',
           info: 'var(--color-feedback-info)',
         },
+        secondary: {
+          action: 'var(--color-secondary-action)',
+          hover: 'var(--color-secondary-hover)',
+          active: 'var(--color-secondary-active)',
+          DEFAULT: 'var(--color-secondary-action)',
+          foreground: 'var(--color-text-inverted)',
+        },
+        // Default Tailwind classes for compatibility
+        background: 'var(--color-bg-base)',
+        foreground: 'var(--color-text-primary)',
+        muted: {
+          DEFAULT: 'var(--color-bg-elevated)',
+          foreground: 'var(--color-text-secondary)',
+        },
+        accent: {
+          DEFAULT: 'var(--color-primary-action)',
+          foreground: 'var(--color-text-inverted)',
+        },
+        destructive: {
+          DEFAULT: 'var(--color-feedback-error)',
+          foreground: 'var(--color-text-inverted)',
+        },
+        input: 'var(--color-bg-elevated)',
+        ring: 'var(--color-border-focus)',
       },
       borderRadius: {
         lg: 'var(--radius)',

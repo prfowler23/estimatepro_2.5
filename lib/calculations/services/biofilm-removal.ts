@@ -244,7 +244,7 @@ export class BiofilmRemovalCalculator extends BaseCalculator<BiofilmRemovalInput
 
   private getBaseRate(severity: string, surfaceType: string): number {
     // Start with base rate range
-    let rate = OTHER_RATES.biofilmRemoval.min
+    let rate: number = OTHER_RATES.biofilmRemoval.min
     
     // Severity adjustments
     switch (severity) {

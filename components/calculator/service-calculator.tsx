@@ -10,6 +10,15 @@ import { Separator } from '@/components/ui/separator'
 import { SERVICE_TYPES } from '@/lib/calculations/constants'
 import { GlassRestorationForm } from './forms/glass-restoration-form'
 import { WindowCleaningForm } from './forms/window-cleaning-form'
+import { PressureWashingForm } from './forms/pressure-washing-form'
+import { PressureWashSealForm } from './forms/pressure-wash-seal-form'
+import { FinalCleanForm } from './forms/final-clean-form'
+import { FrameRestorationForm } from './forms/frame-restoration-form'
+import { HighDustingForm } from './forms/high-dusting-form'
+import { SoftWashingForm } from './forms/soft-washing-form'
+import { ParkingDeckForm } from './forms/parking-deck-form'
+import { GraniteReconditioningForm } from './forms/granite-reconditioning-form'
+import { BiofilmRemovalForm } from './forms/biofilm-removal-form'
 import { useQuoteStore } from '@/lib/stores/quote-store'
 import { AuthModal } from '@/components/auth/auth-modal'
 import { supabase } from '@/lib/supabase/client'
@@ -398,7 +407,61 @@ export function ServiceCalculator() {
                 onCancel={() => setIsModalOpen(false)}
               />
             )}
-            {currentService && !['GR', 'WC'].includes(currentService) && (
+            {currentService === 'PW' && (
+              <PressureWashingForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'PWS' && (
+              <PressureWashSealForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'FC' && (
+              <FinalCleanForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'FR' && (
+              <FrameRestorationForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'HD' && (
+              <HighDustingForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'SW' && (
+              <SoftWashingForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'PD' && (
+              <ParkingDeckForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'GRC' && (
+              <GraniteReconditioningForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService === 'BR' && (
+              <BiofilmRemovalForm
+                onSubmit={handleServiceCalculated}
+                onCancel={() => setIsModalOpen(false)}
+              />
+            )}
+            {currentService && !['GR', 'WC', 'PW', 'PWS', 'FC', 'FR', 'HD', 'SW', 'PD', 'GRC', 'BR'].includes(currentService) && (
               <div className='text-center py-8'>
                 <p className='text-muted-foreground'>
                   {SERVICES.find(s => s.id === currentService)?.name} form coming soon...
