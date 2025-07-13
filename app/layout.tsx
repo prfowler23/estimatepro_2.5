@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/layout/navigation";
+import EnterpriseEstimationBackground from "@/components/enterprise-estimation-background";
+import { AuthProvider } from "@/contexts/auth-context";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -28,10 +30,14 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
       >
-        <Navigation />
-        <main className="min-h-screen bg-background">
-          {children}
-        </main>
+        <AuthProvider>
+          <EnterpriseEstimationBackground>
+            <Navigation />
+            <main className="min-h-screen bg-background">
+              {children}
+            </main>
+          </EnterpriseEstimationBackground>
+        </AuthProvider>
       </body>
     </html>
   );

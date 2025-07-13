@@ -54,19 +54,22 @@ export function WindowCleaningForm({ onSubmit, onCancel }: WindowCleaningFormPro
   // Calculate estimate in real-time using subscription
   useEffect(() => {
     const subscription = form.watch((values) => {
-      const { glassArea } = values
-      if (glassArea && glassArea > 0) {
+      const { glassArea, location, buildingHeightStories, numberOfDrops, crewSize, shiftLength } = values
+      if (glassArea && glassArea > 0 && location && buildingHeightStories && 
+          numberOfDrops && crewSize && shiftLength) {
         setIsCalculating(true)
-        try {
-          const calculator = new WindowCleaningCalculator()
-          const result = calculator.calculate(values as any)
-          setCalculation(result)
-        } catch (error) {
-          console.error('Calculation error:', error)
-          setCalculation(null)
-        } finally {
-          setIsCalculating(false)
-        }
+        setTimeout(() => {
+          try {
+            const calculator = new WindowCleaningCalculator()
+            const result = calculator.calculate(values as any)
+            setCalculation(result)
+          } catch (error) {
+            console.error('Calculation error:', error)
+            setCalculation(null)
+          } finally {
+            setIsCalculating(false)
+          }
+        }, 300)
       } else {
         setCalculation(null)
       }

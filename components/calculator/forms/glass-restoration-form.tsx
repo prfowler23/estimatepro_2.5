@@ -55,7 +55,10 @@ export function GlassRestorationForm({ onSubmit, onCancel }: GlassRestorationFor
   // Auto-calculate when form values change
   useEffect(() => {
     // Check if we have the minimum required values
-    if (watchedValues.glassArea && watchedValues.glassArea > 0) {
+    if (watchedValues.glassArea && watchedValues.glassArea > 0 && 
+        watchedValues.location && watchedValues.buildingHeightStories && 
+        watchedValues.numberOfDrops && watchedValues.crewSize && 
+        watchedValues.shiftLength) {
       setIsCalculating(true)
       
       // Simulate calculation delay

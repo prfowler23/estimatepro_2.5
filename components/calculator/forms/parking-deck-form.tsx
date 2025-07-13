@@ -57,7 +57,9 @@ export function ParkingDeckForm({ onSubmit, onCancel }: ParkingDeckFormProps) {
 
   // Auto-calculate when form values change
   useEffect(() => {
-    if (watchedValues.numberOfSpaces > 0 || watchedValues.totalArea > 0) {
+    if (((watchedValues.numberOfSpaces ?? 0) > 0 || (watchedValues.totalArea ?? 0) > 0) &&
+        watchedValues.location && watchedValues.crewSize && watchedValues.shiftLength &&
+        watchedValues.deckLevel && watchedValues.serviceType) {
       setIsCalculating(true)
       
       const timer = setTimeout(() => {

@@ -1,3 +1,5 @@
+'use client'
+
 import { ServiceCalculator } from '@/components/calculator/service-calculator'
 
 export default function CalculatorPage() {
