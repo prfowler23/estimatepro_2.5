@@ -79,10 +79,7 @@ export function ScaleSetter({
     setMeasurementComplete(false);
   };
 
-  // Expose the click handler for parent components
-  React.useImperativeHandle(React.useRef(), () => ({
-    handleClick: handleScaleClick
-  }));
+  // Handler exposed through props
 
   return (
     <Card className="p-4 min-w-[280px]">

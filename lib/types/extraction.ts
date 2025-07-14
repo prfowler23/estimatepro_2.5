@@ -13,9 +13,10 @@ export interface ExtractedData {
     specialRequirements: string[];
   };
   timeline: {
-    desiredStart: Date | null;
-    deadline: Date | null;
-    flexibility: 'urgent' | 'flexible' | 'normal';
+    requestedDate: string;
+    deadline: string;
+    urgency: 'urgent' | 'flexible' | 'normal';
+    flexibility: 'some' | 'flexible' | 'none';
   };
   budget: {
     stated: number | null;

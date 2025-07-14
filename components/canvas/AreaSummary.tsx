@@ -1,3 +1,18 @@
+interface Shape {
+  id: string;
+  type: string;
+  area: number;
+  label?: string;
+}
+
+interface Measurement {
+  id: string;
+  area: number;
+  perimeter: number;
+  label?: string;
+  distance: number;
+}
+
 interface AreaSummaryProps {
   shapes: Shape[];
   measurements: Measurement[];

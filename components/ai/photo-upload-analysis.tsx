@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Card, Progress, Alert } from '@/components/ui';
 import { Upload, Image, FileText, Video, Map, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
-import { analyzePhotos, extractMeasurements } from '@/lib/ai/photo-analysis';
+import { analyzePhotos } from '@/lib/ai/photo-analysis';
 
 interface FileData {
   id: string;

@@ -19,21 +19,18 @@ interface Requirements {
 }
 
 interface Timeline {
-  desiredStart: Date | null;
-  deadline: Date | null;
-  flexibility: 'urgent' | 'flexible' | 'normal';
+  requestedDate: string;
+  deadline: string;
+  urgency: 'urgent' | 'flexible' | 'normal';
+  flexibility: 'some' | 'flexible' | 'none';
 }
 
 interface Budget {
-  stated: number | null;
-  inferred: 'tight' | 'normal' | 'flexible' | null;
+  range: string;
+  statedAmount: string;
   constraints: string[];
-}
-
-interface DecisionMaker {
-  name: string;
-  role: string;
-  influence: 'primary' | 'secondary';
+  approved: boolean;
+  flexibility: 'tight' | 'normal' | 'flexible';
 }
 
 interface ExtractedData {
@@ -41,9 +38,15 @@ interface ExtractedData {
   requirements: Requirements;
   timeline: Timeline;
   budget: Budget;
-  decisionMakers: DecisionMaker[];
+  decisionMakers: {
+    primaryContact: string;
+    approvers: string[];
+    influencers: string[];
+    roles: Record<string, string>;
+  };
   redFlags: string[];
   urgencyScore: number;
+  confidence: number;
 }
 
 interface InitialContactData {
@@ -63,21 +66,21 @@ function detectRedFlags(data: ExtractedData): string[] {
   const flags: string[] = [];
   // Timeline red flags
   if (
-    data.timeline?.flexibility === 'urgent' &&
-    data.timeline?.desiredStart &&
-    new Date(data.timeline.desiredStart) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    data.timeline?.urgency === 'urgent' &&
+    data.timeline?.requestedDate &&
+    new Date(data.timeline.requestedDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   ) {
     flags.push('⚠️ Extremely tight timeline - less than 7 days');
   }
   // Budget red flags
-  if (data.budget?.inferred === 'tight') {
+  if (data.budget?.flexibility === 'tight') {
     flags.push('⚠️ Budget constraints detected');
   }
   // Service complexity
   if (
     data.requirements?.services?.includes('PWS') &&
     data.requirements?.services?.includes('GR') &&
-    data.timeline?.flexibility === 'urgent'
+    data.timeline?.urgency === 'urgent'
   ) {
     flags.push('⚠️ Complex service bundle with tight timeline');
   }
@@ -226,11 +229,11 @@ export function InitialContact({
             <div className="text-sm">
               <div>Urgency: 
                 <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                  contactData.extractedData.timeline.flexibility === 'urgent' 
+                  contactData.extractedData.timeline.urgency === 'urgent' 
                     ? 'bg-red-100 text-red-700' 
                     : 'bg-green-100 text-green-700'
                 }`}>
-                  {contactData.extractedData.timeline.flexibility}
+                  {contactData.extractedData.timeline.urgency}
                 </span>
               </div>
             </div>

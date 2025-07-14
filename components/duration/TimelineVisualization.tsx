@@ -91,7 +91,7 @@ export function TimelineVisualization({
       'high': 'opacity-60'
     };
     
-    return `${baseColor} ${riskOpacity[weatherRisk]}`;
+    return `${baseColor} ${riskOpacity[weatherRisk as keyof typeof riskOpacity]}`;
   };
   
   const calculatePosition = (date: Date): number => {
@@ -106,13 +106,14 @@ export function TimelineVisualization({
   
   // Generate week markers (every 7 days or at most 10 markers)
   const markerInterval = Math.max(1, Math.floor(totalDays / 10));
-  const weekMarkers = [];
+  const weekMarkers: Array<{ date: Date; position: number; label: string; isWeekend: boolean }> = [];
   for (let i = 0; i <= totalDays; i += markerInterval) {
     const markerDate = new Date(startDate);
     markerDate.setDate(markerDate.getDate() + i);
     weekMarkers.push({
       position: (i / totalDays) * 100,
       date: markerDate,
+      label: markerDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       isWeekend: markerDate.getDay() === 0 || markerDate.getDay() === 6
     });
   }
