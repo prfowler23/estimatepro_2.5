@@ -21,6 +21,7 @@ export const config = {
     threeDimensional: process.env.NEXT_PUBLIC_ENABLE_3D === 'true',
     weather: process.env.NEXT_PUBLIC_ENABLE_WEATHER === 'true',
     drone: process.env.NEXT_PUBLIC_ENABLE_DRONE === 'true',
+    guidedFlow: process.env.NEXT_PUBLIC_ENABLE_GUIDED_FLOW === 'true',
   },
   isDevelopment: process.env.NODE_ENV === 'development',
   isDebug: process.env.NEXT_PUBLIC_DEBUG === 'true',
