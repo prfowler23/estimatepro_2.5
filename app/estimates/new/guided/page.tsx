@@ -1,6 +1,6 @@
 'use client'
 
-import { GuidedEstimationFlow } from '@/components/estimation/guided-flow'
+import { GuidedEstimationFlow } from '@/components/estimation/guided-flow/index'
 import { config } from '@/lib/config'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'

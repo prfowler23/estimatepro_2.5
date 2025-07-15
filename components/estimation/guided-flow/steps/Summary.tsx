@@ -99,7 +99,7 @@ interface ProposalCustomization {
   };
 }
 
-export function Summary({ data, onUpdate, onNext, onBack }) {
+export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdate: (data: any) => void; onNext: () => void; onBack: () => void }) {
   const [activeTab, setActiveTab] = useState('review');
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [customization, setCustomization] = useState<ProposalCustomization>({
@@ -152,7 +152,7 @@ export function Summary({ data, onUpdate, onNext, onBack }) {
         overrides: data.scopeDetails?.overrides || {}
       },
       measurements: {
-        totalArea: data.takeoff?.measurements?.reduce((sum, m) => sum + m.total, 0) || 0,
+        totalArea: data.takeoff?.measurements?.reduce((sum: number, m: any) => sum + m.total, 0) || 0,
         byCategory: data.takeoff?.measurementsByCategory || {},
         floors: data.filesPhotos?.summary?.measurements?.stories || 1,
         accessibility: data.scopeDetails?.accessRestrictions || []

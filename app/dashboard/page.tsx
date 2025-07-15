@@ -87,7 +87,7 @@ export default function Dashboard() {
                 <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Available</h3>
                 <p className="text-muted-foreground mb-4">
-                  Create your first quote to start seeing dashboard insights
+                  Create your first estimate to start seeing dashboard insights
                 </p>
                 <div className="flex gap-2 justify-center">
                   <Button variant="outline" onClick={fetchDashboardData}>
@@ -95,7 +95,7 @@ export default function Dashboard() {
                     Refresh
                   </Button>
                   <Button asChild>
-                    <a href="/calculator">Create Quote</a>
+                    <a href="/calculator">Create Estimate</a>
                   </Button>
                 </div>
               </div>

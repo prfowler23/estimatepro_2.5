@@ -52,12 +52,53 @@ export interface BuildingMeasurements {
   estimatedSqft: number;
 }
 
+export interface MaterialQuantityEstimation {
+  materials: Array<{
+    type: string;
+    area: number;
+    unit: string;
+    cleaningHours: number;
+    difficulty: number;
+    specialEquipment: string[];
+  }>;
+  totalCleanableArea: number;
+  timeEstimate: number;
+  complexity: number;
+}
+
+export interface DetailedItemCount {
+  windows: {
+    total: number;
+    byType: Record<string, number>;
+    avgSize: number;
+    totalArea: number;
+  };
+  doors: {
+    total: number;
+    types: string[];
+  };
+  fixtures: {
+    lights: number;
+    signs: number;
+    awnings: number;
+    other: Record<string, number>;
+  };
+  surfaces: {
+    walls: number;
+    panels: number;
+    columns: number;
+    decorativeElements: number;
+  };
+}
+
 export interface PhotoAnalysisResult {
   windows?: WindowAnalysis;
   materials?: MaterialAnalysis;
   measurements?: BuildingMeasurements;
   damage?: DamageAnalysis;
   safety?: SafetyAnalysis;
+  materialQuantities?: MaterialQuantityEstimation;
+  itemCounts?: DetailedItemCount;
 }
 
 // Helper function to convert File to base64
@@ -103,7 +144,7 @@ export async function detectWindows(imageBase64: string): Promise<WindowAnalysis
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',
@@ -155,7 +196,7 @@ export async function classifyMaterials(imageBase64: string): Promise<MaterialAn
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',
@@ -203,7 +244,7 @@ export async function assessDamage(imageBase64: string): Promise<DamageAnalysis>
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',
@@ -250,7 +291,7 @@ export async function analyzeSafety(imageBase64: string): Promise<SafetyAnalysis
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',
@@ -298,7 +339,7 @@ export async function extractBuildingMeasurements(imageBase64: string): Promise<
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',
@@ -323,6 +364,290 @@ export async function extractBuildingMeasurements(imageBase64: string): Promise<
   }
 }
 
+// Material quantity estimation function
+export async function estimateMaterialQuantities(imageBase64: string): Promise<MaterialQuantityEstimation> {
+  const prompt = `Analyze this building facade for detailed material quantity estimation. Return a JSON object with:
+  {
+    "materials": [
+      {
+        "type": "material name (e.g., brick, concrete, glass, metal)",
+        "area": estimated area in square feet,
+        "unit": "sq ft",
+        "cleaningHours": estimated hours to clean this material,
+        "difficulty": cleaning difficulty 1-10,
+        "specialEquipment": ["required equipment for this material"]
+      }
+    ],
+    "totalCleanableArea": total area requiring cleaning in sq ft,
+    "timeEstimate": total estimated cleaning time in hours,
+    "complexity": overall complexity score 1-10
+  }
+  
+  Consider:
+  - Different material types require different cleaning approaches
+  - Surface texture affects cleaning time
+  - Height and accessibility impact difficulty
+  - Damage or staining increases time requirements
+  - Special coatings or treatments require specific methods`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            {
+              type: 'image_url',
+              image_url: { url: imageBase64, detail: 'high' }
+            }
+          ]
+        }
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens: 1500
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result as MaterialQuantityEstimation;
+  } catch (error) {
+    console.error('Error estimating material quantities:', error);
+    throw new Error('Failed to estimate material quantities');
+  }
+}
+
+// Detailed item counting function
+export async function countDetailedItems(imageBase64: string): Promise<DetailedItemCount> {
+  const prompt = `Count all visible building elements in this facade image with precision. Return a JSON object with:
+  {
+    "windows": {
+      "total": total number of windows,
+      "byType": {
+        "standard": count,
+        "large": count,
+        "small": count,
+        "storefront": count,
+        "decorative": count
+      },
+      "avgSize": average window size in sq ft,
+      "totalArea": total window area in sq ft
+    },
+    "doors": {
+      "total": total number of doors,
+      "types": ["main entrance", "service door", "emergency exit", etc.]
+    },
+    "fixtures": {
+      "lights": number of light fixtures,
+      "signs": number of signs,
+      "awnings": number of awnings,
+      "other": {
+        "vents": count,
+        "cameras": count,
+        "speakers": count,
+        "decorative_elements": count
+      }
+    },
+    "surfaces": {
+      "walls": number of distinct wall sections,
+      "panels": number of panels or sections,
+      "columns": number of columns or pillars,
+      "decorativeElements": number of decorative features
+    }
+  }
+  
+  Count carefully and precisely:
+  - Each individual window pane/unit
+  - Every door and entrance
+  - All lighting fixtures and signs
+  - Decorative elements and architectural features
+  - Distinct surface sections or panels`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            {
+              type: 'image_url',
+              image_url: { url: imageBase64, detail: 'high' }
+            }
+          ]
+        }
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens: 1200
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result as DetailedItemCount;
+  } catch (error) {
+    console.error('Error counting detailed items:', error);
+    throw new Error('Failed to count detailed items');
+  }
+}
+
+// 3D building reconstruction analysis
+export async function analyze3DReconstruction(imageUrls: string[]): Promise<{
+  reconstruction: {
+    confidence: number;
+    dimensions: {
+      length: number;
+      width: number;
+      height: number;
+      volume: number;
+    };
+    surfaces: Array<{
+      type: string;
+      area: number;
+      orientation: string;
+      accessibility: string;
+    }>;
+    complexityFactors: string[];
+  };
+  recommendations: string[];
+}> {
+  if (imageUrls.length < 2) {
+    throw new Error('At least 2 images required for 3D reconstruction analysis');
+  }
+
+  const prompt = `Analyze these multiple building images to create a 3D understanding. Return JSON with:
+  {
+    "reconstruction": {
+      "confidence": confidence in 3D analysis 0.0-1.0,
+      "dimensions": {
+        "length": building length in feet,
+        "width": building width in feet,
+        "height": building height in feet,
+        "volume": total building volume in cubic feet
+      },
+      "surfaces": [
+        {
+          "type": "north wall" | "south wall" | "east wall" | "west wall" | "roof",
+          "area": surface area in sq ft,
+          "orientation": "north" | "south" | "east" | "west" | "horizontal",
+          "accessibility": "easy" | "moderate" | "difficult" | "requires_equipment"
+        }
+      ],
+      "complexityFactors": ["factors affecting service complexity"]
+    },
+    "recommendations": ["strategic recommendations for service planning"]
+  }
+  
+  Use multiple angles to understand:
+  - Building shape and proportions
+  - All facade surfaces
+  - Roof configuration
+  - Access points and challenges
+  - Service planning implications`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            ...imageUrls.map(url => ({
+              type: 'image_url' as const,
+              image_url: { url, detail: 'high' as const }
+            }))
+          ]
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: 2000
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result;
+  } catch (error) {
+    console.error('Error in 3D reconstruction analysis:', error);
+    throw new Error('Failed to perform 3D reconstruction analysis');
+  }
+}
+
+// Before/after comparison analysis
+export async function compareBeforeAfter(beforeImageUrl: string, afterImageUrl: string): Promise<{
+  qualityAssessment: {
+    improvementScore: number; // 0-100
+    areasImproved: string[];
+    remainingIssues: string[];
+    overallSatisfaction: 'poor' | 'fair' | 'good' | 'excellent';
+  };
+  detailedComparison: {
+    cleanliness: { before: number; after: number; improvement: number };
+    damage: { before: string[]; after: string[]; resolved: string[] };
+    appearance: { before: string; after: string };
+  };
+  recommendations: string[];
+}> {
+  const prompt = `Compare these before and after cleaning images to assess work quality. Return JSON with:
+  {
+    "qualityAssessment": {
+      "improvementScore": score 0-100 for overall improvement,
+      "areasImproved": ["specific areas that were improved"],
+      "remainingIssues": ["issues that still need attention"],
+      "overallSatisfaction": "poor" | "fair" | "good" | "excellent"
+    },
+    "detailedComparison": {
+      "cleanliness": {
+        "before": cleanliness score 0-10,
+        "after": cleanliness score 0-10,
+        "improvement": improvement points
+      },
+      "damage": {
+        "before": ["damage/issues visible in before image"],
+        "after": ["damage/issues still visible in after image"],
+        "resolved": ["issues that were resolved"]
+      },
+      "appearance": {
+        "before": "description of before condition",
+        "after": "description of after condition"
+      }
+    },
+    "recommendations": ["recommendations for future maintenance"]
+  }`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'text', text: 'BEFORE IMAGE:' },
+            {
+              type: 'image_url',
+              image_url: { url: beforeImageUrl, detail: 'high' }
+            },
+            { type: 'text', text: 'AFTER IMAGE:' },
+            {
+              type: 'image_url',
+              image_url: { url: afterImageUrl, detail: 'high' }
+            }
+          ]
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: 2000
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result;
+  } catch (error) {
+    console.error('Error in before/after comparison:', error);
+    throw new Error('Failed to compare before/after images');
+  }
+}
+
 // Main analysis function
 export async function analyzePhotos(photos: File[]): Promise<PhotoAnalysisResult[]> {
   const results: PhotoAnalysisResult[] = [];
@@ -333,12 +658,14 @@ export async function analyzePhotos(photos: File[]): Promise<PhotoAnalysisResult
       const imageBase64 = await fileToBase64(photo);
 
       // Run all analysis functions in parallel for each photo
-      const [windows, materials, measurements, damage, safety] = await Promise.allSettled([
+      const [windows, materials, measurements, damage, safety, materialQuantities, itemCounts] = await Promise.allSettled([
         detectWindows(imageBase64),
         classifyMaterials(imageBase64),
         extractBuildingMeasurements(imageBase64),
         assessDamage(imageBase64),
-        analyzeSafety(imageBase64)
+        analyzeSafety(imageBase64),
+        estimateMaterialQuantities(imageBase64),
+        countDetailedItems(imageBase64)
       ]);
 
       // Compile results, handling any failed analyses
@@ -362,6 +689,14 @@ export async function analyzePhotos(photos: File[]): Promise<PhotoAnalysisResult
 
       if (safety.status === 'fulfilled') {
         result.safety = safety.value;
+      }
+
+      if (materialQuantities.status === 'fulfilled') {
+        result.materialQuantities = materialQuantities.value;
+      }
+
+      if (itemCounts.status === 'fulfilled') {
+        result.itemCounts = itemCounts.value;
       }
 
       results.push(result);

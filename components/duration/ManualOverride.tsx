@@ -371,7 +371,7 @@ export function ManualOverride({
           <div className="text-center py-8 text-muted-foreground">
             <Edit3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No duration overrides applied</p>
-            <p className="text-sm">Click "Add Override" to manually adjust service durations</p>
+            <p className="text-sm">Click &quot;Add Override&quot; to manually adjust service durations</p>
           </div>
         )}
         

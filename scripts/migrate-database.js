@@ -21,7 +21,7 @@ async function executeMigration() {
     
     // Test connection first
     const { data: testData, error: testError } = await supabase
-      .from('quotes')
+      .from('estimates')
       .select('id')
       .limit(1);
     

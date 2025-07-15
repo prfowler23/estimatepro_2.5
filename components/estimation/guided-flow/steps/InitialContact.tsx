@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Button, Card, Alert } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
 import { Mail, FileText, AlertCircle, Phone, Users, MessageSquare } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
 
 interface InitialContactData {
   contactMethod: 'email' | 'meeting' | 'phone' | 'walkin';
@@ -46,7 +49,14 @@ const CONTACT_METHODS = [
   { id: 'walkin', name: 'Walk-in', icon: MessageSquare, description: 'In-person discussion' }
 ];
 
-export function InitialContact({ data, onUpdate, onNext, onBack }) {
+interface InitialContactProps {
+  data: any;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+export function InitialContact({ data, onUpdate, onNext, onBack }: InitialContactProps) {
   const [contactData, setContactData] = useState<InitialContactData>({
     contactMethod: data?.initialContact?.contactMethod || 'email',
     originalContent: data?.initialContact?.originalContent || '',
@@ -116,10 +126,18 @@ export function InitialContact({ data, onUpdate, onNext, onBack }) {
     setIsExtracting(true);
 
     try {
+      // Get the current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Please log in to use AI extraction');
+      }
+
       const response = await fetch('/api/ai/extract-contact-info', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           content: contactData.originalContent,

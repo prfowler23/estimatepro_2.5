@@ -1,19 +1,45 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createServerComponentClient, createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 
 // Server-side Supabase client for API routes
 export function createServerSupabaseClient() {
-  return createServerComponentClient({ cookies })
+  return createRouteHandlerClient({ cookies })
 }
 
 // Authenticate API requests and return user
 export async function authenticateRequest(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient()
-    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    // First, try to get session from cookies
+    let session = null
+    try {
+      const { data: { session: cookieSession }, error: cookieError } = await supabase.auth.getSession()
+      if (!cookieError && cookieSession) {
+        session = cookieSession
+      }
+    } catch (cookieError) {
+      console.log('No valid cookie session found, trying Authorization header')
+    }
+    
+    // If no cookie session, try Authorization header
+    if (!session) {
+      const authHeader = request.headers.get('Authorization')
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+        try {
+          const { data: { user }, error } = await supabase.auth.getUser(token)
+          if (user && !error) {
+            session = { user, access_token: token, refresh_token: null }
+          }
+        } catch (tokenError) {
+          console.error('Invalid token:', tokenError)
+        }
+      }
+    }
 
-    if (error || !session) {
+    if (!session) {
       return { user: null, error: 'Unauthorized' }
     }
 

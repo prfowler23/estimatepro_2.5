@@ -16,7 +16,7 @@ async function testAnalytics() {
     // Check if we can connect to Supabase
     console.log('1. Testing database connection...')
     const { data: testData, error: testError } = await supabase
-      .from('quotes')
+      .from('estimates')
       .select('id')
       .limit(1)
     
@@ -27,23 +27,23 @@ async function testAnalytics() {
     
     console.log('✅ Database connection successful')
     
-    // Check quotes count
-    console.log('2. Checking quotes data...')
-    const { count: quotesCount, error: quotesError } = await supabase
-      .from('quotes')
+    // Check estimates count
+    console.log('2. Checking estimates data...')
+    const { count: estimatesCount, error: estimatesError } = await supabase
+      .from('estimates')
       .select('*', { count: 'exact', head: true })
     
-    if (quotesError) {
-      console.error('❌ Error fetching quotes:', quotesError.message)
+    if (estimatesError) {
+      console.error('❌ Error fetching estimates:', estimatesError.message)
       return
     }
     
-    console.log(`📊 Found ${quotesCount} quotes in database`)
+    console.log(`📊 Found ${estimatesCount} estimates in database`)
     
-    // Check quote_services count
+    // Check estimate_services count
     console.log('3. Checking quote services data...')
     const { count: servicesCount, error: servicesError } = await supabase
-      .from('quote_services')
+      .from('estimate_services')
       .select('*', { count: 'exact', head: true })
     
     if (servicesError) {
@@ -54,12 +54,12 @@ async function testAnalytics() {
     console.log(`🔧 Found ${servicesCount} quote services in database`)
     
     // If no data, suggest creating sample data
-    if (quotesCount === 0) {
+    if (estimatesCount === 0) {
       console.log('')
-      console.log('💡 No quotes found. To test analytics:')
+      console.log('💡 No estimates found. To test analytics:')
       console.log('   1. Go to http://localhost:3000/calculator')
-      console.log('   2. Create a few test quotes')
-      console.log('   3. Set some quotes to "approved" status')
+      console.log('   2. Create a few test estimates')
+      console.log('   3. Set some estimates to "approved" status')
       console.log('   4. Visit http://localhost:3000/analytics')
     } else {
       console.log('')

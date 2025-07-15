@@ -1,13 +1,14 @@
 export async function exportMapWithMeasurements(
   canvas: HTMLCanvasElement,
-  shapes: Shape[],
-  measurements: Measurement[]
+  shapes: any[],
+  measurements: any[]
 ): Promise<Blob> {
   // Create a new canvas for export
   const exportCanvas = document.createElement('canvas');
   exportCanvas.width = canvas.width;
   exportCanvas.height = canvas.height;
   const ctx = exportCanvas.getContext('2d');
+  if (!ctx) return new Blob();
   
   // Copy original canvas
   ctx.drawImage(canvas, 0, 0);
@@ -18,24 +19,25 @@ export async function exportMapWithMeasurements(
   ctx.fillStyle = 'black';
   ctx.font = '14px Arial';
   ctx.fillText('Area Summary:', 20, 30);
-  ctx.fillText(`Total: ${calculateTotalArea(shapes).toFixed(0)} sq ft`, 20, 50);
+  const totalArea = shapes.reduce((sum, shape) => sum + (shape.area || 0), 0);
+  ctx.fillText(`Total: ${totalArea.toFixed(0)} sq ft`, 20, 50);
   
   // Convert to blob
-  return new Promise((resolve) => {
+  return new Promise<Blob>((resolve) => {
     exportCanvas.toBlob((blob) => {
-      resolve(blob);
+      resolve(blob || new Blob());
     }, 'image/png');
   });
 }
 
 export function importMeasurementsFromCSV(csvContent: string): {
-  shapes: Partial<Shape>[];
-  measurements: Partial<Measurement>[];
+  shapes: any[];
+  measurements: any[];
 } {
   // Parse CSV format from measurement tools
   const lines = csvContent.split('\n');
-  const shapes = [];
-  const measurements = [];
+  const shapes: any[] = [];
+  const measurements: any[] = [];
   
   lines.forEach(line => {
     const parts = line.split(',');

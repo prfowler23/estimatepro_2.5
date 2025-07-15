@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useQuoteStore, type Quote, type QuoteService } from '@/lib/stores/quote-store'
+import { useEstimateStore, type Estimate, type EstimateService } from '@/lib/stores/estimate-store'
 
 // Safe HTML sanitization
 const sanitizeHtml = (html: string) => {
@@ -65,18 +65,18 @@ export function QuoteEditor({ quoteId, onSave, onCancel }: QuoteEditorProps) {
   const [notesContent, setNotesContent] = useState('')
   
   const {
-    currentQuote,
+    currentEstimate,
     services,
     isSaving,
     isLoading,
     setCustomerInfo,
     addService,
     removeService,
-    saveQuote,
-    createQuote,
-    loadQuote,
+    saveEstimate,
+    createEstimate,
+    loadEstimate,
     calculateTotal,
-  } = useQuoteStore()
+  } = useEstimateStore()
 
   const form = useForm<QuoteFormData>({
     resolver: zodResolver(quoteSchema),
@@ -98,29 +98,29 @@ export function QuoteEditor({ quoteId, onSave, onCancel }: QuoteEditorProps) {
   // Load quote data when component mounts
   useEffect(() => {
     if (quoteId) {
-      loadQuote(quoteId)
+      loadEstimate(quoteId)
     }
-  }, [quoteId, loadQuote])
+  }, [quoteId, loadEstimate])
 
-  // Update form when quote data changes
+  // Update form when estimate data changes
   useEffect(() => {
-    if (currentQuote) {
+    if (currentEstimate) {
       form.reset({
-        customer_name: currentQuote.customer_name || '',
-        customer_email: currentQuote.customer_email || '',
-        customer_phone: currentQuote.customer_phone || '',
-        company_name: currentQuote.company_name || '',
-        building_name: currentQuote.building_name || '',
-        building_address: currentQuote.building_address || '',
-        building_height_stories: currentQuote.building_height_stories || 1,
-        building_height_feet: currentQuote.building_height_feet || undefined,
-        building_type: currentQuote.building_type || '',
-        status: currentQuote.status || 'draft',
-        notes: currentQuote.notes || '',
+        customer_name: currentEstimate.customer_name || '',
+        customer_email: currentEstimate.customer_email || '',
+        customer_phone: currentEstimate.customer_phone || '',
+        company_name: currentEstimate.company_name || '',
+        building_name: currentEstimate.building_name || '',
+        building_address: currentEstimate.building_address || '',
+        building_height_stories: currentEstimate.building_height_stories || 1,
+        building_height_feet: currentEstimate.building_height_feet || undefined,
+        building_type: currentEstimate.building_type || '',
+        status: currentEstimate.status || 'draft',
+        notes: currentEstimate.notes || '',
       })
-      setNotesContent(currentQuote.notes || '')
+      setNotesContent(currentEstimate.notes || '')
     }
-  }, [currentQuote, form])
+  }, [currentEstimate, form])
 
   const onSubmit = async (data: QuoteFormData) => {
     const quoteData = {
@@ -135,13 +135,13 @@ export function QuoteEditor({ quoteId, onSave, onCancel }: QuoteEditorProps) {
     try {
       let resultQuoteId: string | null = null
       
-      if (currentQuote?.id) {
-        const success = await saveQuote()
+      if (currentEstimate?.id) {
+        const success = await saveEstimate()
         if (success) {
-          resultQuoteId = currentQuote.id
+          resultQuoteId = currentEstimate.id
         }
       } else {
-        resultQuoteId = await createQuote()
+        resultQuoteId = await createEstimate()
       }
 
       if (resultQuoteId) {
@@ -158,7 +158,7 @@ export function QuoteEditor({ quoteId, onSave, onCancel }: QuoteEditorProps) {
   }
 
   const handleCancel = () => {
-    if (currentQuote) {
+    if (currentEstimate) {
       form.reset()
       setIsEditing(false)
     } else {
@@ -202,19 +202,19 @@ export function QuoteEditor({ quoteId, onSave, onCancel }: QuoteEditorProps) {
           <FileText className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold">
-              {currentQuote?.quote_number || 'New Quote'}
+              {currentEstimate?.estimate_number || 'New Estimate'}
             </h1>
-            {currentQuote?.created_at && (
+            {currentEstimate?.created_at && (
               <p className="text-muted-foreground">
-                Created {new Date(currentQuote.created_at).toLocaleDateString()}
+                Created {new Date(currentEstimate.created_at).toLocaleDateString()}
               </p>
             )}
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {currentQuote?.status && (
-            <Badge className={getStatusColor(currentQuote.status)}>
-              {currentQuote.status.charAt(0).toUpperCase() + currentQuote.status.slice(1)}
+          {currentEstimate?.status && (
+            <Badge className={getStatusColor(currentEstimate.status)}>
+              {currentEstimate.status.charAt(0).toUpperCase() + currentEstimate.status.slice(1)}
             </Badge>
           )}
           {!isEditing && (

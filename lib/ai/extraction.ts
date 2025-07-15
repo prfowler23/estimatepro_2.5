@@ -1,9 +1,21 @@
 import OpenAI from 'openai';
+import { 
+  safeAIOperation, 
+  mapOpenAIError, 
+  checkContentSafety,
+  ValidationError,
+  AuthenticationError
+} from './ai-error-handler';
 
-// Initialize OpenAI client
+// Initialize OpenAI client with error handling
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Validate API key on module load
+if (!process.env.OPENAI_API_KEY) {
+  throw new AuthenticationError('OPENAI_API_KEY environment variable is required');
+}
 
 // Service type mapping for validation
 const VALID_SERVICES = ['PW', 'PWS', 'WC', 'GR', 'FR', 'HD', 'SW', 'PD', 'GRC', 'FC'];
@@ -113,8 +125,17 @@ Analyze the content for:
 5. Potential project challenges`;
 
 // Email-specific extraction
-export async function extractFromEmail(emailContent: string): Promise<ExtractedData> {
-  const emailPrompt = `${BASE_EXTRACTION_PROMPT}
+export async function extractFromEmail(emailContent: string, userId?: string): Promise<ExtractedData> {
+  if (!emailContent || emailContent.trim().length === 0) {
+    throw new ValidationError('Email content cannot be empty', []);
+  }
+
+  return safeAIOperation(
+    async () => {
+      // Check content safety
+      checkContentSafety(emailContent);
+
+      const emailPrompt = `${BASE_EXTRACTION_PROMPT}
 
 SPECIFIC INSTRUCTIONS FOR EMAIL ANALYSIS:
 - Parse email headers for sender information
@@ -128,30 +149,42 @@ SPECIFIC INSTRUCTIONS FOR EMAIL ANALYSIS:
 EMAIL CONTENT TO ANALYZE:
 ${emailContent}`;
 
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert at extracting structured business information from communications. Always return valid JSON.'
-        },
-        {
-          role: 'user',
-          content: emailPrompt
-        }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.1,
-      max_tokens: 2000
-    });
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert at extracting structured business information from communications. Always return valid JSON.'
+            },
+            {
+              role: 'user',
+              content: emailPrompt
+            }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.1,
+          max_tokens: 2000
+        });
 
-    const extractedData = JSON.parse(response.choices[0].message.content || '{}');
-    return validateAndEnhanceExtraction(extractedData);
-  } catch (error) {
-    console.error('Error extracting from email:', error);
-    throw new Error('Failed to extract information from email');
-  }
+        const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+        return validateAndEnhanceExtraction(extractedData);
+      } catch (error: any) {
+        throw mapOpenAIError(error);
+      }
+    },
+    {
+      operationName: 'extractFromEmail',
+      userId,
+      rateLimitKey: userId || 'anonymous',
+      validateOutput: (result) => {
+        if (!result.customer || !result.requirements) {
+          throw new ValidationError('Invalid extraction result structure', []);
+        }
+        return result;
+      }
+    }
+  );
 }
 
 // Meeting transcript extraction
@@ -345,10 +378,263 @@ function calculateUrgencyScore(data: any): number {
   return Math.min(10, Math.max(1, Math.round(score)));
 }
 
+// PDF/Document extraction
+export async function extractFromDocument(documentContent: string, documentType: 'pdf' | 'rfp' | 'contract' | 'plans'): Promise<ExtractedData> {
+  const documentPrompt = `${BASE_EXTRACTION_PROMPT}
+
+SPECIFIC INSTRUCTIONS FOR DOCUMENT ANALYSIS:
+- Extract structured information from ${documentType.toUpperCase()} documents
+- Look for technical specifications and requirements
+- Identify scope of work sections
+- Extract project timelines and milestones
+- Parse pricing information and budget constraints
+- Identify compliance and regulatory requirements
+- Look for architectural details and building specifications
+- Extract contact information from headers/footers
+- Pay attention to legal terms and conditions
+- Note any quality standards or certifications required
+
+DOCUMENT TYPE: ${documentType.toUpperCase()}
+DOCUMENT CONTENT TO ANALYZE:
+${documentContent}`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert at extracting structured business information from formal documents. Focus on technical requirements, compliance needs, and project specifications. Always return valid JSON.'
+        },
+        {
+          role: 'user',
+          content: documentPrompt
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: 2500
+    });
+
+    const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+    return validateAndEnhanceExtraction(extractedData);
+  } catch (error) {
+    console.error(`Error extracting from ${documentType}:`, error);
+    throw new Error(`Failed to extract information from ${documentType}`);
+  }
+}
+
+// OCR text extraction from images
+export async function extractFromImageOCR(imageUrl: string, imageType: 'document' | 'sign' | 'form' | 'note'): Promise<ExtractedData> {
+  const ocrPrompt = `${BASE_EXTRACTION_PROMPT}
+
+SPECIFIC INSTRUCTIONS FOR IMAGE OCR ANALYSIS:
+- Extract all readable text from the image
+- Interpret handwritten text where possible
+- Look for forms, signatures, and official documents
+- Extract contact information from business cards or letterheads
+- Identify building addresses and property information
+- Parse pricing information from quotes or invoices
+- Look for project requirements in written notes
+- Extract dates and scheduling information
+- Identify safety requirements or restrictions
+- Note any quality standards or specifications
+
+IMAGE TYPE: ${imageType.toUpperCase()}
+Analyze this image and extract all readable text and relevant business information.`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert at reading text from images and extracting structured business information. Process both printed and handwritten text. Always return valid JSON.'
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: ocrPrompt
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: imageUrl,
+                detail: 'high'
+              }
+            }
+          ]
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: 2500
+    });
+
+    const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+    return validateAndEnhanceExtraction(extractedData);
+  } catch (error) {
+    console.error(`Error extracting from ${imageType} image:`, error);
+    throw new Error(`Failed to extract information from ${imageType} image`);
+  }
+}
+
+// Competitive analysis from competitor quotes/proposals
+export async function extractCompetitiveIntelligence(competitorContent: string): Promise<{
+  extraction: ExtractedData;
+  competitive: {
+    competitors: string[];
+    pricingStrategy: string;
+    serviceOfferings: string[];
+    strengthsWeaknesses: string[];
+    marketRates: Record<string, string>;
+    differentiators: string[];
+    threats: string[];
+    opportunities: string[];
+  };
+}> {
+  const competitivePrompt = `Analyze this competitor document/quote and extract both standard project information AND competitive intelligence.
+
+Return JSON with two main sections:
+1. "extraction" - standard project extraction using the format above
+2. "competitive" - competitive analysis with this structure:
+
+{
+  "extraction": ${BASE_EXTRACTION_PROMPT},
+  "competitive": {
+    "competitors": ["list of competitor companies mentioned"],
+    "pricingStrategy": "pricing approach observed (premium, competitive, discount, value-based)",
+    "serviceOfferings": ["services they offer that we might not"],
+    "strengthsWeaknesses": ["observed competitive advantages/disadvantages"],
+    "marketRates": {"service": "price range observed"},
+    "differentiators": ["unique selling points they emphasize"],
+    "threats": ["competitive threats to our business"],
+    "opportunities": ["market gaps we could exploit"]
+  }
+}
+
+COMPETITIVE CONTENT TO ANALYZE:
+${competitorContent}`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a competitive intelligence analyst specializing in building services. Extract both project details and strategic market insights. Always return valid JSON.'
+        },
+        {
+          role: 'user',
+          content: competitivePrompt
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 3000
+    });
+
+    const analysisData = JSON.parse(response.choices[0].message.content || '{}');
+    
+    return {
+      extraction: validateAndEnhanceExtraction(analysisData.extraction || {}),
+      competitive: {
+        competitors: analysisData.competitive?.competitors || [],
+        pricingStrategy: analysisData.competitive?.pricingStrategy || '',
+        serviceOfferings: analysisData.competitive?.serviceOfferings || [],
+        strengthsWeaknesses: analysisData.competitive?.strengthsWeaknesses || [],
+        marketRates: analysisData.competitive?.marketRates || {},
+        differentiators: analysisData.competitive?.differentiators || [],
+        threats: analysisData.competitive?.threats || [],
+        opportunities: analysisData.competitive?.opportunities || []
+      }
+    };
+  } catch (error) {
+    console.error('Error extracting competitive intelligence:', error);
+    throw new Error('Failed to extract competitive intelligence');
+  }
+}
+
+// Enhanced risk assessment
+export async function performRiskAssessment(extractedData: ExtractedData, projectContext?: string): Promise<{
+  riskScore: number; // 1-10 (10 = highest risk)
+  riskFactors: Array<{
+    category: string;
+    risk: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    mitigation: string;
+  }>;
+  recommendations: string[];
+  pricing_adjustments: Record<string, number>; // Service code -> multiplier
+}> {
+  const riskPrompt = `Analyze this project data for potential risks and provide a comprehensive risk assessment:
+
+PROJECT DATA: ${JSON.stringify(extractedData, null, 2)}
+ADDITIONAL CONTEXT: ${projectContext || 'None provided'}
+
+Provide a detailed risk analysis with this JSON structure:
+{
+  "riskScore": number from 1-10 (10 = highest risk),
+  "riskFactors": [
+    {
+      "category": "timeline|budget|technical|safety|weather|access|regulatory|customer",
+      "risk": "specific risk description",
+      "severity": "low|medium|high|critical",
+      "mitigation": "recommended mitigation strategy"
+    }
+  ],
+  "recommendations": ["strategic recommendations for this project"],
+  "pricing_adjustments": {"service_code": multiplier_number}
+}
+
+Consider these risk categories:
+- Timeline risks (unrealistic deadlines, seasonal constraints)
+- Budget risks (tight budgets, payment terms, scope creep)
+- Technical risks (complex requirements, specialized equipment)
+- Safety risks (height work, chemical exposure, confined spaces)
+- Weather risks (seasonal weather, outdoor work exposure)
+- Access risks (restricted access, security requirements)
+- Regulatory risks (permits, compliance, inspections)
+- Customer risks (decision complexity, change requests)`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a risk assessment expert for building services projects. Provide thorough analysis of project risks and mitigation strategies.'
+        },
+        {
+          role: 'user',
+          content: riskPrompt
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 2500
+    });
+
+    const riskData = JSON.parse(response.choices[0].message.content || '{}');
+    
+    return {
+      riskScore: Math.min(10, Math.max(1, riskData.riskScore || 5)),
+      riskFactors: riskData.riskFactors || [],
+      recommendations: riskData.recommendations || [],
+      pricing_adjustments: riskData.pricing_adjustments || {}
+    };
+  } catch (error) {
+    console.error('Error performing risk assessment:', error);
+    throw new Error('Failed to perform risk assessment');
+  }
+}
+
 // Generic extraction function that routes to appropriate method
 export async function extractFromContent(
   content: string, 
-  type: 'email' | 'meeting' | 'phone' | 'walkin'
+  type: 'email' | 'meeting' | 'phone' | 'walkin' | 'pdf' | 'rfp' | 'contract' | 'plans'
 ): Promise<ExtractedData> {
   switch (type) {
     case 'email':
@@ -359,6 +645,11 @@ export async function extractFromContent(
       return extractFromPhone(content);
     case 'walkin':
       return extractFromPhone(content); // Use phone extraction for walk-in notes
+    case 'pdf':
+    case 'rfp':
+    case 'contract':
+    case 'plans':
+      return extractFromDocument(content, type);
     default:
       throw new Error(`Unsupported extraction type: ${type}`);
   }

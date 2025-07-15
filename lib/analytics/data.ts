@@ -32,21 +32,21 @@ export interface RevenueData {
 export interface MonthlyRevenue {
   month: string
   revenue: number
-  quotes: number
+  estimates: number
   avgValue: number
 }
 
 export interface QuarterlyRevenue {
   quarter: string
   revenue: number
-  quotes: number
+  estimates: number
   growth: number
 }
 
 export interface YearlyRevenue {
   year: string
   revenue: number
-  quotes: number
+  estimates: number
   growth: number
 }
 
@@ -54,7 +54,7 @@ export interface ServiceRevenueBreakdown {
   service: string
   revenue: number
   percentage: number
-  quotes: number
+  estimates: number
   avgValue: number
 }
 
@@ -114,7 +114,7 @@ export interface LocationConversion {
   location: string
   rate: number
   revenue: number
-  quotes: number
+  estimates: number
 }
 
 export interface ConversionFunnel {
@@ -150,7 +150,7 @@ export class AnalyticsService {
   static async checkDatabaseConnection(): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('id')
         .limit(1)
       
@@ -166,19 +166,19 @@ export class AnalyticsService {
       const lastMonth = subMonths(currentMonth, 1)
       const lastYear = new Date(currentMonth.getFullYear() - 1, currentMonth.getMonth(), 1)
 
-      // Total quotes
-      const { count: totalQuotes, error: quotesError } = await supabase
-        .from('quotes')
+      // Total estimates
+      const { count: totalQuotes, error: estimatesError } = await supabase
+        .from('estimates')
         .select('*', { count: 'exact', head: true })
 
-      if (quotesError) {
-        console.error('Error fetching quotes count:', quotesError)
-        throw new Error(`Database error: ${quotesError.message}`)
+      if (estimatesError) {
+        console.error('Error fetching estimates count:', estimatesError)
+        throw new Error(`Database error: ${estimatesError.message}`)
       }
 
-      // Total revenue (approved quotes only)
+      // Total revenue (approved estimates only)
       const { data: approvedQuotes, error: revenueError } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('total_price')
         .eq('status', 'approved')
 
@@ -193,12 +193,12 @@ export class AnalyticsService {
 
       // Conversion rate
       const { count: sentQuotes } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('*', { count: 'exact', head: true })
         .in('status', ['sent', 'approved', 'rejected'])
 
       const { count: approvedCount } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'approved')
 
@@ -206,20 +206,20 @@ export class AnalyticsService {
 
       // Active projects (sent + approved)
       const { count: activeProjects } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('*', { count: 'exact', head: true })
         .in('status', ['sent', 'approved'])
 
       // Monthly growth
       const { data: currentMonthQuotes } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('total_price')
         .eq('status', 'approved')
         .gte('created_at', startOfMonth(currentMonth).toISOString())
         .lte('created_at', endOfMonth(currentMonth).toISOString())
 
       const { data: lastMonthQuotes } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('total_price')
         .eq('status', 'approved')
         .gte('created_at', startOfMonth(lastMonth).toISOString())
@@ -231,7 +231,7 @@ export class AnalyticsService {
 
       // Year over year growth
       const { data: lastYearQuotes } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('total_price')
         .eq('status', 'approved')
         .gte('created_at', startOfMonth(lastYear).toISOString())
@@ -242,7 +242,7 @@ export class AnalyticsService {
 
       // Top service
       const { data: serviceData } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .select('service_type, price')
         .order('price', { ascending: false })
 
@@ -275,46 +275,46 @@ export class AnalyticsService {
       const monthlyData: MonthlyRevenue[] = []
       for (let i = 11; i >= 0; i--) {
         const month = subMonths(new Date(), i)
-        const { data: quotes } = await supabase
-          .from('quotes')
+        const { data: estimates } = await supabase
+          .from('estimates')
           .select('total_price')
           .eq('status', 'approved')
           .gte('created_at', startOfMonth(month).toISOString())
           .lte('created_at', endOfMonth(month).toISOString())
 
-        const revenue = quotes?.reduce((sum, q) => sum + q.total_price, 0) || 0
-        const quoteCount = quotes?.length || 0
+        const revenue = estimates?.reduce((sum, q) => sum + q.total_price, 0) || 0
+        const quoteCount = estimates?.length || 0
         const avgValue = quoteCount ? revenue / quoteCount : 0
 
         monthlyData.push({
           month: format(month, 'MMM yyyy'),
           revenue,
-          quotes: quoteCount,
+          estimates: quoteCount,
           avgValue
         })
       }
 
       // Service revenue breakdown
       const { data: serviceData } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .select(`
           service_type,
           price,
-          quotes!inner(status)
+          estimates!inner(status)
         `)
-        .eq('quotes.status', 'approved')
+        .eq('estimates.status', 'approved')
 
       const serviceBreakdown = serviceData?.reduce((acc, service) => {
         const existing = acc.find(s => s.service === service.service_type)
         if (existing) {
           existing.revenue += service.price
-          existing.quotes += 1
+          existing.estimates += 1
         } else {
           acc.push({
             service: service.service_type,
             revenue: service.price,
             percentage: 0, // Will calculate below
-            quotes: 1,
+            estimates: 1,
             avgValue: service.price
           })
         }
@@ -325,7 +325,7 @@ export class AnalyticsService {
       const totalServiceRevenue = serviceBreakdown.reduce((sum, s) => sum + s.revenue, 0)
       serviceBreakdown.forEach(service => {
         service.percentage = totalServiceRevenue ? (service.revenue / totalServiceRevenue) * 100 : 0
-        service.avgValue = service.quotes ? service.revenue / service.quotes : 0
+        service.avgValue = service.estimates ? service.revenue / service.estimates : 0
       })
 
       return {
@@ -343,12 +343,12 @@ export class AnalyticsService {
   static async getServiceMetrics(): Promise<ServiceMetrics[]> {
     try {
       const { data: serviceData, error } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .select(`
           service_type,
           price,
           total_hours,
-          quotes!inner(status, created_at)
+          estimates!inner(status, created_at)
         `)
 
       if (error) {
@@ -366,7 +366,7 @@ export class AnalyticsService {
 
       const serviceMetrics = serviceData.reduce((acc, service) => {
         const existing = acc.find(s => s.serviceType === service.service_type)
-        const quote = Array.isArray(service.quotes) ? service.quotes[0] : service.quotes
+        const quote = Array.isArray(service.estimates) ? service.estimates[0] : service.estimates
         const isApproved = quote?.status === 'approved'
         const isCurrentMonth = new Date(quote?.created_at || '') >= startOfMonth(currentMonth)
         const isLastMonth = new Date(quote?.created_at || '') >= startOfMonth(lastMonth) && 
@@ -405,7 +405,7 @@ export class AnalyticsService {
         
         // Calculate conversion rate (approved / total)
         const approvedCount = serviceData?.filter(s => {
-          const quote = Array.isArray(s.quotes) ? s.quotes[0] : s.quotes
+          const quote = Array.isArray(s.estimates) ? s.estimates[0] : s.estimates
           return s.service_type === service.serviceType && quote?.status === 'approved'
         }).length || 0
         service.conversionRate = service.totalQuotes ? (approvedCount / service.totalQuotes) * 100 : 0
@@ -431,12 +431,12 @@ export class AnalyticsService {
 
   static async getCustomerMetrics(): Promise<CustomerMetrics> {
     try {
-      const { data: quotes } = await supabase
-        .from('quotes')
+      const { data: estimates } = await supabase
+        .from('estimates')
         .select('customer_name, company_name, total_price, status, created_at')
         .order('created_at', { ascending: false })
 
-      if (!quotes) return {
+      if (!estimates) return {
         totalCustomers: 0,
         newCustomers: 0,
         repeatCustomers: 0,
@@ -446,18 +446,18 @@ export class AnalyticsService {
       }
 
       // Group by customer
-      const customerData = quotes.reduce((acc, quote) => {
+      const customerData = estimates.reduce((acc, quote) => {
         const key = `${quote.customer_name}-${quote.company_name || ''}`
         if (!acc[key]) {
           acc[key] = {
             name: quote.customer_name,
             company: quote.company_name || '',
-            quotes: [],
+            estimates: [],
             totalRevenue: 0,
             firstQuote: quote.created_at
           }
         }
-        acc[key].quotes.push(quote)
+        acc[key].estimates.push(quote)
         if (quote.status === 'approved') {
           acc[key].totalRevenue += quote.total_price
         }
@@ -468,7 +468,7 @@ export class AnalyticsService {
       const totalCustomers = customers.length
       const currentMonth = startOfMonth(new Date())
       const newCustomers = customers.filter(c => new Date(c.firstQuote) >= currentMonth).length
-      const repeatCustomers = customers.filter(c => c.quotes.length > 1).length
+      const repeatCustomers = customers.filter(c => c.estimates.length > 1).length
       const totalRevenue = customers.reduce((sum, c) => sum + c.totalRevenue, 0)
       const avgCustomerValue = totalCustomers ? totalRevenue / totalCustomers : 0
 
@@ -480,8 +480,8 @@ export class AnalyticsService {
           name: customer.name,
           company: customer.company,
           totalRevenue: customer.totalRevenue,
-          totalQuotes: customer.quotes.length,
-          lastQuote: customer.quotes[0].created_at
+          totalQuotes: customer.estimates.length,
+          lastQuote: customer.estimates[0].created_at
         }))
 
       // Customer types breakdown (by company vs individual)
@@ -521,11 +521,11 @@ export class AnalyticsService {
 
   static async getConversionData(): Promise<ConversionData> {
     try {
-      const { data: quotes } = await supabase
-        .from('quotes')
-        .select('status, quote_services(service_type)')
+      const { data: estimates } = await supabase
+        .from('estimates')
+        .select('status, estimate_services(service_type)')
 
-      if (!quotes) return {
+      if (!estimates) return {
         overall: 0,
         byService: [],
         byLocation: [],
@@ -533,16 +533,16 @@ export class AnalyticsService {
       }
 
       // Overall conversion
-      const totalSent = quotes.filter(q => ['sent', 'approved', 'rejected'].includes(q.status)).length
-      const totalApproved = quotes.filter(q => q.status === 'approved').length
+      const totalSent = estimates.filter(q => ['sent', 'approved', 'rejected'].includes(q.status)).length
+      const totalApproved = estimates.filter(q => q.status === 'approved').length
       const overall = totalSent ? (totalApproved / totalSent) * 100 : 0
 
       // Conversion funnel
-      const totalQuotes = quotes.length
-      const drafts = quotes.filter(q => q.status === 'draft').length
-      const sent = quotes.filter(q => q.status === 'sent').length
-      const approved = quotes.filter(q => q.status === 'approved').length
-      const rejected = quotes.filter(q => q.status === 'rejected').length
+      const totalQuotes = estimates.length
+      const drafts = estimates.filter(q => q.status === 'draft').length
+      const sent = estimates.filter(q => q.status === 'sent').length
+      const approved = estimates.filter(q => q.status === 'approved').length
+      const rejected = estimates.filter(q => q.status === 'rejected').length
 
       const funnel: ConversionFunnel[] = [
         {

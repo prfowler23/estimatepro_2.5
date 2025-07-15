@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { Button, Card, Alert } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
 import { 
   Upload, 
   Camera, 
@@ -13,9 +15,11 @@ import {
   AlertCircle,
   X,
   Eye,
-  BarChart3
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
-import { analyzePhotos } from '@/lib/ai/extraction';
+import { analyzePhotos } from '@/lib/ai/photo-analysis';
+import { aiCacheWrapper } from '@/lib/ai/ai-cache';
 
 interface FileData {
   id: string;
@@ -24,6 +28,7 @@ interface FileData {
   url: string;
   analysis?: AnalysisResult;
   status: 'pending' | 'analyzing' | 'complete' | 'error';
+  errorMessage?: string;
 }
 
 interface AnalysisResult {
@@ -73,7 +78,14 @@ const FILE_TYPE_LABELS = {
   plan: 'Floor Plan'
 };
 
-export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
+interface FilesPhotosProps {
+  data: any;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+export function FilesPhotos({ data, onUpdate, onNext, onBack }: FilesPhotosProps) {
   const [filesData, setFilesData] = useState<FilesPhotosData>({
     files: data?.filesPhotos?.files || [],
     analysisComplete: false,
@@ -173,30 +185,110 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
     }));
   };
 
-  // Analyze individual photo
+  // Retry analysis for a specific file
+  const retryAnalysis = async (fileId: string) => {
+    const file = filesData.files.find(f => f.id === fileId);
+    if (!file || file.type !== 'photo') return;
+
+    // Reset status to analyzing
+    setFilesData(prev => ({
+      ...prev,
+      files: prev.files.map(f => 
+        f.id === fileId ? { ...f, status: 'analyzing', errorMessage: undefined } : f
+      )
+    }));
+
+    try {
+      const analysis = await analyzePhoto(file);
+      
+      // Update with results
+      setFilesData(prev => ({
+        ...prev,
+        files: prev.files.map(f => 
+          f.id === fileId ? { ...f, analysis, status: 'complete' } : f
+        )
+      }));
+      
+      calculateSummary();
+    } catch (error) {
+      console.error(`Retry failed for ${file.file.name}:`, error);
+      
+      let errorMessage = 'Retry failed';
+      if (error instanceof Error) {
+        if (error.message.includes('Rate limit')) {
+          errorMessage = 'Rate limit exceeded. Please wait before retrying.';
+        } else if (error.message.includes('Network')) {
+          errorMessage = 'Network error. Check your connection.';
+        } else {
+          errorMessage = error.message || 'Retry failed';
+        }
+      }
+      
+      setFilesData(prev => ({
+        ...prev,
+        files: prev.files.map(f => 
+          f.id === fileId ? { ...f, status: 'error', errorMessage } : f
+        )
+      }));
+    }
+  };
+
+  // Analyze individual photo using real AI with caching
   const analyzePhoto = async (fileData: FileData): Promise<AnalysisResult> => {
-    // Simulate AI analysis - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockAnalysis: AnalysisResult = {
-          windowCount: Math.floor(Math.random() * 20) + 5,
-          totalArea: Math.floor(Math.random() * 5000) + 1000,
-          materials: [
-            { type: 'Glass', percentage: Math.floor(Math.random() * 30) + 40, condition: 'good' },
-            { type: 'Concrete', percentage: Math.floor(Math.random() * 40) + 30, condition: 'weathered' },
-            { type: 'Metal', percentage: Math.floor(Math.random() * 20) + 10, condition: 'oxidized' }
-          ],
-          damageLevel: ['none', 'minor', 'moderate', 'severe'][Math.floor(Math.random() * 4)] as any,
-          safetyHazards: Math.random() > 0.7 ? ['Loose panels', 'Cracked glass'] : [],
-          measurements: {
-            height: Math.floor(Math.random() * 100) + 50,
-            width: Math.floor(Math.random() * 200) + 100,
-            stories: Math.floor(Math.random() * 10) + 3
+    try {
+      // Create a cache key based on file size, name, and last modified date
+      const fileHash = `${fileData.file.size}-${fileData.file.name}-${fileData.file.lastModified}`;
+      
+      return await aiCacheWrapper.cachedPhotoAnalysis(
+        fileHash,
+        'comprehensive_analysis',
+        async () => {
+          const formData = new FormData();
+          formData.append('photos', fileData.file);
+
+          const response = await fetch('/api/analyze-photos', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Analysis failed: ${response.statusText}`);
           }
-        };
-        resolve(mockAnalysis);
-      }, 2000 + Math.random() * 3000);
-    });
+
+          const data = await response.json();
+          const result = data.results?.[0];
+
+          if (!result) {
+            throw new Error('No analysis result returned');
+          }
+
+          // Transform API response to match our interface
+          const analysisResult: AnalysisResult = {
+            windowCount: result.windows?.count || result.itemCounts?.windows?.total || 0,
+            totalArea: result.measurements?.estimatedSqft || result.materialQuantities?.totalCleanableArea || 0,
+            materials: result.materials?.breakdown ? 
+              Object.entries(result.materials.breakdown).map(([type, percentage]) => ({
+                type: type.charAt(0).toUpperCase() + type.slice(1),
+                percentage: percentage as number,
+                condition: result.materials?.weathering || 'unknown'
+              })) : [],
+            damageLevel: result.damage?.severity || 'none',
+            safetyHazards: result.safety?.hazards || [],
+            measurements: {
+              height: result.measurements?.buildingHeight,
+              width: result.measurements?.facadeWidth,
+              stories: result.measurements?.stories
+            }
+          };
+
+          return analysisResult;
+        },
+        3600 // Cache for 1 hour
+      );
+    } catch (error) {
+      console.error('Photo analysis failed:', error);
+      throw error;
+    }
   };
 
   // Analyze all photos
@@ -225,11 +317,29 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
             )
           }));
         } catch (error) {
-          // Mark as error
+          console.error(`Failed to analyze ${file.file.name}:`, error);
+          
+          // Determine error message based on error type
+          let errorMessage = 'Analysis failed';
+          if (error instanceof Error) {
+            if (error.message.includes('Rate limit')) {
+              errorMessage = 'Rate limit exceeded. Please wait before retrying.';
+            } else if (error.message.includes('Network')) {
+              errorMessage = 'Network error. Check your connection.';
+            } else if (error.message.includes('Authentication')) {
+              errorMessage = 'Authentication failed. Please refresh and try again.';
+            } else if (error.message.includes('file size')) {
+              errorMessage = 'File too large. Please use a smaller image.';
+            } else {
+              errorMessage = error.message || 'Analysis failed';
+            }
+          }
+          
+          // Mark as error with specific message
           setFilesData(prev => ({
             ...prev,
             files: prev.files.map(f => 
-              f.id === file.id ? { ...f, status: 'error' } : f
+              f.id === file.id ? { ...f, status: 'error', errorMessage } : f
             )
           }));
         }
@@ -274,8 +384,8 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
 
     // Calculate average damage level
     const damageWeight = { none: 0, minor: 1, moderate: 2, severe: 3 };
-    const avgDamageScore = damageLevels.reduce((sum, level) => sum + damageWeight[level], 0) / damageLevels.length;
-    const avgDamageLevel = Object.keys(damageWeight).find(key => damageWeight[key] === Math.round(avgDamageScore)) || 'none';
+    const avgDamageScore = damageLevels.reduce((sum, level) => sum + (damageWeight[level as keyof typeof damageWeight] || 0), 0) / damageLevels.length;
+    const avgDamageLevel = Object.keys(damageWeight).find(key => damageWeight[key as keyof typeof damageWeight] === Math.round(avgDamageScore)) || 'none';
 
     setFilesData(prev => ({
       ...prev,
@@ -322,7 +432,7 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
 
       {/* Upload Area */}
       <Card
-        className={`border-2 border-dashed p-8 text-center transition-colors ${
+        className={`border-2 border-dashed p-6 sm:p-8 text-center transition-colors touch-manipulation ${
           dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
         }`}
         onDragEnter={handleDragEnter}
@@ -338,12 +448,12 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
           className="hidden"
           id="file-upload"
         />
-        <label htmlFor="file-upload" className="cursor-pointer">
+        <label htmlFor="file-upload" className="cursor-pointer block py-4 touch-manipulation">
           <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg font-semibold mb-2">
-            Drop files here or click to upload
+          <h3 className="text-base sm:text-lg font-semibold mb-2">
+            Drop files here or tap to upload
           </h3>
-          <p className="text-gray-500">
+          <p className="text-sm sm:text-base text-gray-500">
             Support for photos, videos, plans, and measurement screenshots
           </p>
         </label>
@@ -352,14 +462,14 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
       {/* Files Grid */}
       {filesData.files.length > 0 && (
         <div>
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
             <h3 className="text-lg font-semibold">
               Uploaded Files ({filesData.files.length})
             </h3>
             <Button
               onClick={analyzeAllPhotos}
               disabled={isAnalyzing || filesData.files.filter(f => f.type === 'photo').length === 0}
-              className="flex items-center"
+              className="flex items-center justify-center w-full sm:w-auto"
             >
               {isAnalyzing ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -370,7 +480,7 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filesData.files.map((fileData) => {
               const IconComponent = FILE_TYPE_ICONS[fileData.type];
               
@@ -378,9 +488,9 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
                 <Card key={fileData.id} className="p-4 relative">
                   <button
                     onClick={() => removeFile(fileData.id)}
-                    className="absolute top-2 right-2 p-1 bg-red-100 hover:bg-red-200 rounded-full"
+                    className="absolute top-2 right-2 p-2 bg-red-100 hover:bg-red-200 rounded-full touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                   >
-                    <X className="w-3 h-3 text-red-600" />
+                    <X className="w-4 h-4 text-red-600" />
                   </button>
 
                   <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
@@ -428,6 +538,27 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
                         )}
                       </div>
                     )}
+
+                    {/* Error Messages */}
+                    {fileData.status === 'error' && (
+                      <div className="text-xs space-y-2 bg-red-50 p-2 rounded border border-red-200">
+                        <div className="text-red-600 font-medium">
+                          Analysis Failed
+                        </div>
+                        <div className="text-red-500">
+                          {fileData.errorMessage || 'Unknown error occurred'}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => retryAnalysis(fileData.id)}
+                          className="w-full text-xs h-8 min-h-[44px] sm:h-6 sm:min-h-[32px] border-red-300 text-red-600 hover:bg-red-50 touch-manipulation"
+                        >
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Retry Analysis
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </Card>
               );
@@ -444,7 +575,7 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
             Analysis Summary
           </h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
                 {filesData.summary.analyzedPhotos}/{filesData.summary.totalPhotos}
@@ -508,13 +639,14 @@ export function FilesPhotos({ data, onUpdate, onNext, onBack }) {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onBack}>
+      <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6">
+        <Button variant="outline" onClick={onBack} className="w-full sm:w-auto">
           Back
         </Button>
         <Button 
           onClick={handleNext}
           disabled={filesData.files.length === 0}
+          className="w-full sm:w-auto"
         >
           Continue to Area Map
         </Button>

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Checkbox, Alert } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert } from '@/components/ui/alert';
 import { AlertTriangle, Info, Package } from 'lucide-react';
 import { SERVICE_RULES } from '@/lib/estimation/service-rules';
 
@@ -44,7 +47,14 @@ const COMMON_BUNDLES = [
   }
 ];
 
-export function ScopeDetails({ data, onUpdate, onNext, onBack }) {
+interface ScopeDetailsProps {
+  data: any;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsProps) {
   const [scopeData, setScopeData] = useState<ScopeDetailsData>({
     selectedServices: data?.initialContact?.extractedData?.requirements?.services || [],
     serviceOrder: [],
@@ -55,7 +65,11 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }) {
     specialRequirements: []
   });
   
-  const [validation, setValidation] = useState({
+  const [validation, setValidation] = useState<{
+    errors: string[];
+    warnings: string[];
+    info: string[];
+  }>({
     errors: [],
     warnings: [],
     info: []
@@ -93,8 +107,8 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }) {
 
   const calculateServiceOrder = (services: string[]): string[] => {
     return services.sort((a, b) => {
-      const aPriority = SERVICE_RULES.serviceOrder[a]?.priority || 99;
-      const bPriority = SERVICE_RULES.serviceOrder[b]?.priority || 99;
+      const aPriority = (SERVICE_RULES.serviceOrder as any)[a]?.priority || 99;
+      const bPriority = (SERVICE_RULES.serviceOrder as any)[b]?.priority || 99;
       return aPriority - bPriority;
     });
   };
@@ -165,11 +179,11 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }) {
           <Package className="w-4 h-4 mr-2" />
           Quick Select Bundles
         </h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {COMMON_BUNDLES.map((bundle) => (
             <Card
               key={bundle.name}
-              className="p-4 cursor-pointer hover:border-blue-500 transition"
+              className="p-4 cursor-pointer hover:border-blue-500 transition touch-manipulation min-h-[120px] flex flex-col justify-center"
               onClick={() => selectBundle(bundle)}
             >
               <h4 className="font-medium">{bundle.name}</h4>
@@ -209,7 +223,7 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }) {
       {/* Service Selection */}
       <div>
         <h3 className="font-semibold mb-3">Select Services</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {SERVICES.map((service) => {
             const isSelected = scopeData.selectedServices.includes(service.id);
             const isAutoAdded = scopeData.autoAddedServices.includes(service.id);
@@ -218,7 +232,7 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }) {
             return (
               <Card
                 key={service.id}
-                className={`p-4 cursor-pointer transition ${
+                className={`p-4 cursor-pointer transition touch-manipulation min-h-[100px] ${
                   isSelected ? 'border-blue-500 bg-blue-50' : ''
                 } ${isDisabled ? 'opacity-75 cursor-not-allowed' : ''}`}
                 onClick={() => !isDisabled && toggleService(service.id)}

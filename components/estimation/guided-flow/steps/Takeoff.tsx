@@ -71,8 +71,8 @@ const MEASUREMENT_CATEGORIES = {
 
 export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
   const [measurements, setMeasurements] = useState<Record<string, MeasurementEntry[]>>({});
-  const [validation, setValidation] = useState({ valid: true, errors: [], warnings: [] });
-  const [suggestions, setSuggestions] = useState([]);
+  const [validation, setValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] }>({ valid: true, errors: [], warnings: [] });
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [importSource, setImportSource] = useState<'manual' | 'nearmap' | 'csv' | 'photo_analysis'>('manual');
   const [notes, setNotes] = useState('');
 
@@ -218,7 +218,7 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
   // Filter categories based on existing measurements and selected services
   const relevantCategories = measurementCategories.filter(cat => {
     const hasData = measurements[cat.key] && measurements[cat.key].length > 0;
-    const isRelevant = selectedServices.some(service => {
+    const isRelevant = selectedServices.some((service: string) => {
       // Map services to categories
       if ((service === 'WC' || service === 'GR') && cat.key.startsWith('glass_')) return true;
       if ((service === 'BWP' || service === 'BWS' || service === 'HBW') && cat.key.startsWith('facade_')) return true;

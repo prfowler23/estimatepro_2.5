@@ -89,16 +89,16 @@ export const SERVICE_RULES = {
     });
     
     // Validate service order compatibility
-    const selectedWithOrder = services.filter(service => this.serviceOrder[service]);
+    const selectedWithOrder = services.filter(service => this.serviceOrder[service as keyof typeof this.serviceOrder]);
     selectedWithOrder.forEach(service => {
-      const serviceRules = this.serviceOrder[service];
+      const serviceRules = this.serviceOrder[service as keyof typeof this.serviceOrder];
       
       // Check mustBeBefore rules
-      if (serviceRules.mustBeBefore) {
+      if ('mustBeBefore' in serviceRules && serviceRules.mustBeBefore) {
         serviceRules.mustBeBefore.forEach(afterService => {
           if (services.includes(afterService)) {
             const servicePriority = serviceRules.priority;
-            const afterServicePriority = this.serviceOrder[afterService]?.priority || 99;
+            const afterServicePriority = this.serviceOrder[afterService as keyof typeof this.serviceOrder]?.priority || 99;
             if (servicePriority >= afterServicePriority) {
               warnings.push(`${service} should be scheduled before ${afterService}`);
             }
@@ -107,11 +107,11 @@ export const SERVICE_RULES = {
       }
       
       // Check mustBeAfter rules
-      if (serviceRules.mustBeAfter) {
+      if ('mustBeAfter' in serviceRules && serviceRules.mustBeAfter) {
         serviceRules.mustBeAfter.forEach(beforeService => {
           if (services.includes(beforeService)) {
             const servicePriority = serviceRules.priority;
-            const beforeServicePriority = this.serviceOrder[beforeService]?.priority || 1;
+            const beforeServicePriority = this.serviceOrder[beforeService as keyof typeof this.serviceOrder]?.priority || 1;
             if (servicePriority <= beforeServicePriority) {
               warnings.push(`${service} should be scheduled after ${beforeService}`);
             }

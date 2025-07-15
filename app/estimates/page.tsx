@@ -49,9 +49,9 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { QuotePDFGenerator } from '@/lib/pdf/generator'
 
-interface Quote {
+interface Estimate {
   id: string
-  quote_number: string
+  estimate_number: string
   customer_name: string
   customer_email: string
   customer_phone: string
@@ -79,8 +79,8 @@ const STATUS_LABELS = {
   rejected: 'Rejected'
 }
 
-function QuotesContent() {
-  const [quotes, setQuotes] = useState<Quote[]>([])
+function EstimatesContent() {
+  const [estimates, setEstimates] = useState<Estimate[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -88,16 +88,16 @@ function QuotesContent() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [error, setError] = useState<string | null>(null)
 
-  const fetchQuotes = useCallback(async () => {
+  const fetchEstimates = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
       let query = supabase
-        .from('quotes')
+        .from('estimates')
         .select(`
           *,
-          quote_services(count)
+          estimate_services(count)
         `)
 
       // Apply status filter
@@ -114,73 +114,73 @@ function QuotesContent() {
 
       if (error) throw error
 
-      // Add services count to each quote
-      const quotesWithCounts = data.map(quote => ({
-        ...quote,
-        services_count: quote.quote_services?.[0]?.count || 0
+      // Add services count to each estimate
+      const estimatesWithCounts = data.map(estimate => ({
+        ...estimate,
+        services_count: estimate.estimate_services?.[0]?.count || 0
       }))
 
-      setQuotes(quotesWithCounts)
+      setEstimates(estimatesWithCounts)
     } catch (error: any) {
       setError(error.message)
-      console.error('Error fetching quotes:', error)
+      console.error('Error fetching estimates:', error)
     } finally {
       setLoading(false)
     }
   }, [statusFilter, sortBy, sortOrder])
 
   useEffect(() => {
-    fetchQuotes()
-  }, [statusFilter, sortBy, sortOrder, fetchQuotes])
+    fetchEstimates()
+  }, [statusFilter, sortBy, sortOrder, fetchEstimates])
 
-  const filteredQuotes = quotes.filter(quote => {
+  const filteredEstimates = estimates.filter(estimate => {
     const searchLower = searchTerm.toLowerCase()
     return (
-      quote.customer_name.toLowerCase().includes(searchLower) ||
-      quote.building_name.toLowerCase().includes(searchLower) ||
-      quote.quote_number.toLowerCase().includes(searchLower) ||
-      quote.customer_email.toLowerCase().includes(searchLower) ||
-      (quote.company_name || '').toLowerCase().includes(searchLower)
+      estimate.customer_name.toLowerCase().includes(searchLower) ||
+      estimate.building_name.toLowerCase().includes(searchLower) ||
+      estimate.estimate_number.toLowerCase().includes(searchLower) ||
+      estimate.customer_email.toLowerCase().includes(searchLower) ||
+      (estimate.company_name || '').toLowerCase().includes(searchLower)
     )
   })
 
-  const handleDeleteQuote = async (quoteId: string) => {
-    if (!confirm('Are you sure you want to delete this quote?')) return
+  const handleDeleteEstimate = async (estimateId: string) => {
+    if (!confirm('Are you sure you want to delete this estimate?')) return
 
     try {
       const { error } = await supabase
-        .from('quotes')
+        .from('estimates')
         .delete()
-        .eq('id', quoteId)
+        .eq('id', estimateId)
 
       if (error) throw error
 
-      await fetchQuotes() // Refresh the list
+      await fetchEstimates() // Refresh the list
     } catch (error: any) {
       setError(error.message)
     }
   }
 
-  const handleDownloadPDF = async (quote: Quote) => {
+  const handleDownloadPDF = async (estimate: Estimate) => {
     try {
-      // Need to fetch full quote data with services
-      const { data: fullQuote, error: quoteError } = await supabase
-        .from('quotes')
+      // Need to fetch full estimate data with services
+      const { data: fullEstimate, error: estimateError } = await supabase
+        .from('estimates')
         .select('*')
-        .eq('id', quote.id)
+        .eq('id', estimate.id)
         .single()
 
-      if (quoteError) throw quoteError
+      if (estimateError) throw estimateError
 
       const { data: services, error: servicesError } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .select('*')
-        .eq('quote_id', quote.id)
+        .eq('quote_id', estimate.id)
 
       if (servicesError) throw servicesError
 
       await QuotePDFGenerator.downloadQuotePDF({
-        ...fullQuote,
+        ...fullEstimate,
         services
       })
     } catch (error: any) {
@@ -188,46 +188,46 @@ function QuotesContent() {
     }
   }
 
-  const handleDuplicateQuote = async (quote: Quote) => {
+  const handleDuplicateEstimate = async (estimate: Estimate) => {
     try {
-      // Create new quote number
+      // Create new estimate number
       const now = new Date()
       const year = now.getFullYear()
       const dayOfYear = Math.floor((now.getTime() - new Date(year, 0, 0).getTime()) / 86400000)
       const timeComponent = Math.floor((now.getTime() % 86400000) / 1000)
-      const newQuoteNumber = `QTE-${year}-${dayOfYear.toString().padStart(3, '0')}-${timeComponent.toString().padStart(5, '0')}`
+      const newEstimateNumber = `EST-${year}-${dayOfYear.toString().padStart(3, '0')}-${timeComponent.toString().padStart(5, '0')}`
 
-      // Duplicate quote
-      const { data: newQuote, error: quoteError } = await supabase
-        .from('quotes')
+      // Duplicate estimate
+      const { data: newEstimate, error: estimateError } = await supabase
+        .from('estimates')
         .insert({
-          quote_number: newQuoteNumber,
-          customer_name: quote.customer_name + ' (Copy)',
-          customer_email: quote.customer_email,
-          customer_phone: quote.customer_phone,
-          company_name: quote.company_name,
-          building_name: quote.building_name,
-          building_address: quote.building_address,
-          total_price: quote.total_price,
+          estimate_number: newEstimateNumber,
+          customer_name: estimate.customer_name + ' (Copy)',
+          customer_email: estimate.customer_email,
+          customer_phone: estimate.customer_phone,
+          company_name: estimate.company_name,
+          building_name: estimate.building_name,
+          building_address: estimate.building_address,
+          total_price: estimate.total_price,
           status: 'draft'
         })
         .select()
         .single()
 
-      if (quoteError) throw quoteError
+      if (estimateError) throw estimateError
 
       // Get original services
       const { data: services, error: servicesError } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .select('*')
-        .eq('quote_id', quote.id)
+        .eq('quote_id', estimate.id)
 
       if (servicesError) throw servicesError
 
       // Duplicate services
       if (services.length > 0) {
         const serviceInserts = services.map(service => ({
-          quote_id: newQuote.id,
+          quote_id: newEstimate.id,
           service_type: service.service_type,
           area_sqft: service.area_sqft,
           glass_sqft: service.glass_sqft,
@@ -244,13 +244,13 @@ function QuotesContent() {
         }))
 
         const { error: duplicateServicesError } = await supabase
-          .from('quote_services')
+          .from('estimate_services')
           .insert(serviceInserts)
 
         if (duplicateServicesError) throw duplicateServicesError
       }
 
-      await fetchQuotes() // Refresh the list
+      await fetchEstimates() // Refresh the list
     } catch (error: any) {
       setError(error.message)
     }
@@ -263,40 +263,40 @@ function QuotesContent() {
   )
 
   const getTotalRevenue = () => {
-    return filteredQuotes
-      .filter(q => q.status === 'approved')
-      .reduce((sum, q) => sum + q.total_price, 0)
+    return filteredEstimates
+      .filter(e => e.status === 'approved')
+      .reduce((sum, e) => sum + e.total_price, 0)
   }
 
-  const getQuoteStats = () => {
-    const total = filteredQuotes.length
-    const draft = filteredQuotes.filter(q => q.status === 'draft').length
-    const sent = filteredQuotes.filter(q => q.status === 'sent').length
-    const approved = filteredQuotes.filter(q => q.status === 'approved').length
-    const rejected = filteredQuotes.filter(q => q.status === 'rejected').length
+  const getEstimateStats = () => {
+    const total = filteredEstimates.length
+    const draft = filteredEstimates.filter(e => e.status === 'draft').length
+    const sent = filteredEstimates.filter(e => e.status === 'sent').length
+    const approved = filteredEstimates.filter(e => e.status === 'approved').length
+    const rejected = filteredEstimates.filter(e => e.status === 'rejected').length
 
     return { total, draft, sent, approved, rejected }
   }
 
-  const stats = getQuoteStats()
+  const stats = getEstimateStats()
 
   return (
     <div className='space-y-6'>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Quotes</h1>
+          <h1 className='text-3xl font-bold text-gray-900'>Estimates</h1>
           <p className='text-gray-600'>Manage and track all your project estimates</p>
         </div>
         <div className='flex gap-2'>
-          <Button variant='outline' onClick={fetchQuotes}>
+          <Button variant='outline' onClick={fetchEstimates}>
             <RefreshCw className='h-4 w-4 mr-2' />
             Refresh
           </Button>
           <Link href='/calculator'>
             <Button>
               <Plus className='h-4 w-4 mr-2' />
-              New Quote
+              New Estimate
             </Button>
           </Link>
         </div>
@@ -314,7 +314,7 @@ function QuotesContent() {
       <div className='grid grid-cols-1 md:grid-cols-5 gap-4'>
         <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium text-gray-600'>Total Quotes</CardTitle>
+            <CardTitle className='text-sm font-medium text-gray-600'>Total Estimates</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{stats.total}</div>
@@ -368,7 +368,7 @@ function QuotesContent() {
             <div className='flex items-center gap-2'>
               <Filter className='h-4 w-4 text-gray-500' />
               <span className='text-sm text-gray-500'>
-                {filteredQuotes.length} of {quotes.length} quotes
+                {filteredEstimates.length} of {estimates.length} estimates
               </span>
             </div>
           </div>
@@ -378,7 +378,7 @@ function QuotesContent() {
             <div className='relative'>
               <Search className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
               <Input
-                placeholder='Search quotes...'
+                placeholder='Search estimates...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='pl-10'
@@ -404,7 +404,7 @@ function QuotesContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='date'>Date Created</SelectItem>
-                <SelectItem value='amount'>Quote Amount</SelectItem>
+                <SelectItem value='amount'>Estimate Amount</SelectItem>
                 <SelectItem value='customer'>Customer Name</SelectItem>
               </SelectContent>
             </Select>
@@ -422,31 +422,31 @@ function QuotesContent() {
         </CardContent>
       </Card>
 
-      {/* Quotes Table */}
+      {/* Estimates Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Quotes</CardTitle>
+          <CardTitle>All Estimates</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className='flex items-center justify-center py-8'>
               <RefreshCw className='h-6 w-6 animate-spin mr-2' />
-              Loading quotes...
+              Loading estimates...
             </div>
-          ) : filteredQuotes.length === 0 ? (
+          ) : filteredEstimates.length === 0 ? (
             <div className='text-center py-8'>
               <FileText className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-              <h3 className='text-lg font-medium text-gray-900 mb-2'>No quotes found</h3>
+              <h3 className='text-lg font-medium text-gray-900 mb-2'>No estimates found</h3>
               <p className='text-gray-500 mb-4'>
                 {searchTerm || statusFilter !== 'all' 
                   ? 'Try adjusting your search or filters'
-                  : 'Get started by creating your first quote'
+                  : 'Get started by creating your first estimate'
                 }
               </p>
               <Link href='/calculator'>
                 <Button>
                   <Plus className='h-4 w-4 mr-2' />
-                  Create First Quote
+                  Create First Estimate
                 </Button>
               </Link>
             </div>
@@ -454,7 +454,7 @@ function QuotesContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Quote #</TableHead>
+                  <TableHead>Estimate #</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Building</TableHead>
                   <TableHead>Services</TableHead>
@@ -465,39 +465,39 @@ function QuotesContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredQuotes.map((quote) => (
-                  <TableRow key={quote.id} className='hover:bg-gray-50'>
+                {filteredEstimates.map((estimate) => (
+                  <TableRow key={estimate.id} className='hover:bg-gray-50'>
                     <TableCell className='font-mono text-sm'>
-                      {quote.quote_number}
+                      {estimate.estimate_number}
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className='font-medium'>{quote.customer_name}</div>
-                        {quote.company_name && (
-                          <div className='text-sm text-gray-500'>{quote.company_name}</div>
+                        <div className='font-medium'>{estimate.customer_name}</div>
+                        {estimate.company_name && (
+                          <div className='text-sm text-gray-500'>{estimate.company_name}</div>
                         )}
-                        <div className='text-sm text-gray-500'>{quote.customer_email}</div>
+                        <div className='text-sm text-gray-500'>{estimate.customer_email}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className='font-medium'>{quote.building_name}</div>
-                        <div className='text-sm text-gray-500'>{quote.building_address}</div>
+                        <div className='font-medium'>{estimate.building_name}</div>
+                        <div className='text-sm text-gray-500'>{estimate.building_address}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant='outline'>
-                        {quote.services_count} service{quote.services_count !== 1 ? 's' : ''}
+                        {estimate.services_count} service{estimate.services_count !== 1 ? 's' : ''}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className='font-medium'>${quote.total_price.toLocaleString()}</div>
+                      <div className='font-medium'>${estimate.total_price.toLocaleString()}</div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(quote.status)}
+                      {getStatusBadge(estimate.status)}
                     </TableCell>
                     <TableCell className='text-sm text-gray-500'>
-                      {format(new Date(quote.created_at), 'MMM d, yyyy')}
+                      {format(new Date(estimate.created_at), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -508,22 +508,22 @@ function QuotesContent() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end'>
                           <DropdownMenuItem asChild>
-                            <Link href={`/quotes/${quote.id}`}>
+                            <Link href={`/estimates/${estimate.id}`}>
                               <Eye className='mr-2 h-4 w-4' />
                               View Details
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/quotes/${quote.id}/edit`}>
+                            <Link href={`/estimates/${estimate.id}/edit`}>
                               <Edit className='mr-2 h-4 w-4' />
-                              Edit Quote
+                              Edit Estimate
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDuplicateQuote(quote)}>
+                          <DropdownMenuItem onClick={() => handleDuplicateEstimate(estimate)}>
                             <Copy className='mr-2 h-4 w-4' />
                             Duplicate
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDownloadPDF(quote)}>
+                          <DropdownMenuItem onClick={() => handleDownloadPDF(estimate)}>
                             <Download className='mr-2 h-4 w-4' />
                             Download PDF
                           </DropdownMenuItem>
@@ -532,7 +532,7 @@ function QuotesContent() {
                             Send Email
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            onClick={() => handleDeleteQuote(quote.id)}
+                            onClick={() => handleDeleteEstimate(estimate.id)}
                             className='text-red-600'
                           >
                             <Trash2 className='mr-2 h-4 w-4' />
@@ -552,10 +552,10 @@ function QuotesContent() {
   )
 }
 
-export default function QuotesPage() {
+export default function EstimatesPage() {
   return (
     <div className="container mx-auto py-8">
-      <QuotesContent />
+      <EstimatesContent />
     </div>
   )
 }

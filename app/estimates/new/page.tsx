@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, Calculator, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
-export default function NewQuote() {
+export default function NewEstimate() {
   // If guided flow is enabled, show workflow selection
   if (config.features.guidedFlow) {
     return (
@@ -40,7 +40,7 @@ export default function NewQuote() {
                 <li>• Professional proposal generation</li>
               </ul>
               <Button asChild className="w-full">
-                <Link href="/quotes/new/guided">
+                <Link href="/estimates/new/guided">
                   Start Guided Flow
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -64,7 +64,7 @@ export default function NewQuote() {
                 <li>• Immediate service selection</li>
                 <li>• Manual data entry</li>
                 <li>• Real-time calculations</li>
-                <li>• Fast quote generation</li>
+                <li>• Fast estimate generation</li>
                 <li>• Perfect for repeat customers</li>
               </ul>
               <Button variant="outline" asChild className="w-full">
@@ -87,8 +87,8 @@ export default function NewQuote() {
   // Fallback for when guided flow is disabled
   return (
     <div className="container py-6">
-      <h1 className="text-3xl font-bold">New Quote</h1>
-      <p className="text-muted-foreground mb-6">Use the calculator to create a new quote.</p>
+      <h1 className="text-3xl font-bold">New Estimate</h1>
+      <p className="text-muted-foreground mb-6">Use the calculator to create a new estimate.</p>
       <Button asChild>
         <Link href="/calculator">
           Open Calculator

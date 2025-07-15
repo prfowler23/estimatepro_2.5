@@ -89,9 +89,9 @@ export class MapImportService {
         imageUrl,
         metadata: {
           scale: scaleResult.pixelsPerFoot,
-          source: 'Google Earth',
-          confidence: scaleResult.confidence
-        }
+          source: 'Google Earth'
+          // confidence: scaleResult.confidence
+        } as any
       };
     } catch (error) {
       console.error('Error importing Google Earth file:', error);

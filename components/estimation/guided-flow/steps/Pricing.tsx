@@ -20,10 +20,10 @@ interface PricingStrategy {
   adjustments: any[];
 }
 
-export function Pricing({ data, onUpdate, onNext, onBack }) {
+export function Pricing({ data, onUpdate, onNext, onBack }: { data: any; onUpdate: (data: any) => void; onNext: () => void; onBack: () => void }) {
   const [loading, setLoading] = useState(true);
-  const [pricingRecommendation, setPricingRecommendation] = useState(null);
-  const [selectedStrategy, setSelectedStrategy] = useState(null);
+  const [pricingRecommendation, setPricingRecommendation] = useState<any>(null);
+  const [selectedStrategy, setSelectedStrategy] = useState<any>(null);
   const [finalPrice, setFinalPrice] = useState(0);
   const [showDiscountApproval, setShowDiscountApproval] = useState(false);
   
@@ -45,7 +45,7 @@ export function Pricing({ data, onUpdate, onNext, onBack }) {
     const marketData = await marketService.analyzeMarket(
       location,
       services,
-      data.takeoff?.measurements?.reduce((sum, m) => sum + m.total, 0) || 10000
+      data.takeoff?.measurements?.reduce((sum: number, m: any) => sum + m.total, 0) || 10000
     );
     
     // Prepare pricing factors
@@ -68,7 +68,7 @@ export function Pricing({ data, onUpdate, onNext, onBack }) {
     // Calculate optimal pricing
     const pricingEngine = new AIPricingEngine();
     const recommendation = await pricingEngine.calculateOptimalPrice(
-      factors,
+      factors as any,
       services,
       location
     );
@@ -214,14 +214,14 @@ export function Pricing({ data, onUpdate, onNext, onBack }) {
           ...pricingRecommendation.alternativeStrategies
         ]}
         currentStrategy={selectedStrategy}
-        onSelectStrategy={handleStrategySelect}
+        onSelectStrategy={handleStrategySelect as any}
       />
       
       {/* Win Probability Calculator */}
       <WinProbabilityCalculator
         currentPrice={finalPrice}
         winProbability={selectedStrategy?.winProbability || 0.5}
-        pricePoints={pricingRecommendation.alternativeStrategies.map(s => ({
+        pricePoints={pricingRecommendation.alternativeStrategies.map((s: any) => ({
           price: s.price,
           probability: s.winProbability
         }))}
@@ -232,14 +232,15 @@ export function Pricing({ data, onUpdate, onNext, onBack }) {
       <div className='grid grid-cols-2 gap-6'>
         {/* Risk Factors */}
         <RiskFactorAnalysis
-          riskFactors={riskFactors}
+          riskFactors={riskFactors as any}
           totalImpact={totalRiskImpact}
+          projectValue={finalPrice}
         />
         
         {/* Manual Override */}
         <ManualPriceOverride
           currentPrice={finalPrice}
-          onOverride={handlePriceOverride}
+          onOverride={handlePriceOverride as any}
         />
       </div>
       
@@ -250,7 +251,7 @@ export function Pricing({ data, onUpdate, onNext, onBack }) {
           AI Pricing Insights
         </h3>
         <div className='space-y-3'>
-          {pricingRecommendation?.insights?.map((insight, i) => (
+          {pricingRecommendation?.insights?.map((insight: any, i: number) => (
             <div key={i} className='flex items-start'>
               <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0' />
               <p className='text-gray-700'>{insight}</p>

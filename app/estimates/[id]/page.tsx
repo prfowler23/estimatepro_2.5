@@ -108,7 +108,7 @@ function QuoteDetailContent() {
       setError(null)
 
       const { data: quoteData, error: quoteError } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('*')
         .eq('id', params.id)
         .single()
@@ -116,7 +116,7 @@ function QuoteDetailContent() {
       if (quoteError) throw quoteError
 
       const { data: servicesData, error: servicesError } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .select('*')
         .eq('quote_id', params.id)
 
@@ -146,7 +146,7 @@ function QuoteDetailContent() {
       setError(null)
 
       const { error } = await supabase
-        .from('quotes')
+        .from('estimates')
         .update({
           status: newStatus,
           updated_at: new Date().toISOString()
@@ -190,7 +190,7 @@ function QuoteDetailContent() {
 
       // Duplicate quote
       const { data: newQuote, error: quoteError } = await supabase
-        .from('quotes')
+        .from('estimates')
         .insert({
           quote_number: newQuoteNumber,
           customer_name: quote.customer_name + ' (Copy)',
@@ -231,13 +231,13 @@ function QuoteDetailContent() {
         }))
 
         const { error: duplicateServicesError } = await supabase
-          .from('quote_services')
+          .from('estimate_services')
           .insert(serviceInserts)
 
         if (duplicateServicesError) throw duplicateServicesError
       }
 
-      router.push(`/quotes/${newQuote.id}`)
+      router.push(`/estimates/${newQuote.id}`)
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -318,7 +318,7 @@ function QuoteDetailContent() {
             <Mail className='h-4 w-4 mr-2' />
             Send Email
           </Button>
-          <Link href={`/quotes/${quote.id}/edit`}>
+          <Link href={`/estimates/${quote.id}/edit`}>
             <Button>
               <Edit className='h-4 w-4 mr-2' />
               Edit Quote

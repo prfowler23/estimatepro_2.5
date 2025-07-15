@@ -8,18 +8,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { SERVICE_TYPES } from '@/lib/calculations/constants'
-import { GlassRestorationForm } from './forms/glass-restoration-form'
-import { WindowCleaningForm } from './forms/window-cleaning-form'
-import { PressureWashingForm } from './forms/pressure-washing-form'
-import { PressureWashSealForm } from './forms/pressure-wash-seal-form'
-import { FinalCleanForm } from './forms/final-clean-form'
-import { FrameRestorationForm } from './forms/frame-restoration-form'
-import { HighDustingForm } from './forms/high-dusting-form'
-import { SoftWashingForm } from './forms/soft-washing-form'
-import { ParkingDeckForm } from './forms/parking-deck-form'
-import { GraniteReconditioningForm } from './forms/granite-reconditioning-form'
-import { BiofilmRemovalForm } from './forms/biofilm-removal-form'
-import { useQuoteStore } from '@/lib/stores/quote-store'
+import { 
+  LazyGlassRestorationForm,
+  LazyWindowCleaningForm,
+  LazyPressureWashingForm,
+  LazyPressureWashSealForm,
+  LazyFinalCleanForm,
+  LazyFrameRestorationForm,
+  LazyHighDustingForm,
+  LazySoftWashingForm,
+  LazyParkingDeckForm,
+  LazyGraniteReconditioningForm,
+  LazyBiofilmRemovalForm,
+  FormWrapper
+} from './lazy-forms'
+import { useEstimateStore } from '@/lib/stores/estimate-store'
+import { ServiceType } from '@/lib/types/estimate-types'
 import { AuthModal } from '@/components/auth/auth-modal'
 import { supabase } from '@/lib/supabase/client'
 import { 
@@ -143,13 +147,13 @@ export function ServiceCalculator() {
     services,
     addService,
     removeService,
-    currentQuote,
+    currentEstimate,
     setCustomerInfo,
-    createQuote,
-    saveQuote,
+    createEstimate,
+    saveEstimate,
     isSaving,
     calculateTotal
-  } = useQuoteStore()
+  } = useEstimateStore()
 
   useEffect(() => {
     // Get initial session
@@ -178,7 +182,7 @@ export function ServiceCalculator() {
       if (currentService) {
         const newService = {
           id: crypto.randomUUID(),
-          serviceType: currentService,
+          serviceType: currentService as ServiceType,
           calculationResult: result,
           formData: result.formData || {}
         }
@@ -204,7 +208,7 @@ export function ServiceCalculator() {
       return
     }
 
-    if (!currentQuote) {
+    if (!currentEstimate) {
       // Create basic quote info first
       setCustomerInfo({
         customer_name: 'Draft Quote',
@@ -218,7 +222,7 @@ export function ServiceCalculator() {
       })
     }
 
-    const success = await (currentQuote?.id ? saveQuote() : createQuote())
+    const success = await (currentEstimate?.id ? saveEstimate() : createEstimate())
     if (success) {
       // Show success message or redirect
       console.log('Quote saved successfully!')
@@ -307,7 +311,7 @@ export function ServiceCalculator() {
                     <div>
                       <p className='font-medium'>{serviceInfo?.name}</p>
                       <p className='text-sm text-muted-foreground'>
-                        {service.calculationResult.breakdown?.[0]?.value || 'Calculated'}
+                        {service.calculationResult.breakdown?.[0]?.description || 'Calculated'}
                       </p>
                     </div>
                   </div>
@@ -396,70 +400,92 @@ export function ServiceCalculator() {
           {/* Service Form Content */}
           <div className='py-4'>
             {currentService === 'GR' && (
-              <GlassRestorationForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyGlassRestorationForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'WC' && (
-              <WindowCleaningForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyWindowCleaningForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'PW' && (
-              <PressureWashingForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyPressureWashingForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'PWS' && (
-              <PressureWashSealForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyPressureWashSealForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'FC' && (
-              <FinalCleanForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyFinalCleanForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'FR' && (
-              <FrameRestorationForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyFrameRestorationForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'HD' && (
-              <HighDustingForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyHighDustingForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'SW' && (
-              <SoftWashingForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazySoftWashingForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'PD' && (
-              <ParkingDeckForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyParkingDeckForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'GRC' && (
-              <GraniteReconditioningForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyGraniteReconditioningForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService === 'BR' && (
-              <BiofilmRemovalForm
-                onSubmit={handleServiceCalculated}
-                onCancel={() => setIsModalOpen(false)}
-              />
+              <FormWrapper>
+                <LazyBiofilmRemovalForm
+                  onSubmit={handleServiceCalculated}
+                  onCancel={() => setIsModalOpen(false)}
+                />
+              </FormWrapper>
             )}
             {currentService && !['GR', 'WC', 'PW', 'PWS', 'FC', 'FR', 'HD', 'SW', 'PD', 'GRC', 'BR'].includes(currentService) && (
               <div className='text-center py-8'>

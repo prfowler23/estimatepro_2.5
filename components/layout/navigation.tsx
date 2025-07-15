@@ -23,13 +23,13 @@ const navItems = [
     icon: Home
   },
   {
-    title: 'New Quote',
-    href: '/calculator',
+    title: 'New Estimate',
+    href: '/estimates/new',
     icon: Calculator
   },
   {
-    title: 'Quotes',
-    href: '/quotes',
+    title: 'Estimates',
+    href: '/estimates',
     icon: FileText
   },
   {
@@ -62,8 +62,7 @@ export function Navigation() {
           <div className='hidden md:flex items-center gap-6'>
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href || 
-                (item.href === '/calculator' && pathname === '/quotes/new')
+              const isActive = pathname === item.href
               
               return (
                 <Link
@@ -97,8 +96,7 @@ export function Navigation() {
           <div className='md:hidden py-4 border-t border-border-primary/30'>
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href || 
-                (item.href === '/calculator' && pathname === '/quotes/new')
+              const isActive = pathname === item.href
               
               return (
                 <Link

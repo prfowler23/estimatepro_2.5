@@ -301,7 +301,7 @@ export class DurationCalculationService {
     const hasDetailedMeasurements = relevantMeasurements.every(m => 
       m.description && m.description.trim() !== '' && 
       m.width > 0 && 
-      (m.height > 0 || m.length > 0) && 
+      (m.height > 0 || (m.length && m.length > 0)) && 
       m.quantity > 0
     );
     

@@ -216,7 +216,7 @@ export function ScaleSetter({
               onClick={() => onScaleSet(10)}
               className="text-xs"
             >
-              1" = 10'
+              1&quot; = 10&apos;
             </Button>
             <Button
               variant="outline"
@@ -224,7 +224,7 @@ export function ScaleSetter({
               onClick={() => onScaleSet(20)}
               className="text-xs"
             >
-              1" = 5'
+              1&quot; = 5&apos;
             </Button>
             <Button
               variant="outline"
@@ -232,7 +232,7 @@ export function ScaleSetter({
               onClick={() => onScaleSet(5)}
               className="text-xs"
             >
-              1" = 20'
+              1&quot; = 20&apos;
             </Button>
             <Button
               variant="outline"
@@ -240,7 +240,7 @@ export function ScaleSetter({
               onClick={() => onScaleSet(50)}
               className="text-xs"
             >
-              1" = 2'
+              1&quot; = 2&apos;
             </Button>
           </div>
         </div>

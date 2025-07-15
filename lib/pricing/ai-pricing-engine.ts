@@ -178,7 +178,7 @@ export class AIPricingEngine {
       recommendedPrice: optimalStrategy.price,
       adjustments: optimalStrategy.adjustments,
       confidence: optimalStrategy.confidence,
-      winProbability: optimalStrategy.winProbability,
+      winProbability: optimalStrategy.winProbability || 0.5,
       alternativeStrategies: strategiesWithProbability.filter(s => s !== optimalStrategy),
       insights: this.generateInsights(
         optimalStrategy,

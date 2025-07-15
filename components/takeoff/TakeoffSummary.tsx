@@ -166,7 +166,7 @@ export function TakeoffSummary({ measurements, services }: TakeoffSummaryProps) 
         <div className='bg-red-50 border border-red-200 p-3 rounded'>
           <p className='text-sm font-medium text-red-800 mb-1'>⚠️ Missing Measurements</p>
           <p className='text-xs text-red-600'>
-            {missingMeasurements.length} service(s) require measurements that haven't been added yet. 
+            {missingMeasurements.length} service(s) require measurements that haven&apos;t been added yet. 
             Add measurements for: {missingMeasurements.map(m => m.name).join(', ')}.
           </p>
         </div>

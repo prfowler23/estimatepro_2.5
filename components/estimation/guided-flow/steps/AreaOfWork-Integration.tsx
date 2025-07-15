@@ -1,16 +1,25 @@
+import React, { useState } from 'react';
 import { DrawingCanvas } from '@/components/canvas/DrawingCanvas';
 import { ToolPalette } from '@/components/canvas/ToolPalette';
 import { ScaleSetter } from '@/components/canvas/ScaleSetter';
 import { AreaSummary } from '@/components/canvas/AreaSummary';
 import { MapImportService } from '@/lib/canvas/map-import';
+import { exportMapWithMeasurements } from '@/lib/canvas/import-export';
+
+interface AreaOfWorkCompleteProps {
+  data: any;
+  onUpdate: (data: any) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
 
 // Main component that combines all the canvas features
-export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }) {
-  const [currentTool, setCurrentTool] = useState('select');
-  const [backgroundImage, setBackgroundImage] = useState(null);
-  const [shapes, setShapes] = useState([]);
-  const [measurements, setMeasurements] = useState([]);
-  const [scale, setScale] = useState(null);
+export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }: AreaOfWorkCompleteProps) {
+  const [currentTool, setCurrentTool] = useState<'select' | 'rectangle' | 'polygon' | 'measure'>('select');
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [shapes, setShapes] = useState<any[]>([]);
+  const [measurements, setMeasurements] = useState<any[]>([]);
+  const [scale, setScale] = useState<{ pixelsPerFoot: number } | null>(null);
   
   const handleFileUpload = async (file: File) => {
     const importService = new MapImportService();
@@ -29,8 +38,11 @@ export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }) {
   };
   
   const handleExport = async () => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+    
     const blob = await exportMapWithMeasurements(
-      document.querySelector('canvas'),
+      canvas,
       shapes,
       measurements
     );
@@ -48,14 +60,14 @@ export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }) {
         <div className='col-span-2'>
           <ToolPalette
             currentTool={currentTool}
-            onToolChange={setCurrentTool}
+            onToolChange={(tool: string) => setCurrentTool(tool as 'select' | 'rectangle' | 'polygon' | 'measure')}
             onClearAll={() => {
               setShapes([]);
               setMeasurements([]);
             }}
           />
           <DrawingCanvas
-            backgroundImage={backgroundImage}
+            backgroundImage={backgroundImage || undefined}
             currentTool={currentTool}
             onShapesChange={(s, m) => {
               setShapes(s);
@@ -64,7 +76,7 @@ export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }) {
           />
         </div>
         <div className='space-y-4'>
-          <ScaleSetter onScaleSet={setScale} />
+          <ScaleSetter onScaleSet={(pixelsPerFoot: number) => setScale({ pixelsPerFoot })} />
           <AreaSummary shapes={shapes} measurements={measurements} />
           <button onClick={handleExport}>Export Map</button>
         </div>

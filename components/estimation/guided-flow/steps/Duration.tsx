@@ -45,6 +45,8 @@ interface WeatherAnalysis {
     overall: number;
   };
   recommendations: string[];
+  riskScore?: number;
+  serviceImpacts?: Record<string, { delayRisk: number }>;
 }
 
 interface TimelineEvent {
@@ -101,9 +103,9 @@ const SERVICE_DEPENDENCIES = {
 
 export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
   const [loading, setLoading] = useState(true);
-  const [serviceDurations, setServiceDurations] = useState([]);
-  const [weatherAnalysis, setWeatherAnalysis] = useState(null);
-  const [timeline, setTimeline] = useState(null);
+  const [serviceDurations, setServiceDurations] = useState<any[]>([]);
+  const [weatherAnalysis, setWeatherAnalysis] = useState<WeatherAnalysis | null>(null);
+  const [timeline, setTimeline] = useState<any>(null);
   const [proposedStartDate, setProposedStartDate] = useState(
     new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 2 weeks from now
   );
@@ -130,7 +132,7 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
       const baseDurations = selectedServices.map((service: string) => {
         return calcService.calculateServiceDuration(
           service,
-          measurements,
+          measurements as any,
           buildingHeight,
           'medium' // Default difficulty
         );
@@ -151,7 +153,7 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
       );
       
       setServiceDurations(baseDurations);
-      setWeatherAnalysis(weather);
+      setWeatherAnalysis(weather as unknown as WeatherAnalysis);
       setTimeline(newTimeline);
     } catch (error) {
       console.error('Duration calculation failed:', error);
@@ -314,8 +316,8 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
           timeline={timeline.entries.map((entry: any) => ({
             ...entry,
             serviceName: SERVICE_RATES[entry.service as keyof typeof SERVICE_RATES]?.name,
-            weatherRisk: weatherAnalysis?.serviceImpacts?.[entry.service]?.delayRisk > 0.6 ? 'high' : 
-                        weatherAnalysis?.serviceImpacts?.[entry.service]?.delayRisk > 0.3 ? 'medium' : 'low',
+            weatherRisk: (weatherAnalysis?.serviceImpacts?.[entry.service]?.delayRisk || 0) > 0.6 ? 'high' : 
+                        (weatherAnalysis?.serviceImpacts?.[entry.service]?.delayRisk || 0) > 0.3 ? 'medium' : 'low',
             isOnCriticalPath: timeline.criticalPath.includes(entry.service),
             confidence: serviceDurations.find((sd: any) => sd.service === entry.service)?.confidence || 'medium'
           }))}
@@ -328,7 +330,7 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
       {/* Weather Analysis */}
       {weatherAnalysis && (
         <WeatherImpactChart
-          historical={weatherAnalysis.historical}
+          historical={weatherAnalysis.historical as any}
           services={selectedServices}
           location={location}
         />
@@ -341,7 +343,7 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
             <DurationSummary
               serviceDurations={serviceDurations}
               totalDuration={totalDuration}
-              weatherAnalysis={weatherAnalysis}
+              weatherAnalysis={weatherAnalysis as any}
               timeline={timeline}
             />
           )}

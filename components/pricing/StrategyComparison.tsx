@@ -182,7 +182,7 @@ export function StrategyComparison({
                     ? 'border-blue-500 bg-blue-50 shadow-md' 
                     : 'border-gray-200 hover:border-gray-300'
                 } ${isRecommended ? 'ring-2 ring-green-200' : ''}`}
-                onClick={() => onSelectStrategy(strategy)}
+                onClick={() => onSelectStrategy(strategy as any)}
               >
                 <CardContent className="p-6">
                   {/* Header */}
@@ -363,7 +363,7 @@ export function StrategyComparison({
                     <Button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        onSelectStrategy(strategy);
+                        onSelectStrategy(strategy as any);
                       }}
                       className="w-full"
                       variant={isRecommended ? "default" : "outline"}

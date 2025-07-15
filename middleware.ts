@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
     // Public API routes that don't require authentication
     const publicRoutes = [
       '/api/health',
+      '/api/ai/',  // AI routes handle their own authentication
     ]
     
     const isPublicRoute = publicRoutes.some(route => 

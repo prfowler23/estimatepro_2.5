@@ -10,7 +10,7 @@ async function createSampleData() {
   console.log('Creating sample data for analytics testing...')
   
   try {
-    // Create sample quotes
+    // Create sample estimates
     const sampleQuotes = [
       {
         quote_number: 'QTE-2025-001-12345',
@@ -59,21 +59,21 @@ async function createSampleData() {
       }
     ]
 
-    console.log('Creating quotes...')
-    const { data: quotesData, error: quotesError } = await supabase
-      .from('quotes')
+    console.log('Creating estimates...')
+    const { data: estimatesData, error: estimatesError } = await supabase
+      .from('estimates')
       .insert(sampleQuotes)
       .select()
 
-    if (quotesError) {
-      throw quotesError
+    if (estimatesError) {
+      throw estimatesError
     }
 
-    console.log(`✅ Created ${quotesData.length} sample quotes`)
+    console.log(`✅ Created ${estimatesData.length} sample estimates`)
 
     // Create sample services for each quote
     const sampleServices = []
-    quotesData.forEach((quote, index) => {
+    estimatesData.forEach((quote, index) => {
       // Add different services to each quote
       if (index === 0) {
         sampleServices.push({
@@ -163,7 +163,7 @@ async function createSampleData() {
 
     console.log('Creating quote services...')
     const { data: servicesData, error: servicesError } = await supabase
-      .from('quote_services')
+      .from('estimate_services')
       .insert(sampleServices)
       .select()
 
@@ -178,7 +178,7 @@ async function createSampleData() {
     console.log('📊 You can now test the analytics at: http://localhost:3000/analytics')
     console.log('')
     console.log('Sample data includes:')
-    console.log('- 3 quotes with different statuses')
+    console.log('- 3 estimates with different statuses')
     console.log('- Multiple services per quote')
     console.log('- Different building types and customers')
     console.log('- Revenue data for charts and metrics')

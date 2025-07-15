@@ -1,11 +1,32 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase/client'
+import { createEstimateWithServices, updateEstimateWithServices } from '@/lib/utils/database-transactions'
+import { loadEstimateWithServices, loadEstimatesWithServices, getEstimateStats } from '@/lib/utils/database-optimization'
+import { withDatabaseRetry, withApiRetry } from '@/lib/utils/retry-logic'
+import {
+  ServiceCalculationResult,
+  ServiceFormData,
+  AIExtractedData,
+  ServiceDependency,
+  UploadedFile,
+  AIAnalysisResult,
+  WorkArea,
+  Measurement,
+  TakeoffData,
+  WeatherAnalysis,
+  EquipmentCost,
+  MaterialCost,
+  PricingCalculation,
+  ManualOverride,
+  FinalEstimate,
+  ServiceType
+} from '@/lib/types/estimate-types'
 
 export interface EstimateService {
   id: string
-  serviceType: string
-  calculationResult: any
-  formData: any
+  serviceType: ServiceType
+  calculationResult: ServiceCalculationResult
+  formData: ServiceFormData
 }
 
 export interface Estimate {
@@ -36,37 +57,37 @@ export interface GuidedFlowData {
     contactMethod: string
     contactDate?: Date
     initialNotes?: string
-    aiExtractedData?: any
+    aiExtractedData?: AIExtractedData
   }
   scopeDetails?: {
-    selectedServices: string[]
-    serviceDependencies?: any
+    selectedServices: ServiceType[]
+    serviceDependencies?: ServiceDependency[]
   }
   filesPhotos?: {
-    uploadedFiles: any[]
-    aiAnalysisResults?: any
+    uploadedFiles: UploadedFile[]
+    aiAnalysisResults?: AIAnalysisResult[]
   }
   areaOfWork?: {
-    workAreas: any[]
-    measurements?: any
+    workAreas: WorkArea[]
+    measurements?: Measurement[]
   }
   takeoff?: {
-    takeoffData: any
+    takeoffData: TakeoffData
   }
   duration?: {
     estimatedDuration: number
-    weatherAnalysis?: any
+    weatherAnalysis?: WeatherAnalysis
   }
   expenses?: {
-    equipmentCosts: any
-    materialCosts: any
+    equipmentCosts: EquipmentCost[]
+    materialCosts: MaterialCost[]
   }
   pricing?: {
-    pricingCalculations: any
-    manualOverrides?: any
+    pricingCalculations: PricingCalculation
+    manualOverrides?: ManualOverride[]
   }
   summary?: {
-    finalEstimate: any
+    finalEstimate: FinalEstimate
     proposalGenerated: boolean
   }
 }
@@ -94,7 +115,7 @@ interface EstimateStore {
   clearServices: () => void
   
   // Guided flow actions
-  updateGuidedFlowData: (step: keyof GuidedFlowData, data: any) => void
+  updateGuidedFlowData: (step: keyof GuidedFlowData, data: GuidedFlowData[keyof GuidedFlowData]) => void
   setCurrentStep: (step: number) => void
   resetGuidedFlow: () => void
   
@@ -102,6 +123,9 @@ interface EstimateStore {
   createEstimate: () => Promise<string | null>
   saveEstimate: () => Promise<boolean>
   loadEstimate: (estimateId: string) => Promise<boolean>
+  loadEstimatesList: (limit?: number, offset?: number) => Promise<any[]>
+  searchEstimates: (query: string, limit?: number) => Promise<any[]>
+  getEstimateStats: () => Promise<any>
   
   // Auto-save functionality
   autoSave: () => Promise<boolean>
@@ -243,71 +267,63 @@ export const useEstimateStore = create<EstimateStore>((set, get) => ({
     try {
       const estimateNumber = state.generateEstimateNumber()
       
-      // Insert estimate (using 'estimates' table after migration)
-      const { data: estimate, error: estimateError } = await supabase
-        .from('estimates')
-        .insert({
-          quote_number: estimateNumber, // Keep for backward compatibility
-          customer_name: state.currentEstimate.customer_name,
-          customer_email: state.currentEstimate.customer_email,
-          customer_phone: state.currentEstimate.customer_phone,
-          company_name: state.currentEstimate.company_name,
-          building_name: state.currentEstimate.building_name,
-          building_address: state.currentEstimate.building_address,
-          building_height_stories: state.currentEstimate.building_height_stories,
-          building_height_feet: state.currentEstimate.building_height_feet,
-          building_type: state.currentEstimate.building_type,
-          total_price: state.currentEstimate.total_price,
-          status: 'draft',
-          notes: state.currentEstimate.notes,
-          estimation_flow_id: state.currentEstimate.estimation_flow_id,
-        })
-        .select()
-        .single()
+      // Prepare estimate data
+      const estimateData = {
+        quote_number: estimateNumber, // Keep for backward compatibility
+        customer_name: state.currentEstimate.customer_name,
+        customer_email: state.currentEstimate.customer_email,
+        customer_phone: state.currentEstimate.customer_phone,
+        company_name: state.currentEstimate.company_name,
+        building_name: state.currentEstimate.building_name,
+        building_address: state.currentEstimate.building_address,
+        building_height_stories: state.currentEstimate.building_height_stories,
+        building_height_feet: state.currentEstimate.building_height_feet,
+        building_type: state.currentEstimate.building_type,
+        total_price: state.currentEstimate.total_price,
+        status: 'draft',
+        notes: state.currentEstimate.notes,
+        estimation_flow_id: state.currentEstimate.estimation_flow_id,
+      };
 
-      if (estimateError) throw estimateError
+      // Prepare services data
+      const servicesData = state.services.map(service => ({
+        service_type: service.serviceType,
+        area_sqft: service.calculationResult?.area || 0,
+        glass_sqft: service.formData?.glassArea || null,
+        price: service.calculationResult?.basePrice || 0,
+        labor_hours: service.calculationResult?.laborHours || 0,
+        setup_hours: service.calculationResult?.setupHours || 0,
+        rig_hours: service.calculationResult?.rigHours || 0,
+        total_hours: service.calculationResult?.totalHours || 0,
+        crew_size: service.calculationResult?.crewSize || 2,
+        equipment_type: service.calculationResult?.equipment?.type || null,
+        equipment_days: service.calculationResult?.equipment?.days || null,
+        equipment_cost: service.calculationResult?.equipment?.cost || null,
+        calculation_details: {
+          breakdown: service.calculationResult?.breakdown || [],
+          warnings: service.calculationResult?.warnings || [],
+          formData: service.formData
+        }
+      }));
 
-      // Insert services
-      if (state.services.length > 0) {
-        const serviceInserts = state.services.map(service => ({
-          quote_id: estimate.id, // Keep column name for now
-          service_type: service.serviceType,
-          area_sqft: service.calculationResult?.area || 0,
-          glass_sqft: service.formData?.glassArea || null,
-          price: service.calculationResult?.basePrice || 0,
-          labor_hours: service.calculationResult?.laborHours || 0,
-          setup_hours: service.calculationResult?.setupHours || 0,
-          rig_hours: service.calculationResult?.rigHours || 0,
-          total_hours: service.calculationResult?.totalHours || 0,
-          crew_size: service.calculationResult?.crewSize || 2,
-          equipment_type: service.calculationResult?.equipment?.type || null,
-          equipment_days: service.calculationResult?.equipment?.days || null,
-          equipment_cost: service.calculationResult?.equipment?.cost || null,
-          calculation_details: {
-            breakdown: service.calculationResult?.breakdown || [],
-            warnings: service.calculationResult?.warnings || [],
-            formData: service.formData
-          }
-        }))
-
-        const { error: servicesError } = await supabase
-          .from('quote_services')
-          .insert(serviceInserts)
-
-        if (servicesError) throw servicesError
+      // Use transaction to create estimate with services
+      const result = await createEstimateWithServices(estimateData, servicesData);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create estimate');
       }
 
       // Update current estimate with ID
       set(state => ({
         currentEstimate: state.currentEstimate ? {
           ...state.currentEstimate,
-          id: estimate.id,
+          id: result.data!.estimate.id,
           quote_number: estimateNumber,
           services: state.services
         } : null
       }))
 
-      return estimate.id
+      return result.data!.estimate.id
     } catch (error) {
       console.error('Error creating estimate:', error)
       return null
@@ -327,60 +343,52 @@ export const useEstimateStore = create<EstimateStore>((set, get) => ({
     set({ isSaving: true })
 
     try {
-      // Update existing estimate
-      const { error: estimateError } = await supabase
-        .from('estimates')
-        .update({
-          customer_name: state.currentEstimate.customer_name,
-          customer_email: state.currentEstimate.customer_email,
-          customer_phone: state.currentEstimate.customer_phone,
-          company_name: state.currentEstimate.company_name,
-          building_name: state.currentEstimate.building_name,
-          building_address: state.currentEstimate.building_address,
-          building_height_stories: state.currentEstimate.building_height_stories,
-          building_height_feet: state.currentEstimate.building_height_feet,
-          building_type: state.currentEstimate.building_type,
-          total_price: state.currentEstimate.total_price,
-          notes: state.currentEstimate.notes,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', state.currentEstimate.id)
+      // Prepare estimate data
+      const estimateData = {
+        customer_name: state.currentEstimate.customer_name,
+        customer_email: state.currentEstimate.customer_email,
+        customer_phone: state.currentEstimate.customer_phone,
+        company_name: state.currentEstimate.company_name,
+        building_name: state.currentEstimate.building_name,
+        building_address: state.currentEstimate.building_address,
+        building_height_stories: state.currentEstimate.building_height_stories,
+        building_height_feet: state.currentEstimate.building_height_feet,
+        building_type: state.currentEstimate.building_type,
+        total_price: state.currentEstimate.total_price,
+        notes: state.currentEstimate.notes,
+        updated_at: new Date().toISOString(),
+      };
 
-      if (estimateError) throw estimateError
+      // Prepare services data
+      const servicesData = state.services.map(service => ({
+        service_type: service.serviceType,
+        area_sqft: service.calculationResult?.area || 0,
+        glass_sqft: service.formData?.glassArea || null,
+        price: service.calculationResult?.basePrice || 0,
+        labor_hours: service.calculationResult?.laborHours || 0,
+        setup_hours: service.calculationResult?.setupHours || 0,
+        rig_hours: service.calculationResult?.rigHours || 0,
+        total_hours: service.calculationResult?.totalHours || 0,
+        crew_size: service.calculationResult?.crewSize || 2,
+        equipment_type: service.calculationResult?.equipment?.type || null,
+        equipment_days: service.calculationResult?.equipment?.days || null,
+        equipment_cost: service.calculationResult?.equipment?.cost || null,
+        calculation_details: {
+          breakdown: service.calculationResult?.breakdown || [],
+          warnings: service.calculationResult?.warnings || [],
+          formData: service.formData
+        }
+      }));
 
-      // Delete existing services and re-insert
-      await supabase
-        .from('quote_services')
-        .delete()
-        .eq('quote_id', state.currentEstimate.id)
-
-      if (state.services.length > 0) {
-        const serviceInserts = state.services.map(service => ({
-          quote_id: state.currentEstimate!.id,
-          service_type: service.serviceType,
-          area_sqft: service.calculationResult?.area || 0,
-          glass_sqft: service.formData?.glassArea || null,
-          price: service.calculationResult?.basePrice || 0,
-          labor_hours: service.calculationResult?.laborHours || 0,
-          setup_hours: service.calculationResult?.setupHours || 0,
-          rig_hours: service.calculationResult?.rigHours || 0,
-          total_hours: service.calculationResult?.totalHours || 0,
-          crew_size: service.calculationResult?.crewSize || 2,
-          equipment_type: service.calculationResult?.equipment?.type || null,
-          equipment_days: service.calculationResult?.equipment?.days || null,
-          equipment_cost: service.calculationResult?.equipment?.cost || null,
-          calculation_details: {
-            breakdown: service.calculationResult?.breakdown || [],
-            warnings: service.calculationResult?.warnings || [],
-            formData: service.formData
-          }
-        }))
-
-        const { error: servicesError } = await supabase
-          .from('quote_services')
-          .insert(serviceInserts)
-
-        if (servicesError) throw servicesError
+      // Use transaction to update estimate with services
+      const result = await updateEstimateWithServices(
+        state.currentEstimate.id,
+        estimateData,
+        servicesData
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save estimate');
       }
 
       return true
@@ -396,56 +404,22 @@ export const useEstimateStore = create<EstimateStore>((set, get) => ({
     set({ isLoading: true })
 
     try {
-      // Load estimate
-      const { data: estimate, error: estimateError } = await supabase
-        .from('estimates')
-        .select('*')
-        .eq('id', estimateId)
-        .single()
+      // Use optimized query with joins and retry logic
+      const result = await withDatabaseRetry(() => 
+        loadEstimateWithServices(estimateId)
+      );
 
-      if (estimateError) throw estimateError
-
-      // Load services
-      const { data: services, error: servicesError } = await supabase
-        .from('quote_services')
-        .select('*')
-        .eq('quote_id', estimateId)
-
-      if (servicesError) throw servicesError
-
-      // Convert services to EstimateService format
-      const estimateServices: EstimateService[] = services.map(service => ({
-        id: service.id,
-        serviceType: service.service_type,
-        calculationResult: {
-          area: service.area_sqft,
-          basePrice: service.price,
-          laborHours: service.labor_hours,
-          setupHours: service.setup_hours,
-          rigHours: service.rig_hours,
-          totalHours: service.total_hours,
-          crewSize: service.crew_size,
-          equipment: service.equipment_type ? {
-            type: service.equipment_type,
-            days: service.equipment_days,
-            cost: service.equipment_cost
-          } : null,
-          breakdown: service.calculation_details?.breakdown || [],
-          warnings: service.calculation_details?.warnings || []
-        },
-        formData: service.calculation_details?.formData || {}
-      }))
-
-      // Set state
-      set({
-        currentEstimate: {
-          ...estimate,
-          services: estimateServices
-        },
-        services: estimateServices
-      })
-
-      return true
+      if (result.success && result.data) {
+        // Set state
+        set({
+          currentEstimate: result.data,
+          services: result.data.services
+        })
+        return true
+      } else {
+        console.error('Error loading estimate:', result.error)
+        return false
+      }
     } catch (error) {
       console.error('Error loading estimate:', error)
       return false
@@ -486,6 +460,38 @@ export const useEstimateStore = create<EstimateStore>((set, get) => ({
     const day = String(date.getDate()).padStart(2, '0')
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
     return `EST-${year}${month}${day}-${random}`
+  },
+
+  // Performance-optimized methods
+  loadEstimatesList: async (limit = 10, offset = 0) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      return await loadEstimatesWithServices(limit, offset, user?.id)
+    } catch (error) {
+      console.error('Error loading estimates list:', error)
+      return []
+    }
+  },
+
+  searchEstimates: async (query: string, limit = 10) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { searchEstimates } = await import('@/lib/utils/database-optimization')
+      return await searchEstimates(query, limit, user?.id)
+    } catch (error) {
+      console.error('Error searching estimates:', error)
+      return []
+    }
+  },
+
+  getEstimateStats: async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      return await getEstimateStats(user?.id)
+    } catch (error) {
+      console.error('Error getting estimate stats:', error)
+      return { total: 0, totalValue: 0, byStatus: {}, byMonth: {} }
+    }
   }
 }))
 

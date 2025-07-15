@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import { useQuoteStore } from '@/lib/stores/quote-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -91,7 +90,7 @@ function QuoteEditContent() {
       setError(null)
 
       const { data: quoteData, error: quoteError } = await supabase
-        .from('quotes')
+        .from('estimates')
         .select('*')
         .eq('id', params.id)
         .single()
@@ -99,7 +98,7 @@ function QuoteEditContent() {
       if (quoteError) throw quoteError
 
       const { data: servicesData, error: servicesError } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .select('*')
         .eq('quote_id', params.id)
 
@@ -133,7 +132,7 @@ function QuoteEditContent() {
 
     try {
       const { error } = await supabase
-        .from('quote_services')
+        .from('estimate_services')
         .delete()
         .eq('id', serviceId)
 
@@ -152,7 +151,7 @@ function QuoteEditContent() {
     }
   }
 
-  const saveQuote = async () => {
+  const saveEstimate = async () => {
     if (!quote) return
 
     try {
@@ -160,7 +159,7 @@ function QuoteEditContent() {
       setError(null)
 
       const { error } = await supabase
-        .from('quotes')
+        .from('estimates')
         .update({
           customer_name: quote.customer_name,
           customer_email: quote.customer_email,
@@ -180,7 +179,7 @@ function QuoteEditContent() {
       if (error) throw error
 
       setHasChanges(false)
-      router.push(`/quotes/${quote.id}`)
+      router.push(`/estimates/${quote.id}`)
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -261,7 +260,7 @@ function QuoteEditContent() {
             </Badge>
           )}
           <Button
-            onClick={saveQuote}
+            onClick={saveEstimate}
             disabled={saving || !hasChanges}
           >
             {saving ? (
@@ -587,7 +586,7 @@ function QuoteEditContent() {
                 Cancel
               </Button>
               <Button
-                onClick={saveQuote}
+                onClick={saveEstimate}
                 disabled={saving || !hasChanges}
               >
                 {saving ? (
