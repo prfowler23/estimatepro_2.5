@@ -2,80 +2,90 @@
 
 ## Project Overview
 
-EstimatePro is a comprehensive Next.js 14 application designed for building services contractors to create professional estimates and quotes. The platform integrates AI-powered photo analysis, guided estimation workflows, and advanced calculation engines for multiple service types.
+EstimatePro is a comprehensive Next.js 14 application for building services contractors featuring AI-enhanced workflows, photo analysis, document extraction, 11 specialized service calculators, 3D visualization, drone integration, and professional estimate generation.
 
-### Core Features
-- **AI-Powered Analysis**: Photo analysis and scope extraction using OpenAI
-- **Guided Estimation Flow**: Step-by-step estimation process with AI assistance
-- **Service Calculators**: 11 specialized calculators for different building services
-- **Quote Management**: Professional quote generation with PDF export
-- **Canvas Drawing**: Interactive area measurement and takeoff tools
-- **Weather Integration**: Weather impact analysis for project scheduling
-- **Analytics Dashboard**: Performance metrics and business insights
+### Key Features
+
+- **9 AI Endpoints**: Photo analysis, document extraction, competitive intelligence, risk assessment, auto-quote generation
+- **11 Service Calculators**: Real-time calculations for window cleaning, pressure washing, 3D modeling, etc.
+- **3D Visualization & Drone Integration**: Building modeling, aerial inspection, flight planning
+- **Guided Workflows**: Step-by-step estimation with validation and state persistence
+- **Enterprise Architecture**: Service layer, transaction support, caching, lazy loading, security
 
 ## Technology Stack
 
-### Framework & Core
-- **Next.js 14**: React framework with App Router
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first styling with custom design system
-- **React Hook Form**: Form management with Zod validation
+**Frontend**: Next.js 14, TypeScript, Tailwind CSS, React Hook Form + Zod, Zustand, React Query, Radix UI, Framer Motion
 
-### Database & Backend
-- **Supabase**: PostgreSQL database with real-time subscriptions
-- **Supabase Auth**: User authentication and authorization
-- **Row Level Security**: Database-level security policies
+**Backend**: Supabase (PostgreSQL, Auth, RLS), OpenAI GPT-4, Weather API, Resend Email
 
-### AI & External Services
-- **OpenAI GPT-4**: Photo analysis and content extraction
-- **Weather API**: Weather data integration
-- **Resend**: Email service for quote delivery
-
-### State Management & UI
-- **Zustand**: Lightweight state management
-- **Radix UI**: Accessible component primitives
-- **React Query (@tanstack/react-query)**: Server state management
-- **Framer Motion**: Animations and transitions
-
-### File Processing & Export
-- **jsPDF**: PDF generation for quotes
-- **React PDF**: Advanced PDF rendering
-- **XLSX**: Excel export functionality
-- **html2canvas**: Screenshot generation
+**Processing**: jsPDF, React PDF, XLSX, html2canvas
 
 ## Project Structure
 
 ```
 ├── app/                          # Next.js App Router pages
 │   ├── api/                      # API routes
-│   │   ├── ai/                   # AI-related endpoints
+│   │   ├── ai/                   # 9 specialized AI endpoints
+│   │   │   ├── auto-quote/       # Automated quote generation
+│   │   │   ├── competitive-intelligence/ # Market analysis
+│   │   │   ├── enhanced-photo-analysis/ # Advanced photo processing
+│   │   │   ├── extract-contact-info/ # Contact extraction
+│   │   │   ├── extract-documents/ # Document processing
+│   │   │   ├── follow-up-automation/ # Automated follow-ups
+│   │   │   └── risk-assessment/  # Automated risk analysis
 │   │   ├── analytics/            # Analytics API
 │   │   ├── analyze-photos/       # Photo analysis
 │   │   ├── customers/            # Customer management
+│   │   ├── drone/                # Drone operations API (NEW)
 │   │   ├── estimation-flows/     # Guided flow API
-│   │   └── quotes/               # Quote operations
+│   │   └── quotes/               # Legacy quote operations
 │   ├── auth/                     # Authentication pages
 │   ├── calculator/               # Service calculator page
 │   ├── dashboard/                # Main dashboard
-│   ├── quotes/                   # Quote management
+│   ├── estimates/                # Estimate management (NEW)
+│   │   ├── [id]/                 # Individual estimate pages
+│   │   └── new/guided/           # Guided estimation flow
+│   ├── 3d-demo/                  # 3D visualization demo (NEW)
+│   ├── drone-demo/               # Drone integration demo (NEW)
 │   └── settings/                 # Application settings
 ├── components/                   # React components
 │   ├── ai/                       # AI-related components
-│   ├── calculator/               # Service calculators
+│   ├── calculator/               # Service calculators with lazy loading
 │   ├── canvas/                   # Drawing and measurement tools
+│   ├── drone/                    # Drone operations components (NEW)
 │   ├── duration/                 # Timeline and scheduling
+│   ├── error-handling/           # Error boundaries and handling (NEW)
 │   ├── estimation/               # Guided estimation flow
 │   ├── expenses/                 # Cost breakdown components
 │   ├── pricing/                  # Pricing strategy tools
 │   ├── takeoff/                  # Measurement and takeoff
-│   └── ui/                       # Reusable UI components
+│   ├── visualizer/               # 3D visualization components (NEW)
+│   └── ui/                       # Reusable UI components with lazy loading
 ├── lib/                          # Core utilities and services
-│   ├── ai/                       # AI service integrations
+│   ├── ai/                       # AI service integrations (ENHANCED)
+│   │   ├── ai-cache.ts           # AI response caching
+│   │   ├── ai-config.ts          # AI configuration management
+│   │   ├── ai-security.ts        # AI security and validation
+│   │   └── optimized-prompts.ts  # Performance-optimized prompts
 │   ├── calculations/             # Service calculation engines
 │   ├── config/                   # Application configuration
+│   ├── drone/                    # Drone service framework (NEW)
+│   ├── schemas/                  # API validation schemas (NEW)
+│   ├── services/                 # Business logic layer (NEW)
+│   │   ├── ai-service.ts         # AI business logic
+│   │   ├── calculator-service.ts # Calculator business logic
+│   │   ├── estimate-service.ts   # Estimate business logic
+│   │   └── workflow-service.ts   # Workflow management
+│   ├── stores/                   # Zustand state management
 │   ├── supabase/                 # Database client/server
 │   ├── types/                    # TypeScript type definitions
-│   └── utils/                    # Utility functions
+│   ├── utils/                    # Utility functions (ENHANCED)
+│   │   ├── cache.ts              # Caching utilities
+│   │   ├── database-optimization.ts # DB performance
+│   │   ├── null-safety.ts        # Type-safe null handling
+│   │   └── retry-logic.ts        # Retry mechanisms
+│   ├── validation/               # Validation utilities (NEW)
+│   └── visualization/            # 3D visualization engine (NEW)
 ├── contexts/                     # React contexts
 ├── hooks/                        # Custom React hooks
 └── types/                        # Global type definitions
@@ -84,39 +94,34 @@ EstimatePro is a comprehensive Next.js 14 application designed for building serv
 ## Development Setup
 
 ### Prerequisites
+
 - Node.js 18+ and npm
 - Supabase account and project
 - OpenAI API key
 - Resend API key (for emails)
 
 ### Environment Variables
-Create a `.env.local` file with the following variables:
+
+Create `.env.local` with required keys:
 
 ```bash
-# Supabase Configuration
+# Core Services
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# OpenAI Configuration
 OPENAI_API_KEY=your_openai_api_key
-
-# Email Configuration
 RESEND_API_KEY=your_resend_api_key
-EMAIL_FROM=noreply@yourdomain.com
 
-# Application Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_NAME=EstimatePro
-NEXT_PUBLIC_APP_VERSION=2.5
-
-# Feature Flags
+# Feature Flags (all default true)
 NEXT_PUBLIC_ENABLE_AI=true
-NEXT_PUBLIC_ENABLE_3D=false
-NEXT_PUBLIC_ENABLE_WEATHER=true
-NEXT_PUBLIC_ENABLE_DRONE=false
-NEXT_PUBLIC_ENABLE_GUIDED_FLOW=true
+NEXT_PUBLIC_ENABLE_3D=true
+NEXT_PUBLIC_ENABLE_DRONE=true
 NEXT_PUBLIC_DEBUG=false
+
+# Performance Settings
+AI_CACHE_TTL=3600
+AI_RATE_LIMIT_PER_MINUTE=100
+CACHE_TTL=1800
 ```
 
 ### Installation & Setup
@@ -138,292 +143,283 @@ npm run dev
 ### Available Scripts
 
 ```bash
-# Development
-npm run dev              # Start development server
-npm run build            # Build for production
-npm run start            # Start production server
-npm run lint             # Run ESLint
-
-# Database Management
-npm run setup-db         # Initialize database schema
-npm run migrate          # Run database migrations
-npm run create-sample    # Create sample data
-
-# Testing & Quality
-npm test                 # Run Jest tests
-npm run test:watch       # Run tests in watch mode
-npm run typecheck        # TypeScript type checking
-npm run security-audit   # Security vulnerability scan
+# Development (MANDATORY: run fmt && lint && typecheck before commits)
+npm run fmt && npm run lint && npm run typecheck
+npm run dev
 
 # Production
-npm run production-check # Verify production readiness
-npm run performance-test # Run performance benchmarks
+npm run build && npm run start
+
+# Database
+node scripts/setup-basic-schema.js
+node scripts/run-migration.js
+node scripts/production-check.js
 ```
+
+## Documentation Hierarchy
+
+- **CLAUDE.md** (this file): Comprehensive project documentation, architecture overview, and development setup
+- **.cursor/.cursorrules**: Strict coding standards and enforcement rules for AI assistants
+- **Both files must be kept in sync** for consistent development practices
 
 ## Key Development Commands
 
 ### Database Operations
+
 ```bash
-# Run migrations
+# Initialize new database schema
+node scripts/setup-basic-schema.js
+
+# Run standard migrations
 node scripts/run-migration.js
 
-# Create sample data
+# Add transaction support (run once)
+node scripts/run-transaction-migration.js
+
+# Create sample data for development
 node scripts/create-sample-data.js
 
-# Verify database setup
+# Verify database setup and connectivity
 node scripts/production-check.js
 ```
 
-### Development Workflow
+### Development Workflow (ENFORCED)
+
 ```bash
+# MANDATORY: Format, lint, and type check before any commits
+npm run fmt && npm run lint && npm run typecheck
+
 # Start development with hot reload
 npm run dev
 
-# Run type checking alongside development
-npm run typecheck
+# Test production build locally
+npm run build && npm run start
 
-# Lint code for style issues
-npm run lint
-
-# Run security audit
-npm run security-audit
+# Verify production readiness
+node scripts/production-check.js
 ```
 
-## Architecture Patterns
+### AI Integration Requirements
 
-### Component Organization
-- **Feature-based structure**: Components grouped by feature area
-- **Atomic design**: UI components follow atomic design principles
-- **Separation of concerns**: Business logic separated from presentation
+```bash
+# NEVER call AI APIs directly from components
+# ALWAYS use services in /lib/ai/ with caching and security validation
+# MUST validate inputs with ai-security.ts
+# REQUIRED: Check AI cache before making API calls
+```
 
-### State Management
-- **Zustand stores**: Global state for estimates, quotes, and user data
-- **React Query**: Server state caching and synchronization
-- **React Context**: Authentication and theme state
+### Service Layer Requirements
 
-### Data Flow
-1. **Client components** use hooks to access stores
-2. **API routes** handle server-side logic and database operations
-3. **Supabase client** manages real-time data synchronization
-4. **AI services** process photos and extract information
+```bash
+# ALL business logic MUST be in /lib/services/
+# ALL database operations MUST use service layer with transactions
+# NEVER write raw Supabase queries in components
+# ALWAYS validate RLS policies are applied
+```
 
-### Security
-- **Row Level Security (RLS)**: Database-level access control
-- **Environment validation**: Required environment variables checked on startup
-- **Content Security Policy**: Configured in next.config.mjs
-- **Input validation**: Zod schemas for all form inputs
+### Testing & Validation
+
+```bash
+# Test analytics functionality
+node scripts/test-analytics.js
+
+# Run TypeScript compilation check
+npm run typecheck
+
+# Validate database migrations
+node scripts/migrate-database.js
+
+# Production verification
+bash scripts/production-verify.sh
+```
+
+## Architecture
+
+**Component Organization**: Feature-based structure with atomic design principles and strict separation of concerns
+
+**State Management**: Zustand (global state), React Query (server state), React Context (auth/theme), Service Layer (business logic)
+
+**Data Flow**: Components → Hooks → Stores → API Routes → Services → Supabase → Database
+
+### Security & Validation
+
+**Database**: RLS policies, ACID transactions, input sanitization, encryption, audit logging
+
+**Application**: Environment validation, CSP, API rate limiting, Supabase Auth, RBAC
+
+**AI Security**: Input validation (`ai-security.ts`), response sanitization, rate limiting, content filtering
+
+**Validation**: Zod schemas, API validation, null safety, error boundaries
 
 ## Service Calculators
 
-The platform includes 11 specialized calculators for different building services:
+**11 Specialized Calculators**: Window Cleaning, Pressure Washing, Soft Washing, Biofilm Removal, Glass/Frame Restoration, High Dusting, Final Clean, Granite Reconditioning, Pressure Wash & Seal, Parking Deck
 
-1. **Window Cleaning**: Interior/exterior, height-based pricing
-2. **Pressure Washing**: Surface area and PSI calculations
-3. **Soft Washing**: Chemical application and coverage
-4. **Biofilm Removal**: Specialized cleaning processes
-5. **Glass Restoration**: Damage assessment and treatment
-6. **Frame Restoration**: Material and labor calculations
-7. **High Dusting**: Height and complexity factors
-8. **Final Clean**: Post-construction cleaning
-9. **Granite Reconditioning**: Stone treatment processes
-10. **Pressure Wash & Seal**: Combined washing and sealing
-11. **Parking Deck**: Large area commercial cleaning
-
-Each calculator includes:
-- Material cost calculations
-- Labor time estimation
-- Equipment requirements
-- Markup and margin settings
-- Risk factor adjustments
+**Features**: Material costs, labor estimation, equipment requirements, markup/margin settings, risk adjustments
 
 ## AI Integration
 
-### Photo Analysis
-- **OpenAI Vision API**: Analyzes uploaded building photos
-- **Automated extraction**: Identifies building features and scope
-- **Validation workflows**: Human review of AI suggestions
+**9 AI Endpoints**: Enhanced photo analysis, facade analyzer, document extraction, contact extraction, auto-quote generation, competitive intelligence, risk assessment, follow-up automation
 
-### Content Processing
-- **Scope extraction**: Extracts work requirements from emails/documents
-- **Service recommendations**: AI-suggested services based on building analysis
-- **Risk assessment**: Automated risk factor identification
+**Core Features**: GPT-4 Vision analysis, automated scope extraction, service recommendations, timeline predictions
+
+**Performance**: Intelligent caching (`ai-cache.ts`), rate limiting, optimized prompts, error recovery (`ai-error-handler.ts`)
+
+**Safety**: Schema validation, content filtering, confidence scoring, human-in-the-loop reviews
+
+## 3D Visualization System
+
+**3D Engine** (`lib/visualization/3d-engine.ts`): Canvas-based rendering with interactive building modeling, measurement tools, service area management
+
+**Enhanced Building3D Component**: Pan/zoom/rotate controls, real-time analysis, drawing tools, export capabilities
+
+**Integration**: Guided flow integration, persistent state management, automated complexity analysis
+
+**Demo**: `/3d-demo` page with feature toggle support (`NEXT_PUBLIC_ENABLE_3D`)
+
+## Drone Integration Platform
+
+**Drone Service Framework** (`lib/drone/drone-service.ts`): AI flight planning, multi-drone fleet management, weather integration, FAA Part 107 compliance
+
+**Aerial Analysis**: 4K/6K photography, thermal imaging, automated 3D mapping, damage detection, coverage verification
+
+**Operations Dashboard** (`components/drone/drone-dashboard.tsx`): Real-time monitoring, flight tracking, weather conditions, fleet status
+
+**API** (`/api/drone/operations`): Flight plan management, fleet control, weather integration, automated analysis
+
+**Safety**: Regulatory compliance, safety protocols, no-fly zones, flight logging, incident reporting
+
+**Demo**: `/drone-demo` page with simulation mode (`NEXT_PUBLIC_ENABLE_DRONE`)
+
+## Service Layer Architecture
+
+**Business Services**:
+
+- `estimate-service.ts`: CRUD operations, validation, status management, data transformation
+- `ai-service.ts`: Centralized AI communication, caching, error recovery, rate limiting
+- `calculator-service.ts`: Real-time calculations, validation, historical data integration
+- `workflow-service.ts`: Guided flow orchestration, step validation, state persistence
+
+**Database Layer**: ACID transactions (`database-transactions.ts`), connection pooling, null safety (`null-safety.ts`), Zod validation
+
+**Performance**: Multi-level caching, intelligent invalidation, retry logic, performance monitoring
+
+**Reliability**: Error boundaries, graceful degradation, detailed logging
 
 ## Database Schema
 
-### Core Tables
-- **profiles**: User accounts and roles
-- **quotes**: Quote metadata and status
-- **quote_services**: Individual services within quotes
-- **measurements**: Canvas-based measurements
-- **analytics_events**: User interaction tracking
+**Core Tables**: profiles, estimates, estimate_services, estimate_flows, measurements, analytics_events
 
-### Relationships
-- Users can create multiple quotes
-- Quotes contain multiple services
-- Services have associated measurements and calculations
-- All data respects user permissions via RLS
+**Enhanced Models**: ai_analysis_cache, service_calculations, workflow_steps, document_extractions, risk_assessments
+
+**Relationships**: Users → Estimates → Services → Measurements/Calculations → AI Analysis (with RLS)
+
+**Enhancements**: ACID transactions, optimized indexes, real-time subscriptions, data validation, audit trails
 
 ## Testing Strategy
 
-### Unit Tests
-- Component testing with Jest and React Testing Library
-- Calculation engine validation
-- Utility function testing
+**Unit Tests**: Jest + React Testing Library for components, calculation engines, utilities
 
-### Integration Tests
-- API endpoint testing
-- Database operation validation
-- AI service integration tests
+**Integration Tests**: API endpoints, database operations, AI services
 
-### Test Files
-- `__tests__/calculator.test.tsx`: Service calculator validation
-- `__tests__/photo-analysis.test.ts`: AI photo analysis tests
-- `__tests__/service-validation.test.ts`: Service validation logic
+**Test Files**: `calculator.test.tsx`, `photo-analysis.test.ts`, `service-validation.test.ts`
 
 ## Performance Optimization
 
-### Code Splitting
-- Dynamic imports for large components
-- Route-based code splitting via Next.js
-- Lazy loading of calculator forms
+**Code Splitting**: Dynamic component loading (`lazy-forms.tsx`, `lazy-components.tsx`), route-based splitting, optimized chunks
 
-### Image Optimization
-- Next.js Image component for automatic optimization
-- WebP format conversion
-- Responsive image sizing
+**Caching**: Multi-level caching, AI response caching, database query caching, service worker integration
 
-### Caching Strategy
-- React Query for API response caching
-- Supabase real-time subscriptions
-- Browser caching via service workers
+**Database**: Connection pooling (`database-optimization.ts`), query optimization, transaction batching, read replicas
+
+**Assets**: Next.js Image optimization, WebP conversion, CDN integration, progressive loading
+
+**Runtime**: Memory management, error boundaries, performance monitoring, bundle analysis
 
 ## Deployment
 
-### Production Checklist
-```bash
-# Run production verification
-npm run production-check
+**Production Checklist**: `npm run production-check`, verify environment variables, security audit, build and test
 
-# Verify environment variables
-npm run verify-env
+**Configuration**: Supabase production DB, OpenAI API limits, Resend email, domain/SSL setup
 
-# Run security audit
-npm run security-audit
-
-# Build and test
-npm run build
-npm run start
-```
-
-### Environment Configuration
-- Supabase production database
-- OpenAI API key with proper limits
-- Resend email configuration
-- Domain and SSL setup
-
-### Monitoring
-- Application performance monitoring
-- Error tracking and logging
-- User analytics and usage metrics
+**Monitoring**: Performance monitoring, error tracking, usage analytics
 
 ## Common Development Tasks
 
-### Adding a New Service Calculator
-1. Create calculator form in `components/calculator/forms/`
-2. Add calculation logic in `lib/calculations/services/`
-3. Update service constants in `lib/constants/services.ts`
-4. Add validation schema in `lib/schemas/service-forms.ts`
-5. Write tests in `__tests__/calculator.test.tsx`
+**Service Calculator**: Create form (`components/calculator/forms/`), add logic (`lib/calculations/services/`), update constants, validation schema, write tests
 
-### Adding New AI Features
-1. Create prompts in `lib/ai/analysis-prompts.ts`
-2. Add processing logic in `lib/ai/extraction.ts`
-3. Create UI components in `components/ai/`
-4. Add API endpoints in `app/api/ai/`
-5. Update types in `lib/types/`
+**AI Features**: Create prompts (`lib/ai/`), add processing logic, update service (`lib/services/ai-service.ts`), create UI, add API endpoints, update types/validation/caching/security
 
-### Database Changes
-1. Write migration SQL in root directory
-2. Test migration locally
-3. Update TypeScript types in `types/database.ts`
-4. Run migration via `scripts/run-migration.js`
+**Database Changes**: Write migration SQL, test locally, update TypeScript types, add service logic, update schemas
+
+**Estimate Features**: Update types (`lib/types/estimate-types.ts`), service logic, create UI with lazy loading, add APIs, update guided flow
+
+**3D Features**: Extend engine (`lib/visualization/3d-engine.ts`), update Building3D component, add analysis capabilities, integrate with workflow
+
+**Drone Features**: Extend service (`lib/drone/drone-service.ts`), update dashboard, extend APIs, add drone models, update compliance
 
 ## Code Conventions
 
-### TypeScript
-- Strict type checking enabled
-- Interface definitions in dedicated type files
-- Generic types for reusable components
+**See `.cursor/.cursorrules` for detailed standards.**
 
-### React
-- Functional components with hooks
-- Custom hooks for business logic
-- Proper dependency arrays in useEffect
+**TypeScript**: Strict .ts/.tsx only, no `any` types, explicit interfaces, generic types for reusables
 
-### Styling
-- Tailwind CSS with custom design system
-- CSS variables for theming
-- Responsive design patterns
+**Import Order**: React imports → Third-party (alphabetical) → Internal (alphabetical, grouped)
 
-### File Naming
-- kebab-case for files and directories
-- PascalCase for React components
-- camelCase for functions and variables
+**Architecture**: UI components have no business logic, all business logic in `/lib/services`, named exports only
+
+**Naming**: Components (PascalCase), Files (kebab-case), Functions (camelCase), Constants (SCREAMING_SNAKE_CASE)
+
+**Styling**: Tailwind CSS with design system, CSS variables, responsive patterns
 
 ## Troubleshooting
 
-### Common Issues
+**Build Errors**: Verify environment variables, run `npm run typecheck`, update database schema
 
-**Build Errors**
-- Verify all environment variables are set
-- Check TypeScript errors with `npm run typecheck`
-- Ensure database schema is up to date
+**Database**: Check Supabase URL/keys, verify RLS policies, ensure service role permissions
 
-**Database Connection**
-- Verify Supabase URL and keys
-- Check RLS policies are correctly configured
-- Ensure service role key has proper permissions
+**AI Integration**: Verify OpenAI key/billing, check rate limits/quotas, validate prompts, review cache/security settings
 
-**AI Integration**
-- Verify OpenAI API key and billing
-- Check rate limits and usage quotas
-- Ensure prompts are within token limits
+**Performance**: Check lazy loading, verify caching, monitor connection pooling, review bundle sizes
 
-### Debug Mode
-Set `NEXT_PUBLIC_DEBUG=true` to enable:
-- Detailed error logging
-- AI prompt/response logging
-- Performance timing information
+**Debug Mode**: Set `NEXT_PUBLIC_DEBUG=true` for detailed logging, AI prompt/response logs, performance timing
 
-## Contributing Guidelines
+## Production Status
 
-### Code Quality
-- Run `npm run lint` before committing
-- Ensure all tests pass with `npm test`
-- Follow existing code patterns and conventions
+**🎉 100% Implementation Complete**
 
-### Git Workflow
-- Create feature branches from main
-- Write descriptive commit messages
-- Run production check before merging
+**Completed Features**: 11 service calculators, 9 AI endpoints, 3D visualization, drone integration, guided workflows, service layer architecture, performance optimization, security implementation, error handling, TypeScript compilation
 
-### Documentation
-- Update CLAUDE.md for architectural changes
-- Add JSDoc comments for complex functions
-- Update README for user-facing changes
+**Technical Achievements**: Production-grade architecture, enterprise security (RLS, rate limiting, validation), multi-level caching, monitoring/analytics, strict type safety
+
+**Deployment Ready**: Environment configuration, production scripts, database migrations, feature flags, monitoring integration, security hardening
+
+**Enterprise Ready**: Scalable architecture, multi-user support, high-volume optimization, RESTful APIs, compliance & security
+
+## Contributing
+
+**Code Quality**: Run `npm run lint`, ensure tests pass, follow patterns
+
+**Git Workflow**: Feature branches from main, descriptive commits, production check before merge
+
+**Documentation**: Update CLAUDE.md for architecture changes, JSDoc for complex functions
 
 ## Resources
 
-### Documentation
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Supabase Documentation](https://supabase.com/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [OpenAI API Documentation](https://platform.openai.com/docs)
+**External**: [Next.js](https://nextjs.org/docs), [Supabase](https://supabase.com/docs), [Tailwind](https://tailwindcss.com/docs), [OpenAI](https://platform.openai.com/docs)
 
-### Internal Documentation
-- `docs/design-system.md`: UI component guidelines
-- `docs/test-calculators.md`: Calculator testing procedures
-- `DEPLOYMENT_GUIDE.md`: Production deployment instructions
-- `INTEGRATION_GUIDE.md`: Third-party integration setup
+**Internal**: `docs/design-system.md`, `docs/test-calculators.md`, `DEPLOYMENT_GUIDE.md`, `INTEGRATION_GUIDE.md`
 
-This document serves as the comprehensive reference for EstimatePro development. Keep it updated as the project evolves.
+# Project Guide for Claude
+
+## Key commands
+
+- `npm run fmt` – format files with Prettier
+- `npm run lint` – lint code with ESLint (no warnings allowed)
+
+## Expectations
+
+1. All code must pass these commands.
+2. Commit messages follow Conventional Commits (hint: `feat: …`, `fix: …`).
+
+Claude: ALWAYS run `npm run fmt && npm run lint` after you edit or create files.

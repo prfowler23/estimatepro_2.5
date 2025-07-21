@@ -10,7 +10,8 @@ class SimpleCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
   private defaultTTL: number;
 
-  constructor(defaultTTL = 5 * 60 * 1000) { // 5 minutes default TTL
+  constructor(defaultTTL = 5 * 60 * 1000) {
+    // 5 minutes default TTL
     this.defaultTTL = defaultTTL;
   }
 
@@ -18,7 +19,7 @@ class SimpleCache<T> {
     const entry: CacheEntry<T> = {
       data,
       timestamp: Date.now(),
-      ttl: ttl || this.defaultTTL
+      ttl: ttl || this.defaultTTL,
     };
     this.cache.set(key, entry);
   }
@@ -57,6 +58,11 @@ class SimpleCache<T> {
       }
     }
   }
+
+  // Get all keys in the cache
+  keys(): string[] {
+    return Array.from(this.cache.keys());
+  }
 }
 
 // Different cache instances for different data types
@@ -69,31 +75,34 @@ export const searchCache = new SimpleCache<any>(2 * 60 * 1000); // 2 minutes
 // Cache keys generator
 export const getCacheKey = {
   estimate: (id: string) => `estimate:${id}`,
-  estimatesList: (limit: number, offset: number, userId?: string) => 
-    `estimates:${userId || 'all'}:${limit}:${offset}`,
-  estimateStats: (userId?: string) => `stats:${userId || 'all'}`,
-  search: (query: string, userId?: string) => `search:${userId || 'all'}:${query}`,
+  estimatesList: (limit: number, offset: number, userId?: string) =>
+    `estimates:${userId || "all"}:${limit}:${offset}`,
+  estimateStats: (userId?: string) => `stats:${userId || "all"}`,
+  search: (query: string, userId?: string) =>
+    `search:${userId || "all"}:${query}`,
   service: (serviceId: string) => `service:${serviceId}`,
-  calculation: (serviceType: string, params: string) => `calc:${serviceType}:${params}`,
-  analytics: (type: string, params?: string) => `analytics:${type}:${params || ''}`,
+  calculation: (serviceType: string, params: string) =>
+    `calc:${serviceType}:${params}`,
+  analytics: (type: string, params?: string) =>
+    `analytics:${type}:${params || ""}`,
 };
 
 // Cache wrapper for async functions
 export function cached<T extends any[], R>(
   cache: SimpleCache<R>,
   keyFn: (...args: T) => string,
-  ttl?: number
+  ttl?: number,
 ) {
-  return function(fn: (...args: T) => Promise<R>) {
-    return async function(...args: T): Promise<R> {
+  return function (fn: (...args: T) => Promise<R>) {
+    return async function (...args: T): Promise<R> {
       const key = keyFn(...args);
-      
+
       // Check cache first
       const cached = cache.get(key);
       if (cached) {
         return cached;
       }
-      
+
       // Execute function and cache result
       const result = await fn(...args);
       cache.set(key, result, ttl);
@@ -107,7 +116,8 @@ export class PersistentCache<T> {
   private storageKey: string;
   private ttl: number;
 
-  constructor(storageKey: string, ttl = 24 * 60 * 60 * 1000) { // 24 hours default
+  constructor(storageKey: string, ttl = 24 * 60 * 60 * 1000) {
+    // 24 hours default
     this.storageKey = storageKey;
     this.ttl = ttl;
   }
@@ -117,15 +127,15 @@ export class PersistentCache<T> {
       const entry = {
         data,
         timestamp: Date.now(),
-        ttl: this.ttl
+        ttl: this.ttl,
       };
-      
+
       const stored = this.getStoredData();
       stored[key] = entry;
-      
+
       localStorage.setItem(this.storageKey, JSON.stringify(stored));
     } catch (error) {
-      console.warn('Failed to store in localStorage:', error);
+      console.warn("Failed to store in localStorage:", error);
     }
   }
 
@@ -133,19 +143,19 @@ export class PersistentCache<T> {
     try {
       const stored = this.getStoredData();
       const entry = stored[key];
-      
+
       if (!entry) return null;
-      
+
       // Check if expired
       if (Date.now() - entry.timestamp > entry.ttl) {
         delete stored[key];
         localStorage.setItem(this.storageKey, JSON.stringify(stored));
         return null;
       }
-      
+
       return entry.data;
     } catch (error) {
-      console.warn('Failed to read from localStorage:', error);
+      console.warn("Failed to read from localStorage:", error);
       return null;
     }
   }
@@ -163,52 +173,62 @@ export class PersistentCache<T> {
     try {
       localStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.warn('Failed to clear localStorage:', error);
+      console.warn("Failed to clear localStorage:", error);
     }
   }
 }
 
 // Persistent cache instances
-export const userSettingsCache = new PersistentCache<any>('user-settings');
-export const recentEstimatesCache = new PersistentCache<any>('recent-estimates', 60 * 60 * 1000);
+export const userSettingsCache = new PersistentCache<any>("user-settings");
+export const recentEstimatesCache = new PersistentCache<any>(
+  "recent-estimates",
+  60 * 60 * 1000,
+);
 
 // Cache invalidation utilities
 export const invalidateCache = {
   estimate: (id: string) => {
     estimatesCache.delete(getCacheKey.estimate(id));
     // Also invalidate related caches
-    const keys = Array.from((estimatesCache as any).cache.keys());
-    keys.forEach(key => {
-      if (key.startsWith('estimates:')) {
+    const keys = estimatesCache.keys();
+    keys.forEach((key) => {
+      if (key.startsWith("estimates:")) {
         estimatesCache.delete(key);
       }
     });
   },
-  
+
+  estimationFlow: (id: string) => {
+    // Invalidate estimation flow cache
+    estimatesCache.delete(`flow:${id}`);
+    // Also invalidate related estimate cache
+    estimatesCache.delete(getCacheKey.estimate(id));
+  },
+
   allEstimates: () => {
-    const keys = Array.from((estimatesCache as any).cache.keys());
-    keys.forEach(key => {
-      if (key.startsWith('estimates:') || key.startsWith('stats:')) {
+    const keys = estimatesCache.keys();
+    keys.forEach((key) => {
+      if (key.startsWith("estimates:") || key.startsWith("stats:")) {
         estimatesCache.delete(key);
       }
     });
   },
-  
+
   search: () => {
     searchCache.clear();
   },
-  
+
   analytics: () => {
     analyticsCache.clear();
   },
-  
+
   all: () => {
     estimatesCache.clear();
     servicesCache.clear();
     calculationsCache.clear();
     analyticsCache.clear();
     searchCache.clear();
-  }
+  },
 };
 
 // Cleanup function to run periodically
@@ -221,7 +241,7 @@ export function cleanupCaches(): void {
 }
 
 // Auto-cleanup every 5 minutes
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   setInterval(cleanupCaches, 5 * 60 * 1000);
 }
 

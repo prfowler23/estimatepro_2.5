@@ -1,11 +1,14 @@
-'use client'
+"use client";
 
-import { ServiceCalculator } from '@/components/calculator/service-calculator'
+import { ServiceCalculator } from "@/components/calculator/service-calculator";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 export default function CalculatorPage() {
   return (
-    <div className='container mx-auto py-8'>
-      <ServiceCalculator />
-    </div>
-  )
+    <ProtectedRoute>
+      <div className="container mx-auto py-8">
+        <ServiceCalculator />
+      </div>
+    </ProtectedRoute>
+  );
 }

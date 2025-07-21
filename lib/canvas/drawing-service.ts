@@ -5,7 +5,7 @@ export interface Point {
 
 export interface Shape {
   id: string;
-  type: 'rectangle' | 'polygon';
+  type: "rectangle" | "polygon";
   points: Point[];
   area: number;
   label?: string;
@@ -28,13 +28,20 @@ export class DrawingService {
   private shapes: Shape[] = [];
   private measurements: Measurement[] = [];
   private colorIndex: number = 0;
-  private colors: string[] = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+  private colors: string[] = [
+    "#3B82F6",
+    "#EF4444",
+    "#10B981",
+    "#F59E0B",
+    "#8B5CF6",
+    "#EC4899",
+  ];
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext("2d");
     if (!context) {
-      throw new Error('Unable to get canvas 2D context');
+      throw new Error("Unable to get canvas 2D context");
     }
     this.ctx = context;
     this.scale = { pixelsPerFoot: 10 }; // Default scale
@@ -66,17 +73,17 @@ export class DrawingService {
       start,
       { x: end.x, y: start.y },
       end,
-      { x: start.x, y: end.y }
+      { x: start.x, y: end.y },
     ];
 
     const area = this.calculateArea(points);
     const shape: Shape = {
       id,
-      type: 'rectangle',
+      type: "rectangle",
       points,
       area,
       label: label || `Rectangle ${this.shapes.length + 1}`,
-      color
+      color,
     };
 
     this.shapes.push(shape);
@@ -89,7 +96,7 @@ export class DrawingService {
    */
   drawPolygon(points: Point[], label?: string): Shape {
     if (points.length < 3) {
-      throw new Error('Polygon must have at least 3 points');
+      throw new Error("Polygon must have at least 3 points");
     }
 
     const id = `poly_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -99,11 +106,11 @@ export class DrawingService {
     const area = this.calculateArea(points);
     const shape: Shape = {
       id,
-      type: 'polygon',
+      type: "polygon",
       points,
       area,
       label: label || `Polygon ${this.shapes.length + 1}`,
-      color
+      color,
     };
 
     this.shapes.push(shape);
@@ -126,7 +133,7 @@ export class DrawingService {
       end,
       distance,
       label: label || `${distance.toFixed(1)} ft`,
-      color
+      color,
     };
 
     this.measurements.push(measurement);
@@ -170,14 +177,17 @@ export class DrawingService {
    * Calculate the centroid of a polygon
    */
   calculateCentroid(points: Point[]): Point {
-    const sum = points.reduce((acc, point) => ({
-      x: acc.x + point.x,
-      y: acc.y + point.y
-    }), { x: 0, y: 0 });
+    const sum = points.reduce(
+      (acc, point) => ({
+        x: acc.x + point.x,
+        y: acc.y + point.y,
+      }),
+      { x: 0, y: 0 },
+    );
 
     return {
       x: sum.x / points.length,
-      y: sum.y / points.length
+      y: sum.y / points.length,
     };
   }
 
@@ -187,10 +197,10 @@ export class DrawingService {
   private renderShape(shape: Shape) {
     this.ctx.save();
     this.ctx.strokeStyle = shape.color;
-    this.ctx.fillStyle = shape.color + '20'; // Semi-transparent
+    this.ctx.fillStyle = shape.color + "20"; // Semi-transparent
     this.ctx.lineWidth = 2;
 
-    if (shape.type === 'rectangle' && shape.points.length >= 4) {
+    if (shape.type === "rectangle" && shape.points.length >= 4) {
       const [topLeft, topRight, bottomRight, bottomLeft] = shape.points;
       const width = topRight.x - topLeft.x;
       const height = bottomLeft.y - topLeft.y;
@@ -200,29 +210,21 @@ export class DrawingService {
 
       // Draw label
       this.ctx.fillStyle = shape.color;
-      this.ctx.font = 'bold 12px Arial';
-      this.ctx.fillText(
-        shape.label || '',
-        topLeft.x + 5,
-        topLeft.y - 5
-      );
+      this.ctx.font = "bold 12px Arial";
+      this.ctx.fillText(shape.label || "", topLeft.x + 5, topLeft.y - 5);
 
       // Draw area text in center
       const centerX = topLeft.x + width / 2;
       const centerY = topLeft.y + height / 2;
       this.ctx.fillStyle = shape.color;
-      this.ctx.font = '10px Arial';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText(
-        `${shape.area.toFixed(0)} sq ft`,
-        centerX,
-        centerY
-      );
-      this.ctx.textAlign = 'left';
-    } else if (shape.type === 'polygon') {
+      this.ctx.font = "10px Arial";
+      this.ctx.textAlign = "center";
+      this.ctx.fillText(`${shape.area.toFixed(0)} sq ft`, centerX, centerY);
+      this.ctx.textAlign = "left";
+    } else if (shape.type === "polygon") {
       this.ctx.beginPath();
       this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
-      shape.points.forEach(point => this.ctx.lineTo(point.x, point.y));
+      shape.points.forEach((point) => this.ctx.lineTo(point.x, point.y));
       this.ctx.closePath();
       this.ctx.fill();
       this.ctx.stroke();
@@ -230,12 +232,16 @@ export class DrawingService {
       // Draw label at centroid
       const centroid = this.calculateCentroid(shape.points);
       this.ctx.fillStyle = shape.color;
-      this.ctx.font = 'bold 12px Arial';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText(shape.label || '', centroid.x, centroid.y - 10);
-      this.ctx.font = '10px Arial';
-      this.ctx.fillText(`${shape.area.toFixed(0)} sq ft`, centroid.x, centroid.y + 5);
-      this.ctx.textAlign = 'left';
+      this.ctx.font = "bold 12px Arial";
+      this.ctx.textAlign = "center";
+      this.ctx.fillText(shape.label || "", centroid.x, centroid.y - 10);
+      this.ctx.font = "10px Arial";
+      this.ctx.fillText(
+        `${shape.area.toFixed(0)} sq ft`,
+        centroid.x,
+        centroid.y + 5,
+      );
+      this.ctx.textAlign = "left";
     }
 
     this.ctx.restore();
@@ -263,17 +269,17 @@ export class DrawingService {
     // Draw distance label at midpoint
     const midpoint = {
       x: (measurement.start.x + measurement.end.x) / 2,
-      y: (measurement.start.y + measurement.end.y) / 2
+      y: (measurement.start.y + measurement.end.y) / 2,
     };
 
     this.ctx.setLineDash([]);
     this.ctx.fillStyle = measurement.color;
-    this.ctx.font = 'bold 12px Arial';
-    this.ctx.textAlign = 'center';
+    this.ctx.font = "bold 12px Arial";
+    this.ctx.textAlign = "center";
     this.ctx.fillRect(midpoint.x - 25, midpoint.y - 15, 50, 20);
-    this.ctx.fillStyle = 'white';
-    this.ctx.fillText(measurement.label || '', midpoint.x, midpoint.y - 2);
-    this.ctx.textAlign = 'left';
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(measurement.label || "", midpoint.x, midpoint.y - 2);
+    this.ctx.textAlign = "left";
 
     this.ctx.restore();
   }
@@ -295,12 +301,12 @@ export class DrawingService {
     this.ctx.moveTo(from.x, from.y);
     this.ctx.lineTo(
       from.x + arrowLength * Math.cos(angle - arrowAngle),
-      from.y + arrowLength * Math.sin(angle - arrowAngle)
+      from.y + arrowLength * Math.sin(angle - arrowAngle),
     );
     this.ctx.moveTo(from.x, from.y);
     this.ctx.lineTo(
       from.x + arrowLength * Math.cos(angle + arrowAngle),
-      from.y + arrowLength * Math.sin(angle + arrowAngle)
+      from.y + arrowLength * Math.sin(angle + arrowAngle),
     );
     this.ctx.stroke();
 
@@ -312,8 +318,10 @@ export class DrawingService {
    */
   redrawAll() {
     this.clearCanvas();
-    this.shapes.forEach(shape => this.renderShape(shape));
-    this.measurements.forEach(measurement => this.renderMeasurement(measurement));
+    this.shapes.forEach((shape) => this.renderShape(shape));
+    this.measurements.forEach((measurement) =>
+      this.renderMeasurement(measurement),
+    );
   }
 
   /**
@@ -337,7 +345,7 @@ export class DrawingService {
    * Remove a specific shape
    */
   removeShape(shapeId: string) {
-    this.shapes = this.shapes.filter(shape => shape.id !== shapeId);
+    this.shapes = this.shapes.filter((shape) => shape.id !== shapeId);
     this.redrawAll();
   }
 
@@ -345,7 +353,9 @@ export class DrawingService {
    * Remove a specific measurement
    */
   removeMeasurement(measurementId: string) {
-    this.measurements = this.measurements.filter(measurement => measurement.id !== measurementId);
+    this.measurements = this.measurements.filter(
+      (measurement) => measurement.id !== measurementId,
+    );
     this.redrawAll();
   }
 
@@ -374,7 +384,7 @@ export class DrawingService {
    * Export canvas as base64 image
    */
   exportAsImage(): string {
-    return this.canvas.toDataURL('image/png');
+    return this.canvas.toDataURL("image/png");
   }
 
   /**
@@ -408,7 +418,7 @@ export class DrawingService {
   getCanvasSize(): { width: number; height: number } {
     return {
       width: this.canvas.width,
-      height: this.canvas.height
+      height: this.canvas.height,
     };
   }
 
@@ -416,7 +426,7 @@ export class DrawingService {
    * Update shape label
    */
   updateShapeLabel(shapeId: string, label: string) {
-    const shape = this.shapes.find(s => s.id === shapeId);
+    const shape = this.shapes.find((s) => s.id === shapeId);
     if (shape) {
       shape.label = label;
       this.redrawAll();
@@ -427,7 +437,7 @@ export class DrawingService {
    * Update measurement label
    */
   updateMeasurementLabel(measurementId: string, label: string) {
-    const measurement = this.measurements.find(m => m.id === measurementId);
+    const measurement = this.measurements.find((m) => m.id === measurementId);
     if (measurement) {
       measurement.label = label;
       this.redrawAll();

@@ -1,112 +1,116 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { authenticateRequest } from '@/lib/auth/server'
-import { createServerSupabaseClient } from '@/lib/auth/server'
+import { NextRequest } from "next/server";
+import { getHandler, postHandler } from "@/lib/api/api-handler";
+import { customerSchema } from "@/lib/schemas/api-validation";
+import { createServerSupabaseClient } from "@/lib/auth/server";
+import { z } from "zod";
 
-export async function POST(request: NextRequest) {
-  try {
-    // Authenticate request
-    const { user, error: authError } = await authenticateRequest(request)
-    if (authError || !user) {
-      return NextResponse.json({ error: authError || 'Unauthorized' }, { status: 401 })
+// Extended customer schema for API
+const createCustomerSchema = customerSchema.extend({
+  company_name: z.string().optional(), // Match database field
+});
+
+async function handleCreateCustomer(
+  data: z.infer<typeof createCustomerSchema>,
+  context: any,
+) {
+  const supabase = createServerSupabaseClient();
+
+  // Check if customer already exists by email
+  if (data.email) {
+    const { data: existingCustomer } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("email", data.email)
+      .single();
+
+    if (existingCustomer) {
+      throw new Error("Customer with this email already exists");
     }
-
-    const supabase = createServerSupabaseClient()
-    const body = await request.json()
-
-    // Validate required fields
-    if (!body.name) {
-      return NextResponse.json(
-        { error: 'Customer name is required' },
-        { status: 400 }
-      )
-    }
-
-    // Check if customer already exists by email
-    if (body.email) {
-      const { data: existingCustomer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', body.email)
-        .single()
-
-      if (existingCustomer) {
-        return NextResponse.json(
-          { error: 'Customer with this email already exists' },
-          { status: 409 }
-        )
-      }
-    }
-
-    // Create new customer
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .insert({
-        name: body.name,
-        email: body.email,
-        phone: body.phone,
-        company_name: body.company_name
-      })
-      .select()
-      .single()
-
-    if (customerError) {
-      console.error('Error creating customer:', customerError)
-      return NextResponse.json(
-        { error: 'Failed to create customer' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ customer }, { status: 201 })
-  } catch (error) {
-    console.error('Customer creation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
   }
+
+  // Create new customer
+  const { data: customer, error: customerError } = await supabase
+    .from("customers")
+    .insert({
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      company_name: data.company || data.company_name,
+    })
+    .select()
+    .single();
+
+  if (customerError) {
+    throw new Error(`Failed to create customer: ${customerError.message}`);
+  }
+
+  return { customer };
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    // Authenticate request
-    const { user, error: authError } = await authenticateRequest(request)
-    if (authError || !user) {
-      return NextResponse.json({ error: authError || 'Unauthorized' }, { status: 401 })
-    }
+// Query parameters schema for customers
+const getCustomersQuerySchema = z.object({
+  search: z.string().optional(),
+  limit: z.number().min(1).max(100).default(50),
+  offset: z.number().min(0).default(0),
+});
 
-    const supabase = createServerSupabaseClient()
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
-    const limit = parseInt(searchParams.get('limit') || '50')
+async function handleGetCustomers(context: any) {
+  const { request } = context;
+  const supabase = createServerSupabaseClient();
 
-    let query = supabase
-      .from('customers')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit)
+  // Get and validate query parameters
+  const searchParams = request.nextUrl.searchParams;
+  const queryParams = {
+    search: searchParams.get("search") || undefined,
+    limit: parseInt(searchParams.get("limit") || "50"),
+    offset: parseInt(searchParams.get("offset") || "0"),
+  };
 
-    // Add search functionality
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,company_name.ilike.%${search}%`)
-    }
-
-    const { data: customers, error } = await query
-
-    if (error) {
-      console.error('Error fetching customers:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch customers' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ customers })
-  } catch (error) {
-    console.error('Customers fetch error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+  const validation = getCustomersQuerySchema.safeParse(queryParams);
+  if (!validation.success) {
+    throw new Error(`Invalid query parameters: ${validation.error.message}`);
   }
+
+  const { search, limit, offset } = validation.data;
+
+  let query = supabase
+    .from("customers")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  // Add search functionality
+  if (search) {
+    query = query.or(
+      `name.ilike.%${search}%,email.ilike.%${search}%,company_name.ilike.%${search}%`,
+    );
+  }
+
+  const { data: customers, error, count } = await query;
+
+  if (error) {
+    throw new Error(`Failed to fetch customers: ${error.message}`);
+  }
+
+  return {
+    customers: customers || [],
+    total: count || 0,
+    hasMore: offset + limit < (count || 0),
+    limit,
+    offset,
+  };
 }
+
+// Standardized route handlers
+export const GET = (request: NextRequest) =>
+  getHandler(request, handleGetCustomers, {
+    requireAuth: true,
+    auditLog: true,
+  });
+
+export const POST = (request: NextRequest) =>
+  postHandler(request, createCustomerSchema, handleCreateCustomer, {
+    requireAuth: true,
+    rateLimiter: "general",
+    auditLog: true,
+  });

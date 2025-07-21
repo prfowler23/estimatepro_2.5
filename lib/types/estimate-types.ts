@@ -25,7 +25,7 @@ export interface ServiceBreakdownItem {
   quantity: number;
   unitPrice: number;
   total: number;
-  category: 'labor' | 'materials' | 'equipment' | 'overhead';
+  category: "labor" | "materials" | "equipment" | "overhead";
 }
 
 export interface MaterialItem {
@@ -38,9 +38,10 @@ export interface MaterialItem {
 }
 
 export interface RiskFactor {
-  type: 'height' | 'access' | 'weather' | 'complexity' | 'timeline';
-  level: 'low' | 'medium' | 'high';
+  type: "height" | "access" | "weather" | "complexity" | "timeline";
+  level: "low" | "medium" | "high";
   multiplier: number;
+  factor?: number; // Additional risk factor for calculations
   description: string;
 }
 
@@ -48,32 +49,35 @@ export interface RiskFactor {
 export interface BaseServiceFormData {
   area: number;
   buildingHeight: number;
-  accessType: 'ladder' | 'lift' | 'scaffold' | 'rope';
+  accessType: "ladder" | "lift" | "scaffold" | "rope";
   timeConstraints?: string;
   specialRequirements?: string;
+  glassArea?: number; // For services that need glass area calculations
 }
 
 export interface WindowCleaningFormData extends BaseServiceFormData {
-  windowType: 'standard' | 'tinted' | 'tempered';
+  windowType: "standard" | "tinted" | "tempered";
   interiorCleaning: boolean;
   screenCleaning: boolean;
   sillCleaning: boolean;
-  frequency: 'one-time' | 'monthly' | 'quarterly' | 'annually';
+  frequency: "one-time" | "monthly" | "quarterly" | "annually";
 }
 
 export interface PressureWashingFormData extends BaseServiceFormData {
-  surfaceType: 'concrete' | 'brick' | 'siding' | 'metal';
+  surfaceType: "concrete" | "brick" | "siding" | "metal";
   pressure: number;
   detergentRequired: boolean;
   waterRecovery: boolean;
   environmentalConcerns: boolean;
+  requiresSealing?: boolean; // For pressure wash & seal services
 }
 
 export interface GlassRestorationFormData extends BaseServiceFormData {
-  damageType: 'mineral-deposits' | 'scratches' | 'etching' | 'staining';
-  severityLevel: 'light' | 'moderate' | 'heavy';
-  glassType: 'standard' | 'tempered' | 'laminated' | 'low-e';
-  treatmentMethod: 'chemical' | 'mechanical' | 'combination';
+  damageType: "mineral-deposits" | "scratches" | "etching" | "staining";
+  severityLevel: "light" | "moderate" | "heavy";
+  damageLevel: "light" | "moderate" | "heavy"; // Alternative property name for backward compatibility
+  glassType: "standard" | "tempered" | "laminated" | "low-e";
+  treatmentMethod: "chemical" | "mechanical" | "combination";
 }
 
 // AI extraction types
@@ -92,10 +96,19 @@ export interface AIExtractedData {
     floors?: number;
     timeline?: string;
     budget?: string;
+    location?: string;
+    specialRequirements?: string[];
+  };
+  timeline?: {
+    requestedDate?: string;
+    deadline?: string;
+    urgency?: "urgent" | "flexible" | "normal";
+    flexibility?: "some" | "flexible" | "none";
   };
   urgencyScore: number;
   confidence: number;
   extractionDate: string;
+  redFlags?: string[];
 }
 
 // Enhanced AI analysis types
@@ -115,7 +128,7 @@ export interface RiskAssessmentResult {
   riskFactors: Array<{
     category: string;
     risk: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: "low" | "medium" | "high" | "critical";
     mitigation: string;
   }>;
   recommendations: string[];
@@ -144,7 +157,7 @@ export interface AutoQuoteResult {
 }
 
 export interface FollowUpPlan {
-  strategy: 'aggressive' | 'moderate' | 'gentle' | 'minimal';
+  strategy: "aggressive" | "moderate" | "gentle" | "minimal";
   timeline: FollowUpAction[];
   personalization: {
     tone: string;
@@ -157,9 +170,9 @@ export interface FollowUpPlan {
 
 export interface FollowUpAction {
   id: string;
-  type: 'email' | 'call' | 'text' | 'proposal_update' | 'meeting_request';
+  type: "email" | "call" | "text" | "proposal_update" | "meeting_request";
   scheduledDate: Date;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: "low" | "medium" | "high" | "urgent";
   content: {
     subject?: string;
     body: string;
@@ -189,6 +202,10 @@ export interface UploadedFile {
   url: string;
   uploadedAt: Date;
   processedAt?: Date;
+  file?: File; // Original File object for processing
+  status?: "pending" | "analyzing" | "complete" | "error"; // Processing status
+  errorMessage?: string; // Error message for failed uploads
+  analysis?: any; // AI analysis results
   metadata?: {
     width?: number;
     height?: number;
@@ -201,7 +218,7 @@ export interface UploadedFile {
 export interface AIAnalysisResult {
   id: string;
   fileId: string;
-  analysisType: 'facade' | 'interior' | 'scope' | 'damage-assessment';
+  analysisType: "facade" | "interior" | "scope" | "damage-assessment";
   confidence: number;
   findings: {
     surfaceArea?: number;
@@ -219,9 +236,9 @@ export interface AIAnalysisResult {
 export interface WorkArea {
   id: string;
   name: string;
-  type: 'exterior' | 'interior' | 'mixed';
+  type: "exterior" | "interior" | "mixed";
   geometry: {
-    type: 'rectangle' | 'polygon' | 'circle';
+    type: "rectangle" | "polygon" | "circle";
     coordinates: number[][];
     area: number;
     perimeter: number;
@@ -229,14 +246,20 @@ export interface WorkArea {
   surfaces: Surface[];
   accessRequirements: string[];
   riskFactors: RiskFactor[];
+  measurements?: {
+    totalArea: number;
+    linearFeet: number;
+    windowCount: number;
+    doorCount: number;
+  };
 }
 
 export interface Surface {
   id: string;
-  type: 'wall' | 'window' | 'door' | 'roof' | 'floor';
+  type: "wall" | "window" | "door" | "roof" | "floor";
   material: string;
   area: number;
-  condition: 'excellent' | 'good' | 'fair' | 'poor';
+  condition: "excellent" | "good" | "fair" | "poor";
   cleaningRequirements: string[];
 }
 
@@ -244,11 +267,11 @@ export interface Surface {
 export interface Measurement {
   id: string;
   workAreaId: string;
-  type: 'length' | 'area' | 'volume' | 'count';
+  type: "length" | "area" | "volume" | "count";
   value: number;
   unit: string;
   accuracy: number;
-  method: 'manual' | 'photo-analysis' | 'blueprint' | 'laser';
+  method: "manual" | "photo-analysis" | "blueprint" | "laser";
   takenAt: Date;
   notes?: string;
 }
@@ -265,9 +288,10 @@ export interface TakeoffData {
     accessDifficulty: number;
   };
   accuracy: number;
-  method: 'manual' | 'assisted' | 'automatic';
+  method: "manual" | "assisted" | "automatic";
   validatedAt?: Date;
   validator?: string;
+  notes?: string; // Required by workflow service
 }
 
 // Weather analysis
@@ -288,12 +312,12 @@ export interface WeatherForecast {
   temperature: {
     min: number;
     max: number;
-    unit: 'celsius' | 'fahrenheit';
+    unit: "celsius" | "fahrenheit";
   };
   precipitation: {
     probability: number;
     amount: number;
-    type: 'rain' | 'snow' | 'sleet';
+    type: "rain" | "snow" | "sleet";
   };
   wind: {
     speed: number;
@@ -311,7 +335,7 @@ export interface WorkableWindow {
 }
 
 export interface SeasonalFactor {
-  season: 'spring' | 'summer' | 'fall' | 'winter';
+  season: "spring" | "summer" | "fall" | "winter";
   multiplier: number;
   considerations: string[];
 }
@@ -320,8 +344,8 @@ export interface SeasonalFactor {
 export interface EquipmentCost {
   id: string;
   name: string;
-  type: 'rental' | 'purchase' | 'consumable';
-  category: 'cleaning' | 'access' | 'safety' | 'transport';
+  type: "rental" | "purchase" | "consumable";
+  category: "cleaning" | "access" | "safety" | "transport";
   dailyCost: number;
   setupCost?: number;
   deliveryCost?: number;
@@ -332,7 +356,7 @@ export interface EquipmentCost {
 export interface MaterialCost {
   id: string;
   name: string;
-  category: 'chemicals' | 'supplies' | 'consumables';
+  category: "chemicals" | "supplies" | "consumables";
   quantity: number;
   unit: string;
   unitCost: number;
@@ -359,7 +383,7 @@ export interface PricingCalculation {
 export interface CompetitiveAnalysis {
   marketAverage: number;
   competitorPrices: number[];
-  positionInMarket: 'below' | 'average' | 'above';
+  positionInMarket: "below" | "average" | "above";
   recommendation: string;
 }
 
@@ -374,7 +398,7 @@ export interface ProfitabilityAnalysis {
 // Manual overrides
 export interface ManualOverride {
   id: string;
-  type: 'price' | 'time' | 'materials' | 'labor';
+  type: "price" | "time" | "materials" | "labor";
   originalValue: number;
   overrideValue: number;
   reason: string;
@@ -398,7 +422,7 @@ export interface FinalEstimate {
   terms: ContractTerms;
   validUntil: Date;
   approval: {
-    status: 'pending' | 'approved' | 'rejected';
+    status: "pending" | "approved" | "rejected";
     approvedBy?: string;
     approvedAt?: Date;
     comments?: string;
@@ -417,6 +441,9 @@ export interface ServiceEstimate {
   endDate?: Date;
   dependencies: string[];
   notes?: string;
+  // Additional properties required by estimate service
+  calculationResult?: ServiceCalculationResult;
+  formData?: any;
 }
 
 export interface ProjectTimeline {
@@ -449,7 +476,7 @@ export interface Milestone {
 }
 
 export interface ResourceRequirement {
-  type: 'labor' | 'equipment' | 'materials';
+  type: "labor" | "equipment" | "materials";
   name: string;
   quantity: number;
   startDate: Date;
@@ -475,70 +502,248 @@ export interface PaymentSchedule {
 }
 
 export interface Warranty {
-  type: 'workmanship' | 'materials' | 'equipment';
+  type: "workmanship" | "materials" | "equipment";
   duration: number;
-  unit: 'days' | 'months' | 'years';
+  unit: "days" | "months" | "years";
   coverage: string;
   limitations: string[];
 }
 
 // Union types for form data
-export type ServiceFormData = 
+export type ServiceFormData =
   | WindowCleaningFormData
   | PressureWashingFormData
   | GlassRestorationFormData
   | BaseServiceFormData;
 
 // Helper types
-export type ServiceType = 
-  | 'window-cleaning'
-  | 'pressure-washing'
-  | 'soft-washing'
-  | 'biofilm-removal'
-  | 'glass-restoration'
-  | 'frame-restoration'
-  | 'high-dusting'
-  | 'final-clean'
-  | 'granite-reconditioning'
-  | 'pressure-wash-seal'
-  | 'parking-deck';
+// Service ID type - using short codes as used in UI
+export type ServiceType =
+  | "WC" // Window Cleaning
+  | "PW" // Pressure Washing
+  | "SW" // Soft Washing
+  | "BF" // Biofilm Removal
+  | "GR" // Glass Restoration
+  | "FR" // Frame Restoration
+  | "HD" // High Dusting
+  | "FC" // Final Clean
+  | "GRC" // Granite Reconditioning
+  | "PWS" // Pressure Wash & Seal
+  | "PD"; // Parking Deck
 
-export type EstimateStatus = 'draft' | 'review' | 'approved' | 'sent' | 'accepted' | 'rejected';
-
-export type UserRole = 'admin' | 'sales' | 'estimator' | 'viewer';
-
-// Export all types for easy importing
-export type {
-  ServiceCalculationResult,
-  ServiceBreakdownItem,
-  MaterialItem,
-  RiskFactor,
-  BaseServiceFormData,
-  AIExtractedData,
-  ServiceDependency,
-  UploadedFile,
-  AIAnalysisResult,
-  WorkArea,
-  Surface,
-  Measurement,
-  TakeoffData,
-  WeatherAnalysis,
-  WeatherForecast,
-  WorkableWindow,
-  SeasonalFactor,
-  EquipmentCost,
-  MaterialCost,
-  PricingCalculation,
-  CompetitiveAnalysis,
-  ProfitabilityAnalysis,
-  ManualOverride,
-  FinalEstimate,
-  ServiceEstimate,
-  ProjectTimeline,
-  ProjectPhase,
-  Milestone,
-  ResourceRequirement,
-  ContractTerms,
-  PaymentSchedule,
-  Warranty
+// Service mapping for display names and metadata
+export const SERVICE_METADATA: Record<
+  ServiceType,
+  {
+    name: string;
+    fullName: string;
+    basePrice: string;
+    category: string;
+  }
+> = {
+  WC: {
+    name: "Window Cleaning",
+    fullName: "window-cleaning",
+    basePrice: "$2-4/window",
+    category: "cleaning",
+  },
+  PW: {
+    name: "Pressure Washing",
+    fullName: "pressure-washing",
+    basePrice: "$0.15-0.50/sq ft",
+    category: "cleaning",
+  },
+  SW: {
+    name: "Soft Washing",
+    fullName: "soft-washing",
+    basePrice: "$0.45/sq ft",
+    category: "cleaning",
+  },
+  BF: {
+    name: "Biofilm Removal",
+    fullName: "biofilm-removal",
+    basePrice: "$0.75/sq ft",
+    category: "specialty",
+  },
+  GR: {
+    name: "Glass Restoration",
+    fullName: "glass-restoration",
+    basePrice: "$5-35/window",
+    category: "restoration",
+  },
+  FR: {
+    name: "Frame Restoration",
+    fullName: "frame-restoration",
+    basePrice: "$25/frame",
+    category: "restoration",
+  },
+  HD: {
+    name: "High Dusting",
+    fullName: "high-dusting",
+    basePrice: "$0.37-0.75/sq ft",
+    category: "cleaning",
+  },
+  FC: {
+    name: "Final Clean",
+    fullName: "final-clean",
+    basePrice: "$70/hour",
+    category: "cleaning",
+  },
+  GRC: {
+    name: "Granite Reconditioning",
+    fullName: "granite-reconditioning",
+    basePrice: "$1.75/sq ft",
+    category: "specialty",
+  },
+  PWS: {
+    name: "Pressure Wash & Seal",
+    fullName: "pressure-wash-seal",
+    basePrice: "$1.25-1.35/sq ft",
+    category: "cleaning",
+  },
+  PD: {
+    name: "Parking Deck",
+    fullName: "parking-deck",
+    basePrice: "$16-23/space",
+    category: "specialty",
+  },
 };
+
+export type EstimateStatus =
+  | "draft"
+  | "review"
+  | "approved"
+  | "sent"
+  | "accepted"
+  | "rejected";
+
+export type UserRole = "admin" | "sales" | "estimator" | "viewer";
+
+// --- Guided Estimation Flow Step Data Types ---
+
+export interface InitialContactData {
+  contactMethod: "email" | "meeting" | "phone" | "walkin";
+  contactDate?: string; // ISO string
+  initialNotes?: string;
+  originalContent?: string; // Raw content for AI extraction
+  aiExtractedData?: AIExtractedData;
+}
+
+export interface ScopeDetailsData {
+  selectedServices: ServiceType[];
+  serviceDependencies?: ServiceDependency[];
+  serviceOrder?: string[];
+  autoAddedServices?: string[];
+  overrides?: Record<string, { price?: number; reason?: string }>;
+  scopeNotes?: string;
+  accessRestrictions?: string[];
+  specialRequirements?: string[];
+}
+
+export interface FilesPhotosData {
+  files: UploadedFile[];
+  uploadedFiles?: UploadedFile[]; // Backward compatibility
+  aiAnalysisResults?: AIAnalysisResult[];
+  analysisComplete?: boolean;
+  summary?: any;
+}
+
+export interface AreaOfWorkData {
+  workAreas: WorkArea[];
+  measurements?: Measurement[];
+  scale?: number | { pixelsPerFoot: number }; // Required by AreaOfWork component
+  totalArea?: number;
+  backgroundImage?: string;
+  imageName?: string;
+  notes?: string;
+}
+
+export interface TakeoffStepData {
+  takeoffData: TakeoffData;
+  measurements?: Measurement[];
+}
+
+export interface DurationStepData {
+  estimatedDuration: number;
+  weatherAnalysis?: WeatherAnalysis;
+  weatherFactors?: any; // Required by workflow templates
+  schedulingConstraints?: any; // Required by workflow templates
+  serviceDurations?: any;
+  timeline?: any;
+  manualOverrides?: Record<string, number>;
+  projectStartDate?: string;
+}
+
+export interface ExpensesStepData {
+  equipment: any[];
+  materials: any[];
+  labor: any[];
+  otherCosts: any[];
+  totalCosts: {
+    equipment: number;
+    materials: number;
+    labor: number;
+    other: number;
+    grand: number;
+  };
+  margins: {
+    equipment: number;
+    materials: number;
+    labor: number;
+    other: number;
+  };
+  markedUpTotals?: {
+    equipment: number;
+    materials: number;
+    labor: number;
+    other: number;
+    grand: number;
+  };
+  other?: number; // For compatibility with Summary component
+  // Backward compatibility
+  equipmentCosts?: EquipmentCost[];
+  materialCosts?: MaterialCost[];
+  laborCosts?: any[];
+}
+
+export interface PricingStepData {
+  pricingCalculations: PricingCalculation;
+  manualOverrides?: ManualOverride[];
+  basePrice?: number;
+  finalPrice?: number;
+  price?: number; // Additional price field
+  strategy?: any;
+  winProbability?: number;
+  adjustments?: any[];
+  riskFactors?: any[];
+  confidence?: number;
+}
+
+export interface SummaryStepData {
+  finalEstimate: FinalEstimate;
+  proposalGenerated: boolean;
+  customer?: any;
+  pricing?: any;
+  timeline?: any;
+  costs?: any;
+  services?: any[];
+  proposal?: any;
+  status?: string;
+}
+
+// Unified GuidedFlowData interface
+export interface GuidedFlowData {
+  initialContact?: InitialContactData;
+  scopeDetails?: ScopeDetailsData;
+  filesPhotos?: FilesPhotosData;
+  areaOfWork?: AreaOfWorkData;
+  takeoff?: TakeoffStepData;
+  duration?: DurationStepData;
+  expenses?: ExpensesStepData;
+  pricing?: PricingStepData;
+  summary?: SummaryStepData;
+}
+
+// Main estimate interfaces for backward compatibility
+export interface Estimate extends FinalEstimate {}
+export interface EstimateService extends ServiceEstimate {}

@@ -1,0 +1,84 @@
+{
+  "functions": {
+    "app/api/ai/enhanced-photo-analysis/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/ai/auto-estimate/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/ai/competitive-intelligence/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/ai/extract-documents/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/ai/risk-assessment/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-RateLimit-Limit",
+          "value": "100"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/health",
+      "destination": "/api/health"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "/dashboard",
+      "permanent": false
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}

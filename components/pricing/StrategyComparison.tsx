@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { 
-  CheckCircle2, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Target, 
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import {
+  CheckCircle2,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Target,
   AlertTriangle,
   Info,
   Star,
   BarChart3,
-  Zap
-} from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+  Zap,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PricingAdjustment {
   reason: string;
@@ -34,7 +34,7 @@ interface PricingStrategy {
   winProbability: number;
   expectedValue?: number;
   margin?: number;
-  riskLevel?: 'low' | 'medium' | 'high';
+  riskLevel?: "low" | "medium" | "high";
   recommended?: boolean;
   description?: string;
 }
@@ -52,36 +52,48 @@ export function StrategyComparison({
   currentStrategy,
   onSelectStrategy,
   baseCost = 0,
-  marketBenchmark
+  marketBenchmark,
 }: StrategyComparisonProps) {
-  const [sortBy, setSortBy] = useState<'price' | 'winProbability' | 'expectedValue'>('expectedValue');
+  const [sortBy, setSortBy] = useState<
+    "price" | "winProbability" | "expectedValue"
+  >("expectedValue");
   const [showDetails, setShowDetails] = useState<string | null>(null);
 
   // Calculate enhanced metrics for each strategy
-  const enhancedStrategies = strategies.map(strategy => {
+  const enhancedStrategies = strategies.map((strategy) => {
     const calculatedBaseCost = strategy.baseCost || baseCost;
-    const margin = calculatedBaseCost > 0 ? ((strategy.price - calculatedBaseCost) / strategy.price) * 100 : 0;
-    const expectedValue = strategy.expectedValue || (strategy.price * strategy.winProbability);
-    const riskLevel = strategy.winProbability > 0.7 ? 'low' : 
-                     strategy.winProbability > 0.4 ? 'medium' : 'high';
+    const margin =
+      calculatedBaseCost > 0
+        ? ((strategy.price - calculatedBaseCost) / strategy.price) * 100
+        : 0;
+    const expectedValue =
+      strategy.expectedValue || strategy.price * strategy.winProbability;
+    const riskLevel =
+      strategy.winProbability > 0.7
+        ? "low"
+        : strategy.winProbability > 0.4
+          ? "medium"
+          : "high";
 
     return {
       ...strategy,
       margin,
       expectedValue,
       riskLevel,
-      marketPosition: marketBenchmark ? (strategy.price / marketBenchmark - 1) * 100 : 0
+      marketPosition: marketBenchmark
+        ? (strategy.price / marketBenchmark - 1) * 100
+        : 0,
     };
   });
 
   // Sort strategies
   const sortedStrategies = [...enhancedStrategies].sort((a, b) => {
     switch (sortBy) {
-      case 'price':
+      case "price":
         return b.price - a.price;
-      case 'winProbability':
+      case "winProbability":
         return b.winProbability - a.winProbability;
-      case 'expectedValue':
+      case "expectedValue":
         return b.expectedValue - a.expectedValue;
       default:
         return b.expectedValue - a.expectedValue;
@@ -90,18 +102,26 @@ export function StrategyComparison({
 
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
-      case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case "low":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "medium":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "high":
+        return "text-red-600 bg-red-50 border-red-200";
+      default:
+        return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
 
   const getStrategyIcon = (strategyName: string) => {
-    if (strategyName.toLowerCase().includes('competitive')) return <Target className="w-4 h-4" />;
-    if (strategyName.toLowerCase().includes('premium')) return <Star className="w-4 h-4" />;
-    if (strategyName.toLowerCase().includes('value')) return <TrendingUp className="w-4 h-4" />;
-    if (strategyName.toLowerCase().includes('penetration')) return <Zap className="w-4 h-4" />;
+    if (strategyName.toLowerCase().includes("competitive"))
+      return <Target className="w-4 h-4" />;
+    if (strategyName.toLowerCase().includes("premium"))
+      return <Star className="w-4 h-4" />;
+    if (strategyName.toLowerCase().includes("value"))
+      return <TrendingUp className="w-4 h-4" />;
+    if (strategyName.toLowerCase().includes("penetration"))
+      return <Zap className="w-4 h-4" />;
     return <BarChart3 className="w-4 h-4" />;
   };
 
@@ -115,23 +135,23 @@ export function StrategyComparison({
           </CardTitle>
           <div className="flex gap-2">
             <Button
-              variant={sortBy === 'expectedValue' ? 'default' : 'outline'}
+              variant={sortBy === "expectedValue" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy('expectedValue')}
+              onClick={() => setSortBy("expectedValue")}
             >
               Expected Value
             </Button>
             <Button
-              variant={sortBy === 'winProbability' ? 'default' : 'outline'}
+              variant={sortBy === "winProbability" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy('winProbability')}
+              onClick={() => setSortBy("winProbability")}
             >
               Win Rate
             </Button>
             <Button
-              variant={sortBy === 'price' ? 'default' : 'outline'}
+              variant={sortBy === "price" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy('price')}
+              onClick={() => setSortBy("price")}
             >
               Price
             </Button>
@@ -145,21 +165,30 @@ export function StrategyComparison({
           <div className="text-center">
             <p className="text-sm text-gray-600">Price Range</p>
             <p className="font-bold">
-              ${Math.min(...strategies.map(s => s.price)).toLocaleString()} - 
-              ${Math.max(...strategies.map(s => s.price)).toLocaleString()}
+              ${Math.min(...strategies.map((s) => s.price)).toLocaleString()} -
+              ${Math.max(...strategies.map((s) => s.price)).toLocaleString()}
             </p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600">Win Rate Range</p>
             <p className="font-bold">
-              {(Math.min(...strategies.map(s => s.winProbability)) * 100).toFixed(1)}% - 
-              {(Math.max(...strategies.map(s => s.winProbability)) * 100).toFixed(1)}%
+              {(
+                Math.min(...strategies.map((s) => s.winProbability)) * 100
+              ).toFixed(1)}
+              % -
+              {(
+                Math.max(...strategies.map((s) => s.winProbability)) * 100
+              ).toFixed(1)}
+              %
             </p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600">Best Expected Value</p>
             <p className="font-bold text-green-600">
-              ${Math.max(...enhancedStrategies.map(s => s.expectedValue)).toLocaleString()}
+              $
+              {Math.max(
+                ...enhancedStrategies.map((s) => s.expectedValue),
+              ).toLocaleString()}
             </p>
           </div>
           <div className="text-center">
@@ -173,15 +202,15 @@ export function StrategyComparison({
           {sortedStrategies.map((strategy, index) => {
             const isSelected = strategy.name === currentStrategy.name;
             const isRecommended = strategy.recommended || index === 0; // First in sorted list or explicitly recommended
-            
+
             return (
               <Card
                 key={strategy.name}
                 className={`cursor-pointer transition-all hover:shadow-md ${
-                  isSelected 
-                    ? 'border-blue-500 bg-blue-50 shadow-md' 
-                    : 'border-gray-200 hover:border-gray-300'
-                } ${isRecommended ? 'ring-2 ring-green-200' : ''}`}
+                  isSelected
+                    ? "border-blue-500 bg-blue-50 shadow-md"
+                    : "border-gray-200 hover:border-gray-300"
+                } ${isRecommended ? "ring-2 ring-green-200" : ""}`}
                 onClick={() => onSelectStrategy(strategy as any)}
               >
                 <CardContent className="p-6">
@@ -191,7 +220,9 @@ export function StrategyComparison({
                       {getStrategyIcon(strategy.name)}
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-lg">{strategy.name}</h4>
+                          <h4 className="font-semibold text-lg">
+                            {strategy.name}
+                          </h4>
                           {isSelected && (
                             <Badge className="bg-blue-600">
                               <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -206,11 +237,13 @@ export function StrategyComparison({
                           )}
                         </div>
                         {strategy.description && (
-                          <p className="text-sm text-gray-600 mt-1">{strategy.description}</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {strategy.description}
+                          </p>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="text-right">
                       <p className="text-3xl font-bold text-blue-600">
                         ${strategy.price.toLocaleString()}
@@ -219,7 +252,10 @@ export function StrategyComparison({
                         <span className="text-sm text-gray-600">
                           {strategy.margin.toFixed(1)}% margin
                         </span>
-                        <Badge variant="outline" className={getRiskColor(strategy.riskLevel)}>
+                        <Badge
+                          variant="outline"
+                          className={getRiskColor(strategy.riskLevel)}
+                        >
                           {strategy.riskLevel} risk
                         </Badge>
                       </div>
@@ -235,7 +271,7 @@ export function StrategyComparison({
                         {(strategy.winProbability * 100).toFixed(1)}%
                       </p>
                     </div>
-                    
+
                     <div className="text-center p-3 bg-purple-50 rounded-lg">
                       <DollarSign className="w-5 h-5 mx-auto mb-1 text-purple-600" />
                       <p className="text-sm text-gray-600">Expected Value</p>
@@ -243,7 +279,7 @@ export function StrategyComparison({
                         ${strategy.expectedValue.toLocaleString()}
                       </p>
                     </div>
-                    
+
                     <div className="text-center p-3 bg-blue-50 rounded-lg">
                       <BarChart3 className="w-5 h-5 mx-auto mb-1 text-blue-600" />
                       <p className="text-sm text-gray-600">Confidence</p>
@@ -259,8 +295,8 @@ export function StrategyComparison({
                       <span className="font-medium">Win Probability</span>
                       <span>{(strategy.winProbability * 100).toFixed(1)}%</span>
                     </div>
-                    <Progress 
-                      value={strategy.winProbability * 100} 
+                    <Progress
+                      value={strategy.winProbability * 100}
                       className="h-3"
                     />
                   </div>
@@ -269,19 +305,26 @@ export function StrategyComparison({
                   {marketBenchmark && (
                     <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">vs Market Median</span>
+                        <span className="text-sm font-medium">
+                          vs Market Median
+                        </span>
                         <div className="flex items-center gap-2">
                           {strategy.marketPosition > 0 ? (
                             <TrendingUp className="w-4 h-4 text-red-500" />
                           ) : (
                             <TrendingDown className="w-4 h-4 text-green-500" />
                           )}
-                          <span className={`font-medium ${
-                            Math.abs(strategy.marketPosition) > 15 
-                              ? strategy.marketPosition > 0 ? 'text-red-600' : 'text-green-600'
-                              : 'text-gray-600'
-                          }`}>
-                            {strategy.marketPosition > 0 ? '+' : ''}{strategy.marketPosition.toFixed(1)}%
+                          <span
+                            className={`font-medium ${
+                              Math.abs(strategy.marketPosition) > 15
+                                ? strategy.marketPosition > 0
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {strategy.marketPosition > 0 ? "+" : ""}
+                            {strategy.marketPosition.toFixed(1)}%
                           </span>
                         </div>
                       </div>
@@ -294,23 +337,38 @@ export function StrategyComparison({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowDetails(showDetails === strategy.name ? null : strategy.name);
+                          setShowDetails(
+                            showDetails === strategy.name
+                              ? null
+                              : strategy.name,
+                          );
                         }}
                         className="text-sm font-medium text-blue-600 hover:text-blue-800 mb-2"
                       >
-                        {showDetails === strategy.name ? 'Hide' : 'Show'} Price Adjustments
+                        {showDetails === strategy.name ? "Hide" : "Show"} Price
+                        Adjustments
                       </button>
-                      
+
                       {showDetails === strategy.name && (
                         <div className="space-y-2 text-sm bg-gray-50 p-3 rounded">
                           {strategy.adjustments.map((adj, i) => (
-                            <div key={i} className="flex justify-between items-center">
-                              <span className="text-gray-700">{adj.reason}</span>
+                            <div
+                              key={i}
+                              className="flex justify-between items-center"
+                            >
+                              <span className="text-gray-700">
+                                {adj.reason}
+                              </span>
                               <div className="flex items-center gap-2">
-                                <span className={`font-medium ${
-                                  adj.percentage > 0 ? 'text-green-600' : 'text-red-600'
-                                }`}>
-                                  {adj.percentage > 0 ? '+' : ''}{adj.percentage.toFixed(1)}%
+                                <span
+                                  className={`font-medium ${
+                                    adj.percentage > 0
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                  }`}
+                                >
+                                  {adj.percentage > 0 ? "+" : ""}
+                                  {adj.percentage.toFixed(1)}%
                                 </span>
                                 {adj.amount && (
                                   <span className="text-xs text-gray-500">
@@ -334,14 +392,17 @@ export function StrategyComparison({
                       </p>
                       <ul className="space-y-1">
                         {strategy.pros.map((pro, i) => (
-                          <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                          <li
+                            key={i}
+                            className="text-sm text-gray-600 flex items-start gap-2"
+                          >
                             <span className="text-green-500 mt-0.5">•</span>
                             <span>{pro}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
-                    
+
                     <div>
                       <p className="font-medium text-red-700 mb-2 flex items-center gap-1">
                         <AlertTriangle className="w-4 h-4" />
@@ -349,7 +410,10 @@ export function StrategyComparison({
                       </p>
                       <ul className="space-y-1">
                         {strategy.cons.map((con, i) => (
-                          <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                          <li
+                            key={i}
+                            className="text-sm text-gray-600 flex items-start gap-2"
+                          >
                             <span className="text-red-500 mt-0.5">•</span>
                             <span>{con}</span>
                           </li>
@@ -360,7 +424,7 @@ export function StrategyComparison({
 
                   {/* Action Button */}
                   {!isSelected && (
-                    <Button 
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectStrategy(strategy as any);
@@ -368,7 +432,9 @@ export function StrategyComparison({
                       className="w-full"
                       variant={isRecommended ? "default" : "outline"}
                     >
-                      {isRecommended ? "Select Recommended Strategy" : "Select This Strategy"}
+                      {isRecommended
+                        ? "Select Recommended Strategy"
+                        : "Select This Strategy"}
                     </Button>
                   )}
                 </CardContent>
@@ -378,13 +444,20 @@ export function StrategyComparison({
         </div>
 
         {/* Best Strategy Alert */}
-        {sortBy === 'expectedValue' && sortedStrategies.length > 0 && (
+        {sortBy === "expectedValue" && sortedStrategies.length > 0 && (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>{sortedStrategies[0].name}</strong> offers the highest expected value at{' '}
-              <strong>${sortedStrategies[0].expectedValue.toLocaleString()}</strong> with a{' '}
-              <strong>{(sortedStrategies[0].winProbability * 100).toFixed(1)}%</strong> win probability.
+              <strong>{sortedStrategies[0].name}</strong> offers the highest
+              expected value at{" "}
+              <strong>
+                ${sortedStrategies[0].expectedValue.toLocaleString()}
+              </strong>{" "}
+              with a{" "}
+              <strong>
+                {(sortedStrategies[0].winProbability * 100).toFixed(1)}%
+              </strong>{" "}
+              win probability.
             </AlertDescription>
           </Alert>
         )}

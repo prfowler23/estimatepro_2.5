@@ -1,10 +1,13 @@
-'use client'
+"use client";
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { finalCleanSchema, type FinalCleanFormData } from '@/lib/schemas/service-forms'
-import { FinalCleanCalculator } from '@/lib/calculations/services/final-clean'
-import { Button } from '@/components/ui/button'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  finalCleanSchema,
+  type FinalCleanFormData,
+} from "@/lib/schemas/service-forms";
+import { FinalCleanCalculator } from "@/lib/calculations/services/final-clean";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,36 +16,37 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import { Checkbox } from '@/components/ui/checkbox'
-import { useState, useEffect } from 'react'
-import { AlertTriangle, Calculator, Brush, Info } from 'lucide-react'
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect } from "react";
+import { calculationError } from "@/lib/utils/logger";
+import { AlertTriangle, Calculator, Brush, Info } from "lucide-react";
 
 interface FinalCleanFormProps {
-  onSubmit: (result: any) => void
-  onCancel: () => void
+  onSubmit: (result: any) => void;
+  onCancel: () => void;
 }
 
 export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
-  const [calculation, setCalculation] = useState<any>(null)
-  const [isCalculating, setIsCalculating] = useState(false)
-  
+  const [calculation, setCalculation] = useState<any>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
   const form = useForm<FinalCleanFormData>({
     resolver: zodResolver(finalCleanSchema),
     defaultValues: {
-      location: 'raleigh',
+      location: "raleigh",
       crewSize: 2,
       shiftLength: 8,
       workWeek: 5,
@@ -51,46 +55,49 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
       includesInterior: false,
       postConstruction: false,
     },
-  })
+  });
 
-  const watchedValues = form.watch()
+  const watchedValues = form.watch();
 
   useEffect(() => {
     if (watchedValues.glassArea > 0) {
-      setIsCalculating(true)
-      
+      setIsCalculating(true);
+
       const timer = setTimeout(() => {
         try {
-          const calculator = new FinalCleanCalculator()
-          const result = calculator.calculate(watchedValues)
-          setCalculation(result)
+          const calculator = new FinalCleanCalculator();
+          const result = calculator.calculate(watchedValues);
+          setCalculation(result);
         } catch (error) {
-          console.error('Calculation error:', error)
+          calculationError(new Error("Final clean calculation failed"), {
+            error,
+            formData: watchedValues,
+          });
         } finally {
-          setIsCalculating(false)
+          setIsCalculating(false);
         }
-      }, 500)
+      }, 500);
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     } else {
-      setCalculation(null)
+      setCalculation(null);
     }
-  }, [watchedValues])
+  }, [watchedValues]);
 
   const handleSubmit = () => {
     if (calculation) {
-      onSubmit(calculation)
+      onSubmit(calculation);
     }
-  }
+  };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   return (
     <div className="space-y-6">
@@ -102,7 +109,8 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Post-construction detailed cleaning service. Pricing at $70/hour with 0.167 hours per window.
+          Post-construction detailed cleaning service. Pricing at $70/hour with
+          0.167 hours per window.
         </AlertDescription>
       </Alert>
 
@@ -120,7 +128,10 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Location</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select location" />
@@ -148,7 +159,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                           type="number"
                           placeholder="Enter glass area"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -171,9 +184,7 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Includes Interior Cleaning
-                        </FormLabel>
+                        <FormLabel>Includes Interior Cleaning</FormLabel>
                         <FormDescription>
                           Interior window cleaning and light fixtures
                         </FormDescription>
@@ -194,9 +205,7 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Post-Construction Clean
-                        </FormLabel>
+                        <FormLabel>Post-Construction Clean</FormLabel>
                         <FormDescription>
                           Heavy-duty cleaning after construction
                         </FormDescription>
@@ -216,7 +225,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                           type="number"
                           placeholder="Enter number of stories"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -238,7 +249,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                           type="number"
                           placeholder="Enter number of access points"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -264,7 +277,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                             min="1"
                             max="10"
                             {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -284,7 +299,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                             min="4"
                             max="12"
                             {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -305,7 +322,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                           min="3"
                           max="7"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -331,7 +350,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
             {isCalculating ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-action"></div>
-                <span className="ml-2 text-muted-foreground">Calculating...</span>
+                <span className="ml-2 text-muted-foreground">
+                  Calculating...
+                </span>
               </div>
             ) : calculation ? (
               <div className="space-y-4">
@@ -339,13 +360,18 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                   <div className="text-3xl font-bold text-primary-action">
                     {formatCurrency(calculation.basePrice)}
                   </div>
-                  <div className="text-sm text-muted-foreground">Total Project Cost</div>
+                  <div className="text-sm text-muted-foreground">
+                    Total Project Cost
+                  </div>
                 </div>
 
                 <div className="space-y-3">
                   <h4 className="font-semibold">Cost Breakdown</h4>
                   {calculation.breakdown?.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center">
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
                       <span className="text-sm">{item.step}</span>
                       <Badge variant="outline">{item.value}</Badge>
                     </div>
@@ -356,7 +382,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                   <div className="space-y-2">
                     <h4 className="font-semibold">Equipment</h4>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">{calculation.equipment.type}</span>
+                      <span className="text-sm">
+                        {calculation.equipment.type}
+                      </span>
                       <Badge variant="outline">
                         {formatCurrency(calculation.equipment.cost)}
                       </Badge>
@@ -368,7 +396,9 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                   <div className="space-y-2">
                     <h4 className="font-semibold">Timeline</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>Working Days: {calculation.timeline.workingDays}</div>
+                      <div>
+                        Working Days: {calculation.timeline.workingDays}
+                      </div>
                       <div>Total Hours: {calculation.timeline.totalHours}</div>
                     </div>
                   </div>
@@ -379,16 +409,20 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
                       <ul className="list-disc list-inside space-y-1">
-                        {calculation.warnings.map((warning: string, index: number) => (
-                          <li key={index} className="text-sm">{warning}</li>
-                        ))}
+                        {calculation.warnings.map(
+                          (warning: string, index: number) => (
+                            <li key={index} className="text-sm">
+                              {warning}
+                            </li>
+                          ),
+                        )}
                       </ul>
                     </AlertDescription>
                   </Alert>
                 )}
 
                 <div className="flex gap-2 pt-4">
-                  <Button 
+                  <Button
                     onClick={handleSubmit}
                     className="flex-1"
                     disabled={!calculation}
@@ -410,5 +444,5 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
         </Card>
       </div>
     </div>
-  )
+  );
 }

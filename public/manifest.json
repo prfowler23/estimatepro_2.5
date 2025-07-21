@@ -1,0 +1,193 @@
+{
+  "name": "EstimatePro - Building Services Estimation",
+  "short_name": "EstimatePro",
+  "description": "Professional building services estimation platform with AI-powered analysis and comprehensive calculation tools",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "EstimatePro Dashboard"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "EstimatePro Mobile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Go to the main dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "New Estimate",
+      "short_name": "New Estimate",
+      "description": "Create a new estimate",
+      "url": "/estimates/new",
+      "icons": [
+        {
+          "src": "/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Calculator",
+      "short_name": "Calculator",
+      "description": "Open the service calculator",
+      "url": "/calculator",
+      "icons": [
+        {
+          "src": "/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "short_name": "Customers",
+      "description": "Manage customers",
+      "url": "/customers",
+      "icons": [
+        {
+          "src": "/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "mailto",
+      "url": "/contact?email=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/import",
+      "accept": {
+        "application/json": [".json"],
+        "text/csv": [".csv"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+          ".xlsx"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "images",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  },
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "id": "estimatepro-app",
+  "related_applications": [],
+  "version": "2.5.0",
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7"
+}

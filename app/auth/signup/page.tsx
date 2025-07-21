@@ -1,94 +1,103 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff, Building, Mail, Lock, User } from 'lucide-react'
-import { useAuth } from '@/contexts/auth-context'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Building, Mail, Lock, User } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function SignupPage() {
-  const { signUp, user, loading: authLoading } = useAuth()
-  const router = useRouter()
+  const { signUp, user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    companyName: ''
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    companyName: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect if already logged in
+  // Only redirect if already logged in when page first loads
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/dashboard')
+    if (!authLoading && user && !loading) {
+      console.log("🔄 User already logged in on page load, redirecting...");
+      router.replace("/dashboard");
     }
-  }, [user, authLoading, router])
+  }, [authLoading, user, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setSuccess('')
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      setLoading(false)
-      return
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
     }
 
     // Validate password length
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long')
-      setLoading(false)
-      return
+      setError("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
     }
 
     try {
       const { data, error } = await signUp(
-        formData.email, 
-        formData.password, 
+        formData.email,
+        formData.password,
         formData.fullName,
-        formData.companyName
-      )
-      
+        formData.companyName,
+      );
+
       if (error) {
-        setError(error.message)
+        setError(error.message);
       } else {
-        setSuccess('Account created! Please check your email to confirm your account.')
+        setSuccess(
+          "Account created! Please check your email to confirm your account.",
+        );
         setTimeout(() => {
-          router.push('/auth/login')
-        }, 3000)
+          router.push("/auth/login");
+        }, 3000);
       }
     } catch (err: any) {
-      setError('An unexpected error occurred')
+      setError("An unexpected error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
-    }))
-  }
+      [e.target.name]: e.target.value,
+    }));
+  };
 
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -108,7 +117,9 @@ export default function SignupPage() {
         {/* Signup Form */}
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Create account</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Create account
+            </CardTitle>
             <CardDescription className="text-center">
               Get started with EstimatePro today
             </CardDescription>
@@ -184,7 +195,7 @@ export default function SignupPage() {
                   <Input
                     id="password"
                     name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Create a password"
                     value={formData.password}
                     onChange={handleChange}
@@ -224,17 +235,13 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? 'Creating account...' : 'Create account'}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Creating account..." : "Create account"}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
                 href="/auth/login"
                 className="text-primary hover:underline font-medium"
@@ -246,5 +253,5 @@ export default function SignupPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

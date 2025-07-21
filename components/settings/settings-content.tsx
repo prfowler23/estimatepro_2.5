@@ -1,137 +1,173 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import { User, Settings as SettingsIcon, LogOut, CheckCircle, XCircle, Building } from 'lucide-react'
-import { useAuth } from '@/contexts/auth-context'
-import { supabase } from '@/lib/supabase/client'
+import { useState, useEffect } from "react";
+import { error as logError } from "@/lib/utils/logger";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+  User,
+  Settings as SettingsIcon,
+  LogOut,
+  CheckCircle,
+  XCircle,
+  Building,
+} from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { supabase } from "@/lib/supabase/client";
 
 interface UserProfile {
-  id: string
-  full_name: string | null
-  email: string | null
-  role: string
-  company_name: string | null
-  phone: string | null
-  avatar_url?: string | null
-  created_at?: string
-  updated_at?: string
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: string;
+  company_name: string | null;
+  phone: string | null;
+  avatar_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export function SettingsContent() {
-  const { user, signOut } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [profileLoading, setProfileLoading] = useState(true)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
+  const { user, signOut } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
-      loadUserProfile()
+      loadUserProfile();
     }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => {
-        setMessage(null)
-      }, 5000)
-      return () => clearTimeout(timer)
+        setMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [message])
+  }, [message]);
 
   const loadUserProfile = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      setProfileLoading(true)
+      setProfileLoading(true);
       const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('id,full_name,email,role,company_name,phone,avatar_url,created_at,updated_at')
-        .eq('id', user.id)
-        .single()
+        .from("profiles")
+        .select(
+          "id,full_name,email,role,company_name,phone,avatar_url,created_at,updated_at",
+        )
+        .eq("id", user.id)
+        .single();
 
-      if (error && error.code === 'PGRST116') {
+      if (error && error.code === "PGRST116") {
         // Profile doesn't exist, create one
         const newProfile = {
           id: user.id,
-          full_name: user.user_metadata?.full_name || '',
+          full_name: user.user_metadata?.full_name || "",
           email: user.email,
-          role: 'viewer',
-          company_name: user.user_metadata?.company_name || '',
-          phone: ''
-        }
+          role: "viewer",
+          company_name: user.user_metadata?.company_name || "",
+          phone: "",
+        };
 
         const { data: createdProfile, error: createError } = await supabase
-          .from('profiles')
+          .from("profiles")
           .insert(newProfile)
-          .select('id,full_name,email,role,company_name,phone,avatar_url,created_at,updated_at')
-          .single()
+          .select(
+            "id,full_name,email,role,company_name,phone,avatar_url,created_at,updated_at",
+          )
+          .single();
 
         if (createError) {
-          console.error('Error creating profile:', createError)
-          setMessage({type: 'error', text: 'Failed to create user profile'})
+          logError("Failed to create user profile", {
+            error: createError,
+            component: "Settings",
+          });
+          setMessage({ type: "error", text: "Failed to create user profile" });
         } else {
-          setProfile(createdProfile)
+          setProfile(createdProfile);
         }
       } else if (error) {
-        console.error('Error loading profile:', error)
-        setMessage({type: 'error', text: 'Failed to load profile'})
+        logError("Failed to load user profile", {
+          error,
+          component: "Settings",
+        });
+        setMessage({ type: "error", text: "Failed to load profile" });
       } else {
-        setProfile(profile)
+        setProfile(profile);
       }
     } catch (error) {
-      console.error('Unexpected error:', error)
-      setMessage({type: 'error', text: 'An unexpected error occurred'})
+      logError("Unexpected error in settings", {
+        error,
+        component: "Settings",
+      });
+      setMessage({ type: "error", text: "An unexpected error occurred" });
     } finally {
-      setProfileLoading(false)
+      setProfileLoading(false);
     }
-  }
+  };
 
   const saveProfile = async () => {
-    if (!profile || !user) return
-    
-    setLoading(true)
+    if (!profile || !user) return;
+
+    setLoading(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           full_name: profile.full_name,
           company_name: profile.company_name,
-          phone: profile.phone
+          phone: profile.phone,
         })
-        .eq('id', user.id)
+        .eq("id", user.id);
 
-      if (error) throw error
-      
-      setMessage({type: 'success', text: 'Profile updated successfully!'})
+      if (error) throw error;
+
+      setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
-      console.error('Error updating profile:', error)
-      setMessage({type: 'error', text: 'Failed to update profile'})
+      logError("Failed to update profile", {
+        error,
+        component: "Settings",
+      });
+      setMessage({ type: "error", text: "Failed to update profile" });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      await signOut()
-      setMessage({type: 'success', text: 'Signed out successfully'})
+      await signOut();
+      setMessage({ type: "success", text: "Signed out successfully" });
     } catch (error) {
-      console.error('Sign out error:', error)
-      setMessage({type: 'error', text: 'Failed to sign out'})
+      logError("Sign out failed", {
+        error,
+        component: "Settings",
+      });
+      setMessage({ type: "error", text: "Failed to sign out" });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (profileLoading) {
     return (
@@ -143,7 +179,7 @@ export function SettingsContent() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -155,8 +191,11 @@ export function SettingsContent() {
       </div>
 
       {message && (
-        <Alert variant={message.type === 'success' ? 'success' : 'destructive'} className="mb-6">
-          {message.type === 'success' ? (
+        <Alert
+          variant={message.type === "success" ? "success" : "destructive"}
+          className="mb-6"
+        >
+          {message.type === "success" ? (
             <CheckCircle className="h-4 w-4" />
           ) : (
             <XCircle className="h-4 w-4" />
@@ -198,8 +237,12 @@ export function SettingsContent() {
                   <Label htmlFor="fullName">Full Name</Label>
                   <Input
                     id="fullName"
-                    value={profile?.full_name || ''}
-                    onChange={(e) => setProfile(prev => prev ? { ...prev, full_name: e.target.value } : null)}
+                    value={profile?.full_name || ""}
+                    onChange={(e) =>
+                      setProfile((prev) =>
+                        prev ? { ...prev, full_name: e.target.value } : null,
+                      )
+                    }
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -207,40 +250,52 @@ export function SettingsContent() {
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
-                    value={user?.email || ''}
+                    value={user?.email || ""}
                     disabled
                     className="bg-muted"
                   />
-                  <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                  <p className="text-xs text-muted-foreground">
+                    Email cannot be changed
+                  </p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
                     id="phone"
-                    value={profile?.phone || ''}
-                    onChange={(e) => setProfile(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                    value={profile?.phone || ""}
+                    onChange={(e) =>
+                      setProfile((prev) =>
+                        prev ? { ...prev, phone: e.target.value } : null,
+                      )
+                    }
                     placeholder="(555) 123-4567"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
                   <div className="flex items-center gap-2">
-                    <Badge variant={profile?.role === 'admin' ? 'default' : 'secondary'}>
-                      {profile?.role || 'viewer'}
+                    <Badge
+                      variant={
+                        profile?.role === "admin" ? "default" : "secondary"
+                      }
+                    >
+                      {profile?.role || "viewer"}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">Role is managed by administrators</span>
+                    <span className="text-xs text-muted-foreground">
+                      Role is managed by administrators
+                    </span>
                   </div>
                 </div>
               </div>
 
               <Separator />
-              
+
               <div className="flex justify-end">
                 <Button onClick={saveProfile} disabled={loading}>
-                  {loading ? 'Saving...' : 'Save Changes'}
+                  {loading ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </CardContent>
@@ -263,17 +318,21 @@ export function SettingsContent() {
                 <Label htmlFor="companyName">Company Name</Label>
                 <Input
                   id="companyName"
-                  value={profile?.company_name || ''}
-                  onChange={(e) => setProfile(prev => prev ? { ...prev, company_name: e.target.value } : null)}
+                  value={profile?.company_name || ""}
+                  onChange={(e) =>
+                    setProfile((prev) =>
+                      prev ? { ...prev, company_name: e.target.value } : null,
+                    )
+                  }
                   placeholder="Enter company name"
                 />
               </div>
 
               <Separator />
-              
+
               <div className="flex justify-end">
                 <Button onClick={saveProfile} disabled={loading}>
-                  {loading ? 'Saving...' : 'Save Changes'}
+                  {loading ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </CardContent>
@@ -292,7 +351,7 @@ export function SettingsContent() {
               <div className="space-y-2">
                 <Label>User ID</Label>
                 <Input
-                  value={user?.id || 'Not available'}
+                  value={user?.id || "Not available"}
                   disabled
                   className="text-xs font-mono"
                 />
@@ -301,7 +360,11 @@ export function SettingsContent() {
               <div className="space-y-2">
                 <Label>Account Created</Label>
                 <Input
-                  value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Not available'}
+                  value={
+                    user?.created_at
+                      ? new Date(user.created_at).toLocaleDateString()
+                      : "Not available"
+                  }
                   disabled
                 />
               </div>
@@ -323,12 +386,12 @@ export function SettingsContent() {
                 className="w-full"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                {loading ? 'Signing out...' : 'Sign Out'}
+                {loading ? "Signing out..." : "Sign Out"}
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

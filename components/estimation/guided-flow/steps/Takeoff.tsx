@@ -1,33 +1,43 @@
-import { useState, useEffect } from 'react';
-import { Table, Plus, Trash2, Calculator, Upload, FileSpreadsheet, Info, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { MeasurementTable } from '@/components/takeoff/MeasurementTable';
-import { TakeoffSummary } from '@/components/takeoff/TakeoffSummary';
-import { TakeoffImportService } from '@/lib/takeoff/import-service';
-import { TakeoffExportService } from '@/lib/takeoff/export-service';
-import { TakeoffValidationService } from '@/lib/takeoff/validation-service';
-import { TakeoffSuggestionsEngine } from '@/lib/takeoff/suggestions-engine';
-import { MeasurementEntry } from '@/lib/types/measurements';
-
-interface TakeoffData {
-  measurements: Record<string, MeasurementEntry[]>;
-  validation: {
-    valid: boolean;
-    errors: string[];
-    warnings: string[];
-    suggestions?: string[];
-  };
-  suggestions: any[];
-  importSource: 'manual' | 'nearmap' | 'csv' | 'photo_analysis';
-  notes: string;
-}
+import { useState, useEffect } from "react";
+import { error as logError } from "@/lib/utils/logger";
+import {
+  Table,
+  Plus,
+  Trash2,
+  Calculator,
+  Upload,
+  FileSpreadsheet,
+  Info,
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MeasurementTable } from "@/components/takeoff/MeasurementTable";
+import { TakeoffSummary } from "@/components/takeoff/TakeoffSummary";
+import { TakeoffImportService } from "@/lib/takeoff/import-service";
+import { TakeoffExportService } from "@/lib/takeoff/export-service";
+import { TakeoffValidationService } from "@/lib/takeoff/validation-service";
+import { TakeoffSuggestionsEngine } from "@/lib/takeoff/suggestions-engine";
+import { MeasurementEntry } from "@/lib/types/measurements";
+import { TakeoffStepData } from "@/lib/types/estimate-types";
 
 interface TakeoffProps {
   data: any;
@@ -38,43 +48,86 @@ interface TakeoffProps {
 
 const MEASUREMENT_CATEGORIES = {
   glass: {
-    name: 'Glass',
-    description: 'Windows, doors, storefronts',
-    unit: 'sqft' as const,
-    fields: ['Description/Location', 'Width (ft)', 'Height (ft)', 'Quantity', 'Total (sqft)', 'Notes']
+    name: "Glass",
+    description: "Windows, doors, storefronts",
+    unit: "sqft" as const,
+    fields: [
+      "Description/Location",
+      "Width (ft)",
+      "Height (ft)",
+      "Quantity",
+      "Total (sqft)",
+      "Notes",
+    ],
   },
   facade: {
-    name: 'Facade',
-    description: 'Wall surfaces by material type',
-    unit: 'sqft' as const,
-    fields: ['Description/Location', 'Width (ft)', 'Height (ft)', 'Quantity', 'Total (sqft)', 'Notes']
+    name: "Facade",
+    description: "Wall surfaces by material type",
+    unit: "sqft" as const,
+    fields: [
+      "Description/Location",
+      "Width (ft)",
+      "Height (ft)",
+      "Quantity",
+      "Total (sqft)",
+      "Notes",
+    ],
   },
   flatSurfaces: {
-    name: 'Flat Surfaces',
-    description: 'Sidewalks, plazas, horizontal surfaces',
-    unit: 'sqft' as const,
-    fields: ['Description/Location', 'Width (ft)', 'Length (ft)', 'Quantity', 'Total (sqft)', 'Notes']
+    name: "Flat Surfaces",
+    description: "Sidewalks, plazas, horizontal surfaces",
+    unit: "sqft" as const,
+    fields: [
+      "Description/Location",
+      "Width (ft)",
+      "Length (ft)",
+      "Quantity",
+      "Total (sqft)",
+      "Notes",
+    ],
   },
   parking: {
-    name: 'Parking',
-    description: 'Parking spaces, lanes, deck levels',
-    unit: 'ea' as const,
-    fields: ['Description/Location', 'Spaces/Units', 'Length (ft)', 'Quantity', 'Total Count', 'Notes']
+    name: "Parking",
+    description: "Parking spaces, lanes, deck levels",
+    unit: "ea" as const,
+    fields: [
+      "Description/Location",
+      "Spaces/Units",
+      "Length (ft)",
+      "Quantity",
+      "Total Count",
+      "Notes",
+    ],
   },
   specialized: {
-    name: 'Specialized',
-    description: 'Retaining walls, ceilings, custom areas',
-    unit: 'sqft' as const,
-    fields: ['Description/Location', 'Width (ft)', 'Height/Length (ft)', 'Quantity', 'Total (sqft)', 'Notes']
-  }
+    name: "Specialized",
+    description: "Retaining walls, ceilings, custom areas",
+    unit: "sqft" as const,
+    fields: [
+      "Description/Location",
+      "Width (ft)",
+      "Height/Length (ft)",
+      "Quantity",
+      "Total (sqft)",
+      "Notes",
+    ],
+  },
 };
 
 export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
-  const [measurements, setMeasurements] = useState<Record<string, MeasurementEntry[]>>({});
-  const [validation, setValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] }>({ valid: true, errors: [], warnings: [] });
+  const [measurements, setMeasurements] = useState<
+    Record<string, MeasurementEntry[]>
+  >({});
+  const [validation, setValidation] = useState<{
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+  }>({ valid: true, errors: [], warnings: [] });
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [importSource, setImportSource] = useState<'manual' | 'nearmap' | 'csv' | 'photo_analysis'>('manual');
-  const [notes, setNotes] = useState('');
+  const [importSource, setImportSource] = useState<
+    "manual" | "nearmap" | "csv" | "photo_analysis"
+  >("manual");
+  const [notes, setNotes] = useState("");
 
   const selectedServices = data.scopeDetails?.selectedServices || [];
   const photoAnalysis = data.filesPhotos?.summary || {};
@@ -84,8 +137,8 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
   useEffect(() => {
     if (data.takeoff) {
       setMeasurements(data.takeoff.measurements || {});
-      setImportSource(data.takeoff.importSource || 'manual');
-      setNotes(data.takeoff.notes || '');
+      setImportSource(data.takeoff.importSource || "manual");
+      setNotes(data.takeoff.notes || "");
     }
   }, [data.takeoff]);
 
@@ -94,15 +147,18 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
     if (photoAnalysis.windows && Object.keys(measurements).length === 0) {
       const importService = new TakeoffImportService();
       const imported = importService.importFromPhotoAnalysis(photoAnalysis);
-      
-      const grouped = imported.reduce((acc, m) => {
-        if (!acc[m.category]) acc[m.category] = [];
-        acc[m.category].push(m);
-        return acc;
-      }, {} as Record<string, MeasurementEntry[]>);
-      
+
+      const grouped = imported.reduce(
+        (acc, m) => {
+          if (!acc[m.category]) acc[m.category] = [];
+          acc[m.category].push(m);
+          return acc;
+        },
+        {} as Record<string, MeasurementEntry[]>,
+      );
+
       setMeasurements(grouped);
-      setImportSource('photo_analysis');
+      setImportSource("photo_analysis");
     }
   }, [photoAnalysis, measurements]);
 
@@ -110,15 +166,19 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
   useEffect(() => {
     if (areaMeasurements.length > 0 && Object.keys(measurements).length === 0) {
       const importService = new TakeoffImportService();
-      const imported = importService.importFromAreaMeasurements(areaMeasurements);
-      
-      const grouped = imported.reduce((acc, m) => {
-        if (!acc[m.category]) acc[m.category] = [];
-        acc[m.category].push(m);
-        return acc;
-      }, {} as Record<string, MeasurementEntry[]>);
-      
-      setMeasurements(prev => ({ ...prev, ...grouped }));
+      const imported =
+        importService.importFromAreaMeasurements(areaMeasurements);
+
+      const grouped = imported.reduce(
+        (acc, m) => {
+          if (!acc[m.category]) acc[m.category] = [];
+          acc[m.category].push(m);
+          return acc;
+        },
+        {} as Record<string, MeasurementEntry[]>,
+      );
+
+      setMeasurements((prev) => ({ ...prev, ...grouped }));
     }
   }, [areaMeasurements, measurements]);
 
@@ -127,16 +187,18 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
     const engine = new TakeoffSuggestionsEngine();
     const validator = new TakeoffValidationService();
     const allMeasurements = Object.values(measurements).flat();
-    
+
     // Get suggestions
-    const buildingType = data.initialContact?.extractedData?.requirements?.buildingType || 'office';
+    const buildingType =
+      data.initialContact?.extractedData?.requirements?.buildingType ||
+      "office";
     const newSuggestions = engine.getSuggestionsForBuildingType(
       buildingType,
       selectedServices,
-      allMeasurements
+      allMeasurements,
     );
     setSuggestions(newSuggestions);
-    
+
     // Validate measurements
     const validationResult = validator.validateMeasurements(
       allMeasurements,
@@ -144,41 +206,54 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
       {
         buildingType,
         photoAnalysis,
-        areaMapping: { shapes: areaMeasurements }
-      }
+        areaMapping: { shapes: areaMeasurements },
+      },
     );
     setValidation(validationResult);
-  }, [measurements, selectedServices, photoAnalysis, areaMeasurements, data.initialContact]);
+  }, [
+    measurements,
+    selectedServices,
+    photoAnalysis,
+    areaMeasurements,
+    data.initialContact,
+  ]);
 
   const handleImportCSV = async (file: File) => {
     try {
       const importService = new TakeoffImportService();
       const imported = await importService.importFromCSV(file);
-      
-      const grouped = imported.reduce((acc, m) => {
-        if (!acc[m.category]) acc[m.category] = [];
-        acc[m.category].push(m);
-        return acc;
-      }, {} as Record<string, MeasurementEntry[]>);
-      
-      setMeasurements(prev => ({ ...prev, ...grouped }));
-      setImportSource('csv');
+
+      const grouped = imported.reduce(
+        (acc, m) => {
+          if (!acc[m.category]) acc[m.category] = [];
+          acc[m.category].push(m);
+          return acc;
+        },
+        {} as Record<string, MeasurementEntry[]>,
+      );
+
+      setMeasurements((prev) => ({ ...prev, ...grouped }));
+      setImportSource("csv");
     } catch (error) {
-      console.error('Import failed:', error);
+      logError("Takeoff import failed", {
+        error,
+        component: "Takeoff",
+        action: "import_data",
+      });
     }
   };
 
   const handleExport = async () => {
     const exportService = new TakeoffExportService();
     const allMeasurements = Object.values(measurements).flat();
-    
+
     try {
       const blob = await exportService.exportToExcel(allMeasurements);
-      exportService.downloadFile(blob, 'takeoff-measurements.xlsx');
+      exportService.downloadFile(blob, "takeoff-measurements.xlsx");
     } catch (error) {
       // Fallback to CSV
       const csv = exportService.exportToCSV(allMeasurements);
-      exportService.downloadFile(csv, 'takeoff-measurements.csv', 'text/csv');
+      exportService.downloadFile(csv, "takeoff-measurements.csv", "text/csv");
     }
   };
 
@@ -186,53 +261,119 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
     if (photoAnalysis.windows) {
       const importService = new TakeoffImportService();
       const imported = importService.importFromPhotoAnalysis(photoAnalysis);
-      
-      const grouped = imported.reduce((acc, m) => {
-        if (!acc[m.category]) acc[m.category] = [];
-        acc[m.category].push(m);
-        return acc;
-      }, {} as Record<string, MeasurementEntry[]>);
-      
-      setMeasurements(prev => ({ ...prev, ...grouped }));
-      setImportSource('photo_analysis');
+
+      const grouped = imported.reduce(
+        (acc, m) => {
+          if (!acc[m.category]) acc[m.category] = [];
+          acc[m.category].push(m);
+          return acc;
+        },
+        {} as Record<string, MeasurementEntry[]>,
+      );
+
+      setMeasurements((prev) => ({ ...prev, ...grouped }));
+      setImportSource("photo_analysis");
     }
   };
 
   const measurementCategories = [
-    { key: 'glass_windows', label: 'Windows', calculation: 'area' as const },
-    { key: 'glass_doors', label: 'Glass Doors', calculation: 'area' as const },
-    { key: 'glass_storefront', label: 'Storefronts', calculation: 'area' as const },
-    { key: 'facade_brick', label: 'Brick Facade', calculation: 'area' as const },
-    { key: 'facade_concrete', label: 'Concrete Facade', calculation: 'area' as const },
-    { key: 'facade_metal', label: 'Metal Facade', calculation: 'area' as const },
-    { key: 'facade_stone', label: 'Stone Facade', calculation: 'area' as const },
-    { key: 'flat_surface', label: 'Flat Surfaces', calculation: 'area' as const },
-    { key: 'parking_spaces', label: 'Parking Spaces', calculation: 'count' as const },
-    { key: 'parking_deck', label: 'Parking Deck', calculation: 'area' as const },
-    { key: 'retaining_wall', label: 'Retaining Walls', calculation: 'area' as const },
-    { key: 'inner_wall', label: 'Interior Walls', calculation: 'area' as const },
-    { key: 'ceiling', label: 'Ceilings/Decks', calculation: 'area' as const },
-    { key: 'footprint', label: 'Building Footprint', calculation: 'area' as const }
+    { key: "glass_windows", label: "Windows", calculation: "area" as const },
+    { key: "glass_doors", label: "Glass Doors", calculation: "area" as const },
+    {
+      key: "glass_storefront",
+      label: "Storefronts",
+      calculation: "area" as const,
+    },
+    {
+      key: "facade_brick",
+      label: "Brick Facade",
+      calculation: "area" as const,
+    },
+    {
+      key: "facade_concrete",
+      label: "Concrete Facade",
+      calculation: "area" as const,
+    },
+    {
+      key: "facade_metal",
+      label: "Metal Facade",
+      calculation: "area" as const,
+    },
+    {
+      key: "facade_stone",
+      label: "Stone Facade",
+      calculation: "area" as const,
+    },
+    {
+      key: "flat_surface",
+      label: "Flat Surfaces",
+      calculation: "area" as const,
+    },
+    {
+      key: "parking_spaces",
+      label: "Parking Spaces",
+      calculation: "count" as const,
+    },
+    {
+      key: "parking_deck",
+      label: "Parking Deck",
+      calculation: "area" as const,
+    },
+    {
+      key: "retaining_wall",
+      label: "Retaining Walls",
+      calculation: "area" as const,
+    },
+    {
+      key: "inner_wall",
+      label: "Interior Walls",
+      calculation: "area" as const,
+    },
+    { key: "ceiling", label: "Ceilings/Decks", calculation: "area" as const },
+    {
+      key: "footprint",
+      label: "Building Footprint",
+      calculation: "area" as const,
+    },
   ];
 
   // Filter categories based on existing measurements and selected services
-  const relevantCategories = measurementCategories.filter(cat => {
+  const relevantCategories = measurementCategories.filter((cat) => {
     const hasData = measurements[cat.key] && measurements[cat.key].length > 0;
     const isRelevant = selectedServices.some((service: string) => {
       // Map services to categories
-      if ((service === 'WC' || service === 'GR') && cat.key.startsWith('glass_')) return true;
-      if ((service === 'BWP' || service === 'BWS' || service === 'HBW') && cat.key.startsWith('facade_')) return true;
-      if ((service === 'PWF' || service === 'HFS') && cat.key === 'flat_surface') return true;
-      if ((service === 'PC' || service === 'PWP') && cat.key.startsWith('parking_')) return true;
-      if (service === 'IW' && cat.key === 'inner_wall') return true;
-      if (service === 'DC' && cat.key === 'ceiling') return true;
+      if (
+        (service === "WC" || service === "GR") &&
+        cat.key.startsWith("glass_")
+      )
+        return true;
+      if (
+        (service === "BWP" || service === "BWS" || service === "HBW") &&
+        cat.key.startsWith("facade_")
+      )
+        return true;
+      if (
+        (service === "PWF" || service === "HFS") &&
+        cat.key === "flat_surface"
+      )
+        return true;
+      if (
+        (service === "PC" || service === "PWP") &&
+        cat.key.startsWith("parking_")
+      )
+        return true;
+      if (service === "IW" && cat.key === "inner_wall") return true;
+      if (service === "DC" && cat.key === "ceiling") return true;
       return false;
     });
     return hasData || isRelevant;
   });
 
   // Add default categories if none are relevant
-  const displayCategories = relevantCategories.length > 0 ? relevantCategories : measurementCategories.slice(0, 6);
+  const displayCategories =
+    relevantCategories.length > 0
+      ? relevantCategories
+      : measurementCategories.slice(0, 6);
 
   const handleNext = () => {
     const takeoffData = {
@@ -240,12 +381,11 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
       validation,
       suggestions,
       importSource,
-      notes
+      notes,
     };
     onUpdate({ takeoff: takeoffData });
     onNext();
   };
-
 
   return (
     <div className="space-y-6">
@@ -261,10 +401,16 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Import & Export Options</CardTitle>
-            <Badge variant={importSource === 'manual' ? 'default' : 'secondary'}>
-              {importSource === 'manual' ? 'Manual Entry' : 
-               importSource === 'nearmap' ? 'NearMap Import' :
-               importSource === 'csv' ? 'CSV Import' : 'Photo Analysis'}
+            <Badge
+              variant={importSource === "manual" ? "default" : "secondary"}
+            >
+              {importSource === "manual"
+                ? "Manual Entry"
+                : importSource === "nearmap"
+                  ? "NearMap Import"
+                  : importSource === "csv"
+                    ? "CSV Import"
+                    : "Photo Analysis"}
             </Badge>
           </div>
           <CardDescription>
@@ -276,7 +422,9 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
             <input
               type="file"
               accept=".csv,.xlsx"
-              onChange={(e) => e.target.files?.[0] && handleImportCSV(e.target.files[0])}
+              onChange={(e) =>
+                e.target.files?.[0] && handleImportCSV(e.target.files[0])
+              }
               className="hidden"
               id="import-file"
             />
@@ -313,10 +461,16 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
               <p className="font-medium mb-2">Measurement Suggestions</p>
               <ul className="text-sm space-y-1">
                 {suggestions.slice(0, 3).map((s: any, i: number) => (
-                  <li key={i} className={`flex items-start gap-2 ${
-                    s.priority === 'critical' ? 'text-red-600' : 
-                    s.priority === 'high' ? 'text-orange-600' : 'text-blue-600'
-                  }`}>
+                  <li
+                    key={i}
+                    className={`flex items-start gap-2 ${
+                      s.priority === "critical"
+                        ? "text-red-600"
+                        : s.priority === "high"
+                          ? "text-orange-600"
+                          : "text-blue-600"
+                    }`}
+                  >
                     <span className="text-xs mt-1">•</span>
                     <span>{s.message}</span>
                   </li>
@@ -340,10 +494,12 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
             category={key}
             categoryLabel={label}
             entries={measurements[key] || []}
-            onUpdate={(entries) => setMeasurements(prev => ({
-              ...prev,
-              [key]: entries
-            }))}
+            onUpdate={(entries) =>
+              setMeasurements((prev) => ({
+                ...prev,
+                [key]: entries,
+              }))
+            }
             calculation={calculation}
           />
         ))}
@@ -383,12 +539,14 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
             <div>
               <p className="font-medium mb-2">Warnings</p>
               <ul className="text-sm space-y-1">
-                {validation.warnings.slice(0, 3).map((warning: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-xs mt-1">•</span>
-                    <span>{warning}</span>
-                  </li>
-                ))}
+                {validation.warnings
+                  .slice(0, 3)
+                  .map((warning: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-xs mt-1">•</span>
+                      <span>{warning}</span>
+                    </li>
+                  ))}
                 {validation.warnings.length > 3 && (
                   <li className="text-xs text-muted-foreground mt-2">
                     +{validation.warnings.length - 3} more warnings
@@ -419,10 +577,7 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
         <Button onClick={onBack} variant="outline">
           Back
         </Button>
-        <Button 
-          onClick={handleNext}
-          disabled={validation.errors.length > 0}
-        >
+        <Button onClick={handleNext} disabled={validation.errors.length > 0}>
           Continue to Duration
         </Button>
       </div>

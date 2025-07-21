@@ -1,0 +1,31 @@
+<!-- SVG content for 512x512 icon - needs conversion to PNG -->
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#2563eb" rx="51.2"/>
+  <g fill="white">
+    <!-- Calculator icon -->
+    <rect x="102.4" y="76.8" width="307.2" height="358.4" fill="none" stroke="white" stroke-width="10.24" rx="25.6"/>
+    
+    <!-- Screen -->
+    <rect x="128" y="102.4" width="256" height="76.8" fill="white" rx="10.24"/>
+    
+    <!-- Buttons -->
+    <circle cx="179.2" cy="230.4" r="17.92" fill="white"/>
+    <circle cx="256" cy="230.4" r="17.92" fill="white"/>
+    <circle cx="332.8" cy="230.4" r="17.92" fill="white"/>
+    
+    <circle cx="179.2" cy="281.6" r="17.92" fill="white"/>
+    <circle cx="256" cy="281.6" r="17.92" fill="white"/>
+    <circle cx="332.8" cy="281.6" r="17.92" fill="white"/>
+    
+    <circle cx="179.2" cy="332.8" r="17.92" fill="white"/>
+    <circle cx="256" cy="332.8" r="17.92" fill="white"/>
+    <circle cx="332.8" cy="332.8" r="17.92" fill="white"/>
+    
+    <!-- Large button -->
+    <rect x="243.2" y="368.64" width="76.8" height="40.96" fill="white" rx="10.24"/>
+    
+    <!-- Text -->
+    <text x="256" y="158.72" text-anchor="middle" fill="#2563eb" font-family="Arial, sans-serif" font-size="40.96" font-weight="bold">EP</text>
+  </g>
+</svg>

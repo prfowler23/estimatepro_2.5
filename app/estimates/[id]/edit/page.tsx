@@ -1,22 +1,28 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -24,7 +30,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 import {
   ArrowLeft,
   Save,
@@ -36,237 +42,245 @@ import {
   User,
   Building2,
   Calculator,
-  DollarSign
-} from 'lucide-react'
-import { SERVICE_TYPES } from '@/lib/calculations/constants'
+  DollarSign,
+} from "lucide-react";
+import { SERVICE_TYPES } from "@/lib/calculations/constants";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
-interface QuoteData {
-  id: string
-  quote_number: string
-  customer_name: string
-  customer_email: string
-  customer_phone: string
-  company_name: string
-  building_name: string
-  building_address: string
-  building_height_stories: number
-  building_height_feet: number
-  building_type: string
-  total_price: number
-  status: string
-  notes: string
-  services: QuoteService[]
+interface EstimateData {
+  id: string;
+  estimate_number: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  company_name: string;
+  building_name: string;
+  building_address: string;
+  building_height_stories: number;
+  building_height_feet: number;
+  building_type: string;
+  total_price: number;
+  status: string;
+  notes: string;
+  services: EstimateService[];
 }
 
-interface QuoteService {
-  id: string
-  service_type: string
-  area_sqft: number
-  glass_sqft: number
-  price: number
-  labor_hours: number
-  setup_hours: number
-  rig_hours: number
-  total_hours: number
-  crew_size: number
-  equipment_type: string
-  equipment_days: number
-  equipment_cost: number
-  calculation_details: any
+interface EstimateService {
+  id: string;
+  service_type: string;
+  area_sqft: number;
+  glass_sqft: number;
+  price: number;
+  labor_hours: number;
+  setup_hours: number;
+  rig_hours: number;
+  total_hours: number;
+  crew_size: number;
+  equipment_type: string;
+  equipment_days: number;
+  equipment_cost: number;
+  calculation_details: any;
 }
 
-function QuoteEditContent() {
-  const params = useParams()
-  const router = useRouter()
-  const [quote, setQuote] = useState<QuoteData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [hasChanges, setHasChanges] = useState(false)
+function EstimateEditContent() {
+  const params = useParams();
+  const router = useRouter();
+  const [estimate, setEstimate] = useState<EstimateData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const fetchQuote = async () => {
+  const fetchEstimate = async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
-      const { data: quoteData, error: quoteError } = await supabase
-        .from('estimates')
-        .select('*')
-        .eq('id', params.id)
-        .single()
+      const { data: estimateData, error: estimateError } = await supabase
+        .from("estimates")
+        .select("*")
+        .eq("id", params.id)
+        .single();
 
-      if (quoteError) throw quoteError
+      if (estimateError) throw estimateError;
 
       const { data: servicesData, error: servicesError } = await supabase
-        .from('estimate_services')
-        .select('*')
-        .eq('quote_id', params.id)
+        .from("estimate_services")
+        .select("*")
+        .eq("estimate_id", params.id);
 
-      if (servicesError) throw servicesError
+      if (servicesError) throw servicesError;
 
-      setQuote({
-        ...quoteData,
-        services: servicesData
-      })
+      setEstimate({
+        ...estimateData,
+        services: servicesData,
+      });
     } catch (error: any) {
-      setError(error.message)
-      console.error('Error fetching quote:', error)
+      setError(error.message);
+      console.error("Error fetching estimate:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchQuote()
-  }, [params.id])
+    fetchEstimate();
+  }, [params.id]);
 
-  const updateQuoteField = (field: string, value: any) => {
-    if (!quote) return
-    
-    setQuote(prev => prev ? { ...prev, [field]: value } : null)
-    setHasChanges(true)
-  }
+  const updateEstimateField = (field: string, value: any) => {
+    if (!estimate) return;
+
+    setEstimate((prev) => (prev ? { ...prev, [field]: value } : null));
+    setHasChanges(true);
+  };
 
   const removeService = async (serviceId: string) => {
-    if (!quote) return
+    if (!estimate) return;
 
     try {
       const { error } = await supabase
-        .from('estimate_services')
+        .from("estimate_services")
         .delete()
-        .eq('id', serviceId)
+        .eq("id", serviceId);
 
-      if (error) throw error
+      if (error) throw error;
 
-      setQuote(prev => prev ? {
-        ...prev,
-        services: prev.services.filter(s => s.id !== serviceId),
-        total_price: prev.services
-          .filter(s => s.id !== serviceId)
-          .reduce((sum, s) => sum + s.price, 0)
-      } : null)
-      setHasChanges(true)
+      setEstimate((prev) =>
+        prev
+          ? {
+              ...prev,
+              services: prev.services.filter((s) => s.id !== serviceId),
+              total_price: prev.services
+                .filter((s) => s.id !== serviceId)
+                .reduce((sum, s) => sum + s.price, 0),
+            }
+          : null,
+      );
+      setHasChanges(true);
     } catch (error: any) {
-      setError(error.message)
+      setError(error.message);
     }
-  }
+  };
 
   const saveEstimate = async () => {
-    if (!quote) return
+    if (!estimate) return;
 
     try {
-      setSaving(true)
-      setError(null)
+      setSaving(true);
+      setError(null);
 
       const { error } = await supabase
-        .from('estimates')
+        .from("estimates")
         .update({
-          customer_name: quote.customer_name,
-          customer_email: quote.customer_email,
-          customer_phone: quote.customer_phone,
-          company_name: quote.company_name,
-          building_name: quote.building_name,
-          building_address: quote.building_address,
-          building_height_stories: quote.building_height_stories,
-          building_height_feet: quote.building_height_feet,
-          building_type: quote.building_type,
-          total_price: quote.total_price,
-          notes: quote.notes,
-          updated_at: new Date().toISOString()
+          customer_name: estimate.customer_name,
+          customer_email: estimate.customer_email,
+          customer_phone: estimate.customer_phone,
+          company_name: estimate.company_name,
+          building_name: estimate.building_name,
+          building_address: estimate.building_address,
+          building_height_stories: estimate.building_height_stories,
+          building_height_feet: estimate.building_height_feet,
+          building_type: estimate.building_type,
+          total_price: estimate.total_price,
+          notes: estimate.notes,
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', quote.id)
+        .eq("id", estimate.id);
 
-      if (error) throw error
+      if (error) throw error;
 
-      setHasChanges(false)
-      router.push(`/estimates/${quote.id}`)
+      setHasChanges(false);
+      router.push(`/estimates/${estimate.id}`);
     } catch (error: any) {
-      setError(error.message)
+      setError(error.message);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const calculateTotalPrice = () => {
-    if (!quote) return 0
-    return quote.services.reduce((sum, service) => sum + service.price, 0)
-  }
+    if (!estimate) return 0;
+    return estimate.services.reduce((sum, service) => sum + service.price, 0);
+  };
 
   const getTotalEquipmentCost = () => {
-    if (!quote) return 0
-    return quote.services.reduce((sum, service) => sum + (service.equipment_cost || 0), 0)
-  }
+    if (!estimate) return 0;
+    return estimate.services.reduce(
+      (sum, service) => sum + (service.equipment_cost || 0),
+      0,
+    );
+  };
 
   const getTotalLaborHours = () => {
-    if (!quote) return 0
-    return quote.services.reduce((sum, service) => sum + service.total_hours, 0)
-  }
+    if (!estimate) return 0;
+    return estimate.services.reduce(
+      (sum, service) => sum + service.total_hours,
+      0,
+    );
+  };
 
   // Update total price when services change
   useEffect(() => {
-    if (quote) {
-      const newTotal = calculateTotalPrice()
-      if (newTotal !== quote.total_price) {
-        setQuote(prev => prev ? { ...prev, total_price: newTotal } : null)
-        setHasChanges(true)
+    if (estimate) {
+      const newTotal = calculateTotalPrice();
+      if (newTotal !== estimate.total_price) {
+        setEstimate((prev) =>
+          prev ? { ...prev, total_price: newTotal } : null,
+        );
+        setHasChanges(true);
       }
     }
-  }, [quote?.services])
+  }, [estimate?.services]);
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center py-8'>
-        <RefreshCw className='h-6 w-6 animate-spin mr-2' />
-        Loading quote...
+      <div className="flex items-center justify-center py-8">
+        <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+        Loading estimate...
       </div>
-    )
+    );
   }
 
-  if (error || !quote) {
+  if (error || !estimate) {
     return (
-      <div className='space-y-4'>
-        <Alert variant='destructive'>
-          <AlertTriangle className='h-4 w-4' />
-          <AlertDescription>
-            {error || 'Quote not found'}
-          </AlertDescription>
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{error || "Estimate not found"}</AlertDescription>
         </Alert>
         <Button onClick={() => router.back()}>
-          <ArrowLeft className='h-4 w-4 mr-2' />
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Go Back
         </Button>
       </div>
-    )
+    );
   }
 
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       {/* Header */}
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-4'>
-          <Button variant='outline' onClick={() => router.back()}>
-            <ArrowLeft className='h-4 w-4 mr-2' />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
           <div>
-            <h1 className='text-3xl font-bold text-gray-900'>Edit Quote</h1>
-            <p className='text-gray-600'>{quote.quote_number}</p>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Estimate</h1>
+            <p className="text-gray-600">{estimate.estimate_number}</p>
           </div>
         </div>
-        <div className='flex items-center gap-2'>
+        <div className="flex items-center gap-2">
           {hasChanges && (
-            <Badge variant='outline' className='text-orange-600'>
+            <Badge variant="outline" className="text-orange-600">
               Unsaved Changes
             </Badge>
           )}
-          <Button
-            onClick={saveEstimate}
-            disabled={saving || !hasChanges}
-          >
+          <Button onClick={saveEstimate} disabled={saving || !hasChanges}>
             {saving ? (
-              <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <Save className='h-4 w-4 mr-2' />
+              <Save className="h-4 w-4 mr-2" />
             )}
             Save Changes
           </Button>
@@ -275,8 +289,8 @@ function QuoteEditContent() {
 
       {/* Error Alert */}
       {error && (
-        <Alert variant='destructive'>
-          <AlertTriangle className='h-4 w-4' />
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -284,48 +298,56 @@ function QuoteEditContent() {
       {/* Customer Information */}
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <User className='h-5 w-5' />
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
             Customer Information
           </CardTitle>
         </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='customer_name'>Customer Name *</Label>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="customer_name">Customer Name *</Label>
               <Input
-                id='customer_name'
-                value={quote.customer_name}
-                onChange={(e) => updateQuoteField('customer_name', e.target.value)}
-                placeholder='John Smith'
+                id="customer_name"
+                value={estimate.customer_name}
+                onChange={(e) =>
+                  updateEstimateField("customer_name", e.target.value)
+                }
+                placeholder="John Smith"
               />
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='company_name'>Company Name</Label>
+            <div className="space-y-2">
+              <Label htmlFor="company_name">Company Name</Label>
               <Input
-                id='company_name'
-                value={quote.company_name || ''}
-                onChange={(e) => updateQuoteField('company_name', e.target.value)}
-                placeholder='ABC Company'
+                id="company_name"
+                value={estimate.company_name || ""}
+                onChange={(e) =>
+                  updateEstimateField("company_name", e.target.value)
+                }
+                placeholder="ABC Company"
               />
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='customer_email'>Email *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="customer_email">Email *</Label>
               <Input
-                id='customer_email'
-                type='email'
-                value={quote.customer_email}
-                onChange={(e) => updateQuoteField('customer_email', e.target.value)}
-                placeholder='john@company.com'
+                id="customer_email"
+                type="email"
+                value={estimate.customer_email}
+                onChange={(e) =>
+                  updateEstimateField("customer_email", e.target.value)
+                }
+                placeholder="john@company.com"
               />
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='customer_phone'>Phone</Label>
+            <div className="space-y-2">
+              <Label htmlFor="customer_phone">Phone</Label>
               <Input
-                id='customer_phone'
-                value={quote.customer_phone}
-                onChange={(e) => updateQuoteField('customer_phone', e.target.value)}
-                placeholder='(555) 123-4567'
+                id="customer_phone"
+                value={estimate.customer_phone}
+                onChange={(e) =>
+                  updateEstimateField("customer_phone", e.target.value)
+                }
+                placeholder="(555) 123-4567"
               />
             </div>
           </div>
@@ -335,71 +357,89 @@ function QuoteEditContent() {
       {/* Building Information */}
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Building2 className='h-5 w-5' />
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
             Building Information
           </CardTitle>
         </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='building_name'>Building Name *</Label>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="building_name">Building Name *</Label>
               <Input
-                id='building_name'
-                value={quote.building_name}
-                onChange={(e) => updateQuoteField('building_name', e.target.value)}
-                placeholder='Downtown Office Complex'
+                id="building_name"
+                value={estimate.building_name}
+                onChange={(e) =>
+                  updateEstimateField("building_name", e.target.value)
+                }
+                placeholder="Downtown Office Complex"
               />
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='building_type'>Building Type</Label>
-              <Select 
-                value={quote.building_type || ''} 
-                onValueChange={(value) => updateQuoteField('building_type', value)}
+            <div className="space-y-2">
+              <Label htmlFor="building_type">Building Type</Label>
+              <Select
+                value={estimate.building_type || ""}
+                onValueChange={(value) =>
+                  updateEstimateField("building_type", value)
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder='Select building type' />
+                  <SelectValue placeholder="Select building type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='office'>Office Building</SelectItem>
-                  <SelectItem value='retail'>Retail/Commercial</SelectItem>
-                  <SelectItem value='residential'>Residential</SelectItem>
-                  <SelectItem value='hospital'>Hospital/Medical</SelectItem>
-                  <SelectItem value='school'>School/Educational</SelectItem>
-                  <SelectItem value='warehouse'>Warehouse/Industrial</SelectItem>
-                  <SelectItem value='hotel'>Hotel/Hospitality</SelectItem>
-                  <SelectItem value='other'>Other</SelectItem>
+                  <SelectItem value="office">Office Building</SelectItem>
+                  <SelectItem value="retail">Retail/Commercial</SelectItem>
+                  <SelectItem value="residential">Residential</SelectItem>
+                  <SelectItem value="hospital">Hospital/Medical</SelectItem>
+                  <SelectItem value="school">School/Educational</SelectItem>
+                  <SelectItem value="warehouse">
+                    Warehouse/Industrial
+                  </SelectItem>
+                  <SelectItem value="hotel">Hotel/Hospitality</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className='space-y-2 md:col-span-2'>
-              <Label htmlFor='building_address'>Address *</Label>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="building_address">Address *</Label>
               <Input
-                id='building_address'
-                value={quote.building_address}
-                onChange={(e) => updateQuoteField('building_address', e.target.value)}
-                placeholder='123 Main St, City, State 12345'
+                id="building_address"
+                value={estimate.building_address}
+                onChange={(e) =>
+                  updateEstimateField("building_address", e.target.value)
+                }
+                placeholder="123 Main St, City, State 12345"
               />
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='height_stories'>Height (Stories) *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="height_stories">Height (Stories) *</Label>
               <Input
-                id='height_stories'
-                type='number'
-                value={quote.building_height_stories}
-                onChange={(e) => updateQuoteField('building_height_stories', parseInt(e.target.value))}
-                placeholder='10'
-                min='1'
+                id="height_stories"
+                type="number"
+                value={estimate.building_height_stories}
+                onChange={(e) =>
+                  updateEstimateField(
+                    "building_height_stories",
+                    parseInt(e.target.value),
+                  )
+                }
+                placeholder="10"
+                min="1"
               />
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='height_feet'>Height (Feet)</Label>
+            <div className="space-y-2">
+              <Label htmlFor="height_feet">Height (Feet)</Label>
               <Input
-                id='height_feet'
-                type='number'
-                value={quote.building_height_feet || ''}
-                onChange={(e) => updateQuoteField('building_height_feet', parseInt(e.target.value) || null)}
-                placeholder='120'
+                id="height_feet"
+                type="number"
+                value={estimate.building_height_feet || ""}
+                onChange={(e) =>
+                  updateEstimateField(
+                    "building_height_feet",
+                    parseInt(e.target.value) || null,
+                  )
+                }
+                placeholder="120"
               />
             </div>
           </div>
@@ -409,29 +449,29 @@ function QuoteEditContent() {
       {/* Services */}
       <Card>
         <CardHeader>
-          <div className='flex items-center justify-between'>
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle className='flex items-center gap-2'>
-                <Calculator className='h-5 w-5' />
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
                 Services
               </CardTitle>
               <CardDescription>
-                Manage services included in this quote
+                Manage services included in this estimate
               </CardDescription>
             </div>
             <Button>
-              <Plus className='h-4 w-4 mr-2' />
+              <Plus className="h-4 w-4 mr-2" />
               Add Service
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {quote.services.length === 0 ? (
-            <div className='text-center py-8 text-gray-500'>
-              <Calculator className='h-12 w-12 mx-auto mb-4 opacity-50' />
+          {estimate.services.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No services added yet</p>
-              <Button variant='outline' className='mt-2'>
-                <Plus className='h-4 w-4 mr-2' />
+              <Button variant="outline" className="mt-2">
+                <Plus className="h-4 w-4 mr-2" />
                 Add First Service
               </Button>
             </div>
@@ -443,69 +483,79 @@ function QuoteEditContent() {
                   <TableHead>Details</TableHead>
                   <TableHead>Hours</TableHead>
                   <TableHead>Equipment</TableHead>
-                  <TableHead className='text-right'>Price</TableHead>
-                  <TableHead className='w-[50px]'></TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {quote.services.map((service) => (
+                {estimate.services.map((service) => (
                   <TableRow key={service.id}>
                     <TableCell>
                       <div>
-                        <div className='font-medium'>
-                          {SERVICE_TYPES[service.service_type as keyof typeof SERVICE_TYPES]}
+                        <div className="font-medium">
+                          {
+                            SERVICE_TYPES[
+                              service.service_type as keyof typeof SERVICE_TYPES
+                            ]
+                          }
                         </div>
-                        <div className='text-sm text-gray-500'>
+                        <div className="text-sm text-gray-500">
                           {service.service_type}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className='text-sm space-y-1'>
+                      <div className="text-sm space-y-1">
                         {service.area_sqft > 0 && (
                           <div>{service.area_sqft.toLocaleString()} sq ft</div>
                         )}
                         {service.glass_sqft > 0 && (
-                          <div>{service.glass_sqft.toLocaleString()} sq ft glass</div>
+                          <div>
+                            {service.glass_sqft.toLocaleString()} sq ft glass
+                          </div>
                         )}
-                        <div className='text-gray-500'>
+                        <div className="text-gray-500">
                           Crew: {service.crew_size} people
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className='text-sm'>
-                        <div className='font-medium'>{service.total_hours.toFixed(1)} total</div>
-                        <div className='text-gray-500'>
-                          {service.labor_hours.toFixed(1)} + {service.setup_hours.toFixed(1)} + {service.rig_hours.toFixed(1)}
+                      <div className="text-sm">
+                        <div className="font-medium">
+                          {service.total_hours.toFixed(1)} total
+                        </div>
+                        <div className="text-gray-500">
+                          {service.labor_hours.toFixed(1)} +{" "}
+                          {service.setup_hours.toFixed(1)} +{" "}
+                          {service.rig_hours.toFixed(1)}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       {service.equipment_type ? (
-                        <div className='text-sm'>
+                        <div className="text-sm">
                           <div>{service.equipment_type}</div>
                           {service.equipment_cost > 0 && (
-                            <div className='text-gray-500'>
+                            <div className="text-gray-500">
                               ${service.equipment_cost.toLocaleString()}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className='text-gray-400'>None</span>
+                        <span className="text-gray-400">None</span>
                       )}
                     </TableCell>
-                    <TableCell className='text-right font-medium'>
+                    <TableCell className="text-right font-medium">
                       ${service.price.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <Button
-                        variant='ghost'
-                        size='sm'
+                        variant="ghost"
+                        size="sm"
                         onClick={() => removeService(service.id)}
-                        className='text-red-600 hover:text-red-700'
+                        className="text-red-600 hover:text-red-700"
                       >
-                        <Trash2 className='h-4 w-4' />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -514,38 +564,53 @@ function QuoteEditContent() {
             </Table>
           )}
 
-          {/* Quote Summary */}
-          {quote.services.length > 0 && (
-            <div className='mt-6 pt-6 border-t'>
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-4'>
-                <div className='text-center p-4 bg-blue-50 rounded-lg'>
-                  <div className='text-2xl font-bold text-blue-700'>{quote.services.length}</div>
-                  <div className='text-sm text-blue-600'>Services</div>
+          {/* Estimate Summary */}
+          {estimate.services.length > 0 && (
+            <div className="mt-6 pt-6 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-700">
+                    {estimate.services.length}
+                  </div>
+                  <div className="text-sm text-blue-600">Services</div>
                 </div>
-                <div className='text-center p-4 bg-purple-50 rounded-lg'>
-                  <div className='text-2xl font-bold text-purple-700'>{getTotalLaborHours().toFixed(1)}</div>
-                  <div className='text-sm text-purple-600'>Total Hours</div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-700">
+                    {getTotalLaborHours().toFixed(1)}
+                  </div>
+                  <div className="text-sm text-purple-600">Total Hours</div>
                 </div>
-                <div className='text-center p-4 bg-orange-50 rounded-lg'>
-                  <div className='text-2xl font-bold text-orange-700'>${getTotalEquipmentCost().toLocaleString()}</div>
-                  <div className='text-sm text-orange-600'>Equipment Cost</div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-700">
+                    ${getTotalEquipmentCost().toLocaleString()}
+                  </div>
+                  <div className="text-sm text-orange-600">Equipment Cost</div>
                 </div>
               </div>
-              
-              <div className='space-y-2 max-w-sm ml-auto'>
-                <div className='flex justify-between text-lg'>
+
+              <div className="space-y-2 max-w-sm ml-auto">
+                <div className="flex justify-between text-lg">
                   <span>Services Total:</span>
-                  <span className='font-medium'>${quote.total_price.toLocaleString()}</span>
+                  <span className="font-medium">
+                    ${estimate.total_price.toLocaleString()}
+                  </span>
                 </div>
                 {getTotalEquipmentCost() > 0 && (
-                  <div className='flex justify-between text-lg'>
+                  <div className="flex justify-between text-lg">
                     <span>Equipment Rental:</span>
-                    <span className='font-medium'>${getTotalEquipmentCost().toLocaleString()}</span>
+                    <span className="font-medium">
+                      ${getTotalEquipmentCost().toLocaleString()}
+                    </span>
                   </div>
                 )}
-                <div className='flex justify-between text-xl font-bold text-primary pt-2 border-t'>
-                  <span>Total Quote:</span>
-                  <span>${(quote.total_price + getTotalEquipmentCost()).toLocaleString()}</span>
+                <div className="flex justify-between text-xl font-bold text-primary pt-2 border-t">
+                  <span>Total Estimate:</span>
+                  <span>
+                    $
+                    {(
+                      estimate.total_price + getTotalEquipmentCost()
+                    ).toLocaleString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -563,36 +628,36 @@ function QuoteEditContent() {
         </CardHeader>
         <CardContent>
           <Textarea
-            value={quote.notes || ''}
-            onChange={(e) => updateQuoteField('notes', e.target.value)}
-            placeholder='Add any special notes, requirements, or additional information...'
-            className='min-h-[100px]'
+            value={estimate.notes || ""}
+            onChange={(e) => updateEstimateField("notes", e.target.value)}
+            placeholder="Add any special notes, requirements, or additional information..."
+            className="min-h-[100px]"
           />
         </CardContent>
       </Card>
 
       {/* Save Section */}
       <Card>
-        <CardContent className='pt-6'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <DollarSign className='h-5 w-5 text-green-600' />
-              <span className='text-lg font-semibold'>
-                Total Quote: ${(quote.total_price + getTotalEquipmentCost()).toLocaleString()}
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              <span className="text-lg font-semibold">
+                Total Estimate: $
+                {(
+                  estimate.total_price + getTotalEquipmentCost()
+                ).toLocaleString()}
               </span>
             </div>
-            <div className='flex gap-2'>
-              <Button variant='outline' onClick={() => router.back()}>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => router.back()}>
                 Cancel
               </Button>
-              <Button
-                onClick={saveEstimate}
-                disabled={saving || !hasChanges}
-              >
+              <Button onClick={saveEstimate} disabled={saving || !hasChanges}>
                 {saving ? (
-                  <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <Save className='h-4 w-4 mr-2' />
+                  <Save className="h-4 w-4 mr-2" />
                 )}
                 Save Changes
               </Button>
@@ -601,13 +666,15 @@ function QuoteEditContent() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
-export default function QuoteEditPage() {
+export default function EstimateEditPage() {
   return (
-    <div className="container mx-auto py-8">
-      <QuoteEditContent />
-    </div>
-  )
+    <ProtectedRoute>
+      <div className="container mx-auto py-8">
+        <EstimateEditContent />
+      </div>
+    </ProtectedRoute>
+  );
 }

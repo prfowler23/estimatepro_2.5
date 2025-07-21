@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Star, Phone, Mail, CheckCircle, AlertTriangle, Plus, Truck, DollarSign, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState, useEffect } from "react";
+import {
+  Star,
+  Phone,
+  Mail,
+  CheckCircle,
+  AlertTriangle,
+  Plus,
+  Truck,
+  DollarSign,
+  Clock,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Equipment {
   id: string;
@@ -41,7 +51,7 @@ interface VendorPricing {
 interface Vendor {
   id: string;
   name: string;
-  type: 'equipment' | 'material' | 'both';
+  type: "equipment" | "material" | "both";
   rating: number;
   reliability: number;
   preferredVendor: boolean;
@@ -59,7 +69,7 @@ interface Vendor {
 }
 
 interface VendorSelectorProps {
-  type: 'equipment' | 'material';
+  type: "equipment" | "material";
   item: Equipment | Material;
   quantity?: number;
   duration?: number; // for equipment rentals
@@ -67,17 +77,17 @@ interface VendorSelectorProps {
   onCancel?: () => void;
 }
 
-export function VendorSelector({ 
-  type, 
-  item, 
-  quantity = 1, 
-  duration = 1, 
-  onSelect, 
-  onCancel 
+export function VendorSelector({
+  type,
+  item,
+  quantity = 1,
+  duration = 1,
+  onSelect,
+  onCancel,
 }: VendorSelectorProps) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [selectedVendor, setSelectedVendor] = useState<string>('');
-  const [customPrice, setCustomPrice] = useState('');
+  const [selectedVendor, setSelectedVendor] = useState<string>("");
+  const [customPrice, setCustomPrice] = useState("");
   const [showAddVendor, setShowAddVendor] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -87,98 +97,98 @@ export function VendorSelector({
 
   const loadVendors = async () => {
     setLoading(true);
-    
+
     // Mock vendor data - replace with actual API call
     const mockVendors: Vendor[] = [
       {
-        id: 'sunbelt',
-        name: 'Sunbelt Rentals',
-        type: 'equipment',
+        id: "sunbelt",
+        name: "Sunbelt Rentals",
+        type: "equipment",
         rating: 4.5,
         reliability: 0.95,
         preferredVendor: true,
         contact: {
-          name: 'John Smith',
-          phone: '555-0123',
-          email: 'john@sunbelt.com',
-          address: '123 Industrial Blvd'
+          name: "John Smith",
+          phone: "555-0123",
+          email: "john@sunbelt.com",
+          address: "123 Industrial Blvd",
         },
-        paymentTerms: 'Net 30',
+        paymentTerms: "Net 30",
         deliveryRadius: 50,
-        specialties: ['Aerial Equipment', 'Power Tools'],
-        notes: 'Excellent service, fast delivery',
-        lastUsed: new Date('2024-01-15')
+        specialties: ["Aerial Equipment", "Power Tools"],
+        notes: "Excellent service, fast delivery",
+        lastUsed: new Date("2024-01-15"),
       },
       {
-        id: 'united',
-        name: 'United Rentals',
-        type: 'equipment',
+        id: "united",
+        name: "United Rentals",
+        type: "equipment",
         rating: 4.2,
         reliability: 0.92,
         preferredVendor: false,
         contact: {
-          name: 'Mike Johnson',
-          phone: '555-0456',
-          email: 'mike@united.com'
+          name: "Mike Johnson",
+          phone: "555-0456",
+          email: "mike@united.com",
         },
-        paymentTerms: 'Net 30',
+        paymentTerms: "Net 30",
         deliveryRadius: 75,
-        specialties: ['Heavy Equipment', 'Generators']
+        specialties: ["Heavy Equipment", "Generators"],
       },
       {
-        id: 'chemstation',
-        name: 'ChemStation',
-        type: 'material',
+        id: "chemstation",
+        name: "ChemStation",
+        type: "material",
         rating: 4.8,
         reliability: 0.98,
         preferredVendor: true,
         contact: {
-          name: 'Sarah Johnson',
-          phone: '555-0789',
-          email: 'sarah@chemstation.com'
+          name: "Sarah Johnson",
+          phone: "555-0789",
+          email: "sarah@chemstation.com",
         },
-        paymentTerms: 'Net 15',
+        paymentTerms: "Net 15",
         deliveryRadius: 100,
-        specialties: ['Cleaning Chemicals', 'Industrial Supplies'],
-        lastUsed: new Date('2024-02-01')
+        specialties: ["Cleaning Chemicals", "Industrial Supplies"],
+        lastUsed: new Date("2024-02-01"),
       },
       {
-        id: 'ecolab',
-        name: 'Ecolab',
-        type: 'material',
+        id: "ecolab",
+        name: "Ecolab",
+        type: "material",
         rating: 4.6,
         reliability: 0.96,
         preferredVendor: false,
         contact: {
-          name: 'David Wilson',
-          phone: '555-0321',
-          email: 'david@ecolab.com'
+          name: "David Wilson",
+          phone: "555-0321",
+          email: "david@ecolab.com",
         },
-        paymentTerms: 'Net 30',
+        paymentTerms: "Net 30",
         deliveryRadius: 200,
-        specialties: ['Commercial Cleaning', 'Sanitization']
+        specialties: ["Commercial Cleaning", "Sanitization"],
       },
       {
-        id: 'home-depot',
-        name: 'Home Depot Pro',
-        type: 'both',
+        id: "home-depot",
+        name: "Home Depot Pro",
+        type: "both",
         rating: 4.0,
         reliability: 0.88,
         preferredVendor: false,
         contact: {
-          name: 'Store Manager',
-          phone: '555-0654',
-          email: 'pro@homedepot.com'
+          name: "Store Manager",
+          phone: "555-0654",
+          email: "pro@homedepot.com",
         },
-        paymentTerms: 'Net 30',
+        paymentTerms: "Net 30",
         deliveryRadius: 25,
-        specialties: ['General Supplies', 'Small Equipment']
-      }
+        specialties: ["General Supplies", "Small Equipment"],
+      },
     ];
 
     // Filter vendors by type
-    const filteredVendors = mockVendors.filter(v => 
-      v.type === type || v.type === 'both'
+    const filteredVendors = mockVendors.filter(
+      (v) => v.type === type || v.type === "both",
     );
 
     // Sort by preference, then rating
@@ -193,14 +203,14 @@ export function VendorSelector({
   };
 
   const getVendorPricing = (vendorId: string): VendorPricing | null => {
-    return item.vendors?.find(v => v.vendorId === vendorId) || null;
+    return item.vendors?.find((v) => v.vendorId === vendorId) || null;
   };
 
   const calculateTotalCost = (vendorId: string): number => {
     const pricing = getVendorPricing(vendorId);
     if (!pricing) return 0;
 
-    if (type === 'equipment') {
+    if (type === "equipment") {
       const equipment = item as Equipment;
       // Choose best rate based on duration
       let rate = pricing.dailyRate || equipment.dailyRate;
@@ -218,26 +228,26 @@ export function VendorSelector({
     } else {
       const unitCost = pricing.unitCost || (item as Material).unitCost;
       let total = unitCost * quantity;
-      
+
       // Apply bulk discounts if available
       if (pricing.bulkDiscounts) {
         for (const discount of pricing.bulkDiscounts) {
           if (quantity >= discount.quantity) {
-            total *= (1 - discount.discount / 100);
+            total *= 1 - discount.discount / 100;
           }
         }
       }
-      
+
       return total;
     }
   };
 
   const handleVendorSelect = () => {
-    const vendor = vendors.find(v => v.id === selectedVendor);
+    const vendor = vendors.find((v) => v.id === selectedVendor);
     if (!vendor) return;
 
     let pricing = getVendorPricing(selectedVendor);
-    
+
     // If no existing pricing or custom price entered, create custom pricing
     if (!pricing || customPrice) {
       const customCost = parseFloat(customPrice);
@@ -245,20 +255,18 @@ export function VendorSelector({
         pricing = {
           vendorId: selectedVendor,
           available: true,
-          ...(type === 'equipment' 
+          ...(type === "equipment"
             ? { dailyRate: customCost }
-            : { unitCost: customCost }
-          )
+            : { unitCost: customCost }),
         };
       } else if (!pricing) {
         // Fallback to item's base pricing
         pricing = {
           vendorId: selectedVendor,
           available: true,
-          ...(type === 'equipment' 
+          ...(type === "equipment"
             ? { dailyRate: (item as Equipment).dailyRate }
-            : { unitCost: (item as Material).unitCost }
-          )
+            : { unitCost: (item as Material).unitCost }),
         };
       }
     }
@@ -269,7 +277,7 @@ export function VendorSelector({
   const getRatingStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
-    
+
     return (
       <div className="flex items-center">
         {[...Array(5)].map((_, i) => (
@@ -277,10 +285,10 @@ export function VendorSelector({
             key={i}
             className={`w-4 h-4 ${
               i < fullStars
-                ? 'text-yellow-400 fill-current'
+                ? "text-yellow-400 fill-current"
                 : i === fullStars && hasHalfStar
-                ? 'text-yellow-400 fill-current opacity-50'
-                : 'text-gray-300'
+                  ? "text-yellow-400 fill-current opacity-50"
+                  : "text-gray-300"
             }`}
           />
         ))}
@@ -304,21 +312,24 @@ export function VendorSelector({
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {type === 'equipment' ? <Truck className="w-5 h-5" /> : <DollarSign className="w-5 h-5" />}
+          {type === "equipment" ? (
+            <Truck className="w-5 h-5" />
+          ) : (
+            <DollarSign className="w-5 h-5" />
+          )}
           Select Vendor for {item.name}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          {type === 'equipment' 
+          {type === "equipment"
             ? `${quantity} unit(s) for ${duration} day(s)`
-            : `${quantity} ${(item as Material).unit}(s)`
-          }
+            : `${quantity} ${(item as Material).unit}(s)`}
         </p>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Vendor List */}
         <div className="space-y-3">
-          {vendors.map(vendor => {
+          {vendors.map((vendor) => {
             const pricing = getVendorPricing(vendor.id);
             const totalCost = calculateTotalCost(vendor.id);
             const isSelected = selectedVendor === vendor.id;
@@ -327,9 +338,9 @@ export function VendorSelector({
               <label
                 key={vendor.id}
                 className={`block p-4 border rounded-lg cursor-pointer transition-all ${
-                  isSelected 
-                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
-                    : 'border-gray-200 hover:border-gray-300'
+                  isSelected
+                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 <input
@@ -340,7 +351,7 @@ export function VendorSelector({
                   onChange={(e) => setSelectedVendor(e.target.value)}
                   className="sr-only"
                 />
-                
+
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -357,16 +368,16 @@ export function VendorSelector({
                         </Badge>
                       )}
                     </div>
-                    
+
                     <div className="space-y-1">
                       {getRatingStars(vendor.rating)}
-                      
+
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span className="flex items-center gap-1">
                           <CheckCircle className="w-4 h-4" />
                           {(vendor.reliability * 100).toFixed(0)}% reliable
                         </span>
-                        
+
                         {pricing?.leadTime && (
                           <span className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
@@ -374,7 +385,7 @@ export function VendorSelector({
                           </span>
                         )}
                       </div>
-                      
+
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span className="flex items-center gap-1">
                           <Phone className="w-4 h-4" />
@@ -385,7 +396,7 @@ export function VendorSelector({
                           {vendor.contact.email}
                         </span>
                       </div>
-                      
+
                       {vendor.paymentTerms && (
                         <p className="text-sm text-gray-600">
                           Payment: {vendor.paymentTerms}
@@ -393,16 +404,14 @@ export function VendorSelector({
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="text-right ml-4">
                     {pricing?.available ? (
                       <div>
                         <p className="font-semibold text-lg">
                           ${totalCost.toFixed(2)}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          Total Cost
-                        </p>
+                        <p className="text-sm text-gray-500">Total Cost</p>
                         {pricing.minOrder && quantity < pricing.minOrder && (
                           <p className="text-xs text-orange-600">
                             Min order: {pricing.minOrder}
@@ -419,11 +428,15 @@ export function VendorSelector({
                     )}
                   </div>
                 </div>
-                
+
                 {vendor.specialties.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {vendor.specialties.slice(0, 3).map(specialty => (
-                      <Badge key={specialty} variant="outline" className="text-xs">
+                    {vendor.specialties.slice(0, 3).map((specialty) => (
+                      <Badge
+                        key={specialty}
+                        variant="outline"
+                        className="text-xs"
+                      >
                         {specialty}
                       </Badge>
                     ))}
@@ -456,21 +469,25 @@ export function VendorSelector({
               value={customPrice}
               onChange={(e) => setCustomPrice(e.target.value)}
               placeholder={`Enter ${
-                type === 'equipment' ? 'daily rate' : `cost per ${(item as Material).unit || 'unit'}`
+                type === "equipment"
+                  ? "daily rate"
+                  : `cost per ${(item as Material).unit || "unit"}`
               }`}
             />
           </div>
         )}
 
         {/* Warning for unavailable vendors */}
-        {selectedVendor && getVendorPricing(selectedVendor)?.available === false && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              This vendor has marked this item as unavailable. Contact them directly or select another vendor.
-            </AlertDescription>
-          </Alert>
-        )}
+        {selectedVendor &&
+          getVendorPricing(selectedVendor)?.available === false && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                This vendor has marked this item as unavailable. Contact them
+                directly or select another vendor.
+              </AlertDescription>
+            </Alert>
+          )}
 
         {/* Add New Vendor Option */}
         <div className="border-t pt-4">

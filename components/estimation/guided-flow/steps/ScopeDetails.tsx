@@ -1,50 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Alert } from '@/components/ui/alert';
-import { AlertTriangle, Info, Package } from 'lucide-react';
-import { SERVICE_RULES } from '@/lib/estimation/service-rules';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert } from "@/components/ui/alert";
+import { AlertTriangle, Info, Package } from "lucide-react";
+import { SERVICE_RULES } from "@/lib/estimation/service-rules";
+import {
+  ScopeDetailsData,
+  ServiceType,
+  SERVICE_METADATA,
+} from "@/lib/types/estimate-types";
 
-interface ScopeDetailsData {
-  selectedServices: string[];
-  serviceOrder: string[];
-  autoAddedServices: string[];
-  overrides: Record<string, { price?: number; reason?: string }>;
-  scopeNotes: string;
-  accessRestrictions: string[];
-  specialRequirements: string[];
-}
-
-const SERVICES = [
-  { id: 'PW', name: 'Pressure Washing', basePrice: '$0.15-0.50/sq ft' },
-  { id: 'PWS', name: 'Pressure Wash & Seal', basePrice: '$1.25-1.35/sq ft' },
-  { id: 'WC', name: 'Window Cleaning', basePrice: '$2-4/window' },
-  { id: 'GR', name: 'Glass Restoration', basePrice: '$5-35/window' },
-  { id: 'FR', name: 'Frame Restoration', basePrice: '$25/frame' },
-  { id: 'HD', name: 'High Dusting', basePrice: '$0.37-0.75/sq ft' },
-  { id: 'SW', name: 'Soft Washing', basePrice: '$0.45/sq ft' },
-  { id: 'PD', name: 'Parking Deck', basePrice: '$16-23/space' },
-  { id: 'GRC', name: 'Granite Reconditioning', basePrice: '$1.75/sq ft' },
-  { id: 'FC', name: 'Final Clean', basePrice: '$70/hour' }
-];
+// Convert SERVICE_METADATA to array format for easier iteration
+const SERVICES = Object.entries(SERVICE_METADATA).map(([id, metadata]) => ({
+  id: id as ServiceType,
+  name: metadata.name,
+  basePrice: metadata.basePrice,
+  category: metadata.category,
+}));
 
 const COMMON_BUNDLES = [
-  { 
-    name: 'Full Restoration', 
-    services: ['PWS', 'GR', 'FR', 'WC'],
-    description: 'Complete building restoration package'
+  {
+    name: "Full Restoration",
+    services: ["PWS", "GR", "FR", "WC"] as ServiceType[],
+    description: "Complete building restoration package",
   },
-  { 
-    name: 'Basic Cleaning', 
-    services: ['PW', 'WC'],
-    description: 'Standard pressure wash with windows'
+  {
+    name: "Basic Cleaning",
+    services: ["PW", "WC"] as ServiceType[],
+    description: "Standard pressure wash with windows",
   },
-  { 
-    name: 'Glass & Frame', 
-    services: ['GR', 'FR'],
-    description: 'Restoration of glass and frames together'
-  }
+  {
+    name: "Glass & Frame",
+    services: ["GR", "FR"] as ServiceType[],
+    description: "Restoration of glass and frames together",
+  },
 ];
 
 interface ScopeDetailsProps {
@@ -54,17 +44,24 @@ interface ScopeDetailsProps {
   onBack: () => void;
 }
 
-export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsProps) {
+export function ScopeDetails({
+  data,
+  onUpdate,
+  onNext,
+  onBack,
+}: ScopeDetailsProps) {
   const [scopeData, setScopeData] = useState<ScopeDetailsData>({
-    selectedServices: data?.initialContact?.extractedData?.requirements?.services || [],
-    serviceOrder: [],
-    autoAddedServices: [],
-    overrides: {},
-    scopeNotes: '',
-    accessRestrictions: [],
-    specialRequirements: []
+    selectedServices: (data?.scopeDetails?.selectedServices ||
+      data?.initialContact?.extractedData?.requirements?.services ||
+      []) as ServiceType[],
+    serviceOrder: data?.scopeDetails?.serviceOrder || [],
+    autoAddedServices: data?.scopeDetails?.autoAddedServices || [],
+    overrides: data?.scopeDetails?.overrides || {},
+    scopeNotes: data?.scopeDetails?.scopeNotes || "",
+    accessRestrictions: data?.scopeDetails?.accessRestrictions || [],
+    specialRequirements: data?.scopeDetails?.specialRequirements || [],
   });
-  
+
   const [validation, setValidation] = useState<{
     errors: string[];
     warnings: string[];
@@ -72,7 +69,7 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
   }>({
     errors: [],
     warnings: [],
-    info: []
+    info: [],
   });
 
   // Validate services whenever selection changes
@@ -81,31 +78,38 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
   }, [scopeData.selectedServices]);
 
   const validateServices = () => {
-    const result = SERVICE_RULES.validateServiceSelection(scopeData.selectedServices);
-    
+    const result = SERVICE_RULES.validateServiceSelection(
+      scopeData.selectedServices,
+    );
+
     // Auto-add required services
     if (result.autoAddedServices.length > 0) {
-      setScopeData(prev => ({
+      setScopeData((prev) => ({
         ...prev,
-        selectedServices: [...new Set([...prev.selectedServices, ...result.autoAddedServices])],
-        autoAddedServices: result.autoAddedServices
+        selectedServices: [
+          ...new Set([...prev.selectedServices, ...result.autoAddedServices]),
+        ],
+        autoAddedServices: result.autoAddedServices,
       }));
     }
-    
+
     // Calculate optimal service order
     const orderedServices = calculateServiceOrder(scopeData.selectedServices);
-    setScopeData(prev => ({ ...prev, serviceOrder: orderedServices }));
-    
+    setScopeData((prev) => ({ ...prev, serviceOrder: orderedServices }));
+
     setValidation({
       errors: result.errors,
       warnings: result.warnings,
-      info: result.autoAddedServices.length > 0 
-        ? [`Window Cleaning (WC) automatically added with Pressure Washing (PW)`]
-        : []
+      info:
+        result.autoAddedServices.length > 0
+          ? [
+              `Window Cleaning (WC) automatically added with Pressure Washing (PW)`,
+            ]
+          : [],
     });
   };
 
-  const calculateServiceOrder = (services: string[]): string[] => {
+  const calculateServiceOrder = (services: ServiceType[]): ServiceType[] => {
     return services.sort((a, b) => {
       const aPriority = (SERVICE_RULES.serviceOrder as any)[a]?.priority || 99;
       const bPriority = (SERVICE_RULES.serviceOrder as any)[b]?.priority || 99;
@@ -113,53 +117,80 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
     });
   };
 
-  const toggleService = (serviceId: string) => {
+  const toggleService = (serviceId: ServiceType) => {
     let newServices = [...scopeData.selectedServices];
-    
+
+    // Clear any previous warnings for this specific interaction
+    setValidation((prev) => ({
+      ...prev,
+      warnings: prev.warnings.filter(
+        (w) =>
+          !w.includes("Window Cleaning cannot be removed") &&
+          !w.includes("automatically added"),
+      ),
+    }));
+
     if (newServices.includes(serviceId)) {
       // Check if we can remove this service
-      if (serviceId === 'WC' && newServices.includes('PW')) {
+      if (serviceId === "WC" && newServices.includes("PW")) {
         // Cannot remove WC if PW is selected
-        setValidation(prev => ({
+        setValidation((prev) => ({
           ...prev,
-          warnings: [...prev.warnings, 'Window Cleaning cannot be removed when Pressure Washing is selected']
+          warnings: [
+            ...prev.warnings,
+            "Window Cleaning cannot be removed when Pressure Washing is selected",
+          ],
         }));
         return;
       }
-      
+
       // Remove service
-      newServices = newServices.filter(s => s !== serviceId);
-      
+      newServices = newServices.filter((s) => s !== serviceId);
+
       // If removing PW, also remove WC
-      if (serviceId === 'PW') {
-        newServices = newServices.filter(s => s !== 'WC');
+      if (serviceId === "PW") {
+        newServices = newServices.filter((s) => s !== "WC");
       }
     } else {
       // Add service
       newServices.push(serviceId);
     }
-    
-    setScopeData(prev => ({
+
+    setScopeData((prev) => ({
       ...prev,
       selectedServices: newServices,
-      autoAddedServices: [] // Reset auto-added tracking
+      autoAddedServices: [], // Reset auto-added tracking
     }));
   };
 
-  const selectBundle = (bundle: typeof COMMON_BUNDLES[0]) => {
-    setScopeData(prev => ({
+  const selectBundle = (bundle: (typeof COMMON_BUNDLES)[0]) => {
+    setScopeData((prev) => ({
       ...prev,
       selectedServices: [...bundle.services],
-      autoAddedServices: []
+      autoAddedServices: [],
     }));
   };
 
   const handleNext = () => {
     if (validation.errors.length > 0) {
-      alert('Please fix service dependency errors before continuing');
+      setValidation((prev) => ({
+        ...prev,
+        errors: [
+          ...prev.errors,
+          "Please fix service dependency errors before continuing",
+        ],
+      }));
       return;
     }
-    
+
+    if (scopeData.selectedServices.length === 0) {
+      setValidation((prev) => ({
+        ...prev,
+        errors: [...prev.errors, "Please select at least one service"],
+      }));
+      return;
+    }
+
     onUpdate({ scopeDetails: scopeData });
     onNext();
   };
@@ -169,7 +200,8 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
       <div>
         <h2 className="text-2xl font-bold mb-4">Scope & Service Details</h2>
         <p className="text-gray-600">
-          Select the services needed. Dependencies will be automatically managed.
+          Select the services needed. Dependencies will be automatically
+          managed.
         </p>
       </div>
 
@@ -189,7 +221,7 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
               <h4 className="font-medium">{bundle.name}</h4>
               <p className="text-sm text-gray-600 mt-1">{bundle.description}</p>
               <p className="text-xs text-gray-500 mt-2">
-                {bundle.services.join(' → ')}
+                {bundle.services.join(" → ")}
               </p>
             </Card>
           ))}
@@ -197,7 +229,9 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
       </div>
 
       {/* Validation Messages */}
-      {(validation.errors.length > 0 || validation.warnings.length > 0 || validation.info.length > 0) && (
+      {(validation.errors.length > 0 ||
+        validation.warnings.length > 0 ||
+        validation.info.length > 0) && (
         <div className="space-y-2">
           {validation.errors.map((error, i) => (
             <Alert key={`error-${i}`} variant="destructive">
@@ -226,22 +260,36 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {SERVICES.map((service) => {
             const isSelected = scopeData.selectedServices.includes(service.id);
-            const isAutoAdded = scopeData.autoAddedServices.includes(service.id);
-            const isDisabled = service.id === 'WC' && scopeData.selectedServices.includes('PW');
-            
+            const isAutoAdded =
+              scopeData.autoAddedServices?.includes(service.id) || false;
+            const isDisabled =
+              service.id === "WC" && scopeData.selectedServices.includes("PW");
+
             return (
               <Card
                 key={service.id}
-                className={`p-4 cursor-pointer transition touch-manipulation min-h-[100px] ${
-                  isSelected ? 'border-blue-500 bg-blue-50' : ''
-                } ${isDisabled ? 'opacity-75 cursor-not-allowed' : ''}`}
+                className={`p-4 cursor-pointer transition-all duration-200 touch-manipulation min-h-[100px] ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                    : "hover:border-gray-300 hover:bg-gray-50"
+                } ${isDisabled ? "opacity-75 cursor-not-allowed" : ""}`}
                 onClick={() => !isDisabled && toggleService(service.id)}
+                role="button"
+                tabIndex={isDisabled ? -1 : 0}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === " ") && !isDisabled) {
+                    e.preventDefault();
+                    toggleService(service.id);
+                  }
+                }}
+                aria-label={`${isSelected ? "Deselect" : "Select"} ${service.name} service`}
               >
                 <div className="flex items-start">
                   <Checkbox
                     checked={isSelected}
                     disabled={isDisabled}
                     className="mt-1 mr-3"
+                    aria-hidden="true"
                   />
                   <div className="flex-1">
                     <div className="flex items-center">
@@ -251,8 +299,16 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
                           Auto-added
                         </span>
                       )}
+                      {isDisabled && (
+                        <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                          Required
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600">{service.basePrice}</p>
+                    <p className="text-xs text-gray-500 mt-1 capitalize">
+                      {service.category}
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -262,16 +318,16 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
       </div>
 
       {/* Service Order Display */}
-      {scopeData.serviceOrder.length > 0 && (
+      {scopeData.serviceOrder && scopeData.serviceOrder.length > 0 && (
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-semibold mb-2">Recommended Service Order</h3>
           <div className="flex items-center space-x-2">
             {scopeData.serviceOrder.map((serviceId, index) => (
               <React.Fragment key={serviceId}>
                 <div className="px-3 py-1 bg-white rounded border">
-                  {SERVICES.find(s => s.id === serviceId)?.name}
+                  {SERVICES.find((s) => s.id === serviceId)?.name}
                 </div>
-                {index < scopeData.serviceOrder.length - 1 && (
+                {index < (scopeData.serviceOrder?.length || 0) - 1 && (
                   <span className="text-gray-400">→</span>
                 )}
               </React.Fragment>
@@ -289,14 +345,16 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
           <textarea
             className="w-full p-2 border rounded"
             placeholder="Note any access restrictions (e.g., security clearance, limited hours, etc.)"
-            value={scopeData.accessRestrictions.join('\n')}
-            onChange={(e) => setScopeData({
-              ...scopeData,
-              accessRestrictions: e.target.value.split('\n').filter(Boolean)
-            })}
+            value={scopeData.accessRestrictions?.join("\n") || ""}
+            onChange={(e) =>
+              setScopeData({
+                ...scopeData,
+                accessRestrictions: e.target.value.split("\n").filter(Boolean),
+              })
+            }
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium mb-2">
             Special Requirements or Notes
@@ -305,10 +363,12 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
             className="w-full p-2 border rounded"
             placeholder="Any special requirements or important notes about the scope"
             value={scopeData.scopeNotes}
-            onChange={(e) => setScopeData({
-              ...scopeData,
-              scopeNotes: e.target.value
-            })}
+            onChange={(e) =>
+              setScopeData({
+                ...scopeData,
+                scopeNotes: e.target.value,
+              })
+            }
           />
         </div>
       </div>
@@ -318,9 +378,12 @@ export function ScopeDetails({ data, onUpdate, onNext, onBack }: ScopeDetailsPro
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button 
+        <Button
           onClick={handleNext}
-          disabled={scopeData.selectedServices.length === 0 || validation.errors.length > 0}
+          disabled={
+            scopeData.selectedServices.length === 0 ||
+            validation.errors.length > 0
+          }
         >
           Continue to Files/Photos
         </Button>

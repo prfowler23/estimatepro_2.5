@@ -1,0 +1,290 @@
+/* Mobile Optimizations for EstimatePro */
+
+/* Viewport height fix for mobile browsers */
+:root {
+  --vh: 1vh;
+}
+
+/* Mobile viewport handling */
+@media screen and (max-width: 768px) {
+  html {
+    height: calc(var(--vh, 1vh) * 100);
+  }
+
+  body {
+    min-height: calc(var(--vh, 1vh) * 100);
+    overscroll-behavior: none; /* Prevent bounce on iOS */
+  }
+}
+
+/* Touch-friendly interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Larger touch targets for mobile */
+@media screen and (max-width: 768px) {
+  button,
+  .btn,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Prevent zoom on input focus for iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile-specific form styling */
+@media screen and (max-width: 768px) {
+  .mobile-form-field {
+    margin-bottom: 1rem;
+  }
+
+  .mobile-form-field label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .mobile-form-field input,
+  .mobile-form-field textarea,
+  .mobile-form-field select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background-color: white;
+  }
+
+  .mobile-form-field input:focus,
+  .mobile-form-field textarea:focus,
+  .mobile-form-field select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Mobile navigation */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile sheet animations */
+@media screen and (max-width: 768px) {
+  .sheet-content[data-side="bottom"] {
+    animation: slide-up 0.3s ease-out;
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Mobile photo capture styles */
+.mobile-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media screen and (min-width: 640px) {
+  .mobile-photo-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Camera overlay styles */
+.camera-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Mobile-specific utilities */
+@media screen and (max-width: 768px) {
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  .mobile-text-sm {
+    font-size: 0.875rem !important;
+  }
+
+  .mobile-p-4 {
+    padding: 1rem !important;
+  }
+
+  .mobile-mb-4 {
+    margin-bottom: 1rem !important;
+  }
+
+  .mobile-gap-3 {
+    gap: 0.75rem !important;
+  }
+}
+
+/* Mobile keyboard handling */
+@media screen and (max-width: 768px) {
+  .keyboard-open {
+    height: calc(var(--vh, 1vh) * 100);
+    overflow: hidden;
+  }
+
+  .keyboard-open .mobile-bottom-nav {
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+}
+
+/* Mobile step navigation */
+.mobile-step-nav {
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+}
+
+/* Mobile progress bar */
+.mobile-progress {
+  height: 0.5rem;
+  background: #f3f4f6;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.mobile-progress-fill {
+  height: 100%;
+  background: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+/* Mobile AI suggestions */
+.mobile-ai-panel {
+  max-height: calc(var(--vh, 1vh) * 80);
+  overflow-y: auto;
+}
+
+.mobile-ai-trigger {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 30;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile smart field enhancements */
+.mobile-smart-field {
+  position: relative;
+}
+
+.mobile-smart-field .ai-indicator {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #dbeafe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile photo analysis badges */
+.mobile-photo-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Accessibility improvements for mobile */
+@media screen and (max-width: 768px) {
+  /* Focus styles for touch devices */
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Safe area handling for devices with notches */
+@supports (padding: max(0px)) {
+  .mobile-safe-area {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Mobile landscape optimizations */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  .mobile-landscape-adjust {
+    max-height: calc(var(--vh, 1vh) * 100 - 2rem);
+    overflow-y: auto;
+  }
+}

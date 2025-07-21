@@ -1,27 +1,30 @@
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require("@supabase/supabase-js");
 
 async function setupBasicSchema() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing Supabase environment variables');
+    console.error("Missing Supabase environment variables");
     process.exit(1);
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    console.log('🚀 Testing database connection...');
-    
+    console.log("🚀 Testing database connection...");
+
     // Test connection with a simple query
-    const { data, error } = await supabase.from('auth.users').select('id').limit(1);
-    
+    const { data, error } = await supabase
+      .from("auth.users")
+      .select("id")
+      .limit(1);
+
     if (error) {
-      console.error('❌ Database connection failed:', error);
-      
+      console.error("❌ Database connection failed:", error);
+
       // Try creating basic estimates table
-      console.log('📝 Attempting to create estimates table...');
+      console.log("📝 Attempting to create estimates table...");
       const createTableSQL = `
         CREATE TABLE IF NOT EXISTS estimates (
           id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -46,34 +49,35 @@ async function setupBasicSchema() {
           created_at TIMESTAMPTZ DEFAULT NOW()
         );
       `;
-      
-      console.log('Creating tables with raw SQL...');
+
+      console.log("Creating tables with raw SQL...");
       // Note: This won't work without proper RPC function, but shows the intent
-      console.log('Tables need to be created manually in Supabase dashboard');
+      console.log("Tables need to be created manually in Supabase dashboard");
       return;
     }
-    
-    console.log('✅ Database connection successful!');
-    
+
+    console.log("✅ Database connection successful!");
+
     // Try to access estimates table
     const { data: estimatesData, error: estimatesError } = await supabase
-      .from('estimates')
-      .select('id')
+      .from("estimates")
+      .select("id")
       .limit(1);
-      
+
     if (estimatesError) {
-      console.log('❌ Quotes table not found:', estimatesError.message);
-      console.log('📝 Please create the estimates table in your Supabase dashboard');
+      console.log("❌ Quotes table not found:", estimatesError.message);
+      console.log(
+        "📝 Please create the estimates table in your Supabase dashboard",
+      );
     } else {
-      console.log('✅ Quotes table exists');
+      console.log("✅ Quotes table exists");
     }
-    
   } catch (error) {
-    console.error('💥 Setup failed:', error);
+    console.error("💥 Setup failed:", error);
   }
 }
 
 // Load environment variables
-require('dotenv').config({ path: '.env.local' });
+require("dotenv").config({ path: ".env.local" });
 
 setupBasicSchema();

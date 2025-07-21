@@ -21,6 +21,7 @@
      - anon public key (starts with: eyJ...)
 
 4. **Create `.env.local` file**
+
    ```bash
    # In your project root, create .env.local
    NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
@@ -35,6 +36,7 @@
 ## What This Creates
 
 ### Tables
+
 1. **quotes** - Stores all quote information
    - Auto-generated quote numbers (EST-YYYY-0001 format)
    - Customer and building information
@@ -47,11 +49,13 @@
    - Flexible JSON storage for calculations
 
 ### Security Features
+
 - Row Level Security (RLS) enabled
 - Currently uses permissive policies (allows all operations)
 - Ready for authentication integration
 
 ### Performance Features
+
 - Indexes on commonly queried fields
 - Optimized for analytics queries
 - Summary view for quick stats
@@ -71,26 +75,29 @@
    ```sql
    -- Run this in SQL editor to add sample data
    INSERT INTO quotes (
-     customer_name, customer_email, customer_phone, 
+     customer_name, customer_email, customer_phone,
      building_name, building_address, status, total_price
-   ) VALUES 
-   ('Test Customer', 'test@example.com', '555-0123', 
+   ) VALUES
+   ('Test Customer', 'test@example.com', '555-0123',
     'Test Building', '123 Test St', 'approved', 50000);
    ```
 
 ## Next Steps
 
 ### For Development
+
 - Current RLS policies allow all operations
 - Perfect for development and testing
 - No authentication required yet
 
 ### For Production
+
 1. **Implement Authentication**
    - Set up Supabase Auth
    - Update RLS policies to use `auth.uid()`
 
 2. **Tighten RLS Policies**
+
    ```sql
    -- Example: Users can only see their own quotes
    CREATE POLICY "Users can see own quotes" ON quotes
@@ -108,16 +115,19 @@
 ## Troubleshooting
 
 ### "Cannot connect to database" error
+
 - Check your .env.local file exists
 - Verify the URL and key are correct
 - Ensure no extra spaces or quotes in env values
 
 ### Tables not showing in dashboard
+
 - Make sure the SQL script ran successfully
 - Check for any error messages in SQL editor
 - Verify RLS policies aren't blocking access
 
 ### Analytics page still blank
+
 - Clear your browser cache
 - Restart the development server
 - Check browser console for errors

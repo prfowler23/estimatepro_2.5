@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { openai } from '@/lib/ai/openai';
-import { authenticateRequest } from '@/lib/auth/server';
-import { aiRateLimiter } from '@/lib/utils/rate-limit';
-import { contactExtractionSchema, validateRequest, sanitizeObject } from '@/lib/schemas/api-validation';
+import { NextRequest } from "next/server";
+import { enhancedOpenAI } from "@/lib/ai/openai";
+import { aiHandler } from "@/lib/api/api-handler";
+import {
+  contactExtractionSchema,
+  sanitizeObject,
+} from "@/lib/schemas/api-validation";
+import { z } from "zod";
 
 const EXTRACTION_PROMPT = `
 You are an AI assistant that extracts structured information from contact communications (emails, meeting notes, phone calls, etc.) for building services estimation.
@@ -38,7 +41,8 @@ Extract the following information from the provided content and return it in thi
     "approvers": ["array of decision makers"],
     "influencers": ["array of influencers"]
   },
-  "urgencyScore": "number from 1-10"
+  "urgencyScore": "number from 1-10",
+  "confidence": "number from 0.0-1.0"
 }
 
 Guidelines:
@@ -47,119 +51,54 @@ Guidelines:
 - Building types: office, retail, warehouse, medical, educational, industrial, residential, mixed-use
 - Urgency score: 1-3 = low, 4-6 = medium, 7-8 = high, 9-10 = emergency
 - Budget approved: true if budget is confirmed/approved, false if pending or not mentioned
+- Confidence: overall confidence in the extraction accuracy (0.0-1.0)
 - Be conservative with red flags - only flag genuine concerns
 `;
 
-export async function POST(request: NextRequest) {
-  try {
-    // Authenticate the request
-    const { user, error: authError } = await authenticateRequest(request);
-    if (authError || !user) {
-      console.error('Authentication failed:', authError);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    console.log('User authenticated successfully:', user.id);
+async function handleContactExtraction(
+  data: z.infer<typeof contactExtractionSchema>,
+  context: any,
+) {
+  const { content, contactMethod } = sanitizeObject(data);
 
-    // Apply rate limiting
-    const rateLimitResult = await aiRateLimiter(request);
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded',
-          retryAfter: rateLimitResult.retryAfter 
-        },
-        { 
-          status: 429,
-          headers: {
-            'Retry-After': Math.ceil((rateLimitResult.retryAfter || 0) / 1000).toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.resetTime.toString()
-          }
-        }
-      );
-    }
+  const messages = [
+    {
+      role: "system" as const,
+      content: EXTRACTION_PROMPT,
+    },
+    {
+      role: "user" as const,
+      content: `Contact Method: ${contactMethod}\n\nContent:\n${content}`,
+    },
+  ];
 
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
-      return NextResponse.json(
-        { error: 'AI service is not properly configured' },
-        { status: 500 }
-      );
-    }
+  const completion = await enhancedOpenAI.createChatCompletion(messages, {
+    model: "gpt-4",
+    temperature: 0.1,
+    maxTokens: 2000,
+    context: "contact_extraction",
+  });
 
-    const requestBody = await request.json();
-    
-    // Validate and sanitize input
-    const validation = validateRequest(contactExtractionSchema, requestBody);
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
-    }
+  const response = completion.choices[0]?.message?.content;
 
-    const { content, contactMethod } = sanitizeObject(validation.data!);
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: EXTRACTION_PROMPT
-        },
-        {
-          role: 'user',
-          content: `Contact Method: ${contactMethod}\n\nContent:\n${content}`
-        }
-      ],
-      temperature: 0.1,
-      max_tokens: 2000,
-    }).catch((error) => {
-      console.error('OpenAI API Error:', error);
-      if (error.status === 401) {
-        throw new Error('OpenAI API authentication failed. Please check your API key.');
-      }
-      if (error.status === 429) {
-        throw new Error('OpenAI API rate limit exceeded. Please try again later.');
-      }
-      throw error;
-    });
-
-    const response = completion.choices[0]?.message?.content;
-    
-    if (!response) {
-      throw new Error('No response from AI');
-    }
-
-    // Parse the JSON response
-    let extractedData;
-    try {
-      extractedData = JSON.parse(response);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      return NextResponse.json(
-        { error: 'Failed to parse extracted information' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      extractedData,
-      rawResponse: response
-    });
-
-  } catch (error) {
-    console.error('Error extracting contact information:', error);
-    
-    // Return more specific error messages
-    const errorMessage = error instanceof Error ? error.message : 'Failed to extract contact information';
-    const statusCode = errorMessage.includes('authentication failed') ? 401 : 500;
-    
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: statusCode }
-    );
+  if (!response) {
+    throw new Error("No response from AI");
   }
+
+  // Parse the JSON response
+  let extractedData;
+  try {
+    extractedData = JSON.parse(response);
+  } catch (parseError) {
+    throw new Error("Failed to parse extracted information");
+  }
+
+  return {
+    extractedData,
+    rawResponse: response,
+    processedAt: new Date().toISOString(),
+  };
 }
+
+export const POST = (request: NextRequest) =>
+  aiHandler(request, contactExtractionSchema, handleContactExtraction);

@@ -1,0 +1,11 @@
+<svg width="1280" height="720" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#f8fafc"/>
+  <rect x="0" y="0" width="1280" height="60" fill="#2563eb"/>
+  <text x="640" y="35" text-anchor="middle" fill="white" font-family="Arial" font-size="24" font-weight="bold">EstimatePro - Building Services Estimation Platform</text>
+  <rect x="40" y="100" width="300" height="200" fill="#e2e8f0" rx="8"/>
+  <text x="190" y="210" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="16">Dashboard Overview</text>
+  <rect x="380" y="100" width="300" height="200" fill="#e2e8f0" rx="8"/>
+  <text x="530" y="210" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="16">Service Calculator</text>
+  <rect x="720" y="100" width="300" height="200" fill="#e2e8f0" rx="8"/>
+  <text x="870" y="210" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="16">AI Photo Analysis</text>
+</svg>

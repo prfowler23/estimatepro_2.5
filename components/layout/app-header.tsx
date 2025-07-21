@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,37 +11,37 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
-import { 
-  Building, 
-  Calculator, 
-  FileText, 
-  BarChart3, 
-  Settings, 
-  User, 
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import {
+  Building,
+  Calculator,
+  FileText,
+  BarChart3,
+  Settings,
+  User,
   LogOut,
   Menu,
-  X
-} from 'lucide-react'
-import { useAuth } from '@/contexts/auth-context'
+  X,
+} from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export function AppHeader() {
-  const { user, signOut } = useAuth()
-  const router = useRouter()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-    { name: 'Calculator', href: '/calculator', icon: Calculator },
-    { name: 'Quotes', href: '/quotes', icon: FileText },
-    { name: 'Settings', href: '/settings', icon: Settings },
-  ]
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    { name: "Calculator", href: "/calculator", icon: Calculator },
+    { name: "Estimates", href: "/estimates", icon: FileText },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push('/auth/login')
-  }
+    await signOut();
+    router.push("/auth/login");
+  };
 
   return (
     <header className="bg-background border-b border-border">
@@ -90,7 +90,10 @@ export function AppHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="text-destructive"
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
@@ -109,7 +112,11 @@ export function AppHeader() {
               className="md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              {mobileMenuOpen ? (
+                <X className="h-4 w-4" />
+              ) : (
+                <Menu className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
@@ -119,8 +126,8 @@ export function AppHeader() {
           <div className="md:hidden py-4 space-y-2">
             {navigation.map((item) => (
               <Link key={item.name} href={item.href}>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="w-full justify-start gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -133,5 +140,5 @@ export function AppHeader() {
         )}
       </div>
     </header>
-  )
+  );
 }

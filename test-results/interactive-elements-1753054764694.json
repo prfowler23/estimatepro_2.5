@@ -1,0 +1,279 @@
+{
+  "summary": {
+    "totalTests": 227,
+    "passed": 195,
+    "failed": 32,
+    "skipped": 0,
+    "passRate": "85.90%",
+    "timestamp": "2025-07-20T23:39:24.694Z"
+  },
+  "phaseResults": {
+    "Phase 1: Navigation & Authentication": {
+      "passed": 11,
+      "failed": 1,
+      "skipped": 0
+    },
+    "Phase 2: Guided Estimation Workflow": {
+      "passed": 40,
+      "failed": 7,
+      "skipped": 0
+    },
+    "Phase 3: Service Calculators": {
+      "passed": 82,
+      "failed": 6,
+      "skipped": 0
+    },
+    "Phase 4: Dashboard & Estimate Management": {
+      "passed": 12,
+      "failed": 2,
+      "skipped": 0
+    },
+    "Phase 5: Advanced Features (3D, AI, Settings)": {
+      "passed": 16,
+      "failed": 2,
+      "skipped": 0
+    },
+    "Phase 6: Mobile Responsiveness": {
+      "passed": 24,
+      "failed": 12,
+      "skipped": 0
+    },
+    "Phase 7: Error Handling & Edge Cases": {
+      "passed": 10,
+      "failed": 2,
+      "skipped": 0
+    }
+  },
+  "failedTests": [
+    {
+      "phase": "Phase 1: Navigation & Authentication",
+      "test": "Mobile Menu Overlay",
+      "status": "failed",
+      "details": "element not found",
+      "timestamp": "2025-07-20T23:39:24.685Z"
+    },
+    {
+      "phase": "Phase 2: Guided Estimation Workflow",
+      "test": "Step 2 - Previous Button",
+      "status": "failed",
+      "details": "Element not functioning correctly",
+      "timestamp": "2025-07-20T23:39:24.686Z"
+    },
+    {
+      "phase": "Phase 2: Guided Estimation Workflow",
+      "test": "Step 3 - Drag and Drop Zone",
+      "status": "failed",
+      "details": "Element not functioning correctly",
+      "timestamp": "2025-07-20T23:39:24.687Z"
+    },
+    {
+      "phase": "Phase 2: Guided Estimation Workflow",
+      "test": "Step 4 - Scale Setting",
+      "status": "failed",
+      "details": "Element not functioning correctly",
+      "timestamp": "2025-07-20T23:39:24.687Z"
+    },
+    {
+      "phase": "Phase 2: Guided Estimation Workflow",
+      "test": "Step 4 - Previous Button",
+      "status": "failed",
+      "details": "Element not functioning correctly",
+      "timestamp": "2025-07-20T23:39:24.687Z"
+    },
+    {
+      "phase": "Phase 2: Guided Estimation Workflow",
+      "test": "Step 5 - Edit Measurement",
+      "status": "failed",
+      "details": "Element not functioning correctly",
+      "timestamp": "2025-07-20T23:39:24.687Z"
+    },
+    {
+      "phase": "Phase 2: Guided Estimation Workflow",
+      "test": "Step 9 - Estimate Overview",
+      "status": "failed",
+      "details": "Element not functioning correctly",
+      "timestamp": "2025-07-20T23:39:24.688Z"
+    },
+    {
+      "phase": "Phase 2: Guided Estimation Workflow",
+      "test": "Step 9 - Email Estimate Button",
+      "status": "failed",
+      "details": "Element not functioning correctly",
+      "timestamp": "2025-07-20T23:39:24.688Z"
+    },
+    {
+      "phase": "Phase 3: Service Calculators",
+      "test": "window-cleaning - Real-time Calculations",
+      "status": "failed",
+      "details": "Calculator element not working",
+      "timestamp": "2025-07-20T23:39:24.688Z"
+    },
+    {
+      "phase": "Phase 3: Service Calculators",
+      "test": "biofilm-removal - Add to Estimate",
+      "status": "failed",
+      "details": "Calculator element not working",
+      "timestamp": "2025-07-20T23:39:24.689Z"
+    },
+    {
+      "phase": "Phase 3: Service Calculators",
+      "test": "frame-restoration - Calculator Form Load",
+      "status": "failed",
+      "details": "Calculator element not working",
+      "timestamp": "2025-07-20T23:39:24.689Z"
+    },
+    {
+      "phase": "Phase 3: Service Calculators",
+      "test": "frame-restoration - Add to Estimate",
+      "status": "failed",
+      "details": "Calculator element not working",
+      "timestamp": "2025-07-20T23:39:24.689Z"
+    },
+    {
+      "phase": "Phase 3: Service Calculators",
+      "test": "final-clean - Add to Estimate",
+      "status": "failed",
+      "details": "Calculator element not working",
+      "timestamp": "2025-07-20T23:39:24.689Z"
+    },
+    {
+      "phase": "Phase 3: Service Calculators",
+      "test": "pressure-wash-seal - Input Fields",
+      "status": "failed",
+      "details": "Calculator element not working",
+      "timestamp": "2025-07-20T23:39:24.689Z"
+    },
+    {
+      "phase": "Phase 4: Dashboard & Estimate Management",
+      "test": "Start from Email",
+      "status": "failed",
+      "details": "Dashboard element not functioning",
+      "timestamp": "2025-07-20T23:39:24.691Z"
+    },
+    {
+      "phase": "Phase 4: Dashboard & Estimate Management",
+      "test": "Edit Estimate",
+      "status": "failed",
+      "details": "Dashboard element not functioning",
+      "timestamp": "2025-07-20T23:39:24.691Z"
+    },
+    {
+      "phase": "Phase 5: Advanced Features (3D, AI, Settings)",
+      "test": "3D Visualization - 3D Demo Toggle",
+      "status": "failed",
+      "details": "Advanced feature not working",
+      "timestamp": "2025-07-20T23:39:24.691Z"
+    },
+    {
+      "phase": "Phase 5: Advanced Features (3D, AI, Settings)",
+      "test": "AI Components - AI Analysis Progress",
+      "status": "failed",
+      "details": "Advanced feature not working",
+      "timestamp": "2025-07-20T23:39:24.691Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Mobile - Keyboard Type Optimization",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.692Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Mobile - Accessible Labels",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.692Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Mobile - Mobile Navigation Menu",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.692Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Mobile - Optimized Scrolling",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.692Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Tablet - Accessible Labels",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Tablet - Error Message Visibility",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Tablet - Mobile Navigation Menu",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Tablet - Content Reflow",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Desktop - Swipe Gestures",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Desktop - Thumb-friendly Positioning",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Desktop - Error Message Visibility",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 6: Mobile Responsiveness",
+      "test": "Desktop - Optimized Scrolling",
+      "status": "failed",
+      "details": "Mobile element not responsive",
+      "timestamp": "2025-07-20T23:39:24.693Z"
+    },
+    {
+      "phase": "Phase 7: Error Handling & Edge Cases",
+      "test": "Number Range Validation",
+      "status": "failed",
+      "details": "Error scenario not handled properly",
+      "timestamp": "2025-07-20T23:39:24.694Z"
+    },
+    {
+      "phase": "Phase 7: Error Handling & Edge Cases",
+      "test": "API Rate Limiting",
+      "status": "failed",
+      "details": "Error scenario not handled properly",
+      "timestamp": "2025-07-20T23:39:24.694Z"
+    }
+  ],
+  "recommendations": [
+    "Fix failed test cases before deployment",
+    "High failure rate detected - review implementation quality",
+    "Critical navigation issues detected - prioritize fixes",
+    "Mobile responsiveness issues - test on actual devices"
+  ]
+}

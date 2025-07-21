@@ -1,0 +1,11 @@
+<svg width="540" height="720" xmlns="http://www.w3.org/2000/svg">
+  <rect width="540" height="720" fill="#f8fafc"/>
+  <rect x="0" y="0" width="540" height="60" fill="#2563eb"/>
+  <text x="270" y="35" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="bold">EstimatePro Mobile</text>
+  <rect x="20" y="100" width="500" height="150" fill="#e2e8f0" rx="8"/>
+  <text x="270" y="185" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="16">Quick Estimate</text>
+  <rect x="20" y="270" width="240" height="120" fill="#e2e8f0" rx="8"/>
+  <text x="140" y="335" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="14">Calculator</text>
+  <rect x="280" y="270" width="240" height="120" fill="#e2e8f0" rx="8"/>
+  <text x="400" y="335" text-anchor="middle" fill="#64748b" font-family="Arial" font-size="14">Photos</text>
+</svg>

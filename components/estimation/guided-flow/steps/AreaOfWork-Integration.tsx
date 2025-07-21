@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { DrawingCanvas } from '@/components/canvas/DrawingCanvas';
-import { ToolPalette } from '@/components/canvas/ToolPalette';
-import { ScaleSetter } from '@/components/canvas/ScaleSetter';
-import { AreaSummary } from '@/components/canvas/AreaSummary';
-import { MapImportService } from '@/lib/canvas/map-import';
-import { exportMapWithMeasurements } from '@/lib/canvas/import-export';
+import React, { useState } from "react";
+import { DrawingCanvas } from "@/components/canvas/DrawingCanvas";
+import { ToolPalette } from "@/components/canvas/ToolPalette";
+import { ScaleSetter } from "@/components/canvas/ScaleSetter";
+import { AreaSummary } from "@/components/canvas/AreaSummary";
+import { MapImportService } from "@/lib/canvas/map-import";
+import { exportMapWithMeasurements } from "@/lib/canvas/import-export";
 
 interface AreaOfWorkCompleteProps {
   data: any;
@@ -14,17 +14,24 @@ interface AreaOfWorkCompleteProps {
 }
 
 // Main component that combines all the canvas features
-export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }: AreaOfWorkCompleteProps) {
-  const [currentTool, setCurrentTool] = useState<'select' | 'rectangle' | 'polygon' | 'measure'>('select');
+export function AreaOfWorkComplete({
+  data,
+  onUpdate,
+  onNext,
+  onBack,
+}: AreaOfWorkCompleteProps) {
+  const [currentTool, setCurrentTool] = useState<
+    "select" | "rectangle" | "polygon" | "measure"
+  >("select");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [shapes, setShapes] = useState<any[]>([]);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [scale, setScale] = useState<{ pixelsPerFoot: number } | null>(null);
-  
+
   const handleFileUpload = async (file: File) => {
     const importService = new MapImportService();
-    
-    if (file.name.includes('nearmap')) {
+
+    if (file.name.includes("nearmap")) {
       const result = await importService.importFromNearmap(file);
       setBackgroundImage(result.imageUrl);
       if (result.metadata?.scale) {
@@ -36,31 +43,31 @@ export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }: AreaOfWor
       setBackgroundImage(url);
     }
   };
-  
+
   const handleExport = async () => {
-    const canvas = document.querySelector('canvas');
+    const canvas = document.querySelector("canvas");
     if (!canvas) return;
-    
-    const blob = await exportMapWithMeasurements(
-      canvas,
-      shapes,
-      measurements
-    );
-    
+
+    const blob = await exportMapWithMeasurements(canvas, shapes, measurements);
+
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'area-measurements.png';
+    a.download = "area-measurements.png";
     a.click();
   };
-  
+
   return (
-    <div className='space-y-6'>
-      <div className='grid grid-cols-3 gap-6'>
-        <div className='col-span-2'>
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-2">
           <ToolPalette
             currentTool={currentTool}
-            onToolChange={(tool: string) => setCurrentTool(tool as 'select' | 'rectangle' | 'polygon' | 'measure')}
+            onToolChange={(tool: string) =>
+              setCurrentTool(
+                tool as "select" | "rectangle" | "polygon" | "measure",
+              )
+            }
             onClearAll={() => {
               setShapes([]);
               setMeasurements([]);
@@ -75,8 +82,10 @@ export function AreaOfWorkComplete({ data, onUpdate, onNext, onBack }: AreaOfWor
             }}
           />
         </div>
-        <div className='space-y-4'>
-          <ScaleSetter onScaleSet={(pixelsPerFoot: number) => setScale({ pixelsPerFoot })} />
+        <div className="space-y-4">
+          <ScaleSetter
+            onScaleSet={(pixelsPerFoot: number) => setScale({ pixelsPerFoot })}
+          />
           <AreaSummary shapes={shapes} measurements={measurements} />
           <button onClick={handleExport}>Export Map</button>
         </div>

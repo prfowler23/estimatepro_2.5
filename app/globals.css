@@ -5,35 +5,35 @@
 @layer base {
   :root {
     /* Primary Actions */
-    --color-primary-action: #1565C0;
-    --color-primary-hover: #1976D2;
-    --color-primary-active: #0D47A1;
-    --color-primary-disabled: #90CAF9;
-    
+    --color-primary-action: #1565c0;
+    --color-primary-hover: #1976d2;
+    --color-primary-active: #0d47a1;
+    --color-primary-disabled: #90caf9;
+
     /* Text Colors */
     --color-text-primary: #212121;
     --color-text-secondary: #515863;
-    --color-text-inverted: #FFFFFF;
-    
+    --color-text-inverted: #ffffff;
+
     /* Background Colors */
-    --color-bg-base: #FFFFFF;
-    --color-bg-elevated: #F5F5F5;
-    
+    --color-bg-base: #ffffff;
+    --color-bg-elevated: #f5f5f5;
+
     /* Border Colors */
-    --color-border-primary: #E0E0E0;
-    --color-border-focus: #1976D2;
-    
+    --color-border-primary: #e0e0e0;
+    --color-border-focus: #1976d2;
+
     /* Semantic State Colors */
-    --color-feedback-success: #2E7D32;
-    --color-feedback-error: #C62828;
-    --color-feedback-warning: #F57C00;
-    --color-feedback-info: #1976D2;
-    
+    --color-feedback-success: #2e7d32;
+    --color-feedback-error: #c62828;
+    --color-feedback-warning: #f57c00;
+    --color-feedback-info: #1976d2;
+
     /* Secondary Actions */
     --color-secondary-action: #424242;
     --color-secondary-hover: #616161;
     --color-secondary-active: #212121;
-    
+
     /* Border radius */
     --radius: 0.5rem;
   }

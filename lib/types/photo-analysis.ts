@@ -4,7 +4,7 @@ export interface PhotoAnalysisResult {
     totalArea: number;
     gridPattern: string;
     confidence: number;
-    locations: Array<{ x: number; y: number; width: number; height: number; }>;
+    locations: Array<{ x: number; y: number; width: number; height: number }>;
   };
   materials?: {
     breakdown: Record<string, number>; // e.g. { brick: 60, glass: 30, concrete: 10 }
@@ -22,11 +22,11 @@ export interface PhotoAnalysisResult {
     staining: string[];
     oxidation: string[];
     damage: string[];
-    severity: 'low' | 'medium' | 'high';
+    severity: "low" | "medium" | "high";
   };
   safety?: {
     hazards: string[];
     requirements: string[];
-    riskLevel: 'low' | 'medium' | 'high';
+    riskLevel: "low" | "medium" | "high";
   };
 }

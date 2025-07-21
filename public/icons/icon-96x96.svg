@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <rect width="96" height="96" fill="#2563eb" rx="9.600000000000001"/>
+  <g fill="white">
+    <!-- Calculator icon -->
+    <rect x="19.200000000000003" y="14.399999999999999" width="57.599999999999994" height="67.19999999999999" fill="none" stroke="white" stroke-width="1.92" rx="4.800000000000001"/>
+    
+    <!-- Screen -->
+    <rect x="24" y="19.200000000000003" width="48" height="14.399999999999999" fill="white" rx="1.92"/>
+    
+    <!-- Buttons -->
+    <circle cx="33.599999999999994" cy="43.2" r="3.3600000000000003" fill="white"/>
+    <circle cx="48" cy="43.2" r="3.3600000000000003" fill="white"/>
+    <circle cx="62.400000000000006" cy="43.2" r="3.3600000000000003" fill="white"/>
+    
+    <circle cx="33.599999999999994" cy="52.800000000000004" r="3.3600000000000003" fill="white"/>
+    <circle cx="48" cy="52.800000000000004" r="3.3600000000000003" fill="white"/>
+    <circle cx="62.400000000000006" cy="52.800000000000004" r="3.3600000000000003" fill="white"/>
+    
+    <circle cx="33.599999999999994" cy="62.400000000000006" r="3.3600000000000003" fill="white"/>
+    <circle cx="48" cy="62.400000000000006" r="3.3600000000000003" fill="white"/>
+    <circle cx="62.400000000000006" cy="62.400000000000006" r="3.3600000000000003" fill="white"/>
+    
+    <!-- Large button -->
+    <rect x="45.599999999999994" y="69.12" width="14.399999999999999" height="7.68" fill="white" rx="1.92"/>
+    
+    <!-- Text -->
+    <text x="48" y="29.759999999999998" text-anchor="middle" fill="#2563eb" font-family="Arial, sans-serif" font-size="7.68" font-weight="bold">EP</text>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
-import { ExtractedData } from './extraction';
-import { FinalEstimate } from '../types/estimate-types';
+import OpenAI from "openai";
+import { ExtractedData } from "./extraction";
+import { FinalEstimate } from "../types/estimate-types";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -12,7 +12,7 @@ export interface FollowUpRequest {
   extractedData: ExtractedData;
   quote?: FinalEstimate;
   previousInteractions?: Array<{
-    type: 'email' | 'call' | 'meeting' | 'quote_sent';
+    type: "email" | "call" | "meeting" | "quote_sent";
     date: string;
     summary: string;
     response?: string;
@@ -26,7 +26,7 @@ export interface FollowUpRequest {
 }
 
 export interface FollowUpPlan {
-  strategy: 'aggressive' | 'moderate' | 'gentle' | 'minimal';
+  strategy: "aggressive" | "moderate" | "gentle" | "minimal";
   timeline: FollowUpAction[];
   personalization: {
     tone: string;
@@ -39,9 +39,9 @@ export interface FollowUpPlan {
 
 export interface FollowUpAction {
   id: string;
-  type: 'email' | 'call' | 'text' | 'proposal_update' | 'meeting_request';
+  type: "email" | "call" | "text" | "proposal_update" | "meeting_request";
   scheduledDate: Date;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: "low" | "medium" | "high" | "urgent";
   content: {
     subject?: string;
     body: string;
@@ -64,34 +64,40 @@ export interface GeneratedEmail {
 }
 
 // Main follow-up automation function
-export async function generateFollowUpPlan(request: FollowUpRequest): Promise<FollowUpPlan> {
+export async function generateFollowUpPlan(
+  request: FollowUpRequest,
+): Promise<FollowUpPlan> {
   try {
     const strategy = determineFollowUpStrategy(request);
     const timeline = await generateFollowUpTimeline(request, strategy);
     const personalization = await generatePersonalization(request);
-    
+
     return {
       strategy,
       timeline,
       personalization,
       alternativeChannels: determineAlternativeChannels(request),
-      escalationTriggers: determineEscalationTriggers(request)
+      escalationTriggers: determineEscalationTriggers(request),
     };
   } catch (error) {
-    console.error('Error generating follow-up plan:', error);
-    throw new Error('Failed to generate follow-up plan');
+    console.error("Error generating follow-up plan:", error);
+    throw new Error("Failed to generate follow-up plan");
   }
 }
 
 // Generate personalized follow-up email
 export async function generateFollowUpEmail(
   request: FollowUpRequest,
-  emailType: 'initial' | 'reminder' | 'value_add' | 'objection_handling' | 'final',
-  previousEmails?: string[]
+  emailType:
+    | "initial"
+    | "reminder"
+    | "value_add"
+    | "objection_handling"
+    | "final",
+  previousEmails?: string[],
 ): Promise<GeneratedEmail> {
-  
   const context = buildEmailContext(request, emailType, previousEmails);
-  
+
   const prompt = `Generate a personalized follow-up email for this prospect:
 
 CONTEXT: ${context}
@@ -120,43 +126,46 @@ Guidelines:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are an expert sales copywriter specializing in building services. Create engaging, personalized follow-up emails that build relationships and drive action.'
+          role: "system",
+          content:
+            "You are an expert sales copywriter specializing in building services. Create engaging, personalized follow-up emails that build relationships and drive action.",
         },
         {
-          role: 'user',
-          content: prompt
-        }
+          role: "user",
+          content: prompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.3,
-      max_tokens: 2000
+      max_tokens: 2000,
     });
 
-    const emailData = JSON.parse(response.choices[0].message.content || '{}');
-    
+    const emailData = JSON.parse(response.choices[0].message.content || "{}");
+
     return {
-      subject: emailData.subject || 'Follow-up on Your Service Request',
-      body: emailData.body || '',
-      tone: emailData.tone || 'professional',
+      subject: emailData.subject || "Follow-up on Your Service Request",
+      body: emailData.body || "",
+      tone: emailData.tone || "professional",
       personalization: emailData.personalization || [],
       attachments: emailData.attachments || [],
-      followUpDate: new Date(emailData.followUpDate || Date.now() + 3 * 24 * 60 * 60 * 1000),
-      objectives: emailData.objectives || []
+      followUpDate: new Date(
+        emailData.followUpDate || Date.now() + 3 * 24 * 60 * 60 * 1000,
+      ),
+      objectives: emailData.objectives || [],
     };
   } catch (error) {
-    console.error('Error generating follow-up email:', error);
-    throw new Error('Failed to generate follow-up email');
+    console.error("Error generating follow-up email:", error);
+    throw new Error("Failed to generate follow-up email");
   }
 }
 
 // Generate call script
 export async function generateCallScript(
   request: FollowUpRequest,
-  callType: 'initial' | 'follow_up' | 'objection_handling' | 'closing'
+  callType: "initial" | "follow_up" | "objection_handling" | "closing",
 ): Promise<{
   script: string;
   talkingPoints: string[];
@@ -164,7 +173,6 @@ export async function generateCallScript(
   questions: string[];
   closeAttempts: string[];
 }> {
-  
   const prompt = `Generate a call script for this prospect:
 
 CUSTOMER DATA: ${JSON.stringify(request.extractedData, null, 2)}
@@ -195,27 +203,28 @@ Include:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are a sales expert creating call scripts for building services sales. Focus on consultative selling and relationship building.'
+          role: "system",
+          content:
+            "You are a sales expert creating call scripts for building services sales. Focus on consultative selling and relationship building.",
         },
         {
-          role: 'user',
-          content: prompt
-        }
+          role: "user",
+          content: prompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 2500
+      max_tokens: 2500,
     });
 
-    const scriptData = JSON.parse(response.choices[0].message.content || '{}');
+    const scriptData = JSON.parse(response.choices[0].message.content || "{}");
     return scriptData;
   } catch (error) {
-    console.error('Error generating call script:', error);
-    throw new Error('Failed to generate call script');
+    console.error("Error generating call script:", error);
+    throw new Error("Failed to generate call script");
   }
 }
 
@@ -226,20 +235,19 @@ export async function analyzeEngagement(
     type: string;
     timestamp: string;
     details: string;
-  }>
+  }>,
 ): Promise<{
   engagementScore: number; // 0-100
   behaviorInsights: string[];
   recommendedActions: Array<{
     action: string;
-    priority: 'low' | 'medium' | 'high';
+    priority: "low" | "medium" | "high";
     timing: string;
     rationale: string;
   }>;
   riskFactors: string[];
   opportunities: string[];
 }> {
-  
   const prompt = `Analyze customer engagement and recommend next actions:
 
 CUSTOMER DATA: ${JSON.stringify(request.extractedData, null, 2)}
@@ -273,27 +281,30 @@ Consider:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are a sales analytics expert specializing in customer engagement analysis and sales strategy recommendations.'
+          role: "system",
+          content:
+            "You are a sales analytics expert specializing in customer engagement analysis and sales strategy recommendations.",
         },
         {
-          role: 'user',
-          content: prompt
-        }
+          role: "user",
+          content: prompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 2000
+      max_tokens: 2000,
     });
 
-    const analysisData = JSON.parse(response.choices[0].message.content || '{}');
+    const analysisData = JSON.parse(
+      response.choices[0].message.content || "{}",
+    );
     return analysisData;
   } catch (error) {
-    console.error('Error analyzing engagement:', error);
-    throw new Error('Failed to analyze customer engagement');
+    console.error("Error analyzing engagement:", error);
+    throw new Error("Failed to analyze customer engagement");
   }
 }
 
@@ -301,7 +312,7 @@ Consider:
 export async function generateProposalUpdate(
   originalQuote: FinalEstimate,
   feedback: string,
-  customerConcerns: string[]
+  customerConcerns: string[],
 ): Promise<{
   updatedQuote: Partial<FinalEstimate>;
   changes: Array<{
@@ -313,7 +324,6 @@ export async function generateProposalUpdate(
   coverLetter: string;
   negotiationPoints: string[];
 }> {
-  
   const prompt = `Update this proposal based on customer feedback:
 
 ORIGINAL QUOTE: ${JSON.stringify(originalQuote, null, 2)}
@@ -349,73 +359,82 @@ Consider:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are a proposal specialist who creates compelling updates that address customer concerns while maintaining business objectives.'
+          role: "system",
+          content:
+            "You are a proposal specialist who creates compelling updates that address customer concerns while maintaining business objectives.",
         },
         {
-          role: 'user',
-          content: prompt
-        }
+          role: "user",
+          content: prompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 2500
+      max_tokens: 2500,
     });
 
-    const updateData = JSON.parse(response.choices[0].message.content || '{}');
+    const updateData = JSON.parse(response.choices[0].message.content || "{}");
     return updateData;
   } catch (error) {
-    console.error('Error generating proposal update:', error);
-    throw new Error('Failed to generate proposal update');
+    console.error("Error generating proposal update:", error);
+    throw new Error("Failed to generate proposal update");
   }
 }
 
 // Helper functions
-function determineFollowUpStrategy(request: FollowUpRequest): 'aggressive' | 'moderate' | 'gentle' | 'minimal' {
+function determineFollowUpStrategy(
+  request: FollowUpRequest,
+): "aggressive" | "moderate" | "gentle" | "minimal" {
   const urgencyScore = request.extractedData.urgencyScore;
   const budget = request.extractedData.budget;
-  
-  if (urgencyScore >= 8 && budget.approved) return 'aggressive';
-  if (urgencyScore >= 6 || budget.flexibility === 'flexible') return 'moderate';
-  if (urgencyScore <= 4 || budget.flexibility === 'tight') return 'gentle';
-  return 'minimal';
+
+  if (urgencyScore >= 8 && budget.approved) return "aggressive";
+  if (urgencyScore >= 6 || budget.flexibility === "flexible") return "moderate";
+  if (urgencyScore <= 4 || budget.flexibility === "tight") return "gentle";
+  return "minimal";
 }
 
-async function generateFollowUpTimeline(request: FollowUpRequest, strategy: string): Promise<FollowUpAction[]> {
+async function generateFollowUpTimeline(
+  request: FollowUpRequest,
+  strategy: string,
+): Promise<FollowUpAction[]> {
   const baseDate = new Date();
   const actions: FollowUpAction[] = [];
-  
+
   // Generate timeline based on strategy
   const intervals = {
-    'aggressive': [1, 3, 7, 14, 30],
-    'moderate': [2, 7, 14, 30, 60],
-    'gentle': [3, 10, 21, 45, 90],
-    'minimal': [7, 21, 60, 120]
+    aggressive: [1, 3, 7, 14, 30],
+    moderate: [2, 7, 14, 30, 60],
+    gentle: [3, 10, 21, 45, 90],
+    minimal: [7, 21, 60, 120],
   };
-  
-  const scheduleIntervals = intervals[strategy as keyof typeof intervals] || intervals.moderate;
-  
+
+  const scheduleIntervals =
+    intervals[strategy as keyof typeof intervals] || intervals.moderate;
+
   scheduleIntervals.forEach((days, index) => {
     const scheduledDate = new Date(baseDate);
     scheduledDate.setDate(baseDate.getDate() + days);
-    
+
     actions.push({
       id: `followup-${index + 1}`,
-      type: index === 0 ? 'email' : (index % 2 === 0 ? 'email' : 'call'),
+      type: index === 0 ? "email" : index % 2 === 0 ? "email" : "call",
       scheduledDate,
-      priority: index < 2 ? 'high' : 'medium',
+      priority: index < 2 ? "high" : "medium",
       content: {
-        body: '', // To be generated when action is executed
+        body: "", // To be generated when action is executed
       },
-      conditions: [`No response from previous ${index > 0 ? 'contact' : 'quote'}`],
+      conditions: [
+        `No response from previous ${index > 0 ? "contact" : "quote"}`,
+      ],
       objectives: [`Advance opportunity to next stage`],
-      successMetrics: [`Response within 48 hours`]
+      successMetrics: [`Response within 48 hours`],
     });
   });
-  
+
   return actions;
 }
 
@@ -423,83 +442,90 @@ async function generatePersonalization(request: FollowUpRequest) {
   return {
     tone: determineTone(request.extractedData),
     keyPoints: extractKeyPoints(request.extractedData),
-    objectionHandling: generateObjectionHandling(request.extractedData)
+    objectionHandling: generateObjectionHandling(request.extractedData),
   };
 }
 
 function determineTone(data: ExtractedData): string {
-  if (data.requirements.buildingType === 'hospital' || data.requirements.buildingType === 'school') {
-    return 'professional and safety-focused';
+  if (
+    data.requirements.buildingType === "hospital" ||
+    data.requirements.buildingType === "school"
+  ) {
+    return "professional and safety-focused";
   }
   if (data.urgencyScore >= 8) {
-    return 'responsive and solution-oriented';
+    return "responsive and solution-oriented";
   }
-  return 'consultative and relationship-building';
+  return "consultative and relationship-building";
 }
 
 function extractKeyPoints(data: ExtractedData): string[] {
   const points = [];
-  
+
   if (data.urgencyScore >= 7) {
-    points.push('Quick response to urgent timeline');
+    points.push("Quick response to urgent timeline");
   }
-  
+
   if (data.requirements.specialRequirements.length > 0) {
-    points.push('Expertise in specialized requirements');
+    points.push("Expertise in specialized requirements");
   }
-  
+
   points.push(`Experience with ${data.requirements.buildingType} buildings`);
-  points.push('Comprehensive service offering');
-  
+  points.push("Comprehensive service offering");
+
   return points;
 }
 
 function generateObjectionHandling(data: ExtractedData): string[] {
   const objections = [];
-  
-  if (data.budget.flexibility === 'tight') {
-    objections.push('Value-focused pricing discussion');
+
+  if (data.budget.flexibility === "tight") {
+    objections.push("Value-focused pricing discussion");
   }
-  
-  if (data.timeline.urgency === 'urgent') {
-    objections.push('Capacity and scheduling assurance');
+
+  if (data.timeline.urgency === "urgent") {
+    objections.push("Capacity and scheduling assurance");
   }
-  
-  objections.push('Quality and safety standards emphasis');
-  objections.push('References and case studies');
-  
+
+  objections.push("Quality and safety standards emphasis");
+  objections.push("References and case studies");
+
   return objections;
 }
 
 function determineAlternativeChannels(request: FollowUpRequest): string[] {
-  const channels = ['email', 'phone'];
-  
+  const channels = ["email", "phone"];
+
   if (request.extractedData.customer.company) {
-    channels.push('linkedin');
+    channels.push("linkedin");
   }
-  
+
   if (request.extractedData.urgencyScore >= 8) {
-    channels.push('text', 'in-person');
+    channels.push("text", "in-person");
   }
-  
+
   return channels;
 }
 
 function determineEscalationTriggers(request: FollowUpRequest): string[] {
   return [
-    'No response after 3 attempts',
-    'Price objection raised',
-    'Timeline concerns expressed',
-    'Competitor mentioned',
-    'Decision delayed beyond original timeline'
+    "No response after 3 attempts",
+    "Price objection raised",
+    "Timeline concerns expressed",
+    "Competitor mentioned",
+    "Decision delayed beyond original timeline",
   ];
 }
 
-function buildEmailContext(request: FollowUpRequest, emailType: string, previousEmails?: string[]): string {
+function buildEmailContext(
+  request: FollowUpRequest,
+  emailType: string,
+  previousEmails?: string[],
+): string {
   return `
 Customer: ${request.extractedData.customer.name} at ${request.extractedData.customer.company}
 Building: ${request.extractedData.requirements.buildingType} - ${request.extractedData.requirements.buildingSize}
-Services: ${request.extractedData.requirements.services.join(', ')}
+Services: ${request.extractedData.requirements.services.join(", ")}
 Urgency: ${request.extractedData.urgencyScore}/10
 Timeline: ${request.extractedData.timeline.urgency}
 Budget: ${request.extractedData.budget.flexibility}

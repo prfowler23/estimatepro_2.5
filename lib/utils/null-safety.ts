@@ -5,20 +5,22 @@ export function isNotNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
 
-export function isNull<T>(value: T | null | undefined): value is null | undefined {
+export function isNull<T>(
+  value: T | null | undefined,
+): value is null | undefined {
   return value === null || value === undefined;
 }
 
 export function isString(value: unknown): value is string {
-  return typeof value === 'string';
+  return typeof value === "string";
 }
 
 export function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && !isNaN(value);
+  return typeof value === "number" && !isNaN(value);
 }
 
 export function isBoolean(value: unknown): value is boolean {
-  return typeof value === 'boolean';
+  return typeof value === "boolean";
 }
 
 export function isArray<T>(value: unknown): value is T[] {
@@ -26,36 +28,42 @@ export function isArray<T>(value: unknown): value is T[] {
 }
 
 export function isObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 export function isFunction(value: unknown): value is Function {
-  return typeof value === 'function';
+  return typeof value === "function";
 }
 
 // Safe property access
-export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
+export function safeGet<T, K extends keyof T>(
+  obj: T | null | undefined,
+  key: K,
+): T[K] | undefined {
   return obj?.[key];
 }
 
-export function safeGetDeep<T>(obj: T | null | undefined, path: string): unknown {
-  if (!obj || typeof obj !== 'object') return undefined;
-  
-  const keys = path.split('.');
+export function safeGetDeep<T>(
+  obj: T | null | undefined,
+  path: string,
+): unknown {
+  if (!obj || typeof obj !== "object") return undefined;
+
+  const keys = path.split(".");
   let current: any = obj;
-  
+
   for (const key of keys) {
     if (current === null || current === undefined) return undefined;
     current = current[key];
   }
-  
+
   return current;
 }
 
 // Safe array operations
 export function safeMap<T, U>(
   array: T[] | null | undefined,
-  mapper: (item: T, index: number) => U
+  mapper: (item: T, index: number) => U,
 ): U[] {
   if (!array || !Array.isArray(array)) return [];
   return array.map(mapper);
@@ -63,7 +71,7 @@ export function safeMap<T, U>(
 
 export function safeFilter<T>(
   array: T[] | null | undefined,
-  predicate: (item: T, index: number) => boolean
+  predicate: (item: T, index: number) => boolean,
 ): T[] {
   if (!array || !Array.isArray(array)) return [];
   return array.filter(predicate);
@@ -71,7 +79,7 @@ export function safeFilter<T>(
 
 export function safeFind<T>(
   array: T[] | null | undefined,
-  predicate: (item: T, index: number) => boolean
+  predicate: (item: T, index: number) => boolean,
 ): T | undefined {
   if (!array || !Array.isArray(array)) return undefined;
   return array.find(predicate);
@@ -84,34 +92,34 @@ export function safeLength(array: unknown[] | null | undefined): number {
 
 // Safe string operations
 export function safeString(value: unknown): string {
-  if (value === null || value === undefined) return '';
+  if (value === null || value === undefined) return "";
   return String(value);
 }
 
 export function safeTrim(value: string | null | undefined): string {
-  return (value || '').trim();
+  return (value || "").trim();
 }
 
 export function safeToLowerCase(value: string | null | undefined): string {
-  return (value || '').toLowerCase();
+  return (value || "").toLowerCase();
 }
 
 export function safeToUpperCase(value: string | null | undefined): string {
-  return (value || '').toUpperCase();
+  return (value || "").toUpperCase();
 }
 
 export function safeSubstring(
   value: string | null | undefined,
   start: number,
-  end?: number
+  end?: number,
 ): string {
-  if (!value) return '';
+  if (!value) return "";
   return value.substring(start, end);
 }
 
 export function safeIncludes(
   value: string | null | undefined,
-  searchString: string
+  searchString: string,
 ): boolean {
   if (!value) return false;
   return value.includes(searchString);
@@ -119,8 +127,8 @@ export function safeIncludes(
 
 // Safe number operations
 export function safeNumber(value: unknown): number {
-  if (typeof value === 'number' && !isNaN(value)) return value;
-  if (typeof value === 'string') {
+  if (typeof value === "number" && !isNaN(value)) return value;
+  if (typeof value === "string") {
     const parsed = parseFloat(value);
     return isNaN(parsed) ? 0 : parsed;
   }
@@ -128,27 +136,39 @@ export function safeNumber(value: unknown): number {
 }
 
 export function safeInteger(value: unknown): number {
-  if (typeof value === 'number' && !isNaN(value)) return Math.floor(value);
-  if (typeof value === 'string') {
+  if (typeof value === "number" && !isNaN(value)) return Math.floor(value);
+  if (typeof value === "string") {
     const parsed = parseInt(value, 10);
     return isNaN(parsed) ? 0 : parsed;
   }
   return 0;
 }
 
-export function safeAdd(a: number | null | undefined, b: number | null | undefined): number {
+export function safeAdd(
+  a: number | null | undefined,
+  b: number | null | undefined,
+): number {
   return safeNumber(a) + safeNumber(b);
 }
 
-export function safeSubtract(a: number | null | undefined, b: number | null | undefined): number {
+export function safeSubtract(
+  a: number | null | undefined,
+  b: number | null | undefined,
+): number {
   return safeNumber(a) - safeNumber(b);
 }
 
-export function safeMultiply(a: number | null | undefined, b: number | null | undefined): number {
+export function safeMultiply(
+  a: number | null | undefined,
+  b: number | null | undefined,
+): number {
   return safeNumber(a) * safeNumber(b);
 }
 
-export function safeDivide(a: number | null | undefined, b: number | null | undefined): number {
+export function safeDivide(
+  a: number | null | undefined,
+  b: number | null | undefined,
+): number {
   const divisor = safeNumber(b);
   return divisor === 0 ? 0 : safeNumber(a) / divisor;
 }
@@ -156,7 +176,7 @@ export function safeDivide(a: number | null | undefined, b: number | null | unde
 // Safe date operations
 export function safeDate(value: unknown): Date {
   if (value instanceof Date && !isNaN(value.getTime())) return value;
-  if (typeof value === 'string' || typeof value === 'number') {
+  if (typeof value === "string" || typeof value === "number") {
     const date = new Date(value);
     return isNaN(date.getTime()) ? new Date() : date;
   }
@@ -168,19 +188,25 @@ export function safeDateString(value: unknown): string {
   return date.toISOString();
 }
 
-export function safeFormatDate(value: unknown, locale: string = 'en-US'): string {
+export function safeFormatDate(
+  value: unknown,
+  locale: string = "en-US",
+): string {
   try {
     const date = safeDate(value);
     return date.toLocaleDateString(locale);
   } catch {
-    return '';
+    return "";
   }
 }
 
 // Safe JSON operations
-export function safeJSONParse<T>(value: string | null | undefined, defaultValue: T): T {
+export function safeJSONParse<T>(
+  value: string | null | undefined,
+  defaultValue: T,
+): T {
   if (!value) return defaultValue;
-  
+
   try {
     return JSON.parse(value);
   } catch {
@@ -192,14 +218,14 @@ export function safeJSONStringify(value: unknown): string {
   try {
     return JSON.stringify(value);
   } catch {
-    return '{}';
+    return "{}";
   }
 }
 
 // Safe async operations
 export async function safeAsync<T>(
   promise: Promise<T>,
-  defaultValue: T
+  defaultValue: T,
 ): Promise<T> {
   try {
     return await promise;
@@ -209,15 +235,15 @@ export async function safeAsync<T>(
 }
 
 export async function safeAsyncWithError<T>(
-  promise: Promise<T>
+  promise: Promise<T>,
 ): Promise<{ success: true; data: T } | { success: false; error: Error }> {
   try {
     const data = await promise;
     return { success: true, data };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error : new Error(String(error)) 
+    return {
+      success: false,
+      error: error instanceof Error ? error : new Error(String(error)),
     };
   }
 }
@@ -233,7 +259,7 @@ export function required<T>(value: T | null | undefined, fieldName: string): T {
 export function validate<T>(
   value: T | null | undefined,
   validator: (value: T) => boolean,
-  errorMessage: string
+  errorMessage: string,
 ): T {
   if (value === null || value === undefined) {
     throw new Error(errorMessage);
@@ -245,7 +271,10 @@ export function validate<T>(
 }
 
 // Default value utilities
-export function withDefault<T>(value: T | null | undefined, defaultValue: T): T {
+export function withDefault<T>(
+  value: T | null | undefined,
+  defaultValue: T,
+): T {
   return value ?? defaultValue;
 }
 
@@ -254,13 +283,13 @@ export function withDefaultArray<T>(value: T[] | null | undefined): T[] {
 }
 
 export function withDefaultObject<T extends Record<string, unknown>>(
-  value: T | null | undefined
+  value: T | null | undefined,
 ): T {
   return value ?? ({} as T);
 }
 
 export function withDefaultString(value: string | null | undefined): string {
-  return value ?? '';
+  return value ?? "";
 }
 
 export function withDefaultNumber(value: number | null | undefined): number {
@@ -271,44 +300,52 @@ export function withDefaultBoolean(value: boolean | null | undefined): boolean {
   return value ?? false;
 }
 
-// React hook for safe state management
+// React hook for safe state management (client-side only)
+// Note: This function should only be used in client-side components
 export function useSafeState<T>(
   initialValue: T | null | undefined,
-  defaultValue: T
+  defaultValue: T,
 ): [T, (value: T | null | undefined) => void] {
-  const [state, setState] = useState<T>(initialValue ?? defaultValue);
-  
+  // Dynamic import to avoid server-side issues
+  if (typeof window === "undefined") {
+    throw new Error("useSafeState can only be used in client-side components");
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const React = require("react");
+  const [state, setState] = React.useState<T>(initialValue ?? defaultValue);
+
   const setSafeState = (value: T | null | undefined) => {
     setState(value ?? defaultValue);
   };
-  
+
   return [state, setSafeState];
 }
 
 // Assertion utilities
 export function assertExists<T>(
   value: T | null | undefined,
-  message?: string
+  message?: string,
 ): asserts value is T {
   if (value === null || value === undefined) {
-    throw new Error(message || 'Value must exist');
+    throw new Error(message || "Value must exist");
   }
 }
 
 export function assertType<T>(
   value: unknown,
   typeGuard: (value: unknown) => value is T,
-  message?: string
+  message?: string,
 ): asserts value is T {
   if (!typeGuard(value)) {
-    throw new Error(message || 'Value must be of correct type');
+    throw new Error(message || "Value must be of correct type");
   }
 }
 
 // Chain safe operations
 export class SafeChain<T> {
   constructor(private value: T | null | undefined) {}
-  
+
   map<U>(mapper: (value: T) => U): SafeChain<U> {
     if (this.value === null || this.value === undefined) {
       return new SafeChain<U>(null);
@@ -319,7 +356,7 @@ export class SafeChain<T> {
       return new SafeChain<U>(null);
     }
   }
-  
+
   filter(predicate: (value: T) => boolean): SafeChain<T> {
     if (this.value === null || this.value === undefined) {
       return this;
@@ -330,18 +367,18 @@ export class SafeChain<T> {
       return new SafeChain<T>(null);
     }
   }
-  
+
   get(): T | null {
     return this.value ?? null;
   }
-  
+
   getOrDefault(defaultValue: T): T {
     return this.value ?? defaultValue;
   }
-  
+
   getOrThrow(message?: string): T {
     if (this.value === null || this.value === undefined) {
-      throw new Error(message || 'Value is null or undefined');
+      throw new Error(message || "Value is null or undefined");
     }
     return this.value;
   }
@@ -350,9 +387,6 @@ export class SafeChain<T> {
 export function chain<T>(value: T | null | undefined): SafeChain<T> {
   return new SafeChain(value);
 }
-
-// Import useState for the hook
-import { useState } from 'react';
 
 export default {
   isNotNull,
@@ -365,5 +399,5 @@ export default {
   chain,
   required,
   validate,
-  withDefault
+  withDefault,
 };

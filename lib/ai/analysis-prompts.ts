@@ -151,18 +151,23 @@ export const BUILDING_TYPE_MODIFIERS = {
 - Specialized cleaning requirements for historic materials
 - Potential restrictions on cleaning methods
 - Unique architectural features requiring special care
-- Preservation considerations`
+- Preservation considerations`,
 };
 
 // Context prompts for different analysis phases
 export const ANALYSIS_CONTEXT = {
-  initial: "This is an initial assessment for cleaning estimation purposes. Focus on identifying key characteristics that will affect cleaning scope and pricing.",
-  
-  detailed: "This is a detailed analysis for project planning. Provide comprehensive information for work planning, safety preparation, and resource allocation.",
-  
-  verification: "This is a verification analysis to confirm previous findings. Pay special attention to any discrepancies with expected results.",
-  
-  damage_focused: "Focus specifically on damage assessment and repair needs. Prioritize identifying issues that must be addressed before or during cleaning.",
-  
-  safety_focused: "Prioritize safety hazard identification and risk assessment. This analysis will be used for safety planning and equipment specification."
+  initial:
+    "This is an initial assessment for cleaning estimation purposes. Focus on identifying key characteristics that will affect cleaning scope and pricing.",
+
+  detailed:
+    "This is a detailed analysis for project planning. Provide comprehensive information for work planning, safety preparation, and resource allocation.",
+
+  verification:
+    "This is a verification analysis to confirm previous findings. Pay special attention to any discrepancies with expected results.",
+
+  damage_focused:
+    "Focus specifically on damage assessment and repair needs. Prioritize identifying issues that must be addressed before or during cleaning.",
+
+  safety_focused:
+    "Prioritize safety hazard identification and risk assessment. This analysis will be used for safety planning and equipment specification.",
 };

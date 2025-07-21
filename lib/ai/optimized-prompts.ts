@@ -27,7 +27,7 @@ SERVICE CODES:
 FEW-SHOT EXAMPLES:
 
 EXAMPLE 1:
-Input: "Hi, I'm Sarah Johnson, Facilities Manager at Westside Medical Center. Our 4-story hospital building needs window cleaning urgently - we have a state inspection next week. The building is about 80,000 sq ft. Please provide a quote ASAP. Budget is tight but approved up to $15,000."
+Input: "Hi, I'm Sarah Johnson, Facilities Manager at Westside Medical Center. Our 4-story hospital building needs window cleaning urgently - we have a state inspection next week. The building is about 80,000 sq ft. Please provide an estimate ASAP. Budget is tight but approved up to $15,000."
 
 Chain of Thought:
 1. Customer: Sarah Johnson, Facilities Manager at medical facility
@@ -88,7 +88,7 @@ Chain of Thought:
 2. Building: Retail plaza, 3 buildings, mixed use, 25,000 sq ft total
 3. Service: Pressure washing for exterior surfaces
 4. Timeline: Spring timeframe, flexible timing
-5. Budget: No mention, likely gathering quotes
+5. Budget: No mention, likely gathering estimates
 6. Decision: Unknown authority level, requesting information
 7. Risks: Minimal urgency, information-gathering stage
 
@@ -212,7 +212,7 @@ PRICING ANALYSIS METHODOLOGY:
 
 EXAMPLE ANALYSIS:
 
-Competitor Quote: "ABC Building Services - Premium Window Cleaning
+Competitor Estimate: "ABC Building Services - Premium Window Cleaning
 - 50,000 sq ft office building
 - Exterior window cleaning: $2,850
 - Interior window cleaning: $1,950
@@ -323,7 +323,7 @@ For your 4-story, 80,000 sq ft building, we can complete the exterior window cle
 
 Recent similar project: City General Hospital (similar size) - completed in 48 hours, passed inspection with commendation for facility cleanliness.
 
-Given your $15,000 budget and tight timeline, I can provide a fixed-price quote of $12,800, which includes:
+Given your $15,000 budget and tight timeline, I can provide a fixed-price estimate of $12,800, which includes:
 - 48-hour completion guarantee
 - Hospital protocol compliance
 - Emergency backup crew availability
@@ -339,19 +339,24 @@ Now generate an email for the provided customer profile and email type.`;
 
 // Function to get optimized prompt based on operation type
 export function getOptimizedPrompt(
-  operationType: 'extraction' | 'photo_analysis' | 'competitive_analysis' | 'risk_assessment' | 'follow_up',
-  context?: any
+  operationType:
+    | "extraction"
+    | "photo_analysis"
+    | "competitive_analysis"
+    | "risk_assessment"
+    | "follow_up",
+  context?: any,
 ): string {
   switch (operationType) {
-    case 'extraction':
+    case "extraction":
       return ENHANCED_EXTRACTION_PROMPT;
-    case 'photo_analysis':
+    case "photo_analysis":
       return ENHANCED_PHOTO_ANALYSIS_PROMPT;
-    case 'competitive_analysis':
+    case "competitive_analysis":
       return ENHANCED_COMPETITIVE_ANALYSIS_PROMPT;
-    case 'risk_assessment':
+    case "risk_assessment":
       return ENHANCED_RISK_ASSESSMENT_PROMPT;
-    case 'follow_up':
+    case "follow_up":
       return ENHANCED_FOLLOW_UP_PROMPT;
     default:
       return ENHANCED_EXTRACTION_PROMPT;
@@ -366,33 +371,38 @@ export const REASONING_PATTERNS = {
     "Then, I'll extract explicit and implicit service requirements.",
     "I'll assess urgency from language cues and timeline mentions.",
     "I'll evaluate budget information and approval status.",
-    "Finally, I'll identify potential risks and complexity factors."
+    "Finally, I'll identify potential risks and complexity factors.",
   ],
-  
+
   photo_analysis: [
     "First, I'll assess the overall building type and condition.",
     "Next, I'll count and measure visible elements systematically.",
     "Then, I'll identify materials and their current condition.",
     "I'll evaluate access challenges and safety requirements.",
     "I'll determine appropriate service recommendations.",
-    "Finally, I'll assess complexity and risk factors."
+    "Finally, I'll assess complexity and risk factors.",
   ],
-  
+
   competitive_analysis: [
     "First, I'll identify the competitor and their market positioning.",
     "Next, I'll analyze their service offerings and capabilities.",
     "Then, I'll evaluate their pricing strategy and models.",
     "I'll assess their competitive advantages and weaknesses.",
     "I'll identify market opportunities and threats.",
-    "Finally, I'll provide strategic recommendations."
-  ]
+    "Finally, I'll provide strategic recommendations.",
+  ],
 };
 
 // Prompt optimization utilities
-export function addChainOfThought(basePrompt: string, operationType: keyof typeof REASONING_PATTERNS): string {
+export function addChainOfThought(
+  basePrompt: string,
+  operationType: keyof typeof REASONING_PATTERNS,
+): string {
   const reasoning = REASONING_PATTERNS[operationType];
-  const reasoningSection = reasoning.map((step, index) => `${index + 1}. ${step}`).join('\n');
-  
+  const reasoningSection = reasoning
+    .map((step, index) => `${index + 1}. ${step}`)
+    .join("\n");
+
   return `${basePrompt}
 
 CHAIN-OF-THOUGHT REASONING:
@@ -402,11 +412,17 @@ ${reasoningSection}
 Think through each step carefully before providing your final analysis.`;
 }
 
-export function addFewShotExamples(basePrompt: string, examples: Array<{ input: string; output: string }>): string {
-  const exampleSection = examples.map((example, index) => 
-    `EXAMPLE ${index + 1}:\nInput: ${example.input}\nOutput: ${example.output}`
-  ).join('\n\n');
-  
+export function addFewShotExamples(
+  basePrompt: string,
+  examples: Array<{ input: string; output: string }>,
+): string {
+  const exampleSection = examples
+    .map(
+      (example, index) =>
+        `EXAMPLE ${index + 1}:\nInput: ${example.input}\nOutput: ${example.output}`,
+    )
+    .join("\n\n");
+
   return `${basePrompt}
 
 EXAMPLES:

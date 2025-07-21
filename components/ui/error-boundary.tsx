@@ -1,31 +1,37 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 interface ErrorBoundaryProps {
-  error?: Error
-  reset?: () => void
-  title?: string
-  description?: string
-  showHomeButton?: boolean
+  error?: Error;
+  reset?: () => void;
+  title?: string;
+  description?: string;
+  showHomeButton?: boolean;
 }
 
-export function ErrorBoundary({ 
-  error, 
-  reset, 
+export function ErrorBoundary({
+  error,
+  reset,
   title = "Something went wrong",
   description = "An unexpected error occurred. Our team has been notified.",
-  showHomeButton = true 
+  showHomeButton = true,
 }: ErrorBoundaryProps) {
   useEffect(() => {
     if (error) {
-      console.error('Error boundary caught:', error)
+      console.error("Error boundary caught:", error);
       // Send to error tracking service
     }
-  }, [error])
+  }, [error]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -46,7 +52,7 @@ export function ErrorBoundary({
               </details>
             </div>
           )}
-          
+
           <div className="flex gap-2">
             {reset && (
               <Button onClick={reset} className="flex-1">
@@ -55,7 +61,11 @@ export function ErrorBoundary({
               </Button>
             )}
             {showHomeButton && (
-              <Button variant="outline" onClick={() => window.location.href = '/'} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => (window.location.href = "/")}
+                className="flex-1"
+              >
                 <Home className="h-4 w-4 mr-2" />
                 Home
               </Button>
@@ -64,5 +74,5 @@ export function ErrorBoundary({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

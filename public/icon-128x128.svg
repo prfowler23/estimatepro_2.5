@@ -1,0 +1,31 @@
+<!-- SVG content for 128x128 icon - needs conversion to PNG -->
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" fill="#2563eb" rx="12.8"/>
+  <g fill="white">
+    <!-- Calculator icon -->
+    <rect x="25.6" y="19.2" width="76.8" height="89.6" fill="none" stroke="white" stroke-width="2.56" rx="6.4"/>
+    
+    <!-- Screen -->
+    <rect x="32" y="25.6" width="64" height="19.2" fill="white" rx="2.56"/>
+    
+    <!-- Buttons -->
+    <circle cx="44.8" cy="57.6" r="4.48" fill="white"/>
+    <circle cx="64" cy="57.6" r="4.48" fill="white"/>
+    <circle cx="83.2" cy="57.6" r="4.48" fill="white"/>
+    
+    <circle cx="44.8" cy="70.4" r="4.48" fill="white"/>
+    <circle cx="64" cy="70.4" r="4.48" fill="white"/>
+    <circle cx="83.2" cy="70.4" r="4.48" fill="white"/>
+    
+    <circle cx="44.8" cy="83.2" r="4.48" fill="white"/>
+    <circle cx="64" cy="83.2" r="4.48" fill="white"/>
+    <circle cx="83.2" cy="83.2" r="4.48" fill="white"/>
+    
+    <!-- Large button -->
+    <rect x="60.8" y="92.16" width="19.2" height="10.24" fill="white" rx="2.56"/>
+    
+    <!-- Text -->
+    <text x="64" y="39.68" text-anchor="middle" fill="#2563eb" font-family="Arial, sans-serif" font-size="10.24" font-weight="bold">EP</text>
+  </g>
+</svg>

@@ -1,4 +1,4 @@
 export const PROMPTS = {
-  assistant: '',
-  analyzer: '',
-}
+  assistant: "",
+  analyzer: "",
+};

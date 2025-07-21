@@ -1,28 +1,28 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/auth-context'
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
-  fallback?: React.ReactNode
-  redirectTo?: string
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  redirectTo?: string;
 }
 
-export function ProtectedRoute({ 
-  children, 
+export function ProtectedRoute({
+  children,
   fallback,
-  redirectTo = '/auth/login'
+  redirectTo = "/auth/login",
 }: ProtectedRouteProps) {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(redirectTo)
+      router.push(redirectTo);
     }
-  }, [user, loading, router, redirectTo])
+  }, [user, loading, router, redirectTo]);
 
   if (loading) {
     return (
@@ -32,19 +32,21 @@ export function ProtectedRoute({
           <p className="text-muted-foreground">Checking authentication...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return fallback || (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-muted-foreground">Redirecting to login...</p>
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+    return (
+      fallback || (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground">Redirecting to login...</p>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+          </div>
         </div>
-      </div>
-    )
+      )
+    );
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }

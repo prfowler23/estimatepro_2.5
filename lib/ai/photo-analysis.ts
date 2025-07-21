@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -24,22 +24,22 @@ export interface MaterialAnalysis {
   conditions: string[];
   cleaningDifficulty: number;
   dominant: string;
-  weathering: 'none' | 'light' | 'moderate' | 'heavy';
+  weathering: "none" | "light" | "moderate" | "heavy";
 }
 
 export interface DamageAnalysis {
   staining: string[];
   oxidation: string[];
   damage: string[];
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   affectedArea: number;
-  repairUrgency: 'none' | 'minor' | 'moderate' | 'urgent';
+  repairUrgency: "none" | "minor" | "moderate" | "urgent";
 }
 
 export interface SafetyAnalysis {
   hazards: string[];
   requirements: string[];
-  riskLevel: 'low' | 'medium' | 'high';
+  riskLevel: "low" | "medium" | "high";
   accessChallenges: string[];
   equipmentNeeded: string[];
 }
@@ -107,18 +107,20 @@ export async function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
+      if (typeof reader.result === "string") {
         resolve(reader.result);
       } else {
-        reject(new Error('Failed to convert file to base64'));
+        reject(new Error("Failed to convert file to base64"));
       }
     };
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
   });
 }
 
 // Window detection function
-export async function detectWindows(imageBase64: string): Promise<WindowAnalysis> {
+export async function detectWindows(
+  imageBase64: string,
+): Promise<WindowAnalysis> {
   const prompt = `Analyze this building facade image and detect all windows. Return a JSON object with the following structure:
   {
     "count": number of windows visible,
@@ -144,33 +146,35 @@ export async function detectWindows(imageBase64: string): Promise<WindowAnalysis
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
+            { type: "text", text: prompt },
             {
-              type: 'image_url',
-              image_url: { url: imageBase64 }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageBase64 },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 1000
+      response_format: { type: "json_object" },
+      max_tokens: 1000,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result as WindowAnalysis;
   } catch (error) {
-    console.error('Error detecting windows:', error);
-    throw new Error('Failed to analyze windows in image');
+    console.error("Error detecting windows:", error);
+    throw new Error("Failed to analyze windows in image");
   }
 }
 
 // Material classification function
-export async function classifyMaterials(imageBase64: string): Promise<MaterialAnalysis> {
+export async function classifyMaterials(
+  imageBase64: string,
+): Promise<MaterialAnalysis> {
   const prompt = `Analyze the building materials in this facade image. Return a JSON object with:
   {
     "breakdown": {
@@ -196,33 +200,35 @@ export async function classifyMaterials(imageBase64: string): Promise<MaterialAn
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
+            { type: "text", text: prompt },
             {
-              type: 'image_url',
-              image_url: { url: imageBase64 }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageBase64 },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 800
+      response_format: { type: "json_object" },
+      max_tokens: 800,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result as MaterialAnalysis;
   } catch (error) {
-    console.error('Error classifying materials:', error);
-    throw new Error('Failed to analyze materials in image');
+    console.error("Error classifying materials:", error);
+    throw new Error("Failed to analyze materials in image");
   }
 }
 
 // Damage assessment function
-export async function assessDamage(imageBase64: string): Promise<DamageAnalysis> {
+export async function assessDamage(
+  imageBase64: string,
+): Promise<DamageAnalysis> {
   const prompt = `Assess damage and staining on this building facade. Return a JSON object with:
   {
     "staining": ["types of stains observed, e.g. water stains, rust stains, organic growth"],
@@ -244,33 +250,35 @@ export async function assessDamage(imageBase64: string): Promise<DamageAnalysis>
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
+            { type: "text", text: prompt },
             {
-              type: 'image_url',
-              image_url: { url: imageBase64 }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageBase64 },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 800
+      response_format: { type: "json_object" },
+      max_tokens: 800,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result as DamageAnalysis;
   } catch (error) {
-    console.error('Error assessing damage:', error);
-    throw new Error('Failed to analyze damage in image');
+    console.error("Error assessing damage:", error);
+    throw new Error("Failed to analyze damage in image");
   }
 }
 
 // Safety analysis function
-export async function analyzeSafety(imageBase64: string): Promise<SafetyAnalysis> {
+export async function analyzeSafety(
+  imageBase64: string,
+): Promise<SafetyAnalysis> {
   const prompt = `Analyze safety considerations for cleaning/maintenance of this building facade. Return a JSON object with:
   {
     "hazards": ["safety hazards visible, e.g. power lines, unstable surfaces, height risks"],
@@ -291,33 +299,35 @@ export async function analyzeSafety(imageBase64: string): Promise<SafetyAnalysis
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
+            { type: "text", text: prompt },
             {
-              type: 'image_url',
-              image_url: { url: imageBase64 }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageBase64 },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 800
+      response_format: { type: "json_object" },
+      max_tokens: 800,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result as SafetyAnalysis;
   } catch (error) {
-    console.error('Error analyzing safety:', error);
-    throw new Error('Failed to analyze safety considerations');
+    console.error("Error analyzing safety:", error);
+    throw new Error("Failed to analyze safety considerations");
   }
 }
 
 // Building measurements function
-export async function extractBuildingMeasurements(imageBase64: string): Promise<BuildingMeasurements> {
+export async function extractBuildingMeasurements(
+  imageBase64: string,
+): Promise<BuildingMeasurements> {
   const prompt = `Estimate building dimensions from this facade image. Return a JSON object with:
   {
     "buildingHeight": estimated height in feet,
@@ -339,33 +349,35 @@ export async function extractBuildingMeasurements(imageBase64: string): Promise<
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
+            { type: "text", text: prompt },
             {
-              type: 'image_url',
-              image_url: { url: imageBase64 }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageBase64 },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 600
+      response_format: { type: "json_object" },
+      max_tokens: 600,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result as BuildingMeasurements;
   } catch (error) {
-    console.error('Error extracting measurements:', error);
-    throw new Error('Failed to extract building measurements');
+    console.error("Error extracting measurements:", error);
+    throw new Error("Failed to extract building measurements");
   }
 }
 
 // Material quantity estimation function
-export async function estimateMaterialQuantities(imageBase64: string): Promise<MaterialQuantityEstimation> {
+export async function estimateMaterialQuantities(
+  imageBase64: string,
+): Promise<MaterialQuantityEstimation> {
   const prompt = `Analyze this building facade for detailed material quantity estimation. Return a JSON object with:
   {
     "materials": [
@@ -392,33 +404,35 @@ export async function estimateMaterialQuantities(imageBase64: string): Promise<M
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
+            { type: "text", text: prompt },
             {
-              type: 'image_url',
-              image_url: { url: imageBase64, detail: 'high' }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageBase64, detail: "high" },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 1500
+      response_format: { type: "json_object" },
+      max_tokens: 1500,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result as MaterialQuantityEstimation;
   } catch (error) {
-    console.error('Error estimating material quantities:', error);
-    throw new Error('Failed to estimate material quantities');
+    console.error("Error estimating material quantities:", error);
+    throw new Error("Failed to estimate material quantities");
   }
 }
 
 // Detailed item counting function
-export async function countDetailedItems(imageBase64: string): Promise<DetailedItemCount> {
+export async function countDetailedItems(
+  imageBase64: string,
+): Promise<DetailedItemCount> {
   const prompt = `Count all visible building elements in this facade image with precision. Return a JSON object with:
   {
     "windows": {
@@ -465,28 +479,28 @@ export async function countDetailedItems(imageBase64: string): Promise<DetailedI
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
+            { type: "text", text: prompt },
             {
-              type: 'image_url',
-              image_url: { url: imageBase64, detail: 'high' }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageBase64, detail: "high" },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
-      max_tokens: 1200
+      response_format: { type: "json_object" },
+      max_tokens: 1200,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result as DetailedItemCount;
   } catch (error) {
-    console.error('Error counting detailed items:', error);
-    throw new Error('Failed to count detailed items');
+    console.error("Error counting detailed items:", error);
+    throw new Error("Failed to count detailed items");
   }
 }
 
@@ -511,7 +525,9 @@ export async function analyze3DReconstruction(imageUrls: string[]): Promise<{
   recommendations: string[];
 }> {
   if (imageUrls.length < 2) {
-    throw new Error('At least 2 images required for 3D reconstruction analysis');
+    throw new Error(
+      "At least 2 images required for 3D reconstruction analysis",
+    );
   }
 
   const prompt = `Analyze these multiple building images to create a 3D understanding. Return JSON with:
@@ -546,39 +562,42 @@ export async function analyze3DReconstruction(imageUrls: string[]): Promise<{
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
-            ...imageUrls.map(url => ({
-              type: 'image_url' as const,
-              image_url: { url, detail: 'high' as const }
-            }))
-          ]
-        }
+            { type: "text", text: prompt },
+            ...imageUrls.map((url) => ({
+              type: "image_url" as const,
+              image_url: { url, detail: "high" as const },
+            })),
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.1,
-      max_tokens: 2000
+      max_tokens: 2000,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result;
   } catch (error) {
-    console.error('Error in 3D reconstruction analysis:', error);
-    throw new Error('Failed to perform 3D reconstruction analysis');
+    console.error("Error in 3D reconstruction analysis:", error);
+    throw new Error("Failed to perform 3D reconstruction analysis");
   }
 }
 
 // Before/after comparison analysis
-export async function compareBeforeAfter(beforeImageUrl: string, afterImageUrl: string): Promise<{
+export async function compareBeforeAfter(
+  beforeImageUrl: string,
+  afterImageUrl: string,
+): Promise<{
   qualityAssessment: {
     improvementScore: number; // 0-100
     areasImproved: string[];
     remainingIssues: string[];
-    overallSatisfaction: 'poor' | 'fair' | 'good' | 'excellent';
+    overallSatisfaction: "poor" | "fair" | "good" | "excellent";
   };
   detailedComparison: {
     cleanliness: { before: number; after: number; improvement: number };
@@ -616,40 +635,42 @@ export async function compareBeforeAfter(beforeImageUrl: string, afterImageUrl: 
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
-            { type: 'text', text: prompt },
-            { type: 'text', text: 'BEFORE IMAGE:' },
+            { type: "text", text: prompt },
+            { type: "text", text: "BEFORE IMAGE:" },
             {
-              type: 'image_url',
-              image_url: { url: beforeImageUrl, detail: 'high' }
+              type: "image_url",
+              image_url: { url: beforeImageUrl, detail: "high" },
             },
-            { type: 'text', text: 'AFTER IMAGE:' },
+            { type: "text", text: "AFTER IMAGE:" },
             {
-              type: 'image_url',
-              image_url: { url: afterImageUrl, detail: 'high' }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: afterImageUrl, detail: "high" },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.1,
-      max_tokens: 2000
+      max_tokens: 2000,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result;
   } catch (error) {
-    console.error('Error in before/after comparison:', error);
-    throw new Error('Failed to compare before/after images');
+    console.error("Error in before/after comparison:", error);
+    throw new Error("Failed to compare before/after images");
   }
 }
 
 // Main analysis function
-export async function analyzePhotos(photos: File[]): Promise<PhotoAnalysisResult[]> {
+export async function analyzePhotos(
+  photos: File[],
+): Promise<PhotoAnalysisResult[]> {
   const results: PhotoAnalysisResult[] = [];
 
   for (const photo of photos) {
@@ -658,49 +679,56 @@ export async function analyzePhotos(photos: File[]): Promise<PhotoAnalysisResult
       const imageBase64 = await fileToBase64(photo);
 
       // Run all analysis functions in parallel for each photo
-      const [windows, materials, measurements, damage, safety, materialQuantities, itemCounts] = await Promise.allSettled([
+      const [
+        windows,
+        materials,
+        measurements,
+        damage,
+        safety,
+        materialQuantities,
+        itemCounts,
+      ] = await Promise.allSettled([
         detectWindows(imageBase64),
         classifyMaterials(imageBase64),
         extractBuildingMeasurements(imageBase64),
         assessDamage(imageBase64),
         analyzeSafety(imageBase64),
         estimateMaterialQuantities(imageBase64),
-        countDetailedItems(imageBase64)
+        countDetailedItems(imageBase64),
       ]);
 
       // Compile results, handling any failed analyses
       const result: PhotoAnalysisResult = {};
 
-      if (windows.status === 'fulfilled') {
+      if (windows.status === "fulfilled") {
         result.windows = windows.value;
       }
 
-      if (materials.status === 'fulfilled') {
+      if (materials.status === "fulfilled") {
         result.materials = materials.value;
       }
 
-      if (measurements.status === 'fulfilled') {
+      if (measurements.status === "fulfilled") {
         result.measurements = measurements.value;
       }
 
-      if (damage.status === 'fulfilled') {
+      if (damage.status === "fulfilled") {
         result.damage = damage.value;
       }
 
-      if (safety.status === 'fulfilled') {
+      if (safety.status === "fulfilled") {
         result.safety = safety.value;
       }
 
-      if (materialQuantities.status === 'fulfilled') {
+      if (materialQuantities.status === "fulfilled") {
         result.materialQuantities = materialQuantities.value;
       }
 
-      if (itemCounts.status === 'fulfilled') {
+      if (itemCounts.status === "fulfilled") {
         result.itemCounts = itemCounts.value;
       }
 
       results.push(result);
-
     } catch (error) {
       console.error(`Error analyzing photo ${photo.name}:`, error);
       // Push empty result for failed analysis
@@ -713,15 +741,15 @@ export async function analyzePhotos(photos: File[]): Promise<PhotoAnalysisResult
 
 // Additional utility function for batch processing with rate limiting
 export async function analyzePhotosWithRateLimit(
-  photos: File[], 
-  rateLimitMs: number = 1000
+  photos: File[],
+  rateLimitMs: number = 1000,
 ): Promise<PhotoAnalysisResult[]> {
   const results: PhotoAnalysisResult[] = [];
 
   for (let i = 0; i < photos.length; i++) {
     if (i > 0) {
       // Add delay between requests to respect rate limits
-      await new Promise(resolve => setTimeout(resolve, rateLimitMs));
+      await new Promise((resolve) => setTimeout(resolve, rateLimitMs));
     }
 
     try {

@@ -15,18 +15,18 @@ export interface ExtractedData {
   timeline: {
     requestedDate: string;
     deadline: string;
-    urgency: 'urgent' | 'flexible' | 'normal';
-    flexibility: 'some' | 'flexible' | 'none';
+    urgency: "urgent" | "flexible" | "normal";
+    flexibility: "some" | "flexible" | "none";
   };
   budget: {
     stated: number | null;
-    inferred: 'tight' | 'normal' | 'flexible' | null;
+    inferred: "tight" | "normal" | "flexible" | null;
     constraints: string[];
   };
   decisionMakers: Array<{
     name: string;
     role: string;
-    influence: 'primary' | 'secondary';
+    influence: "primary" | "secondary";
   }>;
   redFlags: string[];
   urgencyScore: number;

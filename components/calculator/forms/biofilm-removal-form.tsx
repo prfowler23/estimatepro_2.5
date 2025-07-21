@@ -1,10 +1,13 @@
-'use client'
+"use client";
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { biofilmRemovalSchema, type BiofilmRemovalFormData } from '@/lib/schemas/service-forms'
-import { BiofilmRemovalCalculator } from '@/lib/calculations/services/biofilm-removal'
-import { Button } from '@/components/ui/button'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  biofilmRemovalSchema,
+  type BiofilmRemovalFormData,
+} from "@/lib/schemas/service-forms";
+import { BiofilmRemovalCalculator } from "@/lib/calculations/services/biofilm-removal";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,88 +16,95 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import { Checkbox } from '@/components/ui/checkbox'
-import { useState, useEffect } from 'react'
-import { AlertTriangle, Calculator, Bug, Info } from 'lucide-react'
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect } from "react";
+import { calculationError } from "@/lib/utils/logger";
+import { AlertTriangle, Calculator, Bug, Info } from "lucide-react";
 
 interface BiofilmRemovalFormProps {
-  onSubmit: (result: any) => void
-  onCancel: () => void
+  onSubmit: (result: any) => void;
+  onCancel: () => void;
 }
 
-export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormProps) {
-  const [calculation, setCalculation] = useState<any>(null)
-  const [isCalculating, setIsCalculating] = useState(false)
-  
+export function BiofilmRemovalForm({
+  onSubmit,
+  onCancel,
+}: BiofilmRemovalFormProps) {
+  const [calculation, setCalculation] = useState<any>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
   const form = useForm<BiofilmRemovalFormData>({
     resolver: zodResolver(biofilmRemovalSchema),
     defaultValues: {
-      location: 'raleigh',
+      location: "raleigh",
       crewSize: 2,
       shiftLength: 8,
       workWeek: 5,
       buildingHeightStories: 1,
       numberOfDrops: 1,
-      biofilmSeverity: 'moderate',
-      surfaceType: 'concrete',
+      biofilmSeverity: "moderate",
+      surfaceType: "concrete",
       requiresSealing: false,
       hasWaterFeatures: false,
     },
-  })
+  });
 
-  const watchedValues = form.watch()
+  const watchedValues = form.watch();
 
   // Auto-calculate when form values change
   useEffect(() => {
     if (watchedValues.area && watchedValues.area > 0) {
-      setIsCalculating(true)
-      
+      setIsCalculating(true);
+
       const timer = setTimeout(() => {
         try {
-          const calculator = new BiofilmRemovalCalculator()
-          const result = calculator.calculate(watchedValues)
-          setCalculation(result)
+          const calculator = new BiofilmRemovalCalculator();
+          const result = calculator.calculate(watchedValues);
+          setCalculation(result);
         } catch (error) {
-          console.error('Calculation error:', error)
-          setCalculation(null)
+          calculationError(new Error("Biofilm removal calculation failed"), {
+            error,
+            formData: watchedValues,
+          });
+          setCalculation(null);
         } finally {
-          setIsCalculating(false)
+          setIsCalculating(false);
         }
-      }, 500)
+      }, 500);
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     } else {
-      setCalculation(null)
+      setCalculation(null);
     }
-  }, [watchedValues])
+  }, [watchedValues]);
 
   const handleSubmit = () => {
     if (calculation) {
-      onSubmit(calculation)
+      onSubmit(calculation);
     }
-  }
+  };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   return (
     <div className="space-y-6">
@@ -106,7 +116,8 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Specialized biofilm removal service. Pricing ranges from $0.75-1.00/sq ft based on severity.
+          Specialized biofilm removal service. Pricing ranges from $0.75-1.00/sq
+          ft based on severity.
         </AlertDescription>
       </Alert>
 
@@ -126,7 +137,10 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Location</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select location" />
@@ -155,7 +169,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                           type="number"
                           placeholder="Enter area with biofilm"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -173,7 +189,10 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Biofilm Severity</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select biofilm severity" />
@@ -186,7 +205,8 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Light: $0.75/sq ft, Moderate: $0.87/sq ft, Severe: $1.00/sq ft
+                        Light: $0.75/sq ft, Moderate: $0.87/sq ft, Severe:
+                        $1.00/sq ft
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -200,7 +220,10 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Surface Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select surface type" />
@@ -235,9 +258,7 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Requires Sealing
-                        </FormLabel>
+                        <FormLabel>Requires Sealing</FormLabel>
                         <FormDescription>
                           Preventive sealing after biofilm removal
                         </FormDescription>
@@ -259,9 +280,7 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Has Water Features
-                        </FormLabel>
+                        <FormLabel>Has Water Features</FormLabel>
                         <FormDescription>
                           Fountains, pools, or other water features present
                         </FormDescription>
@@ -282,7 +301,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                           type="number"
                           placeholder="Enter number of stories"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -305,7 +326,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                           type="number"
                           placeholder="Enter number of access points"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -332,7 +355,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                             min="1"
                             max="10"
                             {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -352,7 +377,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                             min="4"
                             max="12"
                             {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -373,7 +400,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                           min="3"
                           max="7"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormDescription>
@@ -400,7 +429,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
             {isCalculating ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-action"></div>
-                <span className="ml-2 text-muted-foreground">Calculating...</span>
+                <span className="ml-2 text-muted-foreground">
+                  Calculating...
+                </span>
               </div>
             ) : calculation ? (
               <div className="space-y-4">
@@ -409,14 +440,19 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                   <div className="text-3xl font-bold text-primary-action">
                     {formatCurrency(calculation.basePrice)}
                   </div>
-                  <div className="text-sm text-muted-foreground">Total Project Cost</div>
+                  <div className="text-sm text-muted-foreground">
+                    Total Project Cost
+                  </div>
                 </div>
 
                 {/* Breakdown */}
                 <div className="space-y-3">
                   <h4 className="font-semibold">Cost Breakdown</h4>
                   {calculation.breakdown?.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center">
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
                       <span className="text-sm">{item.label}</span>
                       <Badge variant="outline">{item.value}</Badge>
                     </div>
@@ -428,7 +464,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                   <div className="space-y-2">
                     <h4 className="font-semibold">Equipment</h4>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">{calculation.equipment.type}</span>
+                      <span className="text-sm">
+                        {calculation.equipment.type}
+                      </span>
                       <Badge variant="outline">
                         {formatCurrency(calculation.equipment.cost)}
                       </Badge>
@@ -441,7 +479,9 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                   <div className="space-y-2">
                     <h4 className="font-semibold">Timeline</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>Working Days: {calculation.timeline.workingDays}</div>
+                      <div>
+                        Working Days: {calculation.timeline.workingDays}
+                      </div>
                       <div>Total Hours: {calculation.timeline.totalHours}</div>
                     </div>
                   </div>
@@ -453,9 +493,13 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
                       <ul className="list-disc list-inside space-y-1">
-                        {calculation.warnings.map((warning: string, index: number) => (
-                          <li key={index} className="text-sm">{warning}</li>
-                        ))}
+                        {calculation.warnings.map(
+                          (warning: string, index: number) => (
+                            <li key={index} className="text-sm">
+                              {warning}
+                            </li>
+                          ),
+                        )}
                       </ul>
                     </AlertDescription>
                   </Alert>
@@ -463,7 +507,7 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-4">
-                  <Button 
+                  <Button
                     onClick={handleSubmit}
                     className="flex-1"
                     disabled={!calculation}
@@ -485,5 +529,5 @@ export function BiofilmRemovalForm({ onSubmit, onCancel }: BiofilmRemovalFormPro
         </Card>
       </div>
     </div>
-  )
+  );
 }

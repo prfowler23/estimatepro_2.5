@@ -1,5 +1,5 @@
-import crypto from 'crypto';
-import { aiConfig } from './ai-config';
+import crypto from "crypto";
+import { getAIConfig } from "./ai-config";
 
 // Cache entry interface
 interface CacheEntry<T> {
@@ -26,22 +26,25 @@ export class AICache {
   private cache = new Map<string, CacheEntry<any>>();
   private stats = {
     hits: 0,
-    misses: 0
+    misses: 0,
   };
 
-  constructor(private maxSize: number = 1000, private defaultTtl: number = 3600) {}
+  constructor(
+    private maxSize: number = 1000,
+    private defaultTtl: number = 3600,
+  ) {}
 
   // Generate cache key from input data
   private generateKey(prefix: string, data: any): string {
     const serialized = JSON.stringify(data, Object.keys(data).sort());
-    const hash = crypto.createHash('sha256').update(serialized).digest('hex');
+    const hash = crypto.createHash("sha256").update(serialized).digest("hex");
     return `${prefix}:${hash.substring(0, 16)}`;
   }
 
   // Compress data if enabled
   private compress(data: any): { data: string; compressed: boolean } {
-    const cacheConfig = aiConfig.getCacheConfig();
-    
+    const cacheConfig = getAIConfig().getCacheConfig();
+
     if (!cacheConfig.compression) {
       return { data, compressed: false };
     }
@@ -49,7 +52,7 @@ export class AICache {
     try {
       const serialized = JSON.stringify(data);
       // Simple compression simulation (in real implementation, use zlib)
-      const compressed = Buffer.from(serialized).toString('base64');
+      const compressed = Buffer.from(serialized).toString("base64");
       return { data: compressed, compressed: true };
     } catch {
       return { data, compressed: false };
@@ -63,7 +66,7 @@ export class AICache {
     }
 
     try {
-      const decompressed = Buffer.from(entry.data, 'base64').toString('utf-8');
+      const decompressed = Buffer.from(entry.data, "base64").toString("utf-8");
       return JSON.parse(decompressed);
     } catch {
       return entry.data;
@@ -72,8 +75,8 @@ export class AICache {
 
   // Set cache entry
   set<T>(prefix: string, key: any, value: T, ttl?: number): void {
-    const cacheConfig = aiConfig.getCacheConfig();
-    
+    const cacheConfig = getAIConfig().getCacheConfig();
+
     if (!cacheConfig.enabled) {
       return;
     }
@@ -93,14 +96,14 @@ export class AICache {
       timestamp: now,
       expiresAt: now + timeToLive,
       hits: 0,
-      compressed
+      compressed,
     });
   }
 
   // Get cache entry
   get<T>(prefix: string, key: any): T | null {
-    const cacheConfig = aiConfig.getCacheConfig();
-    
+    const cacheConfig = getAIConfig().getCacheConfig();
+
     if (!cacheConfig.enabled) {
       return null;
     }
@@ -134,7 +137,7 @@ export class AICache {
 
   // Delete cache entry
   delete(prefix: string, key: any): boolean {
-    const cacheConfig = aiConfig.getCacheConfig();
+    const cacheConfig = getAIConfig().getCacheConfig();
     const cacheKey = this.generateKey(cacheConfig.keyPrefix + prefix, key);
     return this.cache.delete(cacheKey);
   }
@@ -163,8 +166,9 @@ export class AICache {
 
   // Evict oldest entries
   private evictOldest(count: number = 1): void {
-    const entries = Array.from(this.cache.entries())
-      .sort(([, a], [, b]) => a.timestamp - b.timestamp);
+    const entries = Array.from(this.cache.entries()).sort(
+      ([, a], [, b]) => a.timestamp - b.timestamp,
+    );
 
     for (let i = 0; i < Math.min(count, entries.length); i++) {
       this.cache.delete(entries[i][0]);
@@ -175,47 +179,51 @@ export class AICache {
   getStats(): CacheStats {
     const entries = Array.from(this.cache.values());
     const totalRequests = this.stats.hits + this.stats.misses;
-    
+
     return {
       totalEntries: this.cache.size,
       hitRate: totalRequests > 0 ? this.stats.hits / totalRequests : 0,
       totalHits: this.stats.hits,
       totalMisses: this.stats.misses,
       memoryUsage: this.estimateMemoryUsage(),
-      oldestEntry: entries.length > 0 ? Math.min(...entries.map(e => e.timestamp)) : 0,
-      newestEntry: entries.length > 0 ? Math.max(...entries.map(e => e.timestamp)) : 0
+      oldestEntry:
+        entries.length > 0 ? Math.min(...entries.map((e) => e.timestamp)) : 0,
+      newestEntry:
+        entries.length > 0 ? Math.max(...entries.map((e) => e.timestamp)) : 0,
     };
   }
 
   // Estimate memory usage
   private estimateMemoryUsage(): number {
     let totalSize = 0;
-    
+
     for (const [key, entry] of this.cache.entries()) {
       totalSize += key.length * 2; // UTF-16 characters
       totalSize += JSON.stringify(entry).length * 2;
     }
-    
+
     return totalSize;
   }
 
   // Get entries by prefix
-  getEntriesByPrefix(prefix: string): Array<{ key: string; value: any; metadata: any }> {
-    const cacheConfig = aiConfig.getCacheConfig();
+  getEntriesByPrefix(
+    prefix: string,
+  ): Array<{ key: string; value: any; metadata: any }> {
+    const cacheConfig = getAIConfig().getCacheConfig();
     const fullPrefix = cacheConfig.keyPrefix + prefix;
     const results: Array<{ key: string; value: any; metadata: any }> = [];
 
     for (const [key, entry] of this.cache.entries()) {
       if (key.startsWith(fullPrefix)) {
         results.push({
-          key: key.replace(fullPrefix + ':', ''),
+          key: key.replace(fullPrefix + ":", ""),
           value: this.decompress(entry),
           metadata: {
             timestamp: entry.timestamp,
             expiresAt: entry.expiresAt,
             hits: entry.hits,
-            compressed: entry.compressed
-          }
+            compressed: entry.compressed,
+          },
         });
       }
     }
@@ -224,9 +232,15 @@ export class AICache {
   }
 
   // Warm up cache with common operations
-  async warmUp(operations: Array<{ prefix: string; key: any; generator: () => Promise<any> }>): Promise<void> {
+  async warmUp(
+    operations: Array<{
+      prefix: string;
+      key: any;
+      generator: () => Promise<any>;
+    }>,
+  ): Promise<void> {
     console.info(`Warming up cache with ${operations.length} operations...`);
-    
+
     const promises = operations.map(async ({ prefix, key, generator }) => {
       try {
         if (!this.has(prefix, key)) {
@@ -239,7 +253,7 @@ export class AICache {
     });
 
     await Promise.allSettled(promises);
-    console.info('Cache warm-up completed');
+    console.info("Cache warm-up completed");
   }
 }
 
@@ -252,17 +266,20 @@ export class AICacheWrapper {
     extractionType: string,
     content: string,
     extractor: () => Promise<T>,
-    ttl?: number
+    ttl?: number,
   ): Promise<T> {
-    const cacheKey = { type: extractionType, content: content.substring(0, 1000) }; // Truncate for key
-    
-    let result = this.cache.get<T>('extraction', cacheKey);
+    const cacheKey = {
+      type: extractionType,
+      content: content.substring(0, 1000),
+    }; // Truncate for key
+
+    let result = this.cache.get<T>("extraction", cacheKey);
     if (result !== null) {
       return result;
     }
 
     result = await extractor();
-    this.cache.set('extraction', cacheKey, result, ttl);
+    this.cache.set("extraction", cacheKey, result, ttl);
     return result;
   }
 
@@ -271,17 +288,17 @@ export class AICacheWrapper {
     imageUrl: string,
     analysisType: string,
     analyzer: () => Promise<T>,
-    ttl?: number
+    ttl?: number,
   ): Promise<T> {
     const cacheKey = { url: imageUrl, type: analysisType };
-    
-    let result = this.cache.get<T>('photo_analysis', cacheKey);
+
+    let result = this.cache.get<T>("photo_analysis", cacheKey);
     if (result !== null) {
       return result;
     }
 
     result = await analyzer();
-    this.cache.set('photo_analysis', cacheKey, result, ttl);
+    this.cache.set("photo_analysis", cacheKey, result, ttl);
     return result;
   }
 
@@ -290,22 +307,22 @@ export class AICacheWrapper {
     extractedData: any,
     options: any,
     generator: () => Promise<T>,
-    ttl?: number
+    ttl?: number,
   ): Promise<T> {
-    const cacheKey = { 
+    const cacheKey = {
       services: extractedData.requirements?.services,
       buildingType: extractedData.requirements?.buildingType,
       buildingSize: extractedData.requirements?.buildingSize,
-      options 
+      options,
     };
-    
-    let result = this.cache.get<T>('quote_generation', cacheKey);
+
+    let result = this.cache.get<T>("quote_generation", cacheKey);
     if (result !== null) {
       return result;
     }
 
     result = await generator();
-    this.cache.set('quote_generation', cacheKey, result, ttl);
+    this.cache.set("quote_generation", cacheKey, result, ttl);
     return result;
   }
 
@@ -313,18 +330,22 @@ export class AICacheWrapper {
   async cachedCompetitiveAnalysis<T>(
     content: string,
     analyzer: () => Promise<T>,
-    ttl?: number
+    ttl?: number,
   ): Promise<T> {
-    const contentHash = crypto.createHash('sha256').update(content).digest('hex').substring(0, 16);
+    const contentHash = crypto
+      .createHash("sha256")
+      .update(content)
+      .digest("hex")
+      .substring(0, 16);
     const cacheKey = { contentHash };
-    
-    let result = this.cache.get<T>('competitive_analysis', cacheKey);
+
+    let result = this.cache.get<T>("competitive_analysis", cacheKey);
     if (result !== null) {
       return result;
     }
 
     result = await analyzer();
-    this.cache.set('competitive_analysis', cacheKey, result, ttl);
+    this.cache.set("competitive_analysis", cacheKey, result, ttl);
     return result;
   }
 
@@ -335,7 +356,7 @@ export class AICacheWrapper {
 }
 
 // Global cache instances
-const cacheConfig = aiConfig.getCacheConfig();
+const cacheConfig = getAIConfig().getCacheConfig();
 export const aiCache = new AICache(cacheConfig.maxSize, cacheConfig.ttl);
 export const aiCacheWrapper = new AICacheWrapper(aiCache);
 
@@ -343,16 +364,20 @@ export const aiCacheWrapper = new AICacheWrapper(aiCache);
 export async function maintainCache(): Promise<void> {
   const cleared = aiCache.clearExpired();
   const stats = aiCache.getStats();
-  
-  console.info(`Cache maintenance: cleared ${cleared} expired entries, ${stats.totalEntries} entries remaining`);
-  
+
+  console.info(
+    `Cache maintenance: cleared ${cleared} expired entries, ${stats.totalEntries} entries remaining`,
+  );
+
   // Log cache statistics periodically
   if (stats.totalEntries > 0) {
-    console.info(`Cache stats: ${(stats.hitRate * 100).toFixed(2)}% hit rate, ${stats.memoryUsage} bytes used`);
+    console.info(
+      `Cache stats: ${(stats.hitRate * 100).toFixed(2)}% hit rate, ${stats.memoryUsage} bytes used`,
+    );
   }
 }
 
 // Set up periodic cache maintenance (every 15 minutes)
-if (typeof setInterval !== 'undefined') {
+if (typeof setInterval !== "undefined") {
   setInterval(maintainCache, 15 * 60 * 1000);
 }

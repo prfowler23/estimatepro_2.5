@@ -1,11 +1,11 @@
-import OpenAI from 'openai';
-import { 
-  safeAIOperation, 
-  mapOpenAIError, 
+import OpenAI from "openai";
+import {
+  safeAIOperation,
+  mapOpenAIError,
   checkContentSafety,
   ValidationError,
-  AuthenticationError
-} from './ai-error-handler';
+  AuthenticationError,
+} from "./ai-error-handler";
 
 // Initialize OpenAI client with error handling
 const openai = new OpenAI({
@@ -14,11 +14,24 @@ const openai = new OpenAI({
 
 // Validate API key on module load
 if (!process.env.OPENAI_API_KEY) {
-  throw new AuthenticationError('OPENAI_API_KEY environment variable is required');
+  throw new AuthenticationError(
+    "OPENAI_API_KEY environment variable is required",
+  );
 }
 
 // Service type mapping for validation
-const VALID_SERVICES = ['PW', 'PWS', 'WC', 'GR', 'FR', 'HD', 'SW', 'PD', 'GRC', 'FC'];
+const VALID_SERVICES = [
+  "PW",
+  "PWS",
+  "WC",
+  "GR",
+  "FR",
+  "HD",
+  "SW",
+  "PD",
+  "GRC",
+  "FC",
+];
 
 export interface ExtractedData {
   customer: {
@@ -40,15 +53,15 @@ export interface ExtractedData {
   timeline: {
     requestedDate: string;
     deadline: string;
-    urgency: 'urgent' | 'normal' | 'flexible';
-    flexibility: 'none' | 'some' | 'flexible';
+    urgency: "urgent" | "normal" | "flexible";
+    flexibility: "none" | "some" | "flexible";
   };
   budget: {
     range: string;
     statedAmount: string;
     constraints: string[];
     approved: boolean;
-    flexibility: 'tight' | 'normal' | 'flexible';
+    flexibility: "tight" | "normal" | "flexible";
   };
   decisionMakers: {
     primaryContact: string;
@@ -125,9 +138,12 @@ Analyze the content for:
 5. Potential project challenges`;
 
 // Email-specific extraction
-export async function extractFromEmail(emailContent: string, userId?: string): Promise<ExtractedData> {
+export async function extractFromEmail(
+  emailContent: string,
+  userId?: string,
+): Promise<ExtractedData> {
   if (!emailContent || emailContent.trim().length === 0) {
-    throw new ValidationError('Email content cannot be empty', []);
+    throw new ValidationError("Email content cannot be empty", []);
   }
 
   return safeAIOperation(
@@ -151,44 +167,49 @@ ${emailContent}`;
 
       try {
         const response = await openai.chat.completions.create({
-          model: 'gpt-4',
+          model: "gpt-4",
           messages: [
             {
-              role: 'system',
-              content: 'You are an expert at extracting structured business information from communications. Always return valid JSON.'
+              role: "system",
+              content:
+                "You are an expert at extracting structured business information from communications. Always return valid JSON.",
             },
             {
-              role: 'user',
-              content: emailPrompt
-            }
+              role: "user",
+              content: emailPrompt,
+            },
           ],
-          response_format: { type: 'json_object' },
+          response_format: { type: "json_object" },
           temperature: 0.1,
-          max_tokens: 2000
+          max_tokens: 2000,
         });
 
-        const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+        const extractedData = JSON.parse(
+          response.choices[0].message.content || "{}",
+        );
         return validateAndEnhanceExtraction(extractedData);
       } catch (error: any) {
         throw mapOpenAIError(error);
       }
     },
     {
-      operationName: 'extractFromEmail',
+      operationName: "extractFromEmail",
       userId,
-      rateLimitKey: userId || 'anonymous',
+      rateLimitKey: userId || "anonymous",
       validateOutput: (result) => {
         if (!result.customer || !result.requirements) {
-          throw new ValidationError('Invalid extraction result structure', []);
+          throw new ValidationError("Invalid extraction result structure", []);
         }
         return result;
-      }
-    }
+      },
+    },
   );
 }
 
 // Meeting transcript extraction
-export async function extractFromTranscript(transcriptContent: string): Promise<ExtractedData> {
+export async function extractFromTranscript(
+  transcriptContent: string,
+): Promise<ExtractedData> {
   const transcriptPrompt = `${BASE_EXTRACTION_PROMPT}
 
 SPECIFIC INSTRUCTIONS FOR MEETING TRANSCRIPT ANALYSIS:
@@ -206,32 +227,37 @@ ${transcriptContent}`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are an expert at extracting business requirements from meeting transcripts and notes. Always return valid JSON.'
+          role: "system",
+          content:
+            "You are an expert at extracting business requirements from meeting transcripts and notes. Always return valid JSON.",
         },
         {
-          role: 'user',
-          content: transcriptPrompt
-        }
+          role: "user",
+          content: transcriptPrompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.1,
-      max_tokens: 2000
+      max_tokens: 2000,
     });
 
-    const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+    const extractedData = JSON.parse(
+      response.choices[0].message.content || "{}",
+    );
     return validateAndEnhanceExtraction(extractedData);
   } catch (error) {
-    console.error('Error extracting from transcript:', error);
-    throw new Error('Failed to extract information from transcript');
+    console.error("Error extracting from transcript:", error);
+    throw new Error("Failed to extract information from transcript");
   }
 }
 
 // Phone call notes extraction
-export async function extractFromPhone(phoneNotes: string): Promise<ExtractedData> {
+export async function extractFromPhone(
+  phoneNotes: string,
+): Promise<ExtractedData> {
   const phonePrompt = `${BASE_EXTRACTION_PROMPT}
 
 SPECIFIC INSTRUCTIONS FOR PHONE CALL NOTES ANALYSIS:
@@ -249,27 +275,30 @@ ${phoneNotes}`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are an expert at extracting business information from phone call summaries and notes. Always return valid JSON.'
+          role: "system",
+          content:
+            "You are an expert at extracting business information from phone call summaries and notes. Always return valid JSON.",
         },
         {
-          role: 'user',
-          content: phonePrompt
-        }
+          role: "user",
+          content: phonePrompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.1,
-      max_tokens: 2000
+      max_tokens: 2000,
     });
 
-    const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+    const extractedData = JSON.parse(
+      response.choices[0].message.content || "{}",
+    );
     return validateAndEnhanceExtraction(extractedData);
   } catch (error) {
-    console.error('Error extracting from phone notes:', error);
-    throw new Error('Failed to extract information from phone notes');
+    console.error("Error extracting from phone notes:", error);
+    throw new Error("Failed to extract information from phone notes");
   }
 }
 
@@ -278,43 +307,44 @@ function validateAndEnhanceExtraction(data: any): ExtractedData {
   // Ensure all required fields exist with defaults
   const validated: ExtractedData = {
     customer: {
-      name: data.customer?.name || '',
-      company: data.customer?.company || '',
-      email: data.customer?.email || '',
-      phone: data.customer?.phone || '',
-      role: data.customer?.role || '',
-      address: data.customer?.address || ''
+      name: data.customer?.name || "",
+      company: data.customer?.company || "",
+      email: data.customer?.email || "",
+      phone: data.customer?.phone || "",
+      role: data.customer?.role || "",
+      address: data.customer?.address || "",
     },
     requirements: {
       services: validateServices(data.requirements?.services || []),
-      buildingType: data.requirements?.buildingType || '',
-      location: data.requirements?.location || '',
-      buildingSize: data.requirements?.buildingSize || '',
+      buildingType: data.requirements?.buildingType || "",
+      location: data.requirements?.location || "",
+      buildingSize: data.requirements?.buildingSize || "",
       floors: Math.max(1, parseInt(data.requirements?.floors) || 1),
-      specialRequirements: data.requirements?.specialRequirements || []
+      specialRequirements: data.requirements?.specialRequirements || [],
     },
     timeline: {
-      requestedDate: data.timeline?.requestedDate || '',
-      deadline: data.timeline?.deadline || '',
+      requestedDate: data.timeline?.requestedDate || "",
+      deadline: data.timeline?.deadline || "",
       urgency: validateUrgency(data.timeline?.urgency),
-      flexibility: validateFlexibility(data.timeline?.flexibility)
+      flexibility: validateFlexibility(data.timeline?.flexibility),
     },
     budget: {
-      range: data.budget?.range || '',
-      statedAmount: data.budget?.statedAmount || '',
+      range: data.budget?.range || "",
+      statedAmount: data.budget?.statedAmount || "",
       constraints: data.budget?.constraints || [],
       approved: Boolean(data.budget?.approved),
-      flexibility: validateBudgetFlexibility(data.budget?.flexibility)
+      flexibility: validateBudgetFlexibility(data.budget?.flexibility),
     },
     decisionMakers: {
-      primaryContact: data.decisionMakers?.primaryContact || data.customer?.name || '',
+      primaryContact:
+        data.decisionMakers?.primaryContact || data.customer?.name || "",
       approvers: data.decisionMakers?.approvers || [],
       influencers: data.decisionMakers?.influencers || [],
-      roles: data.decisionMakers?.roles || {}
+      roles: data.decisionMakers?.roles || {},
     },
     redFlags: data.redFlags || [],
     urgencyScore: calculateUrgencyScore(data),
-    confidence: Math.min(1, Math.max(0, data.confidence || 0.5))
+    confidence: Math.min(1, Math.max(0, data.confidence || 0.5)),
   };
 
   return validated;
@@ -322,31 +352,37 @@ function validateAndEnhanceExtraction(data: any): ExtractedData {
 
 // Validate service codes
 function validateServices(services: string[]): string[] {
-  return services.filter(service => VALID_SERVICES.includes(service.toUpperCase()));
+  return services.filter((service) =>
+    VALID_SERVICES.includes(service.toUpperCase()),
+  );
 }
 
 // Validate urgency level
-function validateUrgency(urgency: string): 'urgent' | 'normal' | 'flexible' {
-  if (['urgent', 'normal', 'flexible'].includes(urgency)) {
-    return urgency as 'urgent' | 'normal' | 'flexible';
+function validateUrgency(urgency: string): "urgent" | "normal" | "flexible" {
+  if (["urgent", "normal", "flexible"].includes(urgency)) {
+    return urgency as "urgent" | "normal" | "flexible";
   }
-  return 'normal';
+  return "normal";
 }
 
 // Validate flexibility level
-function validateFlexibility(flexibility: string): 'none' | 'some' | 'flexible' {
-  if (['none', 'some', 'flexible'].includes(flexibility)) {
-    return flexibility as 'none' | 'some' | 'flexible';
+function validateFlexibility(
+  flexibility: string,
+): "none" | "some" | "flexible" {
+  if (["none", "some", "flexible"].includes(flexibility)) {
+    return flexibility as "none" | "some" | "flexible";
   }
-  return 'some';
+  return "some";
 }
 
 // Validate budget flexibility
-function validateBudgetFlexibility(flexibility: string): 'tight' | 'normal' | 'flexible' {
-  if (['tight', 'normal', 'flexible'].includes(flexibility)) {
-    return flexibility as 'tight' | 'normal' | 'flexible';
+function validateBudgetFlexibility(
+  flexibility: string,
+): "tight" | "normal" | "flexible" {
+  if (["tight", "normal", "flexible"].includes(flexibility)) {
+    return flexibility as "tight" | "normal" | "flexible";
   }
-  return 'normal';
+  return "normal";
 }
 
 // Calculate urgency score based on multiple factors
@@ -354,21 +390,23 @@ function calculateUrgencyScore(data: any): number {
   let score = 5; // Base score
 
   // Timeline urgency
-  if (data.timeline?.urgency === 'urgent') score += 3;
-  else if (data.timeline?.urgency === 'flexible') score -= 2;
+  if (data.timeline?.urgency === "urgent") score += 3;
+  else if (data.timeline?.urgency === "flexible") score -= 2;
 
   // Flexibility impact
-  if (data.timeline?.flexibility === 'none') score += 2;
-  else if (data.timeline?.flexibility === 'flexible') score -= 1;
+  if (data.timeline?.flexibility === "none") score += 2;
+  else if (data.timeline?.flexibility === "flexible") score -= 1;
 
   // Budget pressure
-  if (data.budget?.flexibility === 'tight') score += 1;
+  if (data.budget?.flexibility === "tight") score += 1;
   if (data.budget?.constraints?.length > 0) score += 1;
 
   // Language indicators (from original content analysis)
-  const urgentKeywords = ['asap', 'urgent', 'rush', 'immediately', 'emergency'];
+  const urgentKeywords = ["asap", "urgent", "rush", "immediately", "emergency"];
   const content = JSON.stringify(data).toLowerCase();
-  const urgentMatches = urgentKeywords.filter(keyword => content.includes(keyword));
+  const urgentMatches = urgentKeywords.filter((keyword) =>
+    content.includes(keyword),
+  );
   score += urgentMatches.length;
 
   // Decision maker complexity
@@ -379,7 +417,10 @@ function calculateUrgencyScore(data: any): number {
 }
 
 // PDF/Document extraction
-export async function extractFromDocument(documentContent: string, documentType: 'pdf' | 'rfp' | 'contract' | 'plans'): Promise<ExtractedData> {
+export async function extractFromDocument(
+  documentContent: string,
+  documentType: "pdf" | "rfp" | "contract" | "plans",
+): Promise<ExtractedData> {
   const documentPrompt = `${BASE_EXTRACTION_PROMPT}
 
 SPECIFIC INSTRUCTIONS FOR DOCUMENT ANALYSIS:
@@ -400,23 +441,26 @@ ${documentContent}`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are an expert at extracting structured business information from formal documents. Focus on technical requirements, compliance needs, and project specifications. Always return valid JSON.'
+          role: "system",
+          content:
+            "You are an expert at extracting structured business information from formal documents. Focus on technical requirements, compliance needs, and project specifications. Always return valid JSON.",
         },
         {
-          role: 'user',
-          content: documentPrompt
-        }
+          role: "user",
+          content: documentPrompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.1,
-      max_tokens: 2500
+      max_tokens: 2500,
     });
 
-    const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+    const extractedData = JSON.parse(
+      response.choices[0].message.content || "{}",
+    );
     return validateAndEnhanceExtraction(extractedData);
   } catch (error) {
     console.error(`Error extracting from ${documentType}:`, error);
@@ -425,7 +469,10 @@ ${documentContent}`;
 }
 
 // OCR text extraction from images
-export async function extractFromImageOCR(imageUrl: string, imageType: 'document' | 'sign' | 'form' | 'note'): Promise<ExtractedData> {
+export async function extractFromImageOCR(
+  imageUrl: string,
+  imageType: "document" | "sign" | "form" | "note",
+): Promise<ExtractedData> {
   const ocrPrompt = `${BASE_EXTRACTION_PROMPT}
 
 SPECIFIC INSTRUCTIONS FOR IMAGE OCR ANALYSIS:
@@ -445,35 +492,38 @@ Analyze this image and extract all readable text and relevant business informati
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'system',
-          content: 'You are an expert at reading text from images and extracting structured business information. Process both printed and handwritten text. Always return valid JSON.'
+          role: "system",
+          content:
+            "You are an expert at reading text from images and extracting structured business information. Process both printed and handwritten text. Always return valid JSON.",
         },
         {
-          role: 'user',
+          role: "user",
           content: [
             {
-              type: 'text',
-              text: ocrPrompt
+              type: "text",
+              text: ocrPrompt,
             },
             {
-              type: 'image_url',
+              type: "image_url",
               image_url: {
                 url: imageUrl,
-                detail: 'high'
-              }
-            }
-          ]
-        }
+                detail: "high",
+              },
+            },
+          ],
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.1,
-      max_tokens: 2500
+      max_tokens: 2500,
     });
 
-    const extractedData = JSON.parse(response.choices[0].message.content || '{}');
+    const extractedData = JSON.parse(
+      response.choices[0].message.content || "{}",
+    );
     return validateAndEnhanceExtraction(extractedData);
   } catch (error) {
     console.error(`Error extracting from ${imageType} image:`, error);
@@ -482,7 +532,9 @@ Analyze this image and extract all readable text and relevant business informati
 }
 
 // Competitive analysis from competitor quotes/proposals
-export async function extractCompetitiveIntelligence(competitorContent: string): Promise<{
+export async function extractCompetitiveIntelligence(
+  competitorContent: string,
+): Promise<{
   extraction: ExtractedData;
   competitive: {
     competitors: string[];
@@ -520,50 +572,57 @@ ${competitorContent}`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are a competitive intelligence analyst specializing in building services. Extract both project details and strategic market insights. Always return valid JSON.'
+          role: "system",
+          content:
+            "You are a competitive intelligence analyst specializing in building services. Extract both project details and strategic market insights. Always return valid JSON.",
         },
         {
-          role: 'user',
-          content: competitivePrompt
-        }
+          role: "user",
+          content: competitivePrompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 3000
+      max_tokens: 3000,
     });
 
-    const analysisData = JSON.parse(response.choices[0].message.content || '{}');
-    
+    const analysisData = JSON.parse(
+      response.choices[0].message.content || "{}",
+    );
+
     return {
       extraction: validateAndEnhanceExtraction(analysisData.extraction || {}),
       competitive: {
         competitors: analysisData.competitive?.competitors || [],
-        pricingStrategy: analysisData.competitive?.pricingStrategy || '',
+        pricingStrategy: analysisData.competitive?.pricingStrategy || "",
         serviceOfferings: analysisData.competitive?.serviceOfferings || [],
-        strengthsWeaknesses: analysisData.competitive?.strengthsWeaknesses || [],
+        strengthsWeaknesses:
+          analysisData.competitive?.strengthsWeaknesses || [],
         marketRates: analysisData.competitive?.marketRates || {},
         differentiators: analysisData.competitive?.differentiators || [],
         threats: analysisData.competitive?.threats || [],
-        opportunities: analysisData.competitive?.opportunities || []
-      }
+        opportunities: analysisData.competitive?.opportunities || [],
+      },
     };
   } catch (error) {
-    console.error('Error extracting competitive intelligence:', error);
-    throw new Error('Failed to extract competitive intelligence');
+    console.error("Error extracting competitive intelligence:", error);
+    throw new Error("Failed to extract competitive intelligence");
   }
 }
 
 // Enhanced risk assessment
-export async function performRiskAssessment(extractedData: ExtractedData, projectContext?: string): Promise<{
+export async function performRiskAssessment(
+  extractedData: ExtractedData,
+  projectContext?: string,
+): Promise<{
   riskScore: number; // 1-10 (10 = highest risk)
   riskFactors: Array<{
     category: string;
     risk: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: "low" | "medium" | "high" | "critical";
     mitigation: string;
   }>;
   recommendations: string[];
@@ -572,7 +631,7 @@ export async function performRiskAssessment(extractedData: ExtractedData, projec
   const riskPrompt = `Analyze this project data for potential risks and provide a comprehensive risk assessment:
 
 PROJECT DATA: ${JSON.stringify(extractedData, null, 2)}
-ADDITIONAL CONTEXT: ${projectContext || 'None provided'}
+ADDITIONAL CONTEXT: ${projectContext || "None provided"}
 
 Provide a detailed risk analysis with this JSON structure:
 {
@@ -601,54 +660,63 @@ Consider these risk categories:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: "gpt-4",
       messages: [
         {
-          role: 'system',
-          content: 'You are a risk assessment expert for building services projects. Provide thorough analysis of project risks and mitigation strategies.'
+          role: "system",
+          content:
+            "You are a risk assessment expert for building services projects. Provide thorough analysis of project risks and mitigation strategies.",
         },
         {
-          role: 'user',
-          content: riskPrompt
-        }
+          role: "user",
+          content: riskPrompt,
+        },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 2500
+      max_tokens: 2500,
     });
 
-    const riskData = JSON.parse(response.choices[0].message.content || '{}');
-    
+    const riskData = JSON.parse(response.choices[0].message.content || "{}");
+
     return {
       riskScore: Math.min(10, Math.max(1, riskData.riskScore || 5)),
       riskFactors: riskData.riskFactors || [],
       recommendations: riskData.recommendations || [],
-      pricing_adjustments: riskData.pricing_adjustments || {}
+      pricing_adjustments: riskData.pricing_adjustments || {},
     };
   } catch (error) {
-    console.error('Error performing risk assessment:', error);
-    throw new Error('Failed to perform risk assessment');
+    console.error("Error performing risk assessment:", error);
+    throw new Error("Failed to perform risk assessment");
   }
 }
 
 // Generic extraction function that routes to appropriate method
 export async function extractFromContent(
-  content: string, 
-  type: 'email' | 'meeting' | 'phone' | 'walkin' | 'pdf' | 'rfp' | 'contract' | 'plans'
+  content: string,
+  type:
+    | "email"
+    | "meeting"
+    | "phone"
+    | "walkin"
+    | "pdf"
+    | "rfp"
+    | "contract"
+    | "plans",
 ): Promise<ExtractedData> {
   switch (type) {
-    case 'email':
+    case "email":
       return extractFromEmail(content);
-    case 'meeting':
+    case "meeting":
       return extractFromTranscript(content);
-    case 'phone':
+    case "phone":
       return extractFromPhone(content);
-    case 'walkin':
+    case "walkin":
       return extractFromPhone(content); // Use phone extraction for walk-in notes
-    case 'pdf':
-    case 'rfp':
-    case 'contract':
-    case 'plans':
+    case "pdf":
+    case "rfp":
+    case "contract":
+    case "plans":
       return extractFromDocument(content, type);
     default:
       throw new Error(`Unsupported extraction type: ${type}`);

@@ -19,7 +19,7 @@
 All calculator forms have been updated to support live calculations:
 
 - ✅ Glass Restoration (glassArea field)
-- ✅ Window Cleaning (glassArea field) 
+- ✅ Window Cleaning (glassArea field)
 - ✅ Pressure Washing (facadeArea field)
 - ✅ Pressure Wash & Seal (area field)
 - ✅ Final Clean (glassArea field)

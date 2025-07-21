@@ -1,85 +1,51 @@
-import { useState, useEffect } from 'react';
-import { FileText, Download, Send, CheckCircle, Eye, Clock, Edit, Share2, Sparkles, DollarSign, Calendar, MapPin, Building, User, Phone, Mail, Palette, Image, Settings, History, Bell, BarChart, Upload, ExternalLink, Printer, Save, Copy, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-
-interface SummaryData {
-  customer: {
-    name: string;
-    company?: string;
-    email: string;
-    phone: string;
-    address: string;
-    contactMethod: string;
-    requirements: any;
-  };
-  services: {
-    selected: string[];
-    dependencies: Record<string, string[]>;
-    autoAdded: string[];
-    overrides: Record<string, any>;
-  };
-  measurements: {
-    totalArea: number;
-    byCategory: Record<string, number>;
-    floors: number;
-    accessibility: string[];
-  };
-  timeline: {
-    startDate: Date;
-    endDate: Date;
-    duration: number;
-    milestones: Array<{
-      name: string;
-      date: Date;
-      description: string;
-    }>;
-    weatherFactors: any;
-  };
-  costs: {
-    equipment: number;
-    materials: number;
-    labor: number;
-    other: number;
-    total: number;
-    breakdown: any[];
-  };
-  pricing: {
-    basePrice: number;
-    finalPrice: number;
-    strategy: string;
-    winProbability: number;
-    adjustments: any[];
-    riskFactors: any[];
-    confidence: number;
-  };
-  proposal: {
-    content: string;
-    version: number;
-    generatedAt: Date;
-    customizations: {
-      introduction: string;
-      closing: string;
-      terms: string;
-      branding: {
-        logo: string;
-        colors: {
-          primary: string;
-          secondary: string;
-        };
-      };
-    };
-  };
-  status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected';
-}
+import { useState, useEffect } from "react";
+import {
+  FileText,
+  Download,
+  Send,
+  CheckCircle,
+  Eye,
+  Clock,
+  Edit,
+  Share2,
+  Sparkles,
+  DollarSign,
+  Calendar,
+  MapPin,
+  Building,
+  User,
+  Phone,
+  Mail,
+  Palette,
+  Image,
+  Settings,
+  History,
+  Bell,
+  BarChart,
+  Upload,
+  ExternalLink,
+  Printer,
+  Save,
+  Copy,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SummaryStepData, GuidedFlowData } from "@/lib/types/estimate-types";
 
 interface ProposalCustomization {
   introduction: string;
@@ -99,32 +65,41 @@ interface ProposalCustomization {
   };
 }
 
-export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdate: (data: any) => void; onNext: () => void; onBack: () => void }) {
-  const [activeTab, setActiveTab] = useState('review');
-  const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
+interface SummaryProps {
+  data: GuidedFlowData;
+  onUpdate: (stepData: Partial<GuidedFlowData>) => void;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+export function Summary({ data, onUpdate, onNext, onBack }: SummaryProps) {
+  const [activeTab, setActiveTab] = useState("review");
+  const [summaryData, setSummaryData] = useState<SummaryStepData | null>(null);
   const [customization, setCustomization] = useState<ProposalCustomization>({
-    introduction: "Thank you for considering our professional building services. We're excited to present this comprehensive proposal tailored to your specific needs.",
-    closing: "We look forward to the opportunity to work with you and deliver exceptional results for your project.",
+    introduction:
+      "Thank you for considering our professional building services. We're excited to present this comprehensive proposal tailored to your specific needs.",
+    closing:
+      "We look forward to the opportunity to work with you and deliver exceptional results for your project.",
     includeSections: {
       executiveSummary: true,
       scopeDetails: true,
       timeline: true,
       investment: true,
       terms: true,
-      photoGallery: true
+      photoGallery: true,
     },
     branding: {
-      logo: '',
-      primaryColor: '#2563eb',
-      secondaryColor: '#64748b'
-    }
+      logo: "",
+      primaryColor: "#2563eb",
+      secondaryColor: "#64748b",
+    },
   });
   const [exportOptions, setExportOptions] = useState({
-    format: 'pdf',
-    delivery: 'email',
+    format: "pdf",
+    delivery: "email",
     tracking: true,
     signature: true,
-    followUp: true
+    followUp: true,
   });
   const [generating, setGenerating] = useState(false);
   const [proposalGenerated, setProposalGenerated] = useState(false);
@@ -135,75 +110,92 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
 
   const consolidateData = () => {
     // Consolidate all step data into comprehensive summary
-    const consolidated: SummaryData = {
-      customer: {
-        name: data.initialContact?.extractedData?.customer?.name || 'Unknown Customer',
-        company: data.initialContact?.extractedData?.customer?.company,
-        email: data.initialContact?.extractedData?.customer?.email || '',
-        phone: data.initialContact?.extractedData?.customer?.phone || '',
-        address: data.initialContact?.extractedData?.requirements?.location || '',
-        contactMethod: data.initialContact?.contactMethod || 'email',
-        requirements: data.initialContact?.extractedData?.requirements || {}
+    const customerInfo = {
+      name:
+        data.initialContact?.aiExtractedData?.customer?.name ||
+        "Unknown Customer",
+      company: data.initialContact?.aiExtractedData?.customer?.company || "",
+      email: data.initialContact?.aiExtractedData?.customer?.email || "",
+      phone: data.initialContact?.aiExtractedData?.customer?.phone || "",
+      address:
+        data.initialContact?.aiExtractedData?.requirements?.location || "",
+      contactMethod: data.initialContact?.contactMethod || "email",
+      requirements: data.initialContact?.aiExtractedData?.requirements || {},
+    };
+
+    // Calculate totals from step data
+    const totalPrice = data.pricing?.finalPrice || 0;
+    const estimatedDuration = data.duration?.estimatedDuration || 0;
+    const selectedServices = data.scopeDetails?.selectedServices || [];
+
+    const consolidated: SummaryStepData = {
+      finalEstimate: {
+        id: `est-${Date.now()}`,
+        summary: {
+          totalPrice,
+          totalTime: estimatedDuration,
+          totalArea: data.areaOfWork?.totalArea || 0,
+          serviceCount: selectedServices.length,
+          complexityScore: 3, // Default complexity
+        },
+        services: selectedServices.map((service) => ({
+          serviceType: service,
+          description: `${service} service`,
+          quantity: 0,
+          unit: "sq ft",
+          unitPrice: 0,
+          totalPrice: 0,
+          duration: 0,
+          dependencies: [],
+        })),
+        timeline: {
+          startDate: new Date(),
+          endDate: new Date(
+            Date.now() + estimatedDuration * 24 * 60 * 60 * 1000,
+          ),
+          totalDuration: estimatedDuration,
+          phases: [],
+          milestones: [],
+          criticalPath: [],
+        },
+        terms: {
+          paymentSchedule: [],
+          warranties: [],
+          limitations: [],
+          changeOrderPolicy: "Standard change order policy applies",
+          cancellationPolicy: "Standard cancellation policy applies",
+          insuranceRequirements: [],
+        },
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        approval: {
+          status: "pending" as const,
+        },
       },
-      services: {
-        selected: data.scopeDetails?.selectedServices || [],
-        dependencies: data.scopeDetails?.serviceDependencies || {},
-        autoAdded: data.scopeDetails?.autoAddedServices || [],
-        overrides: data.scopeDetails?.overrides || {}
-      },
-      measurements: {
-        totalArea: data.takeoff?.measurements?.reduce((sum: number, m: any) => sum + m.total, 0) || 0,
-        byCategory: data.takeoff?.measurementsByCategory || {},
-        floors: data.filesPhotos?.summary?.measurements?.stories || 1,
-        accessibility: data.scopeDetails?.accessRestrictions || []
+      proposalGenerated: false,
+      customer: customerInfo,
+      pricing: {
+        finalPrice: totalPrice,
+        strategy: data.pricing?.strategy || "standard",
+        winProbability: data.pricing?.winProbability || 0.5,
       },
       timeline: {
-        startDate: data.duration?.schedule?.startDate || new Date(),
-        endDate: data.duration?.schedule?.endDate || new Date(),
-        duration: data.duration?.totalDuration || 0,
-        milestones: data.duration?.milestones || [],
-        weatherFactors: data.duration?.weatherAnalysis || {}
+        startDate: new Date(),
+        endDate: new Date(Date.now() + estimatedDuration * 24 * 60 * 60 * 1000),
+        duration: estimatedDuration,
+        milestones: [],
       },
+      services: selectedServices,
       costs: {
-        equipment: data.expenses?.totalCosts?.equipment || 0,
-        materials: data.expenses?.totalCosts?.materials || 0,
-        labor: data.expenses?.totalCosts?.labor || 0,
-        other: data.expenses?.totalCosts?.other || 0,
-        total: data.expenses?.totalCosts?.grand || 0,
-        breakdown: [
-          ...(data.expenses?.equipment || []),
-          ...(data.expenses?.materials || []),
-          ...(data.expenses?.labor || []),
-          ...(data.expenses?.otherCosts || [])
-        ]
+        equipment: data.expenses?.equipment || 0,
+        materials: data.expenses?.materials || 0,
+        labor: data.expenses?.labor || 0,
+        other: data.expenses?.other || 0,
       },
-      pricing: {
-        basePrice: data.pricing?.basePrice || 0,
-        finalPrice: data.pricing?.finalPrice || 0,
-        strategy: data.pricing?.strategy?.strategy || 'Standard',
-        winProbability: data.pricing?.winProbability || 0,
-        adjustments: data.pricing?.adjustments || [],
-        riskFactors: data.pricing?.riskFactors || [],
-        confidence: data.pricing?.confidence || 0
-      },
+      status: "draft" as const,
       proposal: {
-        content: '',
-        version: 1,
+        content: "",
         generatedAt: new Date(),
-        customizations: {
-          introduction: customization.introduction,
-          closing: customization.closing,
-          terms: 'Standard terms and conditions apply. Payment terms: Net 30 days.',
-          branding: {
-            logo: customization.branding.logo,
-            colors: {
-              primary: customization.branding.primaryColor,
-              secondary: customization.branding.secondaryColor
-            }
-          }
-        }
       },
-      status: 'draft'
     };
 
     setSummaryData(consolidated);
@@ -211,22 +203,22 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
 
   const generateProposal = async () => {
     setGenerating(true);
-    
+
     // Simulate proposal generation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // Generate proposal content
     const proposalContent = `
       PROFESSIONAL BUILDING SERVICES PROPOSAL
       
       Executive Summary:
-      Project: ${summaryData?.customer.requirements.buildingType || 'Commercial Building'} Services
+      Project: ${summaryData?.customer.requirements.buildingType || "Commercial Building"} Services
       Client: ${summaryData?.customer.name}
       Total Investment: $${summaryData?.pricing.finalPrice.toLocaleString()}
       Project Duration: ${summaryData?.timeline.duration} days
       
       Scope of Work:
-      ${summaryData?.services.selected.map(service => `• ${service}`).join('\n')}
+      ${summaryData?.finalEstimate.services.map((service: any) => `• ${service.description || service.serviceType}`).join("\n")}
       
       Timeline:
       Start Date: ${summaryData?.timeline.startDate.toLocaleDateString()}
@@ -247,80 +239,80 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
         proposal: {
           ...summaryData.proposal,
           content: proposalContent,
-          generatedAt: new Date()
-        }
+          generatedAt: new Date(),
+        },
       });
     }
 
     setProposalGenerated(true);
     setGenerating(false);
-    
+
     // Track analytics event
-    trackEvent('proposal_generated', {
+    trackEvent("proposal_generated", {
       customer: summaryData?.customer.name,
       value: summaryData?.pricing.finalPrice,
-      services: summaryData?.services.selected.length
+      services: summaryData?.finalEstimate.services.length,
     });
   };
 
   const exportToPDF = async () => {
     // Simulate PDF generation
     setGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
     // In real implementation, would generate PDF
-    const blob = new Blob(['PDF content'], { type: 'application/pdf' });
+    const blob = new Blob(["PDF content"], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `Proposal_${summaryData?.customer.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+    link.download = `Proposal_${summaryData?.customer.name.replace(/\s+/g, "_")}_${new Date().getTime()}.pdf`;
     link.click();
-    
+
     setGenerating(false);
-    trackEvent('proposal_exported', { format: 'pdf' });
+    trackEvent("proposal_exported", { format: "pdf" });
   };
 
   const sendProposal = async () => {
     setGenerating(true);
-    
+
     // Simulate email sending
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     if (summaryData) {
       setSummaryData({
         ...summaryData,
-        status: 'sent'
+        status: "sent",
       });
     }
 
     setGenerating(false);
-    trackEvent('proposal_sent', {
+    trackEvent("proposal_sent", {
       customer: summaryData?.customer.email,
-      tracking: exportOptions.tracking
+      tracking: exportOptions.tracking,
     });
-    
-    alert('Proposal sent successfully! Tracking link has been enabled.');
+
+    alert("Proposal sent successfully! Tracking link has been enabled.");
   };
 
   const trackEvent = (event: string, properties: any) => {
     // Analytics tracking implementation
-    console.log('Analytics Event:', event, properties);
+    console.log("Analytics Event:", event, properties);
   };
 
   const handleCustomizationChange = (key: string, value: any) => {
-    setCustomization(prev => ({
+    setCustomization((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
   };
 
   const handleSectionToggle = (section: string, enabled: boolean) => {
-    setCustomization(prev => ({
+    setCustomization((prev) => ({
       ...prev,
       includeSections: {
         ...prev.includeSections,
-        [section]: enabled
-      }
+        [section]: enabled,
+      },
     }));
   };
 
@@ -349,14 +341,21 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
 
       {/* Status Badge */}
       <div className="flex items-center gap-4">
-        <Badge className={
-          summaryData.status === 'draft' ? 'bg-gray-500' :
-          summaryData.status === 'sent' ? 'bg-blue-500' :
-          summaryData.status === 'viewed' ? 'bg-yellow-500' :
-          summaryData.status === 'accepted' ? 'bg-green-500' :
-          'bg-red-500'
-        }>
-          {summaryData.status.charAt(0).toUpperCase() + summaryData.status.slice(1)}
+        <Badge
+          className={
+            (summaryData.status || "draft") === "draft"
+              ? "bg-gray-500"
+              : (summaryData.status || "draft") === "sent"
+                ? "bg-blue-500"
+                : (summaryData.status || "draft") === "viewed"
+                  ? "bg-yellow-500"
+                  : (summaryData.status || "draft") === "accepted"
+                    ? "bg-green-500"
+                    : "bg-red-500"
+          }
+        >
+          {(summaryData.status || "draft").charAt(0).toUpperCase() +
+            (summaryData.status || "draft").slice(1)}
         </Badge>
         <span className="text-sm text-gray-600">
           Last updated: {summaryData.proposal.generatedAt.toLocaleString()}
@@ -391,7 +390,9 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Project Duration</p>
-                  <p className="text-xl font-bold">{summaryData.timeline.duration} days</p>
+                  <p className="text-xl font-bold">
+                    {summaryData.timeline.duration} days
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Win Probability</p>
@@ -401,7 +402,9 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Services</p>
-                  <p className="text-xl font-bold">{summaryData.services.selected.length}</p>
+                  <p className="text-xl font-bold">
+                    {summaryData.finalEstimate.services.length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -420,26 +423,35 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                 <div>
                   <p className="font-medium">{summaryData.customer.name}</p>
                   {summaryData.customer.company && (
-                    <p className="text-gray-600">{summaryData.customer.company}</p>
+                    <p className="text-gray-600">
+                      {summaryData.customer.company}
+                    </p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
                     <Mail className="w-4 h-4" />
-                    <span className="text-sm">{summaryData.customer.email}</span>
+                    <span className="text-sm">
+                      {summaryData.customer.email}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4" />
-                    <span className="text-sm">{summaryData.customer.phone}</span>
+                    <span className="text-sm">
+                      {summaryData.customer.phone}
+                    </span>
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
-                    <span className="text-sm">{summaryData.customer.address}</span>
+                    <span className="text-sm">
+                      {summaryData.customer.address}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <Building className="w-4 h-4" />
                     <span className="text-sm capitalize">
-                      {summaryData.customer.requirements.buildingType || 'Commercial'}
+                      {summaryData.customer.requirements.buildingType ||
+                        "Commercial"}
                     </span>
                   </div>
                 </div>
@@ -454,12 +466,17 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {summaryData.services.selected.map((service, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 border rounded">
+                {summaryData.services?.map((service: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-3 border rounded"
+                  >
                     <CheckCircle className="w-5 h-5 text-green-500" />
                     <span className="font-medium">{service}</span>
-                    {summaryData.services.autoAdded.includes(service) && (
-                      <Badge variant="secondary" className="text-xs">Auto-added</Badge>
+                    {false && ( // Simplified for now
+                      <Badge variant="secondary" className="text-xs">
+                        Auto-added
+                      </Badge>
                     )}
                   </div>
                 ))}
@@ -480,25 +497,38 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Start Date</p>
-                    <p className="font-medium">{summaryData.timeline.startDate.toLocaleDateString()}</p>
+                    <p className="font-medium">
+                      {summaryData.timeline.startDate.toLocaleDateString()}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Completion Date</p>
-                    <p className="font-medium">{summaryData.timeline.endDate.toLocaleDateString()}</p>
+                    <p className="font-medium">
+                      {summaryData.timeline.endDate.toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
-                
+
                 {summaryData.timeline.milestones.length > 0 && (
                   <div>
                     <p className="font-medium mb-2">Key Milestones</p>
                     <div className="space-y-2">
-                      {summaryData.timeline.milestones.map((milestone, index) => (
-                        <div key={index} className="flex items-center gap-3 text-sm">
-                          <Clock className="w-4 h-4 text-blue-500" />
-                          <span className="font-medium">{milestone.name}</span>
-                          <span className="text-gray-600">{milestone.date.toLocaleDateString()}</span>
-                        </div>
-                      ))}
+                      {summaryData.timeline.milestones.map(
+                        (milestone: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 text-sm"
+                          >
+                            <Clock className="w-4 h-4 text-blue-500" />
+                            <span className="font-medium">
+                              {milestone.name}
+                            </span>
+                            <span className="text-gray-600">
+                              {milestone.date.toLocaleDateString()}
+                            </span>
+                          </div>
+                        ),
+                      )}
                     </div>
                   </div>
                 )}
@@ -520,24 +550,34 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Equipment:</span>
-                      <span className="font-medium">${summaryData.costs.equipment.toLocaleString()}</span>
+                      <span className="font-medium">
+                        ${summaryData.costs.equipment.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Materials:</span>
-                      <span className="font-medium">${summaryData.costs.materials.toLocaleString()}</span>
+                      <span className="font-medium">
+                        ${summaryData.costs.materials.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Labor:</span>
-                      <span className="font-medium">${summaryData.costs.labor.toLocaleString()}</span>
+                      <span className="font-medium">
+                        ${summaryData.costs.labor.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Other:</span>
-                      <span className="font-medium">${summaryData.costs.other.toLocaleString()}</span>
+                      <span className="font-medium">
+                        ${summaryData.costs.other.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                   <div>
                     <div className="text-center p-4 bg-green-50 rounded">
-                      <p className="text-sm text-gray-600">Total Project Investment</p>
+                      <p className="text-sm text-gray-600">
+                        Total Project Investment
+                      </p>
                       <p className="text-2xl font-bold text-green-600">
                         ${summaryData.pricing.finalPrice.toLocaleString()}
                       </p>
@@ -563,39 +603,53 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Company Logo</label>
+                <label className="block text-sm font-medium mb-2">
+                  Company Logo
+                </label>
                 <div className="flex items-center gap-4">
                   <Button variant="outline" className="flex items-center gap-2">
                     <Upload className="w-4 h-4" />
                     Upload Logo
                   </Button>
                   {customization.branding.logo && (
-                    <img src={customization.branding.logo} alt="Logo" className="h-12" />
+                    <img
+                      src={customization.branding.logo}
+                      alt="Logo"
+                      className="h-12"
+                    />
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Primary Color</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Primary Color
+                  </label>
                   <Input
                     type="color"
                     value={customization.branding.primaryColor}
-                    onChange={(e) => handleCustomizationChange('branding', {
-                      ...customization.branding,
-                      primaryColor: e.target.value
-                    })}
+                    onChange={(e) =>
+                      handleCustomizationChange("branding", {
+                        ...customization.branding,
+                        primaryColor: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Secondary Color</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Secondary Color
+                  </label>
                   <Input
                     type="color"
                     value={customization.branding.secondaryColor}
-                    onChange={(e) => handleCustomizationChange('branding', {
-                      ...customization.branding,
-                      secondaryColor: e.target.value
-                    })}
+                    onChange={(e) =>
+                      handleCustomizationChange("branding", {
+                        ...customization.branding,
+                        secondaryColor: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -612,19 +666,27 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Introduction</label>
+                <label className="block text-sm font-medium mb-2">
+                  Introduction
+                </label>
                 <Textarea
                   value={customization.introduction}
-                  onChange={(e) => handleCustomizationChange('introduction', e.target.value)}
+                  onChange={(e) =>
+                    handleCustomizationChange("introduction", e.target.value)
+                  }
                   rows={3}
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium mb-2">Closing</label>
+                <label className="block text-sm font-medium mb-2">
+                  Closing
+                </label>
                 <Textarea
                   value={customization.closing}
-                  onChange={(e) => handleCustomizationChange('closing', e.target.value)}
+                  onChange={(e) =>
+                    handleCustomizationChange("closing", e.target.value)
+                  }
                   rows={3}
                 />
               </div>
@@ -641,17 +703,24 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                {Object.entries(customization.includeSections).map(([section, enabled]) => (
-                  <div key={section} className="flex items-center justify-between">
-                    <label className="text-sm font-medium capitalize">
-                      {section.replace(/([A-Z])/g, ' $1').trim()}
-                    </label>
-                    <Switch
-                      checked={enabled}
-                      onCheckedChange={(checked) => handleSectionToggle(section, checked)}
-                    />
-                  </div>
-                ))}
+                {Object.entries(customization.includeSections).map(
+                  ([section, enabled]) => (
+                    <div
+                      key={section}
+                      className="flex items-center justify-between"
+                    >
+                      <label className="text-sm font-medium capitalize">
+                        {section.replace(/([A-Z])/g, " $1").trim()}
+                      </label>
+                      <Switch
+                        checked={enabled}
+                        onCheckedChange={(checked) =>
+                          handleSectionToggle(section, checked)
+                        }
+                      />
+                    </div>
+                  ),
+                )}
               </div>
             </CardContent>
           </Card>
@@ -669,10 +738,15 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Format</label>
-                  <Select value={exportOptions.format} onValueChange={(value) => 
-                    setExportOptions(prev => ({ ...prev, format: value }))
-                  }>
+                  <label className="block text-sm font-medium mb-2">
+                    Format
+                  </label>
+                  <Select
+                    value={exportOptions.format}
+                    onValueChange={(value) =>
+                      setExportOptions((prev) => ({ ...prev, format: value }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -683,12 +757,17 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Delivery Method</label>
-                  <Select value={exportOptions.delivery} onValueChange={(value) => 
-                    setExportOptions(prev => ({ ...prev, delivery: value }))
-                  }>
+                  <label className="block text-sm font-medium mb-2">
+                    Delivery Method
+                  </label>
+                  <Select
+                    value={exportOptions.delivery}
+                    onValueChange={(value) =>
+                      setExportOptions((prev) => ({ ...prev, delivery: value }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -700,34 +779,47 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                   </Select>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Enable Tracking</label>
                   <Switch
                     checked={exportOptions.tracking}
-                    onCheckedChange={(checked) => 
-                      setExportOptions(prev => ({ ...prev, tracking: checked }))
+                    onCheckedChange={(checked) =>
+                      setExportOptions((prev) => ({
+                        ...prev,
+                        tracking: checked,
+                      }))
                     }
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Digital Signature</label>
+                  <label className="text-sm font-medium">
+                    Digital Signature
+                  </label>
                   <Switch
                     checked={exportOptions.signature}
-                    onCheckedChange={(checked) => 
-                      setExportOptions(prev => ({ ...prev, signature: checked }))
+                    onCheckedChange={(checked) =>
+                      setExportOptions((prev) => ({
+                        ...prev,
+                        signature: checked,
+                      }))
                     }
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Follow-up Automation</label>
+                  <label className="text-sm font-medium">
+                    Follow-up Automation
+                  </label>
                   <Switch
                     checked={exportOptions.followUp}
-                    onCheckedChange={(checked) => 
-                      setExportOptions(prev => ({ ...prev, followUp: checked }))
+                    onCheckedChange={(checked) =>
+                      setExportOptions((prev) => ({
+                        ...prev,
+                        followUp: checked,
+                      }))
                     }
                   />
                 </div>
@@ -744,11 +836,13 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
             >
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                {generating ? 'Generating...' : 'Generate Proposal'}
+                {generating ? "Generating..." : "Generate Proposal"}
               </div>
-              <span className="text-xs opacity-75">Create professional proposal</span>
+              <span className="text-xs opacity-75">
+                Create professional proposal
+              </span>
             </Button>
-            
+
             <Button
               onClick={exportToPDF}
               disabled={!proposalGenerated || generating}
@@ -759,9 +853,11 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                 <Download className="w-5 h-5" />
                 Export PDF
               </div>
-              <span className="text-xs opacity-75">Download proposal as PDF</span>
+              <span className="text-xs opacity-75">
+                Download proposal as PDF
+              </span>
             </Button>
-            
+
             <Button
               onClick={sendProposal}
               disabled={!proposalGenerated || generating}
@@ -774,7 +870,7 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
               </div>
               <span className="text-xs opacity-75">Email with tracking</span>
             </Button>
-            
+
             <Button
               variant="outline"
               className="h-16 text-left flex-col items-start"
@@ -783,7 +879,9 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                 <Share2 className="w-5 h-5" />
                 Share Link
               </div>
-              <span className="text-xs opacity-75">Generate shareable link</span>
+              <span className="text-xs opacity-75">
+                Generate shareable link
+              </span>
             </Button>
           </div>
         </TabsContent>
@@ -811,7 +909,7 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                   <p className="text-sm text-gray-600">Last Viewed</p>
                 </div>
               </div>
-              
+
               <Alert>
                 <Eye className="h-4 w-4" />
                 <AlertDescription>
@@ -836,7 +934,8 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
                   <div>
                     <p className="font-medium">Version 1.0</p>
                     <p className="text-sm text-gray-600">
-                      Initial proposal - {summaryData.proposal.generatedAt.toLocaleString()}
+                      Initial proposal -{" "}
+                      {summaryData.proposal.generatedAt.toLocaleString()}
                     </p>
                   </div>
                   <Badge>Current</Badge>
@@ -857,11 +956,13 @@ export function Summary({ data, onUpdate, onNext, onBack }: { data: any; onUpdat
             <Save className="w-4 h-4" />
             Save Draft
           </Button>
-          <Button onClick={() => {
-            onUpdate({ summary: summaryData });
-            // In a real app, this might navigate to a project dashboard
-            alert('Estimate completed and saved!');
-          }}>
+          <Button
+            onClick={() => {
+              onUpdate({ summary: summaryData });
+              // In a real app, this might navigate to a project dashboard
+              alert("Estimate completed and saved!");
+            }}
+          >
             Complete Estimate
           </Button>
         </div>

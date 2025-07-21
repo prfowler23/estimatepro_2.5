@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Button, Card } from '@/components/ui';
-import { Ruler, Check, X } from 'lucide-react';
+import React, { useState } from "react";
+import { Button, Card } from "@/components/ui";
+import { Ruler, Check, X } from "lucide-react";
 
 interface Point {
   x: number;
@@ -15,12 +15,12 @@ interface ScaleSetterProps {
   onDeactivate?: () => void;
 }
 
-export function ScaleSetter({ 
-  onScaleSet, 
+export function ScaleSetter({
+  onScaleSet,
   currentScale,
   isActive = false,
   onActivate,
-  onDeactivate
+  onDeactivate,
 }: ScaleSetterProps) {
   const [isSettingScale, setIsSettingScale] = useState(false);
   const [referenceLength, setReferenceLength] = useState(10);
@@ -51,10 +51,10 @@ export function ScaleSetter({
       setScalePoints([point]);
     } else if (scalePoints.length === 1) {
       const distance = Math.sqrt(
-        Math.pow(point.x - scalePoints[0].x, 2) + 
-        Math.pow(point.y - scalePoints[0].y, 2)
+        Math.pow(point.x - scalePoints[0].x, 2) +
+          Math.pow(point.y - scalePoints[0].y, 2),
       );
-      
+
       setPixelLength(distance);
       setScalePoints([...scalePoints, point]);
       setMeasurementComplete(true);
@@ -103,7 +103,8 @@ export function ScaleSetter({
       {!isSettingScale ? (
         <div className="space-y-3">
           <p className="text-sm text-gray-600">
-            Set a reference measurement to calibrate the map scale for accurate area calculations.
+            Set a reference measurement to calibrate the map scale for accurate
+            area calculations.
           </p>
           <Button onClick={startScaleSetting} className="w-full">
             <Ruler className="w-4 h-4 mr-2" />
@@ -160,7 +161,8 @@ export function ScaleSetter({
                 <strong>Reference distance:</strong> {referenceLength} feet
               </p>
               <p className="text-sm text-gray-700">
-                <strong>Calculated scale:</strong> {(pixelLength / referenceLength).toFixed(2)} pixels/foot
+                <strong>Calculated scale:</strong>{" "}
+                {(pixelLength / referenceLength).toFixed(2)} pixels/foot
               </p>
             </div>
           )}
@@ -169,7 +171,7 @@ export function ScaleSetter({
           <div className="flex space-x-2">
             {measurementComplete ? (
               <>
-                <Button 
+                <Button
                   onClick={confirmScale}
                   className="flex-1"
                   disabled={referenceLength <= 0}
@@ -177,16 +179,13 @@ export function ScaleSetter({
                   <Check className="w-4 h-4 mr-2" />
                   Confirm Scale
                 </Button>
-                <Button 
-                  variant="outline"
-                  onClick={resetMeasurement}
-                >
+                <Button variant="outline" onClick={resetMeasurement}>
                   <X className="w-4 h-4" />
                 </Button>
               </>
             ) : (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={cancelScaleSetting}
                 className="w-full"
               >

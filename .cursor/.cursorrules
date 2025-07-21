@@ -1,24 +1,27 @@
-# EstimatePro - Building Services Estimation Platform
+# EstimatePro - AI-Powered Building Services Estimation Platform
 # Comprehensive Cursor AI Rules and Guidelines
 
 ## PROJECT OVERVIEW
-EstimatePro is a professional building services estimation platform with:
-- 10 service calculators (Glass Restoration, Window Cleaning, Pressure Washing, etc.)
-- AI-powered facade analysis and assistant
-- 3D building visualization
-- Weather intelligence and drone integration
-- Quote management and analytics
-- Multi-tenant enterprise features
+EstimatePro is a comprehensive Next.js 14 application designed for building services contractors with:
+- 11 specialized service calculators (Window Cleaning, Pressure Washing, Soft Washing, Biofilm Removal, Glass Restoration, Frame Restoration, High Dusting, Final Clean, Granite Reconditioning, Pressure Wash & Seal, Parking Deck)
+- 9 specialized AI endpoints for comprehensive analysis (photo analysis, document extraction, contact extraction, competitive intelligence, risk assessment, auto-quote generation, follow-up automation)
+- Guided estimation workflow with AI assistance and validation
+- Canvas drawing tools for interactive area measurement and takeoff
+- Weather integration for project scheduling and risk factors
+- Analytics dashboard with performance metrics and business insights
+- Enterprise-grade features with transaction support and error handling
 
 ## TECHNOLOGY STACK
 - Frontend: Next.js 14 (App Router), TypeScript, Tailwind CSS
-- Backend: Next.js API Routes, Supabase (PostgreSQL)
-- AI: OpenAI GPT-4, Claude API integration
-- 3D: Three.js, React Three Fiber
-- State: Zustand, React Query
+- Backend: Next.js API Routes, Supabase (PostgreSQL with RLS)
+- AI: OpenAI GPT-4 Vision, comprehensive AI ecosystem
+- State: Zustand stores, React Query (@tanstack/react-query), React Context
 - Forms: React Hook Form + Zod validation
-- UI: shadcn/ui components, Lucide icons
-- Testing: Jest, Playwright, React Testing Library
+- UI: shadcn/ui components (Radix UI), Lucide icons, Framer Motion
+- Database: Supabase with Row Level Security, transaction support
+- File Processing: jsPDF, React PDF, XLSX, html2canvas
+- Email: Resend API
+- Testing: Jest, React Testing Library
 - Deployment: Vercel, Supabase hosting
 
 ## CODE STYLE & CONVENTIONS
@@ -94,34 +97,69 @@ export function ComponentName({
 
 ### File Organization
 ```
-app/
-├── (dashboard)/           # Route groups
-│   ├── dashboard/
-│   └── quotes/
-├── api/                   # API routes
-├── globals.css
-└── layout.tsx
+app/                          # Next.js App Router pages
+├── api/                      # API routes
+│   ├── ai/                   # 9 specialized AI endpoints
+│   │   ├── auto-quote/       # Automated quote generation
+│   │   ├── competitive-intelligence/ # Market analysis
+│   │   ├── enhanced-photo-analysis/ # Advanced photo processing
+│   │   ├── extract-contact-info/ # Contact extraction
+│   │   ├── extract-documents/ # Document processing
+│   │   ├── follow-up-automation/ # Automated follow-ups
+│   │   └── risk-assessment/  # Automated risk analysis
+│   ├── analytics/            # Analytics API
+│   ├── customers/            # Customer management
+│   ├── estimation-flows/     # Guided flow API
+│   └── quotes/               # Quote operations
+├── auth/                     # Authentication pages
+├── calculator/               # Service calculator page
+├── dashboard/                # Main dashboard
+├── estimates/                # Estimate management (NEW)
+│   ├── [id]/                 # Individual estimate pages
+│   └── new/guided/           # Guided estimation flow
+└── settings/                 # Application settings
 
-components/
-├── ui/                    # shadcn/ui components
-├── calculator/            # Calculator components
-├── quotes/               # Quote management
-├── analytics/            # Analytics components
-└── navigation/           # Navigation components
+components/                   # React components
+├── ai/                       # AI-related components
+├── calculator/               # Service calculators with lazy loading
+├── canvas/                   # Drawing and measurement tools
+├── duration/                 # Timeline and scheduling
+├── error-handling/           # Error boundaries and handling
+├── estimation/               # Guided estimation flow
+├── expenses/                 # Cost breakdown components
+├── pricing/                  # Pricing strategy tools
+├── takeoff/                  # Measurement and takeoff
+└── ui/                       # Reusable UI components with lazy loading
 
-lib/
-├── calculations/         # Calculation engines
-├── supabase/            # Database clients
-├── utils/               # Utility functions
-├── config/              # Configuration
-├── ai/                  # AI integrations
-└── validations/         # Zod schemas
+lib/                          # Core utilities and services
+├── ai/                       # AI service integrations (ENHANCED)
+│   ├── ai-cache.ts           # AI response caching
+│   ├── ai-config.ts          # AI configuration management
+│   ├── ai-security.ts        # AI security and validation
+│   └── optimized-prompts.ts  # Performance-optimized prompts
+├── calculations/             # Service calculation engines
+├── config/                   # Application configuration
+├── schemas/                  # API validation schemas
+├── services/                 # Business logic layer
+│   ├── ai-service.ts         # AI business logic
+│   ├── calculator-service.ts # Calculator business logic
+│   ├── estimate-service.ts   # Estimate business logic
+│   └── workflow-service.ts   # Workflow management
+├── stores/                   # Zustand state management
+├── supabase/                 # Database client/server
+├── types/                    # TypeScript type definitions
+├── utils/                    # Utility functions (ENHANCED)
+│   ├── cache.ts              # Caching utilities
+│   ├── database-optimization.ts # DB performance
+│   ├── null-safety.ts        # Type-safe null handling
+│   └── retry-logic.ts        # Retry mechanisms
+└── validation/               # Validation utilities
 
-types/
-├── calculations.ts       # Calculation types
-├── database.ts          # Database types
-├── supabase.ts          # Supabase types
-└── index.ts             # Shared types
+types/                        # Global type definitions
+├── calculations.ts           # Calculation types
+├── database.ts              # Database types
+├── supabase.ts              # Supabase types
+└── index.ts                 # Shared types
 ```
 
 ## CALCULATION ENGINE GUIDELINES
@@ -258,52 +296,94 @@ export function QuoteForm() {
 
 ## AI INTEGRATION GUIDELINES
 
-### OpenAI Integration
-- Use streaming responses for better UX
-- Implement proper error handling and fallbacks
-- Use structured prompts for consistent results
-- Implement rate limiting and cost controls
+### Comprehensive AI Ecosystem
+The platform features 9 specialized AI endpoints for intelligent automation:
 
-### AI Assistant Pattern
+1. **Enhanced Photo Analysis** (`/api/ai/enhanced-photo-analysis`): Advanced building analysis with GPT-4 Vision
+2. **Facade Analyzer** (`/api/ai/analyze-facade`): Specialized facade condition assessment
+3. **Document Extraction** (`/api/ai/extract-documents`): Extracts scope details from RFPs, emails, and documents
+4. **Contact Information Extraction** (`/api/ai/extract-contact-info`): Automated contact data parsing
+5. **Auto Quote Generation** (`/api/ai/auto-quote`): Fully automated estimate creation from minimal input
+6. **Competitive Intelligence** (`/api/ai/competitive-intelligence`): Market analysis and competitive positioning
+7. **Risk Assessment** (`/api/ai/risk-assessment`): Automated project risk evaluation
+8. **Follow-up Automation** (`/api/ai/follow-up-automation`): Intelligent client communication management
+9. **AI Assistant** (`/api/ai/assistant`): General-purpose AI assistance
+
+### AI Configuration & Performance
+- **AI Configuration Management**: Centralized AI settings with `ai-config.ts`
+- **Response Caching**: Intelligent caching system via `ai-cache.ts` to reduce API costs
+- **Rate Limiting**: Built-in rate limiting and quota management
+- **Error Handling**: Comprehensive error recovery with `ai-error-handler.ts`
+- **Security**: Input validation and sanitization through `ai-security.ts`
+- **Optimized Prompts**: Performance-tuned prompts for faster, more accurate responses
+
+### AI Service Pattern
 ```typescript
-import { OpenAI } from 'openai'
+import { openai } from '@/lib/ai/openai'
+import { aiCache } from '@/lib/ai/ai-cache'
+import { validateAIInput, sanitizeAIResponse } from '@/lib/ai/ai-security'
 import { z } from 'zod'
 
 const analysisSchema = z.object({
   buildingType: z.string(),
   windowCount: z.number(),
   facadeComplexity: z.enum(['simple', 'standard', 'complex', 'ornate']),
-  recommendedServices: z.array(z.string())
+  recommendedServices: z.array(z.string()),
+  riskFactors: z.array(z.string()),
+  estimatedTimeline: z.string()
 })
 
-export async function analyzeBuilding(imageUrl: string) {
-  const openai = new OpenAI()
+export async function analyzeBuilding(imageUrl: string, additionalContext?: string) {
+  // Validate and sanitize input
+  const validatedInput = validateAIInput({ imageUrl, additionalContext })
   
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4-vision-preview',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a building analysis expert...'
-      },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: 'Analyze this building facade' },
-          { type: 'image_url', image_url: { url: imageUrl } }
-        ]
-      }
-    ],
-    functions: [
-      {
-        name: 'analyze_building',
-        description: 'Analyze building facade and provide structured data',
-        parameters: analysisSchema
-      }
-    ]
-  })
+  // Check cache first
+  const cacheKey = `building-analysis-${validatedInput.imageUrl}`
+  const cachedResult = await aiCache.get(cacheKey)
+  if (cachedResult) return cachedResult
   
-  return analysisSchema.parse(response.choices[0].function_call?.arguments)
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4-vision-preview',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a building analysis expert specializing in facade assessment...'
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: `Analyze this building facade. ${additionalContext || ''}` },
+            { type: 'image_url', image_url: { url: validatedInput.imageUrl } }
+          ]
+        }
+      ],
+      tools: [
+        {
+          type: 'function',
+          function: {
+            name: 'analyze_building',
+            description: 'Analyze building facade and provide structured assessment',
+            parameters: analysisSchema
+          }
+        }
+      ]
+    })
+    
+    const result = analysisSchema.parse(
+      JSON.parse(response.choices[0].message.tool_calls?.[0].function.arguments || '{}')
+    )
+    
+    // Sanitize response and cache
+    const sanitizedResult = sanitizeAIResponse(result)
+    await aiCache.set(cacheKey, sanitizedResult, { ttl: 3600 })
+    
+    return sanitizedResult
+  } catch (error) {
+    // Comprehensive error handling with fallback
+    console.error('AI Analysis Error:', error)
+    throw new Error('Failed to analyze building. Please try again.')
+  }
 }
 ```
 
@@ -417,54 +497,233 @@ export function App() {
 
 ## SPECIFIC RULES FOR CURSOR AI
 
-1. **Always use TypeScript**: Never write JavaScript files
-2. **Import organization**: Group imports (React, third-party, local)
-3. **Component exports**: Use named exports, not default exports
-4. **Error handling**: Always implement proper error boundaries
-5. **Performance**: Consider React.memo and useCallback for expensive operations
-6. **Accessibility**: Always include proper ARIA labels and semantic HTML
-7. **Testing**: Write tests for all calculation logic
-8. **Security**: Never expose sensitive data in client-side code
-9. **Validation**: Use Zod for all form and API validation
-10. **State management**: Use the right tool for the job (local state vs Zustand vs React Query)
+### CRITICAL ENFORCEMENT RULES
+
+1. **NEVER CREATE NEW FILES** unless explicitly required and justified
+   - Always prefer editing existing files over creating new ones
+   - If creating a new file is absolutely necessary, explain why in comments
+   - Check if similar functionality already exists in the codebase first
+
+2. **STRICT TYPESCRIPT ONLY**: Never write JavaScript files (.js/.jsx)
+   - All files must be .ts/.tsx
+   - Use strict type checking, never use `any`
+   - Define explicit interfaces for all props and data structures
+
+3. **MANDATORY IMPORT ORGANIZATION**:
+   ```typescript
+   // 1. React imports first
+   import { useState, useEffect } from 'react'
+   import type { ComponentProps } from 'react'
+   
+   // 2. Third-party imports (alphabetical)
+   import { z } from 'zod'
+   import { useForm } from 'react-hook-form'
+   
+   // 3. Internal imports (alphabetical, grouped by type)
+   import { Button } from '@/components/ui/button'
+   import { useCalculator } from '@/hooks/use-calculator'
+   import { calculatorService } from '@/lib/services/calculator-service'
+   import type { CalculationResult } from '@/types/calculations'
+   ```
+
+4. **COMPONENT ARCHITECTURE ENFORCEMENT**:
+   - UI components in `/components` NEVER contain business logic
+   - Business logic MUST be in `/lib/services` layer
+   - Database operations MUST go through service layer
+   - Use named exports only, never default exports
+
+5. **API ROUTE STANDARDIZATION** - ALL API routes must follow this pattern:
+   ```typescript
+   import { NextRequest, NextResponse } from 'next/server'
+   import { z } from 'zod'
+   import { serviceLayer } from '@/lib/services/...'
+   import { handleApiError } from '@/lib/utils/error-handling'
+   
+   const requestSchema = z.object({...})
+   
+   export async function POST(request: NextRequest) {
+     try {
+       const body = await request.json()
+       const validatedData = requestSchema.parse(body)
+       
+       const result = await serviceLayer.operation(validatedData)
+       
+       return NextResponse.json({ success: true, data: result })
+     } catch (error) {
+       return handleApiError(error)
+     }
+   }
+   ```
+
+6. **DATABASE OPERATION RULES**:
+   - NEVER write raw Supabase queries in components
+   - ALL database operations MUST use service layer with transactions
+   - ALWAYS validate RLS policies are applied
+   - Use `database-transactions.ts` for complex operations
+
+7. **AI INTEGRATION ENFORCEMENT**:
+   - NEVER call OpenAI directly from components
+   - ALWAYS use AI services in `/lib/ai/` with caching
+   - MUST validate inputs with `ai-security.ts`
+   - REQUIRED: Check AI cache before making API calls
+
+8. **CALCULATION RULES ENFORCEMENT**:
+   - ALL calculations MUST extend BaseCalculator
+   - MUST validate inputs with Zod schemas
+   - REQUIRED: Apply minimum charges and proper rounding
+   - Use constants from `/lib/calculations/constants.ts`
+
+9. **STATE MANAGEMENT HIERARCHY** (use in this order):
+   - Local component state for UI-only state
+   - Custom hooks for reusable component logic
+   - Zustand stores for global application state
+   - React Query for server state and caching
+   - Service layer for business logic state
+
+10. **SECURITY ENFORCEMENT**:
+    - NEVER expose API keys in client code
+    - ALWAYS validate user inputs with Zod
+    - MUST use RLS for all database operations
+    - Required: Sanitize all AI inputs/outputs
+
+11. **PERFORMANCE REQUIREMENTS**:
+    - MUST use lazy loading for calculator forms
+    - REQUIRED: Implement React.memo for expensive components
+    - MUST use AI caching to reduce costs
+    - Required: Use database optimization utilities
+
+12. **ERROR HANDLING REQUIREMENTS**:
+    - EVERY component MUST have error boundaries
+    - ALL API routes MUST have comprehensive error handling
+    - REQUIRED: Use service layer error handling patterns
+    - MUST provide user-friendly error messages
+
+13. **TESTING REQUIREMENTS**:
+    - ALL calculation logic MUST have unit tests
+    - ALL AI integrations MUST have integration tests
+    - NEW features MUST include test coverage
+    - Use existing test patterns in `__tests__/`
+
+14. **CODE REVIEW ENFORCEMENT**:
+    - MUST run `npm run typecheck` before any changes
+    - REQUIRED: Pass `npm run lint` with zero warnings
+    - MUST format with `npm run fmt`
+    - Required: Follow existing code patterns exactly
 
 ## CALCULATION-SPECIFIC RULES
 
-1. **Rate sources**: Always reference where rates come from
-2. **Validation**: Validate all inputs before calculations
-3. **Minimums**: Always check and apply minimum charges
+The platform includes 11 specialized calculators for different building services:
+1. Window Cleaning, 2. Pressure Washing, 3. Soft Washing, 4. Biofilm Removal, 5. Glass Restoration, 6. Frame Restoration, 7. High Dusting, 8. Final Clean, 9. Granite Reconditioning, 10. Pressure Wash & Seal, 11. Parking Deck
+
+### Calculator Implementation Rules:
+1. **Rate sources**: Always reference where rates come from in constants
+2. **Validation**: Validate all inputs before calculations using Zod schemas
+3. **Minimums**: Always check and apply minimum charges per service
 4. **Rounding**: Round monetary values to 2 decimal places
 5. **Edge cases**: Handle zero values, negative inputs, and extreme values
-6. **Documentation**: Document all calculation formulas
-7. **Testing**: Test calculations with known good values
+6. **Documentation**: Document all calculation formulas in calculator classes
+7. **Testing**: Test calculations with known good values in __tests__/
 8. **Consistency**: Use consistent units throughout (hours, sq ft, etc.)
-9. **Multipliers**: Apply multipliers in documented order
+9. **Multipliers**: Apply multipliers in documented order (material, labor, equipment, markup)
 10. **Error reporting**: Provide clear error messages for invalid inputs
+11. **Service Layer**: Use calculator-service.ts for business logic
+12. **Real-time Updates**: Implement live calculation updates as users input data
 
 ## COMMON PATTERNS TO AVOID
 
-- Don't use `any` type
-- Don't mutate props directly
+- Don't use `any` type - use proper TypeScript types
+- Don't mutate props directly - use immutable patterns
 - Don't use inline styles (use Tailwind classes)
-- Don't hardcode values (use constants)
-- Don't skip error handling
-- Don't use useEffect for calculations
-- Don't put business logic in components
-- Don't forget to handle loading states
-- Don't skip input validation
-- Don't use console.log in production code
+- Don't hardcode values (use constants from lib/constants/)
+- Don't skip error handling - use service layer error handling
+- Don't use useEffect for calculations - use real-time calculation patterns
+- Don't put business logic in components - use service layer
+- Don't forget to handle loading states - use lazy loading patterns
+- Don't skip input validation - use Zod schemas
+- Don't use console.log in production code - use proper logging
+- Don't bypass AI security validation - always use ai-security.ts
+- Don't ignore caching opportunities - use AI and database caching
+- Don't create components without lazy loading when appropriate
 
 ## PREFERRED PATTERNS
 
-- Use custom hooks for reusable logic
+- Use custom hooks for reusable logic (see hooks/ directory)
 - Use composition over inheritance
-- Use proper TypeScript generics
-- Use meaningful variable names
+- Use proper TypeScript generics and strict typing
+- Use meaningful variable names following naming conventions
 - Use early returns to reduce nesting
-- Use proper error boundaries
-- Use React Query for server state
-- Use Zod for validation
-- Use constants for magic numbers
-- Use proper loading and error states
+- Use comprehensive error boundaries with service layer integration
+- Use React Query for server state with proper invalidation
+- Use Zod for validation with detailed schemas
+- Use constants for magic numbers (lib/calculations/constants.ts)
+- Use proper loading and error states with lazy loading
+- Use the service layer for all business logic operations
+- Use AI caching for expensive AI operations
+- Use database optimization utilities for performance
+- Use transaction support for complex database operations
+- Use lazy loading for components and forms to improve performance
+
+## DEVELOPMENT WORKFLOW
+
+### Key Commands
+- `npm run dev` - Start development server with hot reload
+- `npm run typecheck` - TypeScript type checking (run before commits)
+- `npm run lint` - ESLint with zero warnings policy
+- `npm run fmt` - Prettier formatting
+- `npm run build` - Production build
+- `node scripts/production-check.js` - Verify production readiness
+
+### Database Management
+- `node scripts/setup-basic-schema.js` - Initialize database schema
+- `node scripts/run-migration.js` - Run database migrations
+- `node scripts/run-transaction-migration.js` - Add transaction support
+- `node scripts/test-analytics.js` - Test analytics functionality
+
+## ABSOLUTE PROHIBITIONS (NEVER DO THESE)
+
+❌ **NEVER create new files without explicit justification**
+❌ **NEVER use `any` type - use proper TypeScript types**
+❌ **NEVER put business logic in React components**
+❌ **NEVER call database directly from components**
+❌ **NEVER call AI APIs directly from components**
+❌ **NEVER skip input validation**
+❌ **NEVER ignore error handling**
+❌ **NEVER hardcode values - use constants**
+❌ **NEVER use default exports**
+❌ **NEVER skip lazy loading for calculator forms**
+❌ **NEVER bypass the service layer**
+❌ **NEVER create duplicate functionality**
+
+## MANDATORY PATTERNS (ALWAYS DO THESE)
+
+✅ **ALWAYS check for existing similar functionality first**
+✅ **ALWAYS use the service layer for business logic**
+✅ **ALWAYS validate inputs with Zod schemas**
+✅ **ALWAYS use proper TypeScript types**
+✅ **ALWAYS implement error boundaries**
+✅ **ALWAYS use AI caching for expensive operations**
+✅ **ALWAYS follow the import organization rules**
+✅ **ALWAYS use named exports**
+✅ **ALWAYS run typecheck and lint before changes**
+✅ **ALWAYS use transaction support for database operations**
+✅ **ALWAYS use lazy loading for performance**
+✅ **ALWAYS follow the existing code patterns exactly**
+
+## DECISION TREE FOR CURSOR AI
+
+**When adding new functionality:**
+1. First: Search for existing similar functionality
+2. If exists: Extend/modify existing code
+3. If not exists: Create minimal new code following all patterns above
+4. Always: Use service layer for business logic
+5. Always: Add proper error handling and validation
+6. Always: Follow the established architecture patterns
+
+**When modifying existing code:**
+1. Understand the existing pattern first
+2. Follow the same patterns exactly
+3. Don't introduce new patterns without justification
+4. Maintain consistency with surrounding code
+5. Keep changes minimal and focused
 
 This file should be updated as the project evolves and new patterns emerge.

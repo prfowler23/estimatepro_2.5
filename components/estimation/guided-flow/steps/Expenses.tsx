@@ -1,22 +1,55 @@
-import { useState, useEffect } from 'react';
-import { DollarSign, Truck, Package, Users, Calculator, FileSpreadsheet, TrendingUp, Plus, Edit, Trash2, Upload, Download, AlertTriangle, CheckCircle, Info, Settings, Eye, Layers } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from "react";
+import { error as logError } from "@/lib/utils/logger";
+import {
+  DollarSign,
+  Truck,
+  Package,
+  Users,
+  Calculator,
+  FileSpreadsheet,
+  TrendingUp,
+  Plus,
+  Edit,
+  Trash2,
+  Upload,
+  Download,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Settings,
+  Eye,
+  Layers,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 // Import new expense management components
-import { EquipmentSelector } from '@/lib/expenses/equipment-database';
-import { MaterialCalculator } from '@/lib/expenses/materials-database';
-import { LaborCalculator } from '@/lib/expenses/labor-calculator';
-import { VendorSelector } from '@/components/expenses/VendorSelector';
-import { CostBreakdown } from '@/components/expenses/CostBreakdown';
-import { HistoricalComparison } from '@/components/expenses/HistoricalComparison';
-import { MarginAdjustment } from '@/components/expenses/MarginAdjustment';
+import { EquipmentSelector } from "@/lib/expenses/equipment-database";
+import { MaterialCalculator } from "@/lib/expenses/materials-database";
+import { LaborCalculator } from "@/lib/expenses/labor-calculator";
+import { VendorSelector } from "@/components/expenses/VendorSelector";
+import { CostBreakdown } from "@/components/expenses/CostBreakdown";
+import { HistoricalComparison } from "@/components/expenses/HistoricalComparison";
+import { MarginAdjustment } from "@/components/expenses/MarginAdjustment";
+import { ExpensesStepData, GuidedFlowData } from "@/lib/types/estimate-types";
 
 interface Equipment {
   id: string;
@@ -74,36 +107,45 @@ interface Margins {
   other: number;
 }
 
-interface ExpensesData {
-  equipment: Equipment[];
-  materials: Material[];
-  labor: Labor[];
-  otherCosts: OtherCost[];
-  totalCosts: TotalCosts;
-  margins: Margins;
-}
-
 interface ExpensesProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: GuidedFlowData;
+  onUpdate: (stepData: Partial<GuidedFlowData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
 export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
-  const [expensesData, setExpensesData] = useState<ExpensesData>({
-    equipment: [],
-    materials: [],
-    labor: [],
-    otherCosts: [],
-    totalCosts: { equipment: 0, materials: 0, labor: 0, other: 0, grand: 0 },
-    margins: { equipment: 15, materials: 20, labor: 35, other: 15 }
+  const [expensesData, setExpensesData] = useState<ExpensesStepData>({
+    equipment: data?.expenses?.equipment || [],
+    materials: data?.expenses?.materials || [],
+    labor: data?.expenses?.labor || [],
+    otherCosts: data?.expenses?.otherCosts || [],
+    totalCosts: data?.expenses?.totalCosts || {
+      equipment: 0,
+      materials: 0,
+      labor: 0,
+      other: 0,
+      grand: 0,
+    },
+    margins: data?.expenses?.margins || {
+      equipment: 15,
+      materials: 20,
+      labor: 35,
+      other: 15,
+    },
   });
-  
+
+  // Sync local state with parent data
+  useEffect(() => {
+    if (data?.expenses) {
+      setExpensesData(data.expenses);
+    }
+  }, [data?.expenses]);
+
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [showVendorSelector, setShowVendorSelector] = useState<{
-    type: 'equipment' | 'material';
+    type: "equipment" | "material";
     item: any;
     index: number;
   } | null>(null);
@@ -113,9 +155,14 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
   const selectedServices = data.scopeDetails?.selectedServices || [];
   const measurements = data.takeoff?.measurements || [];
   const serviceDurations = data.duration?.serviceDurations || [];
-  const buildingHeight = Math.ceil((data.filesPhotos?.summary?.measurements?.buildingHeight || 40) / 10);
-  const buildingType = data.initialContact?.extractedData?.requirements?.buildingType || 'office';
-  const location = data.initialContact?.extractedData?.requirements?.location || '';
+  const buildingHeight = Math.ceil(
+    (data.filesPhotos?.summary?.measurements?.buildingHeight || 40) / 10,
+  );
+  const buildingType =
+    data.initialContact?.aiExtractedData?.requirements?.buildingType ||
+    "office";
+  const location =
+    data.initialContact?.aiExtractedData?.requirements?.location || "";
 
   useEffect(() => {
     calculateInitialCosts();
@@ -123,30 +170,36 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
 
   const calculateInitialCosts = async () => {
     setLoading(true);
-    
+
     try {
       // Calculate equipment needs
       const equipmentSelector = new EquipmentSelector();
-      const totalDuration = serviceDurations.reduce((sum: number, sd: any) => sum + sd.finalDuration, 0);
+      const totalDuration = serviceDurations.reduce(
+        (sum: number, sd: any) => sum + sd.finalDuration,
+        0,
+      );
       const requiredEquipment = equipmentSelector.selectRequiredEquipment(
         selectedServices,
         totalDuration,
-        buildingHeight
+        buildingHeight,
       );
 
       // Calculate material needs
       const materialCalculator = new MaterialCalculator();
       const requiredMaterials = materialCalculator.calculateRequiredMaterials(
         selectedServices,
-        measurements
+        measurements as any, // Type conversion for legacy compatibility
       );
 
       // Calculate labor costs
       const laborCalculator = new LaborCalculator();
-      const laborCosts = laborCalculator.calculateLaborCosts(serviceDurations, buildingHeight);
+      const laborCosts = laborCalculator.calculateLaborCosts(
+        serviceDurations,
+        buildingHeight,
+      );
 
       // Convert to expected format
-      const equipment = requiredEquipment.map(req => ({
+      const equipment = requiredEquipment.map((req) => ({
         id: req.equipment.id,
         name: req.equipment.name,
         category: req.equipment.category,
@@ -154,11 +207,11 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
         quantity: req.quantity,
         days: req.days,
         total: req.totalCost,
-        vendor: req.vendor || 'TBD',
-        required: true
+        vendor: req.vendor || "TBD",
+        required: true,
       }));
 
-      const materials = requiredMaterials.map(req => ({
+      const materials = requiredMaterials.map((req) => ({
         id: req.material.id,
         name: req.material.name,
         unit: req.material.unit,
@@ -166,18 +219,18 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
         quantity: req.adjustedQuantity,
         total: req.totalCost,
         service: req.service,
-        vendor: req.vendor || 'TBD',
-        coverage: req.material.coverage
+        vendor: req.vendor || "TBD",
+        coverage: req.material.coverage,
       }));
 
-      const labor = laborCosts.map(cost => ({
+      const labor = laborCosts.map((cost) => ({
         id: `${cost.service}-${cost.roleId}`,
         role: cost.role,
         hourlyRate: cost.hourlyRate,
         hours: cost.totalHours,
         total: cost.totalCost,
         service: cost.service,
-        benefits: cost.benefitsRate
+        benefits: cost.benefitsRate,
       }));
 
       const totalCosts = calculateTotalCosts(equipment, materials, labor, []);
@@ -188,21 +241,24 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
         labor,
         otherCosts: [],
         totalCosts,
-        margins: { equipment: 15, materials: 20, labor: 35, other: 15 }
+        margins: { equipment: 15, materials: 20, labor: 35, other: 15 },
       });
-
     } catch (error) {
-      console.error('Error calculating costs:', error);
+      logError("Cost calculation failed", {
+        error,
+        component: "Expenses",
+        action: "cost_calculation",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const calculateTotalCosts = (
-    equipment: Equipment[], 
-    materials: Material[], 
-    labor: Labor[], 
-    other: OtherCost[]
+    equipment: Equipment[],
+    materials: Material[],
+    labor: Labor[],
+    other: OtherCost[],
   ): TotalCosts => {
     const equipmentTotal = equipment.reduce((sum, item) => sum + item.total, 0);
     const materialsTotal = materials.reduce((sum, item) => sum + item.total, 0);
@@ -214,25 +270,25 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
       materials: materialsTotal,
       labor: laborTotal,
       other: otherTotal,
-      grand: equipmentTotal + materialsTotal + laborTotal + otherTotal
+      grand: equipmentTotal + materialsTotal + laborTotal + otherTotal,
     };
   };
 
   const getMarkedUpTotals = () => {
     const { equipment, materials, labor, other } = expensesData.totalCosts;
     const { margins } = expensesData;
-    
+
     const equipmentMarked = equipment * (1 + margins.equipment / 100);
     const materialsMarked = materials * (1 + margins.materials / 100);
     const laborMarked = labor * (1 + margins.labor / 100);
     const otherMarked = other * (1 + margins.other / 100);
-    
+
     return {
       equipment: equipmentMarked,
       materials: materialsMarked,
       labor: laborMarked,
       other: otherMarked,
-      grand: equipmentMarked + materialsMarked + laborMarked + otherMarked
+      grand: equipmentMarked + materialsMarked + laborMarked + otherMarked,
     };
   };
 
@@ -244,54 +300,60 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
     const { type, index } = showVendorSelector;
     const updated = { ...expensesData };
 
-    if (type === 'equipment') {
+    if (type === "equipment") {
       updated.equipment[index] = {
         ...updated.equipment[index],
         vendor: vendor.name,
         dailyRate: pricing.dailyRate || updated.equipment[index].dailyRate,
-        total: (pricing.dailyRate || updated.equipment[index].dailyRate) * 
-               updated.equipment[index].quantity * 
-               updated.equipment[index].days
+        total:
+          (pricing.dailyRate || updated.equipment[index].dailyRate) *
+          updated.equipment[index].quantity *
+          updated.equipment[index].days,
       };
     } else {
       updated.materials[index] = {
         ...updated.materials[index],
         vendor: vendor.name,
         unitCost: pricing.unitCost || updated.materials[index].unitCost,
-        total: (pricing.unitCost || updated.materials[index].unitCost) * 
-               updated.materials[index].quantity
+        total:
+          (pricing.unitCost || updated.materials[index].unitCost) *
+          updated.materials[index].quantity,
       };
     }
 
     updated.totalCosts = calculateTotalCosts(
-      updated.equipment, 
-      updated.materials, 
-      updated.labor, 
-      updated.otherCosts
+      updated.equipment,
+      updated.materials,
+      updated.labor,
+      updated.otherCosts,
     );
 
     setExpensesData(updated);
     setShowVendorSelector(null);
   };
 
-  const handleAddOtherCost = (description: string, amount: number, category: string) => {
+  const handleAddOtherCost = (
+    description: string,
+    amount: number,
+    category: string,
+  ) => {
     const newCost: OtherCost = {
       id: Date.now().toString(),
       description,
       amount,
-      category
+      category,
     };
 
     const updated = {
       ...expensesData,
-      otherCosts: [...expensesData.otherCosts, newCost]
+      otherCosts: [...expensesData.otherCosts, newCost],
     };
 
     updated.totalCosts = calculateTotalCosts(
       updated.equipment,
       updated.materials,
       updated.labor,
-      updated.otherCosts
+      updated.otherCosts,
     );
 
     setExpensesData(updated);
@@ -301,16 +363,16 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
   const handleMarginUpdate = (newMargins: Margins) => {
     setExpensesData({
       ...expensesData,
-      margins: newMargins
+      margins: newMargins,
     });
   };
 
   const handleNext = () => {
-    onUpdate({ 
+    onUpdate({
       expenses: {
         ...expensesData,
-        markedUpTotals
-      }
+        markedUpTotals,
+      },
     });
     onNext();
   };
@@ -331,7 +393,8 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
       <div>
         <h2 className="text-2xl font-bold">Project Expenses</h2>
         <p className="text-muted-foreground">
-          Comprehensive cost breakdown with equipment, materials, labor, and overhead
+          Comprehensive cost breakdown with equipment, materials, labor, and
+          overhead
         </p>
       </div>
 
@@ -345,7 +408,8 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
             </p>
             <p className="text-sm text-muted-foreground">Equipment</p>
             <p className="text-xs text-blue-600">
-              +{expensesData.margins.equipment}% = ${markedUpTotals.equipment.toLocaleString()}
+              +{expensesData.margins.equipment}% = $
+              {markedUpTotals.equipment.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -358,7 +422,8 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
             </p>
             <p className="text-sm text-muted-foreground">Materials</p>
             <p className="text-xs text-green-600">
-              +{expensesData.margins.materials}% = ${markedUpTotals.materials.toLocaleString()}
+              +{expensesData.margins.materials}% = $
+              {markedUpTotals.materials.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -371,7 +436,8 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
             </p>
             <p className="text-sm text-muted-foreground">Labor</p>
             <p className="text-xs text-purple-600">
-              +{expensesData.margins.labor}% = ${markedUpTotals.labor.toLocaleString()}
+              +{expensesData.margins.labor}% = $
+              {markedUpTotals.labor.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -384,7 +450,8 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
             </p>
             <p className="text-sm text-muted-foreground">Other</p>
             <p className="text-xs text-orange-600">
-              +{expensesData.margins.other}% = ${markedUpTotals.other.toLocaleString()}
+              +{expensesData.margins.other}% = $
+              {markedUpTotals.other.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -416,38 +483,38 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Cost Breakdown */}
             <CostBreakdown
-              equipment={expensesData.equipment.map(eq => ({
+              equipment={expensesData.equipment.map((eq) => ({
                 id: eq.id,
                 name: eq.name,
                 quantity: eq.quantity,
                 rate: eq.dailyRate,
                 days: eq.days,
                 totalCost: eq.total,
-                services: selectedServices
+                services: selectedServices,
               }))}
-              materials={expensesData.materials.map(mat => ({
+              materials={expensesData.materials.map((mat) => ({
                 id: mat.id,
                 name: mat.name,
                 quantity: mat.quantity,
                 unitCost: mat.unitCost,
                 totalCost: mat.total,
                 service: mat.service,
-                category: 'material'
+                category: "material",
               }))}
-              labor={expensesData.labor.map(lab => ({
+              labor={expensesData.labor.map((lab) => ({
                 service: lab.service,
                 role: lab.role,
                 regularHours: lab.hours * 0.9, // Assume 90% regular
                 overtimeHours: lab.hours * 0.1, // Assume 10% overtime
                 totalHours: lab.hours,
                 totalCost: lab.total,
-                workers: 1
+                workers: 1,
               }))}
-              other={expensesData.otherCosts.map(other => ({
+              other={expensesData.otherCosts.map((other) => ({
                 id: other.id,
                 description: other.description,
                 amount: other.amount,
-                category: other.category
+                category: other.category,
               }))}
               margins={expensesData.margins}
               services={selectedServices}
@@ -462,7 +529,7 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
                 materials: expensesData.totalCosts.materials,
                 labor: expensesData.totalCosts.labor,
                 other: expensesData.totalCosts.other,
-                total: expensesData.totalCosts.grand
+                total: expensesData.totalCosts.grand,
               }}
               projectType={buildingType}
             />
@@ -488,25 +555,30 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
                       <div className="flex-1">
                         <h4 className="font-medium">{item.name}</h4>
                         <p className="text-sm text-gray-600">
-                          {item.category} • {item.quantity} unit(s) • {item.days} days
+                          {item.category} • {item.quantity} unit(s) •{" "}
+                          {item.days} days
                         </p>
                         <p className="text-sm text-gray-600">
                           Vendor: {item.vendor}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold">${item.total.toLocaleString()}</p>
+                        <p className="text-lg font-bold">
+                          ${item.total.toLocaleString()}
+                        </p>
                         <p className="text-sm text-gray-600">
                           ${item.dailyRate}/day
                         </p>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowVendorSelector({
-                            type: 'equipment',
-                            item,
-                            index
-                          })}
+                          onClick={() =>
+                            setShowVendorSelector({
+                              type: "equipment",
+                              item,
+                              index,
+                            })
+                          }
                           className="mt-2"
                         >
                           <Settings className="w-4 h-4 mr-2" />
@@ -552,18 +624,22 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold">${item.total.toLocaleString()}</p>
+                        <p className="text-lg font-bold">
+                          ${item.total.toLocaleString()}
+                        </p>
                         <p className="text-sm text-gray-600">
                           ${item.unitCost}/{item.unit}
                         </p>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowVendorSelector({
-                            type: 'material',
-                            item,
-                            index
-                          })}
+                          onClick={() =>
+                            setShowVendorSelector({
+                              type: "material",
+                              item,
+                              index,
+                            })
+                          }
                           className="mt-2"
                         >
                           <Settings className="w-4 h-4 mr-2" />
@@ -607,7 +683,9 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
                         <td className="p-2">{item.service}</td>
                         <td className="p-2">{item.role}</td>
                         <td className="p-2 text-center">{item.hours}</td>
-                        <td className="p-2 text-center">${item.hourlyRate}/hr</td>
+                        <td className="p-2 text-center">
+                          ${item.hourlyRate}/hr
+                        </td>
                         <td className="p-2 text-right font-medium">
                           ${item.total.toLocaleString()}
                         </td>
@@ -641,12 +719,17 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
               {expensesData.otherCosts.length > 0 ? (
                 <div className="space-y-2">
                   {expensesData.otherCosts.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center p-2 border rounded">
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-center p-2 border rounded"
+                    >
                       <div>
                         <p className="font-medium">{item.description}</p>
                         <p className="text-sm text-gray-600">{item.category}</p>
                       </div>
-                      <p className="font-bold">${item.amount.toLocaleString()}</p>
+                      <p className="font-bold">
+                        ${item.amount.toLocaleString()}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -667,7 +750,7 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
               materials: expensesData.totalCosts.materials,
               labor: expensesData.totalCosts.labor,
               other: expensesData.totalCosts.other,
-              total: expensesData.totalCosts.grand
+              total: expensesData.totalCosts.grand,
             }}
             buildingType={buildingType}
             services={selectedServices}
@@ -699,7 +782,9 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1">
+                  Description
+                </label>
                 <Input id="description" placeholder="Enter cost description" />
               </div>
               <div>
@@ -707,7 +792,9 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
                 <Input id="amount" type="number" placeholder="0.00" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Category</label>
+                <label className="block text-sm font-medium mb-1">
+                  Category
+                </label>
                 <Select>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
@@ -715,7 +802,9 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
                   <SelectContent>
                     <SelectItem value="permits">Permits & Fees</SelectItem>
                     <SelectItem value="insurance">Insurance</SelectItem>
-                    <SelectItem value="travel">Travel & Transportation</SelectItem>
+                    <SelectItem value="travel">
+                      Travel & Transportation
+                    </SelectItem>
                     <SelectItem value="misc">Miscellaneous</SelectItem>
                   </SelectContent>
                 </Select>
@@ -723,9 +812,14 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
               <div className="flex gap-2">
                 <Button
                   onClick={() => {
-                    const description = (document.getElementById('description') as HTMLInputElement)?.value;
-                    const amount = parseFloat((document.getElementById('amount') as HTMLInputElement)?.value || '0');
-                    const category = 'misc'; // Would get from select
+                    const description = (
+                      document.getElementById("description") as HTMLInputElement
+                    )?.value;
+                    const amount = parseFloat(
+                      (document.getElementById("amount") as HTMLInputElement)
+                        ?.value || "0",
+                    );
+                    const category = "misc"; // Would get from select
                     if (description && amount > 0) {
                       handleAddOtherCost(description, amount, category);
                     }
@@ -734,7 +828,10 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
                 >
                   Add Cost
                 </Button>
-                <Button variant="outline" onClick={() => setShowAddOther(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddOther(false)}
+                >
                   Cancel
                 </Button>
               </div>
@@ -748,9 +845,7 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
         <Button variant="outline" onClick={onBack}>
           Back to Duration
         </Button>
-        <Button onClick={handleNext}>
-          Continue to Final Review
-        </Button>
+        <Button onClick={handleNext}>Continue to Final Review</Button>
       </div>
     </div>
   );

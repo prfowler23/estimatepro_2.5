@@ -1,0 +1,10 @@
+<svg width="384" height="384" xmlns="http://www.w3.org/2000/svg">
+  <rect width="384" height="384" fill="#2563eb" rx="38.400000000000006"/>
+  <g fill="white">
+    <circle cx="192" cy="115.19999999999999" r="30.72" />
+    <rect x="134.39999999999998" y="172.8" width="115.19999999999999" height="7.68" />
+    <rect x="134.39999999999998" y="211.20000000000002" width="115.19999999999999" height="7.68" />
+    <rect x="134.39999999999998" y="249.60000000000002" width="115.19999999999999" height="7.68" />
+    <text x="192" y="326.4" text-anchor="middle" fill="white" font-family="Arial" font-size="38.400000000000006" font-weight="bold">EP</text>
+  </g>
+</svg>

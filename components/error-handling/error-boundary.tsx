@@ -1,10 +1,21 @@
-'use client';
+"use client";
 
-import React, { Component, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import React, { Component, ReactNode } from "react";
+import { AlertTriangle, RefreshCw, Home, Bug } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { errorHandler } from "@/lib/error/error-handler";
+import {
+  createComponentError,
+  EstimateProError,
+} from "@/lib/error/error-types";
 
 interface ErrorInfo {
   componentStack: string;
@@ -16,7 +27,7 @@ interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
-  errorId: string | null;
+  estimateProError: EstimateProError | null;
   retryCount: number;
 }
 
@@ -26,10 +37,13 @@ interface ErrorBoundaryProps {
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   showDetails?: boolean;
   maxRetries?: number;
-  level?: 'page' | 'component' | 'section';
+  level?: "page" | "component" | "section";
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   private retryTimeout: NodeJS.Timeout | null = null;
 
   constructor(props: ErrorBoundaryProps) {
@@ -38,8 +52,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       hasError: false,
       error: null,
       errorInfo: null,
-      errorId: null,
-      retryCount: 0
+      estimateProError: null,
+      retryCount: 0,
     };
   }
 
@@ -47,67 +61,45 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return {
       hasError: true,
       error,
-      errorId: generateErrorId()
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const enhancedErrorInfo: ErrorInfo = {
-      componentStack: errorInfo.componentStack || '',
+      componentStack: errorInfo.componentStack || "",
       errorBoundary: this.constructor.name,
-      errorInfo: 'Unknown'
+      errorInfo: "Component error boundary",
     };
 
+    // Use the centralized error handler
+    const estimateProError = await errorHandler.handleError(error, {
+      component: this.constructor.name,
+      action: "component_catch",
+      metadata: {
+        componentStack: errorInfo.componentStack,
+      },
+    });
+
     this.setState({
-      errorInfo: enhancedErrorInfo
+      errorInfo: enhancedErrorInfo,
+      estimateProError,
     });
 
     // Call custom error handler
     if (this.props.onError) {
       this.props.onError(error, enhancedErrorInfo);
     }
-
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error);
-      console.error('Error info:', enhancedErrorInfo);
-    }
-
-    // Report error to monitoring service
-    this.reportError(error, enhancedErrorInfo);
   }
-
-  private reportError = (error: Error, errorInfo: ErrorInfo) => {
-    try {
-      // Here you would integrate with your error reporting service
-      // For now, we'll just log it
-      const errorReport = {
-        message: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        userId: 'current-user-id', // Replace with actual user ID
-        errorId: this.state.errorId
-      };
-
-      // In production, send to error tracking service
-      console.error('Error report:', errorReport);
-    } catch (reportingError) {
-      console.error('Failed to report error:', reportingError);
-    }
-  };
 
   private handleRetry = () => {
     const { maxRetries = 3 } = this.props;
-    
+
     if (this.state.retryCount >= maxRetries) {
       return;
     }
 
-    this.setState(prevState => ({
-      retryCount: prevState.retryCount + 1
+    this.setState((prevState) => ({
+      retryCount: prevState.retryCount + 1,
     }));
 
     // Add delay before retry to avoid immediate re-error
@@ -116,7 +108,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         hasError: false,
         error: null,
         errorInfo: null,
-        errorId: null
+        estimateProError: null,
       });
     }, 1000);
   };
@@ -126,7 +118,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   private handleGoHome = () => {
-    window.location.href = '/dashboard';
+    window.location.href = "/dashboard";
   };
 
   componentWillUnmount() {
@@ -136,8 +128,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   render() {
-    const { hasError, error, errorInfo, errorId, retryCount } = this.state;
-    const { children, fallback, showDetails = false, maxRetries = 3, level = 'component' } = this.props;
+    const { hasError, error, errorInfo, estimateProError, retryCount } =
+      this.state;
+    const {
+      children,
+      fallback,
+      showDetails = false,
+      maxRetries = 3,
+      level = "component",
+    } = this.props;
 
     if (hasError) {
       // Custom fallback provided
@@ -148,11 +147,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       // Default error UI based on level
       return (
         <div className="error-boundary">
-          {level === 'page' ? (
+          {level === "page" ? (
             <PageErrorFallback
               error={error}
               errorInfo={errorInfo}
-              errorId={errorId}
+              estimateProError={estimateProError}
               onRetry={this.handleRetry}
               onReload={this.handleReload}
               onGoHome={this.handleGoHome}
@@ -164,7 +163,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <ComponentErrorFallback
               error={error}
               errorInfo={errorInfo}
-              errorId={errorId}
+              estimateProError={estimateProError}
               onRetry={this.handleRetry}
               canRetry={retryCount < maxRetries}
               retryCount={retryCount}
@@ -183,17 +182,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 function PageErrorFallback({
   error,
   errorInfo,
-  errorId,
+  estimateProError,
   onRetry,
   onReload,
   onGoHome,
   canRetry,
   retryCount,
-  showDetails
+  showDetails,
 }: {
   error: Error | null;
   errorInfo: ErrorInfo | null;
-  errorId: string | null;
+  estimateProError: EstimateProError | null;
   onRetry: () => void;
   onReload: () => void;
   onGoHome: () => void;
@@ -210,15 +209,21 @@ function PageErrorFallback({
           </div>
           <CardTitle className="text-lg">Something went wrong</CardTitle>
           <CardDescription>
-            We encountered an unexpected error. Please try again or contact support if the problem persists.
+            We encountered an unexpected error. Please try again or contact
+            support if the problem persists.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {errorId && (
+          {estimateProError?.id && (
             <Alert>
               <Bug className="h-4 w-4" />
               <AlertDescription>
-                Error ID: <code className="text-sm">{errorId}</code>
+                Error ID: <code className="text-sm">{estimateProError.id}</code>
+                {estimateProError.suggestedAction && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    {estimateProError.suggestedAction}
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -261,15 +266,15 @@ function PageErrorFallback({
 function ComponentErrorFallback({
   error,
   errorInfo,
-  errorId,
+  estimateProError,
   onRetry,
   canRetry,
   retryCount,
-  showDetails
+  showDetails,
 }: {
   error: Error | null;
   errorInfo: ErrorInfo | null;
-  errorId: string | null;
+  estimateProError: EstimateProError | null;
   onRetry: () => void;
   canRetry: boolean;
   retryCount: number;
@@ -282,14 +287,20 @@ function ComponentErrorFallback({
         <div>
           <h3 className="font-medium text-red-900">Component Error</h3>
           <p className="text-sm text-red-700">
-            This component encountered an error and couldn&apos;t render properly.
+            This component encountered an error and couldn&apos;t render
+            properly.
           </p>
         </div>
       </div>
 
-      {errorId && (
+      {estimateProError?.id && (
         <div className="text-xs text-red-600 mb-3">
-          Error ID: <code>{errorId}</code>
+          Error ID: <code>{estimateProError.id}</code>
+          {estimateProError.suggestedAction && (
+            <div className="mt-1 text-sm text-red-700">
+              {estimateProError.suggestedAction}
+            </div>
+          )}
         </div>
       )}
 
@@ -314,17 +325,10 @@ function ComponentErrorFallback({
   );
 }
 
-// Utility function to generate error IDs
-function generateErrorId(): string {
-  const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).substring(2, 8);
-  return `err_${timestamp}_${randomPart}`;
-}
-
 // HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
+  errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">,
 ) {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary {...errorBoundaryProps}>
@@ -336,14 +340,7 @@ export function withErrorBoundary<P extends object>(
   return WrappedComponent;
 }
 
-// Hook for error reporting
-export function useErrorHandler() {
-  const reportError = (error: Error, context?: string) => {
-    console.error('Manual error report:', { error, context });
-    // Here you would integrate with your error reporting service
-  };
-
-  return { reportError };
-}
+// Re-export the centralized error handler hook
+export { useErrorHandler } from "@/lib/error/error-handler";
 
 export default ErrorBoundary;

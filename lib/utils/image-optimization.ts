@@ -1,11 +1,11 @@
 // Image optimization utilities for better performance
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export interface ImageOptimizationOptions {
   quality?: number;
   maxWidth?: number;
   maxHeight?: number;
-  format?: 'webp' | 'jpeg' | 'png';
+  format?: "webp" | "jpeg" | "png";
   progressive?: boolean;
 }
 
@@ -18,19 +18,23 @@ export interface OptimizedImage {
   format: string;
 }
 
-export const imageLoader = ({ src, width, quality }: {
-  src: string
-  width: number
-  quality?: number
+export const imageLoader = ({
+  src,
+  width,
+  quality,
+}: {
+  src: string;
+  width: number;
+  quality?: number;
 }) => {
-  return `${src}?w=${width}&q=${quality || 75}`
-}
+  return `${src}?w=${width}&q=${quality || 75}`;
+};
 
 export const getOptimizedImageProps = (
   src: string,
   alt: string,
   width: number,
-  height: number
+  height: number,
 ) => ({
   src,
   alt,
@@ -38,26 +42,27 @@ export const getOptimizedImageProps = (
   height,
   loader: imageLoader,
   quality: 85,
-  placeholder: 'blur' as const,
-  blurDataURL: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx4f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
-})
+  placeholder: "blur" as const,
+  blurDataURL:
+    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx4f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==",
+});
 
 // Compress and optimize image files
 export async function optimizeImage(
   file: File,
-  options: ImageOptimizationOptions = {}
+  options: ImageOptimizationOptions = {},
 ): Promise<OptimizedImage> {
   const {
     quality = 0.8,
     maxWidth = 1920,
     maxHeight = 1080,
-    format = 'webp',
-    progressive = true
+    format = "webp",
+    progressive = true,
   } = options;
 
   return new Promise((resolve, reject) => {
     const img = new Image();
-    
+
     img.onload = () => {
       try {
         // Calculate optimal dimensions
@@ -65,15 +70,15 @@ export async function optimizeImage(
           img.width,
           img.height,
           maxWidth,
-          maxHeight
+          maxHeight,
         );
 
         // Create canvas for optimization
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
         if (!ctx) {
-          throw new Error('Failed to get canvas context');
+          throw new Error("Failed to get canvas context");
         }
 
         canvas.width = width;
@@ -81,18 +86,18 @@ export async function optimizeImage(
 
         // Apply image smoothing for better quality
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+        ctx.imageSmoothingQuality = "high";
 
         // Draw optimized image
         ctx.drawImage(img, 0, 0, width, height);
 
         // Convert to optimized format
         const mimeType = getMimeType(format);
-        
+
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new Error('Failed to optimize image'));
+              reject(new Error("Failed to optimize image"));
               return;
             }
 
@@ -105,21 +110,22 @@ export async function optimizeImage(
                 width,
                 height,
                 size: blob.size,
-                format
+                format,
               });
             };
-            reader.onerror = () => reject(new Error('Failed to read optimized image'));
+            reader.onerror = () =>
+              reject(new Error("Failed to read optimized image"));
             reader.readAsDataURL(blob);
           },
           mimeType,
-          quality
+          quality,
         );
       } catch (error) {
         reject(error);
       }
     };
 
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => reject(new Error("Failed to load image"));
     img.src = URL.createObjectURL(file);
   });
 }
@@ -129,7 +135,7 @@ function calculateOptimalDimensions(
   originalWidth: number,
   originalHeight: number,
   maxWidth: number,
-  maxHeight: number
+  maxHeight: number,
 ): { width: number; height: number } {
   let width = originalWidth;
   let height = originalHeight;
@@ -148,14 +154,14 @@ function calculateOptimalDimensions(
 // Get MIME type for format
 function getMimeType(format: string): string {
   switch (format) {
-    case 'webp':
-      return 'image/webp';
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
+    case "webp":
+      return "image/webp";
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
     default:
-      return 'image/webp';
+      return "image/webp";
   }
 }
 
@@ -169,9 +175,9 @@ export class ProgressiveImageLoader {
       placeholder?: string;
       quality?: number;
       sizes?: string;
-    } = {}
+    } = {},
   ): Promise<string> {
-    const { placeholder = '', quality = 0.8 } = options;
+    const { placeholder = "", quality = 0.8 } = options;
 
     // Check cache first
     if (this.cache.has(src)) {
@@ -180,13 +186,13 @@ export class ProgressiveImageLoader {
 
     return new Promise((resolve, reject) => {
       const img = new Image();
-      
+
       img.onload = () => {
         // Cache the loaded image
         this.cache.set(src, src);
         resolve(src);
       };
-      
+
       img.onerror = () => {
         // Fallback to placeholder or reject
         if (placeholder) {
@@ -195,7 +201,7 @@ export class ProgressiveImageLoader {
           reject(new Error(`Failed to load image: ${src}`));
         }
       };
-      
+
       img.src = src;
     });
   }
@@ -211,20 +217,23 @@ export class LazyImageObserver {
   private images = new Set<HTMLImageElement>();
 
   constructor(options: IntersectionObserverInit = {}) {
-    this.observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const img = entry.target as HTMLImageElement;
-          this.loadImage(img);
-          this.observer.unobserve(img);
-          this.images.delete(img);
-        }
-      });
-    }, {
-      rootMargin: '50px',
-      threshold: 0.1,
-      ...options
-    });
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement;
+            this.loadImage(img);
+            this.observer.unobserve(img);
+            this.images.delete(img);
+          }
+        });
+      },
+      {
+        rootMargin: "50px",
+        threshold: 0.1,
+        ...options,
+      },
+    );
   }
 
   observe(img: HTMLImageElement): void {
@@ -241,7 +250,7 @@ export class LazyImageObserver {
     const src = img.dataset.src;
     if (src) {
       img.src = src;
-      img.classList.add('loaded');
+      img.classList.add("loaded");
     }
   }
 
@@ -257,9 +266,11 @@ export const lazyImageObserver = new LazyImageObserver();
 // React hook for image optimization
 export function useOptimizedImage(
   file: File | null,
-  options: ImageOptimizationOptions = {}
+  options: ImageOptimizationOptions = {},
 ) {
-  const [optimizedImage, setOptimizedImage] = useState<OptimizedImage | null>(null);
+  const [optimizedImage, setOptimizedImage] = useState<OptimizedImage | null>(
+    null,
+  );
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -282,7 +293,9 @@ export function useOptimizedImage(
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to optimize image');
+          setError(
+            err instanceof Error ? err.message : "Failed to optimize image",
+          );
         }
       } finally {
         if (!cancelled) {
@@ -304,7 +317,7 @@ export function useOptimizedImage(
 // Batch image optimization
 export async function optimizeImages(
   files: File[],
-  options: ImageOptimizationOptions = {}
+  options: ImageOptimizationOptions = {},
 ): Promise<OptimizedImage[]> {
   const results: OptimizedImage[] = [];
   const errors: string[] = [];
@@ -313,7 +326,7 @@ export async function optimizeImages(
   const batchSize = 3;
   for (let i = 0; i < files.length; i += batchSize) {
     const batch = files.slice(i, i + batchSize);
-    
+
     const batchPromises = batch.map(async (file) => {
       try {
         return await optimizeImage(file, options);
@@ -324,41 +337,44 @@ export async function optimizeImages(
     });
 
     const batchResults = await Promise.all(batchPromises);
-    results.push(...batchResults.filter(Boolean) as OptimizedImage[]);
+    results.push(...(batchResults.filter(Boolean) as OptimizedImage[]));
   }
 
   if (errors.length > 0) {
-    console.warn('Image optimization errors:', errors);
+    console.warn("Image optimization errors:", errors);
   }
 
   return results;
 }
 
 // Image format detection
-export function getOptimalFormat(file: File): 'webp' | 'jpeg' | 'png' {
+export function getOptimalFormat(file: File): "webp" | "jpeg" | "png" {
   // Check browser support for WebP
   if (supportsWebP()) {
-    return 'webp';
+    return "webp";
   }
 
   // Fallback based on original format
-  if (file.type === 'image/png') {
-    return 'png';
+  if (file.type === "image/png") {
+    return "png";
   }
 
-  return 'jpeg';
+  return "jpeg";
 }
 
 // Check WebP support
 function supportsWebP(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  const canvas = document.createElement('canvas');
-  return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+  if (typeof window === "undefined") return false;
+
+  const canvas = document.createElement("canvas");
+  return canvas.toDataURL("image/webp").indexOf("data:image/webp") === 0;
 }
 
 // Image size validation
-export function validateImageSize(file: File, maxSize: number = 10 * 1024 * 1024): boolean {
+export function validateImageSize(
+  file: File,
+  maxSize: number = 10 * 1024 * 1024,
+): boolean {
   return file.size <= maxSize;
 }
 
@@ -366,13 +382,13 @@ export function validateImageSize(file: File, maxSize: number = 10 * 1024 * 1024
 export function generateResponsiveSizes(
   baseWidth: number,
   baseHeight: number,
-  breakpoints: number[] = [640, 768, 1024, 1280, 1920]
+  breakpoints: number[] = [640, 768, 1024, 1280, 1920],
 ): Array<{ width: number; height: number; size: string }> {
   const aspectRatio = baseHeight / baseWidth;
-  
+
   return breakpoints.map((width) => ({
     width,
     height: Math.round(width * aspectRatio),
-    size: `${width}w`
+    size: `${width}w`,
   }));
 }
