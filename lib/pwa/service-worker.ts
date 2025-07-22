@@ -6,43 +6,21 @@
 // Service Worker type declarations
 declare const self: ServiceWorkerGlobalScope;
 
-// Cache configuration
+// Cache names with versioning
 const CACHE_NAME = "estimatepro-v1";
 const STATIC_CACHE_NAME = "estimatepro-static-v1";
 const DYNAMIC_CACHE_NAME = "estimatepro-dynamic-v1";
 const DATA_CACHE_NAME = "estimatepro-data-v1";
 
-// Cache strategies
-const CACHE_STRATEGIES = {
-  CACHE_FIRST: "cache-first",
-  NETWORK_FIRST: "network-first",
-  CACHE_ONLY: "cache-only",
-  NETWORK_ONLY: "network-only",
-  STALE_WHILE_REVALIDATE: "stale-while-revalidate",
-};
-
-// Static assets to cache
-const STATIC_ASSETS = [
-  "/",
-  "/dashboard",
-  "/calculator",
-  "/estimates",
-  "/settings",
-  "/offline",
-  "/manifest.json",
-  "/favicon.ico",
-  "/_next/static/css/app.css",
-  "/_next/static/chunks/main.js",
-  "/_next/static/chunks/pages/_app.js",
-  "/_next/static/chunks/webpack.js",
-];
+// Static assets to cache (minimal list for reliability)
+const STATIC_ASSETS = ["/", "/manifest.json"];
 
 // API endpoints for offline support
 const CACHEABLE_APIS = [
   "/api/estimates",
   "/api/customers",
   "/api/calculations",
-  "/api/analytics",
+  "/api/analytics/enhanced",
 ];
 
 // Background sync tags
@@ -52,6 +30,12 @@ const SYNC_TAGS = {
   PHOTO_UPLOAD: "photo-upload",
   OFFLINE_ACTIONS: "offline-actions",
 };
+
+// Check if we're in development mode
+const isDevelopment =
+  self.location.hostname === "localhost" ||
+  self.location.hostname === "127.0.0.1" ||
+  self.location.hostname.includes("localhost");
 
 // Install event - cache static assets
 self.addEventListener("install", (event: ExtendableEvent) => {
@@ -109,7 +93,19 @@ self.addEventListener("fetch", (event: FetchEvent) => {
     return;
   }
 
-  // Handle different types of requests
+  // In development, be very selective about what we intercept
+  if (isDevelopment) {
+    // Only handle API requests and specific static assets in development
+    if (isAPIRequest(url)) {
+      event.respondWith(handleAPIRequest(request));
+    } else if (url.pathname === "/" || url.pathname === "/manifest.json") {
+      event.respondWith(handleStaticAsset(request));
+    }
+    // Let everything else (Next.js assets, etc.) go through normally
+    return;
+  }
+
+  // In production, handle all requests
   if (isStaticAsset(url)) {
     event.respondWith(handleStaticAsset(request));
   } else if (isAPIRequest(url)) {
@@ -145,29 +141,19 @@ self.addEventListener("sync", (event: SyncEvent) => {
 self.addEventListener("push", (event: PushEvent) => {
   console.log("Service Worker: Push notification received");
 
+  if (!event.data) {
+    return;
+  }
+
+  const data = event.data.json();
   const options = {
-    body: event.data?.text() || "New notification",
+    body: data.body,
     icon: "/icon-192x192.png",
-    badge: "/icon-72x72.png",
-    vibrate: [200, 100, 200],
-    data: {
-      url: "/",
-    },
-    actions: [
-      {
-        action: "open",
-        title: "Open App",
-        icon: "/icon-192x192.png",
-      },
-      {
-        action: "close",
-        title: "Close",
-        icon: "/icon-192x192.png",
-      },
-    ],
+    badge: "/icon-96x96.png",
+    data: data.data,
   };
 
-  event.waitUntil(self.registration.showNotification("EstimatePro", options));
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 // Notification click event
@@ -183,21 +169,27 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
   }
 });
 
-// Message event - handle messages from main thread
+// Message event
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   console.log("Service Worker: Message received", event.data);
 
   const { type, payload } = event.data;
 
   switch (type) {
+    case "SKIP_WAITING":
+      self.skipWaiting();
+      break;
+    case "CLAIM_CLIENTS":
+      self.clients.claim();
+      break;
+    case "CLEAR_CACHE":
+      event.waitUntil(clearCache());
+      break;
     case "CACHE_ESTIMATE":
       event.waitUntil(cacheEstimate(payload));
       break;
     case "CACHE_CUSTOMER":
       event.waitUntil(cacheCustomer(payload));
-      break;
-    case "CLEAR_CACHE":
-      event.waitUntil(clearCache());
       break;
     case "SYNC_DATA":
       event.waitUntil(syncAllData());
@@ -236,6 +228,18 @@ function isPageRequest(url: URL): boolean {
 
 async function handleStaticAsset(request: Request): Promise<Response> {
   const cache = await caches.open(STATIC_CACHE_NAME);
+
+  // Skip caching for unsupported URL schemes
+  const url = new URL(request.url);
+  if (!url.protocol.startsWith("http")) {
+    console.log("Service Worker: Skipping unsupported scheme:", url.protocol);
+    try {
+      return await fetch(request);
+    } catch (error) {
+      return new Response("Asset not available", { status: 503 });
+    }
+  }
+
   const cachedResponse = await cache.match(request);
 
   if (cachedResponse) {
@@ -245,11 +249,19 @@ async function handleStaticAsset(request: Request): Promise<Response> {
   try {
     const response = await fetch(request);
     if (response.ok) {
+      // Only cache successful responses
       cache.put(request, response.clone());
     }
     return response;
   } catch (error) {
     console.error("Service Worker: Failed to fetch static asset", error);
+
+    // In development, don't return 503 for static assets
+    if (isDevelopment) {
+      // Just let it fail naturally without service worker intervention
+      throw error;
+    }
+
     return new Response("Asset not available offline", { status: 503 });
   }
 }
@@ -278,7 +290,7 @@ async function handleAPIRequest(request: Request): Promise<Response> {
         return cachedResponse;
       }
 
-      // Return offline response
+      // Return offline response for cacheable APIs
       return new Response(
         JSON.stringify({
           error: "Data not available offline",
@@ -479,17 +491,17 @@ async function syncOfflineActions(): Promise<void> {
 
       for (const action of actions) {
         try {
-          const response = await fetch(action.url, {
+          const response = await fetch(action.endpoint, {
             method: action.method,
             headers: action.headers,
             body: action.body,
           });
 
           if (response.ok) {
-            console.log("Service Worker: Offline action synced successfully");
+            console.log("Service Worker: Action synced successfully");
           }
         } catch (error) {
-          console.error("Service Worker: Failed to sync offline action", error);
+          console.error("Service Worker: Failed to sync action", error);
         }
       }
     }
@@ -525,7 +537,7 @@ async function cacheCustomer(customer: any): Promise<void> {
 
 async function clearCache(): Promise<void> {
   const cacheNames = await caches.keys();
-  await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+  await Promise.all(cacheNames.map((name) => caches.delete(name)));
 }
 
 async function syncAllData(): Promise<void> {

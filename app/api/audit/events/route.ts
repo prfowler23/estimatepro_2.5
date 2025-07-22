@@ -51,10 +51,15 @@ async function handleGET(request: NextRequest) {
     // Get total count for pagination
     let totalCount = 0;
     if (events.length > 0) {
-      const { count } = await supabase
+      let countQuery = supabase
         .from("audit_events")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", targetUserId);
+        .select("*", { count: "exact", head: true });
+
+      if (targetUserId) {
+        countQuery = countQuery.eq("user_id", targetUserId);
+      }
+
+      const { count } = await countQuery;
 
       totalCount = count || 0;
     }

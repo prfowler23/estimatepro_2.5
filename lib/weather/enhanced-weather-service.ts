@@ -261,7 +261,7 @@ export class EnhancedWeatherService {
       });
 
       // Publish weather analysis event
-      await publishSystemEvent("weather.analysis_completed", {
+      await publishSystemEvent("system.maintenance", {
         location: resolvedLocation.city,
         services,
         risk_score: analysis.riskScore,

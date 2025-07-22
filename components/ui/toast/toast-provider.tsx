@@ -169,35 +169,35 @@ function ToastItem({
   const typeConfig = {
     success: {
       icon: CheckCircle,
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200",
-      iconColor: "text-green-600",
-      titleColor: "text-green-900",
-      descriptionColor: "text-green-700",
+      bgColor: "bg-success-50",
+      borderColor: "border-success-200",
+      iconColor: "text-success-600",
+      titleColor: "text-success-900",
+      descriptionColor: "text-success-700",
     },
     error: {
       icon: AlertCircle,
-      bgColor: "bg-red-50",
-      borderColor: "border-red-200",
-      iconColor: "text-red-600",
-      titleColor: "text-red-900",
-      descriptionColor: "text-red-700",
+      bgColor: "bg-error-50",
+      borderColor: "border-error-200",
+      iconColor: "text-error-600",
+      titleColor: "text-error-900",
+      descriptionColor: "text-error-700",
     },
     warning: {
       icon: AlertTriangle,
-      bgColor: "bg-yellow-50",
-      borderColor: "border-yellow-200",
-      iconColor: "text-yellow-600",
-      titleColor: "text-yellow-900",
-      descriptionColor: "text-yellow-700",
+      bgColor: "bg-warning-50",
+      borderColor: "border-warning-200",
+      iconColor: "text-warning-600",
+      titleColor: "text-warning-900",
+      descriptionColor: "text-warning-700",
     },
     info: {
       icon: Info,
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      iconColor: "text-blue-600",
-      titleColor: "text-blue-900",
-      descriptionColor: "text-blue-700",
+      bgColor: "bg-bg-elevated",
+      borderColor: "border-border-primary",
+      iconColor: "text-text-secondary",
+      titleColor: "text-text-primary",
+      descriptionColor: "text-text-secondary",
     },
   };
 
@@ -240,7 +240,7 @@ function ToastItem({
           variant="ghost"
           size="sm"
           onClick={() => onRemove(id)}
-          className="h-6 w-6 p-0 hover:bg-black/10 flex-shrink-0"
+          className="h-6 w-6 p-0 hover:bg-bg-subtle flex-shrink-0"
         >
           <X className="h-3 w-3" />
         </Button>

@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         name: integration.name,
         enabled: integration.enabled,
         health: status || { success: false, error: "Health check failed" },
-        last_sync: integration.sync_settings?.last_sync,
+        last_sync: (integration.sync_settings as any)?.last_sync,
         checked_at: new Date().toISOString(),
       });
     } else {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
           success: false,
           error: "Health check failed",
         },
-        last_sync: integration.sync_settings?.last_sync,
+        last_sync: (integration.sync_settings as any)?.last_sync,
       }));
 
       const healthyCount = healthReport.filter((r) => r.health.success).length;

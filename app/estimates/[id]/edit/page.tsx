@@ -50,18 +50,19 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 interface EstimateData {
   id: string;
   estimate_number: string;
+  quote_number?: string; // For backward compatibility
   customer_name: string;
   customer_email: string;
-  customer_phone: string;
-  company_name: string;
+  customer_phone: string | null;
+  company_name: string | null;
   building_name: string;
   building_address: string;
   building_height_stories: number;
-  building_height_feet: number;
-  building_type: string;
+  building_height_feet: number | null;
+  building_type: string | null;
   total_price: number;
   status: string;
-  notes: string;
+  notes: string | null;
   services: EstimateService[];
 }
 
@@ -99,7 +100,7 @@ function EstimateEditContent() {
       const { data: estimateData, error: estimateError } = await supabase
         .from("estimates")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", Array.isArray(params.id) ? params.id[0] : params.id)
         .single();
 
       if (estimateError) throw estimateError;
@@ -107,13 +108,24 @@ function EstimateEditContent() {
       const { data: servicesData, error: servicesError } = await supabase
         .from("estimate_services")
         .select("*")
-        .eq("estimate_id", params.id);
+        .eq("quote_id", Array.isArray(params.id) ? params.id[0] : params.id);
 
       if (servicesError) throw servicesError;
 
       setEstimate({
         ...estimateData,
-        services: servicesData,
+        estimate_number: estimateData.quote_number, // Map quote_number to estimate_number
+        services: servicesData.map((service: any) => ({
+          ...service,
+          serviceType: service.service_type,
+          description: service.description || `${service.service_type} service`,
+          quantity: service.area_sqft || 1,
+          unit: "sqft",
+          unitPrice: service.price / (service.area_sqft || 1),
+          totalPrice: service.price,
+          duration: service.total_hours || 8,
+          dependencies: [],
+        })),
       });
     } catch (error: any) {
       setError(error.message);
@@ -313,7 +325,7 @@ function EstimateEditContent() {
                 onChange={(e) =>
                   updateEstimateField("customer_name", e.target.value)
                 }
-                placeholder="John Smith"
+                placeholder="Customer Name"
               />
             </div>
             <div className="space-y-2">
@@ -336,7 +348,7 @@ function EstimateEditContent() {
                 onChange={(e) =>
                   updateEstimateField("customer_email", e.target.value)
                 }
-                placeholder="john@company.com"
+                placeholder="customer@company.com"
               />
             </div>
             <div className="space-y-2">

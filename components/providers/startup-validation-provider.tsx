@@ -48,22 +48,22 @@ export function StartupValidationProvider({
   // In production, show error screen if validation fails
   if (validationError && process.env.NODE_ENV === "production") {
     return (
-      <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
+      <div className="min-h-screen bg-error-50 flex items-center justify-center p-4">
+        <div className="bg-bg-elevated rounded-lg shadow-lg p-8 max-w-2xl w-full">
           <div className="text-center">
-            <div className="text-red-600 text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            <div className="text-error-600 text-6xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-text-primary mb-4">
               Configuration Error
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-text-secondary mb-6">
               The application could not start due to configuration issues:
             </p>
-            <div className="bg-red-100 border border-red-200 rounded-md p-4 mb-6">
-              <pre className="text-sm text-red-800 text-left whitespace-pre-wrap">
+            <div className="bg-error-50 border border-error-200 rounded-md p-4 mb-6">
+              <pre className="text-sm text-error-700 text-left whitespace-pre-wrap">
                 {validationError}
               </pre>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-text-muted">
               Please check your environment configuration and try again.
             </p>
           </div>
@@ -76,11 +76,11 @@ export function StartupValidationProvider({
   if (validationError && process.env.NODE_ENV === "development") {
     return (
       <>
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+        <div className="bg-warning-50 border-l-4 border-warning-400 p-4 mb-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
-                className="h-5 w-5 text-yellow-400"
+                className="h-5 w-5 text-warning-500"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -92,7 +92,7 @@ export function StartupValidationProvider({
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-warning-700">
                 <strong>Development Mode:</strong> Configuration issues detected
                 but continuing anyway.
               </p>
@@ -107,13 +107,13 @@ export function StartupValidationProvider({
   // Show loading state during validation
   if (!isValidated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-bg-subtle flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
             Initializing EstimatePro
           </h2>
-          <p className="text-gray-600">Validating configuration...</p>
+          <p className="text-text-secondary">Validating configuration...</p>
         </div>
       </div>
     );

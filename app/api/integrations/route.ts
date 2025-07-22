@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (provider) {
-      query = query.eq("provider", provider);
+      query = query.eq("provider", provider as any);
     }
 
     const { data: integrations, error } = await query.order("created_at", {

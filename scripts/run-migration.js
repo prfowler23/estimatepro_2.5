@@ -18,7 +18,7 @@ async function runMigration() {
     const migrationPath = path.join(
       __dirname,
       "..",
-      "migration_guided_estimation_flow.sql",
+      "sql/migrations/migration_pilot_certifications.sql",
     );
     const migrationSQL = fs.readFileSync(migrationPath, "utf8");
 

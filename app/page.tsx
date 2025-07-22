@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +23,32 @@ import {
   CheckCircle,
   Bot,
 } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect authenticated users directly to dashboard
+    if (!loading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, loading, router]);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render marketing page if user is authenticated (will redirect)
+  if (user) {
+    return null;
+  }
   return (
     <div>
       {/* Hero Section */}
@@ -34,24 +62,24 @@ export default function HomePage() {
               Create accurate quotes for window cleaning, pressure washing, and
               restoration services in minutes
             </p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/estimates/new/guided">
                 <Button
-                  size="lg"
-                  className="bg-secondary hover:bg-secondary/90"
+                  size="xl"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-0 min-w-[220px] group"
                 >
-                  <Bot className="mr-2 h-5 w-5" />
+                  <Bot className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-200" />
                   Create AI Estimate
                 </Button>
               </Link>
               <Link href="/dashboard">
                 <Button
-                  size="lg"
+                  size="xl"
                   variant="outline"
-                  className="text-white border-white hover:bg-bg-base/10"
+                  className="text-white border-2 border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white hover:text-slate-900 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 min-w-[200px] group"
                 >
                   View Dashboard
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
               </Link>
             </div>

@@ -149,7 +149,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   <Input
                     id="signin-email"
                     type="email"
-                    placeholder="john@company.com"
+                    placeholder="your@email.com"
                     className="pl-10"
                     value={signInData.email}
                     onChange={(e) =>
@@ -239,7 +239,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="John Smith"
+                    placeholder="Your Full Name"
                     className="pl-10"
                     value={signUpData.fullName}
                     onChange={(e) =>
@@ -280,7 +280,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="john@company.com"
+                    placeholder="your@email.com"
                     className="pl-10"
                     value={signUpData.email}
                     onChange={(e) =>

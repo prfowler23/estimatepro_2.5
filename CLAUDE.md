@@ -160,7 +160,8 @@ node scripts/production-check.js
 
 - **CLAUDE.md** (this file): Comprehensive project documentation, architecture overview, and development setup
 - **.cursor/.cursorrules**: Strict coding standards and enforcement rules for AI assistants
-- **Both files must be kept in sync** for consistent development practices
+- **docs/THEME_GUIDE.md**: Professional theme system guide for AI assistants (Stripe/Salesforce-inspired design)
+- **All files must be kept in sync** for consistent development practices
 
 ## Key Development Commands
 
@@ -360,7 +361,7 @@ bash scripts/production-verify.sh
 
 ## Code Conventions
 
-**See `.cursor/.cursorrules` for detailed standards.**
+**See `.cursor/.cursorrules` for detailed standards and `docs/THEME_GUIDE.md` for theme consistency.**
 
 **TypeScript**: Strict .ts/.tsx only, no `any` types, explicit interfaces, generic types for reusables
 
@@ -370,7 +371,12 @@ bash scripts/production-verify.sh
 
 **Naming**: Components (PascalCase), Files (kebab-case), Functions (camelCase), Constants (SCREAMING_SNAKE_CASE)
 
-**Styling**: Tailwind CSS with design system, CSS variables, responsive patterns
+**Styling**: Professional theme system using semantic CSS variables, semantic color tokens only (see `docs/THEME_GUIDE.md`)
+
+- Use `bg-bg-base`, `text-text-primary`, `border-border-primary` (semantic tokens)
+- Avoid `bg-white`, `text-gray-500`, `bg-blue-500` (hardcoded colors)
+- Component variants over custom styling
+- Test in light/dark/system themes
 
 ## Troubleshooting
 

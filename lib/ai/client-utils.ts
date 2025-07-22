@@ -108,32 +108,74 @@ export async function extractContactInfo(content: string, type: string) {
   return callAIEndpoint("extract-contact-info", { content, type });
 }
 
-export async function analyzePhotosClient(photos: File[]) {
-  // Convert files to FormData for upload
-  const formData = new FormData();
-  photos.forEach((photo, index) => {
-    formData.append(`photo_${index}`, photo);
-  });
-
+export async function analyzePhotosClient(
+  photos: File[],
+  options: {
+    estimateId?: string;
+    analysisTypes?: string[];
+    compress?: boolean;
+  } = {},
+) {
   try {
-    const response = await fetch("/api/ai/enhanced-photo-analysis", {
+    // Step 1: Upload photos first
+    const formData = new FormData();
+    photos.forEach((photo, index) => {
+      formData.append(`photo_${index}`, photo);
+    });
+
+    if (options.estimateId) {
+      formData.append("estimate_id", options.estimateId);
+    }
+
+    formData.append("compress", String(options.compress ?? true));
+
+    const uploadResponse = await fetch("/api/photos/upload", {
       method: "POST",
       body: formData,
     });
 
-    if (!response.ok) {
-      throw new Error(`Photo analysis failed: ${response.statusText}`);
+    if (!uploadResponse.ok) {
+      throw new Error(`Photo upload failed: ${uploadResponse.statusText}`);
     }
 
-    const result = await response.json();
+    const uploadResult = await uploadResponse.json();
+    const photoIds = uploadResult.photos.map((photo: any) => photo.id);
+
+    // Step 2: Analyze uploaded photos
+    const analysisResponse = await fetch("/api/photos/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "analyze",
+        photo_ids: photoIds,
+        analysis_types: options.analysisTypes || ["comprehensive"],
+        stream_progress: false,
+      }),
+    });
+
+    if (!analysisResponse.ok) {
+      throw new Error(`Photo analysis failed: ${analysisResponse.statusText}`);
+    }
+
+    const analysisResult = await analysisResponse.json();
+
     return {
       success: true,
-      data: result,
+      data: {
+        uploadedPhotos: uploadResult.photos,
+        analysisResults: analysisResult.result,
+        photoIds,
+      },
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Photo analysis failed",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Photo upload and analysis failed",
     };
   }
 }

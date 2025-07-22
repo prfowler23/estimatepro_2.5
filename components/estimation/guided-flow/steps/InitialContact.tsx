@@ -655,7 +655,7 @@ export function InitialContact({
                 }
                 type="email"
                 label="Email Address"
-                placeholder="customer@example.com"
+                placeholder="customer@company.com"
                 enablePredictions
                 flowData={data}
                 currentStep={1}

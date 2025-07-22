@@ -22,7 +22,7 @@ async function runAnalyticsMigration() {
     // Read the SQL file
     const migrationFile = path.join(
       __dirname,
-      "../15-add-analytics-tables.sql",
+      "../sql/migrations/15-add-analytics-tables.sql",
     );
     const sql = fs.readFileSync(migrationFile, "utf8");
 

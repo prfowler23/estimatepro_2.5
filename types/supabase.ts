@@ -18,6 +18,12 @@ export interface Database {
           company_name: string | null;
           phone: string | null;
           avatar_url: string | null;
+          drone_pilot_license: string | null;
+          part_107_expiry: string | null;
+          pilot_certifications: Json;
+          flight_hours: number | null;
+          last_medical_exam: string | null;
+          is_certified_pilot: boolean | null;
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +35,12 @@ export interface Database {
           company_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          drone_pilot_license?: string | null;
+          part_107_expiry?: string | null;
+          pilot_certifications?: Json;
+          flight_hours?: number | null;
+          last_medical_exam?: string | null;
+          is_certified_pilot?: boolean | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -40,6 +52,12 @@ export interface Database {
           company_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          drone_pilot_license?: string | null;
+          part_107_expiry?: string | null;
+          pilot_certifications?: Json;
+          flight_hours?: number | null;
+          last_medical_exam?: string | null;
+          is_certified_pilot?: boolean | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -749,33 +767,84 @@ export interface Database {
       integrations: {
         Row: {
           id: string;
+          provider:
+            | "quickbooks"
+            | "sage"
+            | "xero"
+            | "salesforce"
+            | "hubspot"
+            | "zapier"
+            | "microsoft_dynamics"
+            | "stripe"
+            | "square"
+            | "buildium"
+            | "appfolio"
+            | "custom_webhook"
+            | "custom_api";
           name: string;
-          type: string;
-          config: Json;
-          is_active: boolean;
-          created_by: string;
+          enabled: boolean;
+          settings: Json;
+          authentication: Json;
+          webhooks: Json;
+          sync_settings: Json;
+          field_mappings: Json;
           created_at: string;
           updated_at: string;
+          created_by: string;
         };
         Insert: {
           id?: string;
+          provider:
+            | "quickbooks"
+            | "sage"
+            | "xero"
+            | "salesforce"
+            | "hubspot"
+            | "zapier"
+            | "microsoft_dynamics"
+            | "stripe"
+            | "square"
+            | "buildium"
+            | "appfolio"
+            | "custom_webhook"
+            | "custom_api";
           name: string;
-          type: string;
-          config?: Json;
-          is_active?: boolean;
-          created_by: string;
+          enabled?: boolean;
+          settings?: Json;
+          authentication?: Json;
+          webhooks?: Json;
+          sync_settings?: Json;
+          field_mappings?: Json;
           created_at?: string;
           updated_at?: string;
+          created_by: string;
         };
         Update: {
           id?: string;
+          provider?:
+            | "quickbooks"
+            | "sage"
+            | "xero"
+            | "salesforce"
+            | "hubspot"
+            | "zapier"
+            | "microsoft_dynamics"
+            | "stripe"
+            | "square"
+            | "buildium"
+            | "appfolio"
+            | "custom_webhook"
+            | "custom_api";
           name?: string;
-          type?: string;
-          config?: Json;
-          is_active?: boolean;
-          created_by?: string;
+          enabled?: boolean;
+          settings?: Json;
+          authentication?: Json;
+          webhooks?: Json;
+          sync_settings?: Json;
+          field_mappings?: Json;
           created_at?: string;
           updated_at?: string;
+          created_by?: string;
         };
         Relationships: [
           {
@@ -791,28 +860,37 @@ export interface Database {
           id: string;
           integration_id: string;
           event_type: string;
-          payload: Json;
-          status: string;
+          event_data: Json;
+          status: "pending" | "processing" | "completed" | "failed";
+          retries: number;
+          max_retries: number;
           error_message: string | null;
           created_at: string;
+          processed_at: string | null;
         };
         Insert: {
           id?: string;
           integration_id: string;
           event_type: string;
-          payload?: Json;
-          status?: string;
+          event_data?: Json;
+          status?: "pending" | "processing" | "completed" | "failed";
+          retries?: number;
+          max_retries?: number;
           error_message?: string | null;
           created_at?: string;
+          processed_at?: string | null;
         };
         Update: {
           id?: string;
           integration_id?: string;
           event_type?: string;
-          payload?: Json;
-          status?: string;
+          event_data?: Json;
+          status?: "pending" | "processing" | "completed" | "failed";
+          retries?: number;
+          max_retries?: number;
           error_message?: string | null;
           created_at?: string;
+          processed_at?: string | null;
         };
         Relationships: [
           {
@@ -908,6 +986,371 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      integration_sync_logs: {
+        Row: {
+          id: string;
+          integration_id: string;
+          sync_direction: "inbound" | "outbound" | "bidirectional";
+          status: "started" | "completed" | "failed";
+          records_processed: number;
+          records_successful: number;
+          records_failed: number;
+          sync_data: Json;
+          error_message: string | null;
+          started_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          integration_id: string;
+          sync_direction: "inbound" | "outbound" | "bidirectional";
+          status: "started" | "completed" | "failed";
+          records_processed?: number;
+          records_successful?: number;
+          records_failed?: number;
+          sync_data?: Json;
+          error_message?: string | null;
+          started_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          integration_id?: string;
+          sync_direction?: "inbound" | "outbound" | "bidirectional";
+          status?: "started" | "completed" | "failed";
+          records_processed?: number;
+          records_successful?: number;
+          records_failed?: number;
+          sync_data?: Json;
+          error_message?: string | null;
+          started_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "integration_sync_logs_integration_id_fkey";
+            columns: ["integration_id"];
+            referencedRelation: "integrations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      webhook_deliveries: {
+        Row: {
+          id: string;
+          webhook_id: string;
+          event: string;
+          payload: Json;
+          status: "pending" | "delivered" | "failed" | "retrying";
+          attempts: number;
+          max_attempts: number;
+          response_status: number | null;
+          response_body: string | null;
+          error_message: string | null;
+          created_at: string;
+          delivered_at: string | null;
+          next_retry_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          webhook_id: string;
+          event: string;
+          payload: Json;
+          status?: "pending" | "delivered" | "failed" | "retrying";
+          attempts?: number;
+          max_attempts?: number;
+          response_status?: number | null;
+          response_body?: string | null;
+          error_message?: string | null;
+          created_at?: string;
+          delivered_at?: string | null;
+          next_retry_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          webhook_id?: string;
+          event?: string;
+          payload?: Json;
+          status?: "pending" | "delivered" | "failed" | "retrying";
+          attempts?: number;
+          max_attempts?: number;
+          response_status?: number | null;
+          response_body?: string | null;
+          error_message?: string | null;
+          created_at?: string;
+          delivered_at?: string | null;
+          next_retry_at?: string | null;
+        };
+        Relationships: [];
+      };
+      pdf_processing_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          filename: string;
+          file_size: number;
+          pages_processed: number;
+          text_extracted: boolean;
+          images_found: number;
+          measurements_found: number;
+          building_analysis: Json | null;
+          processing_options: Json | null;
+          processing_duration_ms: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          filename: string;
+          file_size: number;
+          pages_processed?: number;
+          text_extracted?: boolean;
+          images_found?: number;
+          measurements_found?: number;
+          building_analysis?: Json | null;
+          processing_options?: Json | null;
+          processing_duration_ms?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          filename?: string;
+          file_size?: number;
+          pages_processed?: number;
+          text_extracted?: boolean;
+          images_found?: number;
+          measurements_found?: number;
+          building_analysis?: Json | null;
+          processing_options?: Json | null;
+          processing_duration_ms?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      equipment_categories: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      equipment: {
+        Row: {
+          id: string;
+          category_id: string | null;
+          name: string;
+          description: string | null;
+          manufacturer: string | null;
+          model: string | null;
+          daily_rate: number;
+          weekly_rate: number | null;
+          monthly_rate: number | null;
+          replacement_cost: number | null;
+          specifications: Json;
+          availability_status: "available" | "unavailable" | "maintenance";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          category_id?: string | null;
+          name: string;
+          description?: string | null;
+          manufacturer?: string | null;
+          model?: string | null;
+          daily_rate?: number;
+          weekly_rate?: number | null;
+          monthly_rate?: number | null;
+          replacement_cost?: number | null;
+          specifications?: Json;
+          availability_status?: "available" | "unavailable" | "maintenance";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          category_id?: string | null;
+          name?: string;
+          description?: string | null;
+          manufacturer?: string | null;
+          model?: string | null;
+          daily_rate?: number;
+          weekly_rate?: number | null;
+          monthly_rate?: number | null;
+          replacement_cost?: number | null;
+          specifications?: Json;
+          availability_status?: "available" | "unavailable" | "maintenance";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "equipment_category_id_fkey";
+            columns: ["category_id"];
+            referencedRelation: "equipment_categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      equipment_vendors: {
+        Row: {
+          id: string;
+          name: string;
+          contact_email: string | null;
+          contact_phone: string | null;
+          address: string | null;
+          website: string | null;
+          rating: number | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          address?: string | null;
+          website?: string | null;
+          rating?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          address?: string | null;
+          website?: string | null;
+          rating?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      materials_vendors: {
+        Row: {
+          id: string;
+          name: string;
+          contact_email: string | null;
+          contact_phone: string | null;
+          address: string | null;
+          website: string | null;
+          rating: number | null;
+          minimum_order_amount: number | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          address?: string | null;
+          website?: string | null;
+          rating?: number | null;
+          minimum_order_amount?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          address?: string | null;
+          website?: string | null;
+          rating?: number | null;
+          minimum_order_amount?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      vendors: {
+        Row: {
+          id: string;
+          name: string;
+          type: "equipment" | "materials" | "both";
+          rating: number | null;
+          reliability: number | null;
+          preferredVendor: boolean | null;
+          contact_name: string | null;
+          contact_phone: string | null;
+          contact_email: string | null;
+          contact_address: string | null;
+          paymentTerms: string | null;
+          deliveryRadius: number | null;
+          specialties: Json | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          type: "equipment" | "materials" | "both";
+          rating?: number | null;
+          reliability?: number | null;
+          preferredVendor?: boolean | null;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          contact_email?: string | null;
+          contact_address?: string | null;
+          paymentTerms?: string | null;
+          deliveryRadius?: number | null;
+          specialties?: Json | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          type?: "equipment" | "materials" | "both";
+          rating?: number | null;
+          reliability?: number | null;
+          preferredVendor?: boolean | null;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          contact_email?: string | null;
+          contact_address?: string | null;
+          paymentTerms?: string | null;
+          deliveryRadius?: number | null;
+          specialties?: Json | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {

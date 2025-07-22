@@ -45,7 +45,7 @@ async function syncHandler(request: NextRequest) {
 
     // Check if sync is needed (unless forced)
     if (!force) {
-      const lastSync = integrationConfig.sync_settings.last_sync;
+      const lastSync = (integrationConfig.sync_settings as any)?.last_sync;
       if (lastSync) {
         const lastSyncDate = new Date(lastSync);
         const timeSinceLastSync = Date.now() - lastSyncDate.getTime();
@@ -62,17 +62,23 @@ async function syncHandler(request: NextRequest) {
     }
 
     // Initialize QuickBooks integration
-    const quickbooks = new QuickBooksIntegration(integrationConfig);
+    const quickbooks = new QuickBooksIntegration(integrationConfig as any);
 
     // Perform sync
     const syncResult = await quickbooks.syncData(direction);
 
     if (syncResult.success) {
       // Update last sync timestamp
+      const currentSettings = (integrationConfig.sync_settings as any) || {};
+      const updatedSyncSettings = {
+        ...currentSettings,
+        last_sync: new Date().toISOString(),
+      };
+
       await supabase
         .from("integrations")
         .update({
-          "sync_settings.last_sync": new Date().toISOString(),
+          sync_settings: updatedSyncSettings,
         })
         .eq("id", integrationConfig.id);
     }

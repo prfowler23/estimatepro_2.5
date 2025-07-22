@@ -59,7 +59,7 @@ async function handleContactExtraction(
   data: z.infer<typeof contactExtractionSchema>,
   context: any,
 ) {
-  const { content, contactMethod } = sanitizeObject(data);
+  const { content, contactMethod = "other" } = sanitizeObject(data);
 
   const messages = [
     {

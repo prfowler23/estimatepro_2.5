@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import GuidedFlow from "@/components/estimation/guided-flow";
+import { GuidedEstimationFlow as GuidedFlow } from "@/components/estimation/guided-flow";
 
 // Mock router
 const mockPush = jest.fn();

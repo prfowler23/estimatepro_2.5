@@ -876,7 +876,7 @@ export class WorkflowService {
       const { error } = await supabase.from("estimation_flows").upsert({
         user_id: userId,
         estimate_id: estimateId,
-        flow_data: guidedFlowData,
+        flow_data: guidedFlowData as any,
         current_step: currentStep,
         updated_at: new Date().toISOString(),
       });
@@ -909,7 +909,8 @@ export class WorkflowService {
 
     if (result.success && result.data) {
       return {
-        guidedFlowData: result.data.flow_data || {},
+        guidedFlowData:
+          (result.data.flow_data as GuidedFlowData) || ({} as GuidedFlowData),
         currentStep: result.data.current_step || 1,
       };
     }

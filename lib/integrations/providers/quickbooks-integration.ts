@@ -547,67 +547,82 @@ export class QuickBooksIntegration implements BaseIntegration {
   // Private helper methods
   private async syncCustomersFromQuickBooks(): Promise<IntegrationResponse> {
     // Implementation for syncing customers from QuickBooks
-    return withRetry(async () => {
-      const searchResult = await this.searchRecords("customer", {
-        select: "*",
-        where: "Active = true",
-      });
+    const result = await withRetry(
+      async () => {
+        const searchResult = await this.searchRecords("customer", {
+          select: "*",
+          where: "Active = true",
+        });
 
-      if (!searchResult.success) {
-        return searchResult;
-      }
-
-      const customers = searchResult.data?.QueryResponse?.Customer || [];
-      const supabase = createClient();
-      let syncedCount = 0;
-      const errors: string[] = [];
-
-      for (const qbCustomer of customers) {
-        try {
-          const customerData =
-            this.mapQuickBooksCustomerToEstimatePro(qbCustomer);
-
-          // Upsert customer in EstimatePro database
-          const { error } = await supabase.from("customers").upsert(
-            {
-              ...customerData,
-              quickbooks_id: qbCustomer.Id,
-              integration_source: "quickbooks",
-              last_sync: new Date().toISOString(),
-            },
-            {
-              onConflict: "quickbooks_id",
-            },
-          );
-
-          if (error) {
-            errors.push(
-              `Failed to sync customer ${qbCustomer.Name}: ${error.message}`,
-            );
-          } else {
-            syncedCount++;
-          }
-        } catch (error) {
-          errors.push(
-            `Error processing customer ${qbCustomer.Name}: ${error instanceof Error ? error.message : "Unknown error"}`,
-          );
+        if (!searchResult.success) {
+          return searchResult;
         }
-      }
 
-      return {
-        success: errors.length === 0,
-        data: {
-          synced_customers: syncedCount,
-          total_customers: customers.length,
-        },
-        warnings: errors.length > 0 ? errors : undefined,
-      };
-    });
+        const customers = searchResult.data?.QueryResponse?.Customer || [];
+        const supabase = createClient();
+        let syncedCount = 0;
+        const errors: string[] = [];
+
+        for (const qbCustomer of customers) {
+          try {
+            const customerData =
+              this.mapQuickBooksCustomerToEstimatePro(qbCustomer);
+
+            // Upsert customer in EstimatePro database
+            const { error } = await supabase.from("customers").upsert(
+              {
+                ...customerData,
+                quickbooks_id: qbCustomer.Id,
+                integration_source: "quickbooks",
+                last_sync: new Date().toISOString(),
+              },
+              {
+                onConflict: "quickbooks_id",
+              },
+            );
+
+            if (error) {
+              errors.push(
+                `Failed to sync customer ${qbCustomer.Name}: ${error.message}`,
+              );
+            } else {
+              syncedCount++;
+            }
+          } catch (error) {
+            errors.push(
+              `Error processing customer ${qbCustomer.Name}: ${error instanceof Error ? error.message : "Unknown error"}`,
+            );
+          }
+        }
+
+        return {
+          success: errors.length === 0,
+          data: {
+            synced_customers: syncedCount,
+            total_customers: customers.length,
+          },
+          warnings: errors.length > 0 ? errors : undefined,
+        };
+      },
+      {
+        maxAttempts: 3,
+        delayMs: 1000,
+        backoffFactor: 1.5,
+        maxDelayMs: 5000,
+      },
+    );
+
+    return result.success && result.data
+      ? result.data
+      : {
+          success: false,
+          error: result.error?.message || "Sync failed",
+        };
   }
 
   private async syncItemsFromQuickBooks(): Promise<IntegrationResponse> {
     // Implementation for syncing items/services from QuickBooks
-    return withRetry(async () => {
+    const result = await withRetry(async () => {
       const searchResult = await this.searchRecords("item", {
         select: "*",
         where: "Active = true AND Type = 'Service'",
@@ -664,7 +679,7 @@ export class QuickBooksIntegration implements BaseIntegration {
 
   private async syncEstimatesToQuickBooks(): Promise<IntegrationResponse> {
     // Implementation for syncing estimates to QuickBooks
-    return withRetry(async () => {
+    const result = await withRetry(async () => {
       const supabase = createClient();
 
       // Get unsynced estimates from EstimatePro
@@ -750,7 +765,7 @@ export class QuickBooksIntegration implements BaseIntegration {
 
   private async syncApprovedEstimatesAsInvoices(): Promise<IntegrationResponse> {
     // Implementation for converting approved estimates to invoices
-    return withRetry(async () => {
+    const result = await withRetry(async () => {
       const supabase = createClient();
 
       // Get approved estimates that haven't been converted to invoices

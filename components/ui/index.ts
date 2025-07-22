@@ -66,3 +66,5 @@ export {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
+export { Breadcrumb, useBreadcrumbs } from "./breadcrumb";
+export type { BreadcrumbItem, BreadcrumbProps } from "./breadcrumb";

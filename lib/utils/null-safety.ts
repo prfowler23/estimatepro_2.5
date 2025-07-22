@@ -313,7 +313,7 @@ export function useSafeState<T>(
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const React = require("react");
-  const [state, setState] = React.useState<T>(initialValue ?? defaultValue);
+  const [state, setState] = React.useState(initialValue ?? defaultValue);
 
   const setSafeState = (value: T | null | undefined) => {
     setState(value ?? defaultValue);
@@ -388,7 +388,7 @@ export function chain<T>(value: T | null | undefined): SafeChain<T> {
   return new SafeChain(value);
 }
 
-export default {
+const nullSafetyUtils = {
   isNotNull,
   isNull,
   safeGet,
@@ -401,3 +401,5 @@ export default {
   validate,
   withDefault,
 };
+
+export default nullSafetyUtils;

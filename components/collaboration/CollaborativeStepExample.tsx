@@ -224,7 +224,7 @@ export function CollaborativeStepExample({
                 onChange={(value) => handleFieldChange("email", value)}
                 type="email"
                 label="Email Address"
-                placeholder="customer@example.com"
+                placeholder="customer@company.com"
                 required
                 stepId={stepId}
                 showCollaborationInfo={isConnected}

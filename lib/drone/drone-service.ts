@@ -3,6 +3,8 @@
  * Comprehensive drone flight planning, management, and compliance system
  */
 
+import { PilotService } from "@/lib/services/pilot-service";
+
 export interface DroneSpec {
   id: string;
   name: string;
@@ -235,9 +237,11 @@ export class DroneService {
   private droneFleet: DroneSpec[] = [];
   private flightPlans: FlightPlan[] = [];
   private flightResults: DroneFlightResult[] = [];
+  private pilotService: PilotService;
 
   constructor() {
     this.initializeDefaultDrones();
+    this.pilotService = new PilotService();
   }
 
   // Drone Fleet Management
@@ -314,6 +318,38 @@ export class DroneService {
     );
     const safetyChecklist = this.generateSafetyChecklist();
 
+    // Get real pilot certification data
+    const pilotCertification = await this.pilotService.getPilotCertification(
+      params.pilotId,
+    );
+
+    if (!pilotCertification) {
+      throw new Error("Pilot certification not found or invalid");
+    }
+
+    // Validate pilot qualifications for this flight
+    const flightRequirements = {
+      requiresThermal: params.objectives.some(
+        (obj) =>
+          obj.type === "roof_inspection" || obj.type === "damage_assessment",
+      ),
+      requiresHighAltitude: waypoints.some((wp) => wp.altitude > 200),
+      requiresNightFlight: false, // Would be determined by planned flight time
+      flightDistance: flightPath.totalDistance / 1000, // Convert to km
+    };
+
+    const qualificationCheck =
+      await this.pilotService.validatePilotQualifications(
+        params.pilotId,
+        flightRequirements,
+      );
+
+    if (!qualificationCheck.qualified) {
+      throw new Error(
+        `Pilot not qualified for this flight: ${qualificationCheck.issues.join(", ")}`,
+      );
+    }
+
     const flightPlan: FlightPlan = {
       id: `flight-${Date.now()}`,
       name: `Flight Plan - ${new Date().toLocaleDateString()}`,
@@ -329,10 +365,10 @@ export class DroneService {
       permits: await this.checkRequiredPermits(params.location),
       status: "draft",
       pilot: {
-        id: params.pilotId,
-        name: "Certified Pilot", // Would be fetched from database
-        licenseNumber: "PART107-XXXXXX",
-        certifications: ["Part 107", "Visual Observer"],
+        id: pilotCertification.pilotId,
+        name: pilotCertification.pilotName,
+        licenseNumber: pilotCertification.licenseNumber,
+        certifications: pilotCertification.certifications,
       },
     };
 

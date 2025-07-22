@@ -54,7 +54,7 @@ export class AutoSaveService {
     saveInterval: 30000, // 30 seconds
     maxRetries: 3,
     retryDelay: 2000, // 2 seconds
-    enableVersionControl: true,
+    enableVersionControl: false, // disabled by default – can be re-enabled via hook config
     maxVersions: 50,
     conflictDetectionEnabled: true,
     compressionEnabled: true,
@@ -329,7 +329,7 @@ export class AutoSaveService {
               .insert({
                 quote_number: estimateId,
                 customer_name: "Estimate Customer",
-                customer_email: "customer@example.com",
+                customer_email: null, // Will be filled when customer is selected
                 building_name: `Building for ${estimateId}`,
                 created_by: userId,
               })
@@ -357,9 +357,85 @@ export class AutoSaveService {
         }
       }
 
+      // Ensure we always include an authenticated user_id – fetch from Supabase if not provided
+      let effectiveUserId = userId;
+      if (!effectiveUserId) {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          effectiveUserId = session?.user?.id || undefined;
+        } catch (authErr) {
+          console.warn(
+            "Unable to retrieve auth session while saving:",
+            authErr,
+          );
+        }
+      }
+
+      if (!effectiveUserId) {
+        console.error(
+          "Auto-save aborted – no authenticated user found, cannot satisfy RLS policy.",
+        );
+        throw new Error("Not authenticated: user ID missing");
+      }
+
+      // ---------------------------------------------------------------------------
+      // Guarantee foreign-key integrity: create a stub record in `estimates` if one
+      // does not already exist for `actualEstimateId`.
+      // ---------------------------------------------------------------------------
+      try {
+        const { data: existingEstimate, error: estimateLookupErr } =
+          await supabase
+            .from("estimates")
+            .select("id")
+            .eq("id", actualEstimateId)
+            .single();
+
+        if (estimateLookupErr && estimateLookupErr.code !== "PGRST116") {
+          // PGRST116 = no rows returned; any other error we surface for visibility
+          console.warn(
+            "Unexpected error looking up estimate:",
+            estimateLookupErr,
+          );
+        }
+
+        if (!existingEstimate) {
+          // Create a minimal placeholder estimate so the FK constraint passes.
+          const placeholderQuote = `AUTO-${Date.now()}`;
+          const insertPayload: any = {
+            id: actualEstimateId,
+            quote_number: placeholderQuote,
+            customer_name: "New Customer",
+            customer_email: "placeholder@example.com",
+            building_name: "Untitled Building",
+            building_address: "",
+            building_height_stories: 0,
+            total_price: 0,
+            status: "draft",
+            created_by: effectiveUserId,
+          };
+
+          const { error: createEstimateErr } = await supabase
+            .from("estimates")
+            .insert(insertPayload);
+
+          if (createEstimateErr) {
+            console.error(
+              "Failed to create placeholder estimate, auto-save will abort:",
+              createEstimateErr,
+            );
+            throw createEstimateErr;
+          }
+        }
+      } catch (fkGuardErr) {
+        // Rethrow so outer retry logic can handle
+        throw fkGuardErr;
+      }
+
       const upsertData = {
         estimate_id: actualEstimateId,
-        user_id: userId,
+        user_id: effectiveUserId,
         current_step: saveData.current_step || 1,
         status: "draft",
 
@@ -468,10 +544,12 @@ export class AutoSaveService {
     localVersion: number,
   ): Promise<boolean> {
     try {
+      // Try to fetch versioning information; fall back gracefully if these columns
+      // are absent in the current schema.
       const result = await withDatabaseRetry(async () => {
         const { data, error } = await supabase
           .from("estimation_flows")
-          .select("version, last_modified")
+          .select("version, updated_at")
           .eq("estimate_id", estimateId)
           .single();
 
@@ -480,9 +558,11 @@ export class AutoSaveService {
       });
 
       if (result.success && result.data) {
-        const serverVersion = result.data.version || 1;
+        const serverVersion = (result.data as any).version || 1;
         this.updateSaveState(estimateId, { serverVersion });
-        return serverVersion > localVersion;
+        return (result.data as any).version
+          ? (result.data as any).version > localVersion
+          : false; // if version column absent, skip conflict detection
       }
 
       return false;

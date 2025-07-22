@@ -23,6 +23,10 @@ import {
   CheckCircle,
   XCircle,
   Building,
+  TestTube as Flask,
+  Building2,
+  Camera,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase/client";
@@ -205,7 +209,7 @@ export function SettingsContent() {
       )}
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
@@ -213,6 +217,10 @@ export function SettingsContent() {
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
             Company
+          </TabsTrigger>
+          <TabsTrigger value="labs" className="flex items-center gap-2">
+            <Flask className="h-4 w-4" />
+            Labs
           </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" />
@@ -335,6 +343,94 @@ export function SettingsContent() {
                   {loading ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="labs" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Flask className="h-5 w-5" />
+                Experimental Features
+              </CardTitle>
+              <CardDescription>
+                Explore cutting-edge features and demos. These are experimental
+                and may not be fully stable.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* 3D Visualization Demo */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Building2 className="h-6 w-6 text-blue-600 mt-1" />
+                  <div>
+                    <h3 className="font-semibold">3D Building Visualization</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Interactive 3D building modeling with measurement tools
+                      and service area management
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        Beta
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Canvas Rendering
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                <Button variant="outline" asChild>
+                  <a href="/3d-demo" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Demo
+                  </a>
+                </Button>
+              </div>
+
+              {/* Drone Integration Demo */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Camera className="h-6 w-6 text-green-600 mt-1" />
+                  <div>
+                    <h3 className="font-semibold">Drone Operations Platform</h3>
+                    <p className="text-sm text-muted-foreground">
+                      AI flight planning, aerial analysis, and fleet management
+                      with weather integration
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        Experimental
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        FAA Compliant
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                <Button variant="outline" asChild>
+                  <a
+                    href="/drone-demo"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Demo
+                  </a>
+                </Button>
+              </div>
+
+              <Separator />
+
+              <Alert>
+                <Flask className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>About Labs:</strong> These experimental features are
+                  designed to showcase future capabilities of EstimatePro. They
+                  may undergo significant changes and are not recommended for
+                  production workflows.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </TabsContent>

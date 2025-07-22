@@ -98,7 +98,7 @@ export const contactExtractionSchema = z.object({
     .max(10000, "Content too long"),
   contactMethod: z
     .enum(["email", "phone", "meeting", "walkin", "other"])
-    .default("other"),
+    .optional(),
 });
 
 // Photo analysis

@@ -1,7 +1,7 @@
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { rateLimit, rateLimitConfigs } from "@/lib/utils/rate-limiter";
+import { rateLimit } from "@/lib/middleware/rate-limit";
 
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next();
@@ -12,53 +12,13 @@ export async function middleware(request: NextRequest) {
 
   // Apply global rate limiting to API routes
   if (request.nextUrl.pathname.startsWith("/api/")) {
-    let rateLimitConfig = rateLimitConfigs.api;
+    const rateLimitResponse = await rateLimit(request);
 
-    // Use more restrictive limits for specific route types
-    if (request.nextUrl.pathname.startsWith("/api/ai/")) {
-      rateLimitConfig = rateLimitConfigs.ai;
-    } else if (request.nextUrl.pathname.includes("/auth/")) {
-      rateLimitConfig = rateLimitConfigs.auth;
-    } else if (
-      request.method === "POST" ||
-      request.method === "PUT" ||
-      request.method === "DELETE" ||
-      request.method === "PATCH"
-    ) {
-      rateLimitConfig = rateLimitConfigs.write;
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
-    const limiter = rateLimit(rateLimitConfig);
-    const rateLimitResult = await limiter(request);
-
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "Rate limit exceeded",
-          limit: rateLimitResult.limit,
-          remaining: rateLimitResult.remaining,
-          reset: rateLimitResult.reset,
-          retryAfter: rateLimitResult.retryAfter,
-        },
-        {
-          status: 429,
-          headers: {
-            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
-            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-            "X-RateLimit-Reset": rateLimitResult.reset.toString(),
-            "Retry-After": rateLimitResult.retryAfter?.toString() || "60",
-          },
-        },
-      );
-    }
-
-    // Add rate limit headers to successful requests
-    res.headers.set("X-RateLimit-Limit", rateLimitResult.limit.toString());
-    res.headers.set(
-      "X-RateLimit-Remaining",
-      rateLimitResult.remaining.toString(),
-    );
-    res.headers.set("X-RateLimit-Reset", rateLimitResult.reset.toString());
+    // Rate limit headers are set by the rateLimit function
   }
 
   // Get session from Supabase

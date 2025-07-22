@@ -370,7 +370,7 @@ async function executeRollback(context: OperationContext): Promise<void> {
         // Compensate creation by deleting the created record
         if (recordId) {
           const { error } = await supabase
-            .from(table)
+            .from(table as any)
             .delete()
             .eq("id", recordId);
           if (error) throw error;
@@ -382,7 +382,7 @@ async function executeRollback(context: OperationContext): Promise<void> {
         // Compensate update by restoring original data
         if (recordId && originalData) {
           const { error } = await supabase
-            .from(table)
+            .from(table as any)
             .update(originalData)
             .eq("id", recordId);
           if (error) throw error;
@@ -393,7 +393,9 @@ async function executeRollback(context: OperationContext): Promise<void> {
       case "delete":
         // Compensate deletion by recreating the record
         if (originalData) {
-          const { error } = await supabase.from(table).insert(originalData);
+          const { error } = await supabase
+            .from(table as any)
+            .insert(originalData);
           if (error) throw error;
           console.log(`Rolled back deletion from ${table}`);
         }

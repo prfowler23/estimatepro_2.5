@@ -1,0 +1,14 @@
+🔍 [2025-07-22T00:02:22.507Z] Starting database migration deployment...
+🔍 [2025-07-22T00:02:22.507Z] ============================================================
+🔍 [2025-07-22T00:02:22.507Z] Validating environment configuration...
+✅ [2025-07-22T00:02:22.507Z] Environment validation passed
+💾 [2025-07-22T00:02:22.507Z] Creating database backup before migration...
+⚠️ [2025-07-22T00:02:22.817Z] Supabase CLI not available - please create manual backup
+🔍 [2025-07-22T00:02:22.817Z] Manual backup command:
+🔍 [2025-07-22T00:02:22.817Z] pg_dump -h <host> -U <user> -d <database> > /home/prfowler/estimatepro/backups/backup-2025-07-22T00-02-22-507Z.sql
+❌ [2025-07-22T00:02:24.144Z] Deployment failed: Database backup required
+🔍 [2025-07-22T00:02:24.144Z] ============================================================
+🔍 [2025-07-22T00:02:24.144Z] DATABASE MIGRATION DEPLOYMENT REPORT
+🔍 [2025-07-22T00:02:24.144Z] ============================================================
+❌ [2025-07-22T00:02:24.145Z] 🚨 Migration deployment completed with errors:
+❌ [2025-07-22T00:02:24.145Z]   - Database backup required before migration

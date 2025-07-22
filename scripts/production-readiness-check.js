@@ -213,13 +213,13 @@ class ProductionReadinessChecker {
     this.log("Checking database setup...");
 
     // Check for database schema files
-    this.checkFile("database_schema.sql", "Database schema");
+    this.checkFile("sql/schema/database_schema.sql", "Database schema");
 
-    // Check for migration files
+    // Check for migration files in correct location
     const migrationFiles = [
-      "migration_fix_estimation_flows_schema.sql",
-      "migration_auto_save_system.sql",
-      "migration_guided_estimation_flow.sql",
+      "sql/migrations/migration_fix_estimation_flows_schema.sql",
+      "sql/migrations/migration_auto_save_system.sql",
+      "sql/migrations/migration_guided_estimation_flow.sql",
     ];
 
     migrationFiles.forEach((file) => {
@@ -246,7 +246,7 @@ class ProductionReadinessChecker {
     // Check for key API endpoints
     const keyEndpoints = [
       "app/api/ai/enhanced-photo-analysis/route.ts",
-      "app/api/ai/auto-quote/route.ts",
+      "app/api/ai/auto-estimate/route.ts",
       "app/api/analytics/route.ts",
       "app/api/estimation-flows/route.ts",
     ];

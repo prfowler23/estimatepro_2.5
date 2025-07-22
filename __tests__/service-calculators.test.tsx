@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ServiceCalculator from "@/components/calculator/service-calculator";
+import { ServiceCalculator } from "@/components/calculator/service-calculator";
 
 // Mock calculator context
 const mockCalculatorStore = {

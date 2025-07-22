@@ -1,5 +1,8 @@
 // Re-export types from the comprehensive Supabase types file
-export type { Database, Json } from "./supabase";
+import type { Database as SupabaseDatabase, Json } from "./supabase";
+
+export type Database = SupabaseDatabase;
+export type { Json };
 
 // Additional helper types for common database operations
 export type Tables<T extends keyof Database["public"]["Tables"]> =

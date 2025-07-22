@@ -1,58 +1,86 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authenticateRequest } from "@/lib/auth/server";
-import { AnalyticsService } from "@/lib/analytics/data";
+import { AnalyticsService } from "@/lib/services/analytics-service";
+import { getHandler, postHandler } from "@/lib/api/api-handler";
+import { z } from "zod";
+
+const analyticsQuerySchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  userId: z.string().optional(),
+  limit: z.string().transform(Number).optional(),
+  offset: z.string().transform(Number).optional(),
+});
 
 export async function GET(request: NextRequest) {
-  try {
-    // Authenticate the request
-    const { user, error: authError } = await authenticateRequest(request);
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
-    const metrics = searchParams.get("metrics")?.split(",");
-
-    // Fetch analytics data
-    const analyticsData = await AnalyticsService.getFullAnalyticsData();
-
-    // Filter data based on parameters if provided
-    let filteredData = analyticsData;
-
-    if (metrics) {
-      // Return only requested metrics
-      const allowedMetrics = [
-        "overview",
-        "revenue",
-        "services",
-        "customers",
-        "conversion",
-        "locations",
-      ];
-      const requestedMetrics = metrics.filter((metric) =>
-        allowedMetrics.includes(metric),
+  return getHandler(
+    request,
+    async (context) => {
+      const searchParams = new URL(request.url).searchParams;
+      const params = analyticsQuerySchema.parse(
+        Object.fromEntries(searchParams),
       );
 
-      filteredData = Object.fromEntries(
-        Object.entries(analyticsData).filter(([key]) =>
-          requestedMetrics.includes(key),
-        ),
-      ) as typeof analyticsData;
-    }
+      // Create analytics service with proper parameters
+      const analyticsService = new AnalyticsService(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      );
 
-    return NextResponse.json({
-      success: true,
-      data: filteredData,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Analytics error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch analytics" },
-      { status: 500 },
-    );
-  }
+      const analytics = await analyticsService.getAnalyticsMetrics({
+        startDate: params.startDate ? new Date(params.startDate) : undefined,
+        endDate: params.endDate ? new Date(params.endDate) : undefined,
+        userIds: params.userId
+          ? [params.userId]
+          : context.user?.id
+            ? [context.user.id]
+            : undefined,
+      });
+
+      return analytics;
+    },
+    { requireAuth: true },
+  );
+}
+
+const eventSchema = z.object({
+  eventType: z.string(),
+  eventData: z.record(z.any()),
+  sessionId: z.string().optional(),
+});
+
+export async function POST(request: NextRequest) {
+  return postHandler(
+    request,
+    eventSchema,
+    async (data, context) => {
+      // Create analytics service with proper parameters
+      const analyticsService = new AnalyticsService(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      );
+
+      // Use updateWorkflowStep to track the event
+      const result = await analyticsService.updateWorkflowStep(
+        data.sessionId || "unknown",
+        data.eventType,
+        data.eventType,
+        {
+          stepId: data.eventType,
+          stepName: data.eventType,
+          startTime: new Date(),
+          endTime: new Date(),
+          duration: 0,
+          visitCount: 1,
+          backtrackCount: 0,
+          validationErrors: 0,
+          aiAssistanceUsed: false,
+          helpViewCount: 0,
+          timeSpentInHelp: 0,
+        },
+      );
+
+      return result;
+    },
+    { requireAuth: true },
+  );
 }

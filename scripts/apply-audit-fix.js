@@ -23,7 +23,10 @@ async function applyAuditFix() {
 
   try {
     // Read the audit fix file
-    const auditFixSQL = fs.readFileSync("fix-audit-permissions.sql", "utf8");
+    const auditFixSQL = fs.readFileSync(
+      "sql/fixes/fix-audit-permissions.sql",
+      "utf8",
+    );
 
     console.log("📄 Audit fix file loaded successfully");
     console.log(`📊 File size: ${(auditFixSQL.length / 1024).toFixed(1)}KB`);

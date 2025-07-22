@@ -1464,7 +1464,9 @@ export class WeatherService {
     // Check last window
     if (currentWindow && consecutiveGoodDays >= minWindowDays) {
       const finalWindow: OptimalWindow = {
-        ...currentWindow,
+        start: currentWindow.start!,
+        end: currentWindow.end!,
+        services: currentWindow.services!,
         score: windowScore / consecutiveGoodDays,
         duration: consecutiveGoodDays,
       };

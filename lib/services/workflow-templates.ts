@@ -563,7 +563,7 @@ export class WorkflowTemplateService {
         // Templates with AI integration get bonus usage
         const hasAISteps =
           template.customSteps?.some(
-            (step) =>
+            (step: any) =>
               step.config?.enableAI ||
               step.component?.includes("ai") ||
               step.title?.toLowerCase().includes("ai"),

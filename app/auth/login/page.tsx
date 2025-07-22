@@ -16,7 +16,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Building, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { debug, info, warn, error as logError } from "@/lib/utils/logger";
+import { error as logError } from "@/lib/utils/logger";
 
 export default function LoginPage() {
   const { signIn, loading: authLoading, user } = useAuth();
@@ -32,11 +32,6 @@ export default function LoginPage() {
 
   // Environment validation
   useEffect(() => {
-    debug("Checking environment configuration", {
-      component: "LoginPage",
-      action: "environmentValidation",
-    });
-
     // Add a small delay to allow Next.js to inject environment variables
     const checkEnv = () => {
       const missingVars = [];
@@ -58,21 +53,11 @@ export default function LoginPage() {
 
         // In development, be more lenient
         if (process.env.NODE_ENV === "development") {
-          warn(
-            "Environment variables missing in development - continuing anyway",
-            {
-              component: "LoginPage",
-              missingVars,
-            },
-          );
           setEnvError("");
         } else {
           setEnvError(message);
         }
       } else {
-        debug("Environment configuration validated successfully", {
-          component: "LoginPage",
-        });
         setEnvError("");
       }
     };
@@ -84,38 +69,17 @@ export default function LoginPage() {
   // Only redirect if already logged in when page first loads
   useEffect(() => {
     if (!authLoading && user && !loading) {
-      info("User already authenticated, redirecting to dashboard", {
-        component: "LoginPage",
-        action: "automaticRedirect",
-        userId: user.id,
-      });
       router.replace("/dashboard");
     }
   }, [authLoading, user, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🚀 Login form submitted with:", formData);
-    console.log("🔧 Environment check:", {
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL
-        ? "✅ Set"
-        : "❌ Missing",
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        ? "✅ Set"
-        : "❌ Missing",
-    });
-
     setLoading(true);
     setError("");
 
     try {
-      console.log("📡 Attempting Supabase sign in...");
       const { data, error } = await signIn(formData.email, formData.password);
-      console.log("📊 Supabase response:", {
-        success: !!data.user,
-        error: error?.message || "None",
-        user: data.user ? { id: data.user.id, email: data.user.email } : null,
-      });
 
       if (error) {
         logError("Login authentication failed", {
@@ -143,19 +107,19 @@ export default function LoginPage() {
         }
         setError(userMessage);
       } else if (data.user) {
-        console.log("✅ Login successful! Redirecting to dashboard...");
-        // Simple redirect - development middleware will allow access
         router.push("/dashboard");
       } else {
-        console.warn("⚠️ No error but no user returned");
         setError("Login failed - no user returned");
       }
     } catch (err: any) {
-      console.error("💥 Unexpected error during login:", err);
+      logError("Unexpected error during login", {
+        component: "LoginPage",
+        action: "signIn",
+        error: err.message,
+      });
       setError(`An unexpected error occurred: ${err.message}`);
     } finally {
       setLoading(false);
-      console.log("🏁 Login attempt completed");
     }
   };
 
@@ -167,34 +131,27 @@ export default function LoginPage() {
   };
 
   const handleDemoLogin = async () => {
-    console.log("🎯 Demo login button clicked");
     const demoCredentials = {
       email: "demo@estimatepro.com",
       password: "demo123",
     };
 
-    console.log("📝 Setting demo credentials:", demoCredentials);
     setFormData(demoCredentials);
-
-    // Auto-submit the form with demo credentials
-    console.log("🤖 Auto-submitting demo login...");
     setLoading(true);
     setError("");
 
     try {
-      console.log("📡 Attempting demo Supabase sign in...");
       const { data, error } = await signIn(
         demoCredentials.email,
         demoCredentials.password,
       );
-      console.log("📊 Demo Supabase response:", {
-        success: !!data.user,
-        error: error?.message || "None",
-        user: data.user ? { id: data.user.id, email: data.user.email } : null,
-      });
 
       if (error) {
-        console.error("❌ Demo login error:", error);
+        logError("Demo login authentication failed", {
+          component: "LoginPage",
+          action: "demoSignIn",
+          error: error.message,
+        });
         // Provide user-friendly demo error messages
         let userMessage = error.message;
         if (error.message.toLowerCase().includes("invalid login credentials")) {
@@ -211,19 +168,19 @@ export default function LoginPage() {
         }
         setError(`Demo login failed: ${userMessage}`);
       } else if (data.user) {
-        console.log("✅ Demo login successful! Redirecting to dashboard...");
-        // Simple redirect - development middleware will allow access
         router.push("/dashboard");
       } else {
-        console.warn("⚠️ Demo login: No error but no user returned");
         setError("Demo login failed - no user returned");
       }
     } catch (err: any) {
-      console.error("💥 Unexpected error during demo login:", err);
+      logError("Unexpected error during demo login", {
+        component: "LoginPage",
+        action: "demoSignIn",
+        error: err.message,
+      });
       setError(`Demo login error: ${err.message}`);
     } finally {
       setLoading(false);
-      console.log("🏁 Demo login attempt completed");
     }
   };
 

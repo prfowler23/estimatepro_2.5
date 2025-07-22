@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { VendorService, type Vendor } from "@/lib/services/vendor-service";
 
 interface Equipment {
   id: string;
@@ -48,26 +49,6 @@ interface VendorPricing {
   bulkDiscounts?: { quantity: number; discount: number }[];
 }
 
-interface Vendor {
-  id: string;
-  name: string;
-  type: "equipment" | "material" | "both";
-  rating: number;
-  reliability: number;
-  preferredVendor: boolean;
-  contact: {
-    name: string;
-    phone: string;
-    email: string;
-    address?: string;
-  };
-  paymentTerms: string;
-  deliveryRadius: number; // miles
-  specialties: string[];
-  notes?: string;
-  lastUsed?: Date;
-}
-
 interface VendorSelectorProps {
   type: "equipment" | "material";
   item: Equipment | Material;
@@ -90,6 +71,7 @@ export function VendorSelector({
   const [customPrice, setCustomPrice] = useState("");
   const [showAddVendor, setShowAddVendor] = useState(false);
   const [loading, setLoading] = useState(true);
+  const vendorService = new VendorService();
 
   useEffect(() => {
     loadVendors();
@@ -97,109 +79,27 @@ export function VendorSelector({
 
   const loadVendors = async () => {
     setLoading(true);
+    try {
+      // Use real vendor service instead of mock data
+      const vendorType = type === "material" ? "materials" : type;
+      const allVendors = await vendorService.getVendors({
+        type: vendorType as "equipment" | "materials" | "both",
+      });
 
-    // Mock vendor data - replace with actual API call
-    const mockVendors: Vendor[] = [
-      {
-        id: "sunbelt",
-        name: "Sunbelt Rentals",
-        type: "equipment",
-        rating: 4.5,
-        reliability: 0.95,
-        preferredVendor: true,
-        contact: {
-          name: "John Smith",
-          phone: "555-0123",
-          email: "john@sunbelt.com",
-          address: "123 Industrial Blvd",
-        },
-        paymentTerms: "Net 30",
-        deliveryRadius: 50,
-        specialties: ["Aerial Equipment", "Power Tools"],
-        notes: "Excellent service, fast delivery",
-        lastUsed: new Date("2024-01-15"),
-      },
-      {
-        id: "united",
-        name: "United Rentals",
-        type: "equipment",
-        rating: 4.2,
-        reliability: 0.92,
-        preferredVendor: false,
-        contact: {
-          name: "Mike Johnson",
-          phone: "555-0456",
-          email: "mike@united.com",
-        },
-        paymentTerms: "Net 30",
-        deliveryRadius: 75,
-        specialties: ["Heavy Equipment", "Generators"],
-      },
-      {
-        id: "chemstation",
-        name: "ChemStation",
-        type: "material",
-        rating: 4.8,
-        reliability: 0.98,
-        preferredVendor: true,
-        contact: {
-          name: "Sarah Johnson",
-          phone: "555-0789",
-          email: "sarah@chemstation.com",
-        },
-        paymentTerms: "Net 15",
-        deliveryRadius: 100,
-        specialties: ["Cleaning Chemicals", "Industrial Supplies"],
-        lastUsed: new Date("2024-02-01"),
-      },
-      {
-        id: "ecolab",
-        name: "Ecolab",
-        type: "material",
-        rating: 4.6,
-        reliability: 0.96,
-        preferredVendor: false,
-        contact: {
-          name: "David Wilson",
-          phone: "555-0321",
-          email: "david@ecolab.com",
-        },
-        paymentTerms: "Net 30",
-        deliveryRadius: 200,
-        specialties: ["Commercial Cleaning", "Sanitization"],
-      },
-      {
-        id: "home-depot",
-        name: "Home Depot Pro",
-        type: "both",
-        rating: 4.0,
-        reliability: 0.88,
-        preferredVendor: false,
-        contact: {
-          name: "Store Manager",
-          phone: "555-0654",
-          email: "pro@homedepot.com",
-        },
-        paymentTerms: "Net 30",
-        deliveryRadius: 25,
-        specialties: ["General Supplies", "Small Equipment"],
-      },
-    ];
+      // Sort by preference, then rating
+      allVendors.sort((a, b) => {
+        if (a.preferredVendor && !b.preferredVendor) return -1;
+        if (!a.preferredVendor && b.preferredVendor) return 1;
+        return b.rating - a.rating;
+      });
 
-    // Filter vendors by type
-    const filteredVendors = mockVendors.filter(
-      (v) => v.type === type || v.type === "both",
-    );
-
-    // Sort by preference, then rating
-    filteredVendors.sort((a, b) => {
-      if (a.preferredVendor && !b.preferredVendor) return -1;
-      if (!a.preferredVendor && b.preferredVendor) return 1;
-      return b.rating - a.rating;
-    });
-
-    setVendors(filteredVendors);
-    setLoading(false);
+      setVendors(allVendors);
+    } catch (error) {
+      console.error("Error loading vendors:", error);
+      setVendors([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getVendorPricing = (vendorId: string): VendorPricing | null => {

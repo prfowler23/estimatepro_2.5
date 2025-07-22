@@ -21,7 +21,7 @@ async function runTransactionMigration() {
     const migrationPath = path.join(
       __dirname,
       "..",
-      "migration_transaction_support.sql",
+      "sql/migrations/migration_transaction_support.sql",
     );
     const migrationSQL = fs.readFileSync(migrationPath, "utf8");
 

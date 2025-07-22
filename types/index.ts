@@ -1,3 +1,3 @@
-export * from "./database";
 export * from "./calculations";
-export * from "./supabase";
+export type { Database } from "./supabase";
+export type { Json } from "./supabase";

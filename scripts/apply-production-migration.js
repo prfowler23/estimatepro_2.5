@@ -24,7 +24,7 @@ async function applyProductionMigration() {
   try {
     // Read the migration file
     const migrationSQL = fs.readFileSync(
-      "production-ready-migration.sql",
+      "sql/migrations/production-ready-migration.sql",
       "utf8",
     );
 

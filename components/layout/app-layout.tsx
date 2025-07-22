@@ -3,7 +3,7 @@
 import { AppHeader } from "./app-header";
 import { useAuth } from "@/contexts/auth-context";
 import { PageLoader } from "@/components/ui/loading/page-loader";
-import { ErrorBoundary } from "@/components/error-handling/error-boundary";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 interface AppLayoutProps {
   children: React.ReactNode;

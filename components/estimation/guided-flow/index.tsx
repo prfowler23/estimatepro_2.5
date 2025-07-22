@@ -28,6 +28,7 @@ import {
   useConflictResolution,
 } from "@/hooks/useAutoSave";
 import { Alert } from "@/components/ui/alert";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
 import { MobileStepNavigation } from "@/components/ui/mobile/MobileStepNavigation";
@@ -144,7 +145,7 @@ export function GuidedEstimationFlow({
     enabled: true,
     config: {
       saveInterval: 30000, // 30 seconds
-      enableVersionControl: true,
+      enableVersionControl: false, // disabled to avoid 400 errors in dev
       conflictDetectionEnabled: true,
     },
     onSaveSuccess: () => {
@@ -466,6 +467,20 @@ export function GuidedEstimationFlow({
           validationErrors={validationErrors}
           className={`${isMobile ? "pb-20" : "max-w-6xl mx-auto p-3 sm:p-6"}`}
         >
+          {/* Breadcrumbs */}
+          <div className="mb-4">
+            <Breadcrumb
+              items={[
+                { title: "Dashboard", href: "/dashboard" },
+                { title: "New Estimate", href: "/estimates/new/guided" },
+                {
+                  title: `Step ${currentStep}: ${STEPS[currentStep - 1]?.name}`,
+                },
+              ]}
+              className="mb-2"
+            />
+          </div>
+
           {/* Desktop Panels */}
           {!isMobile && (
             <div className="mb-6 flex gap-4">
@@ -559,59 +574,94 @@ export function GuidedEstimationFlow({
             )}
           </div>
 
-          {/* Step indicator - Hidden on mobile */}
+          {/* Enhanced Step indicator - Hidden on mobile */}
           {!isMobile && (
             <div className="mb-6 sm:mb-8">
+              {/* Progress bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    Progress: Step {currentStep} of {STEPS.length}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {Math.round((currentStep / STEPS.length) * 100)}% Complete
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+
               {/* Desktop step indicator */}
               <div className="flex items-center justify-between overflow-x-auto">
-                {STEPS.map((step) => {
+                {STEPS.map((step, index) => {
                   const isAvailable = availableSteps.includes(step.id);
                   const isCompleted = currentStep > step.id;
                   const isCurrent = currentStep === step.id;
 
                   return (
-                    <div
-                      key={step.id}
-                      className={`flex flex-col items-center min-w-0 flex-1 cursor-pointer ${
-                        isCurrent
-                          ? "text-primary"
-                          : isCompleted
-                            ? "text-green-600"
-                            : isAvailable
-                              ? "text-blue-600"
-                              : "text-gray-400"
-                      }`}
-                      onClick={() => {
-                        if (isAvailable || isCompleted) {
-                          setCurrentStep(step.id);
-                          setAttemptedNavigation(false);
-                        }
-                      }}
-                    >
+                    <div key={step.id} className="flex items-center flex-1">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 ${
+                        className={`flex flex-col items-center min-w-0 flex-1 cursor-pointer group ${
                           isCurrent
-                            ? "bg-primary text-primary-foreground"
+                            ? "text-primary"
                             : isCompleted
-                              ? "bg-green-600 text-white"
+                              ? "text-green-600"
                               : isAvailable
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-200 text-gray-500"
+                                ? "text-blue-600"
+                                : "text-gray-400"
                         }`}
+                        onClick={() => {
+                          if (isAvailable || isCompleted) {
+                            setCurrentStep(step.id);
+                            setAttemptedNavigation(false);
+                          }
+                        }}
                       >
-                        <span>{step.id}</span>
-                      </div>
-                      <div className="text-xs text-center px-1">
-                        {step.name}
-                      </div>
-                      {!isAvailable && !isCompleted && !isCurrent && (
-                        <div className="text-xs text-gray-400 mt-1">🔒</div>
-                      )}
-                      {step.id < STEPS.length && (
                         <div
-                          className={`hidden md:block w-full h-0.5 mt-4 ${
-                            isCompleted ? "bg-green-600" : "bg-gray-200"
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium mb-2 transition-all duration-200 ${
+                            isCurrent
+                              ? "bg-primary text-primary-foreground shadow-md scale-110"
+                              : isCompleted
+                                ? "bg-green-600 text-white shadow-sm group-hover:bg-green-700"
+                                : isAvailable
+                                  ? "bg-blue-600 text-white shadow-sm group-hover:bg-blue-700"
+                                  : "bg-gray-200 text-gray-500"
                           }`}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle className="h-5 w-5" />
+                          ) : (
+                            <span>{step.id}</span>
+                          )}
+                        </div>
+                        <div
+                          className={`text-xs text-center px-1 font-medium ${isCurrent ? "text-primary" : ""}`}
+                        >
+                          {step.name}
+                        </div>
+                        {isCurrent && (
+                          <div className="text-xs text-center mt-1 px-2 py-1 bg-primary/10 rounded text-primary font-medium">
+                            Current
+                          </div>
+                        )}
+                        {!isAvailable && !isCompleted && !isCurrent && (
+                          <div className="text-xs text-gray-400 mt-1">🔒</div>
+                        )}
+                      </div>
+
+                      {/* Connector line */}
+                      {index < STEPS.length - 1 && (
+                        <div
+                          className={`w-full h-0.5 mx-2 transition-colors duration-300 ${
+                            currentStep > step.id
+                              ? "bg-green-600"
+                              : "bg-gray-200"
+                          }`}
+                          style={{ minWidth: "20px" }}
                         />
                       )}
                     </div>

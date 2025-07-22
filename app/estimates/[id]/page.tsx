@@ -53,18 +53,19 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 interface EstimateData {
   id: string;
   estimate_number: string;
+  quote_number?: string; // For backward compatibility
   customer_name: string;
   customer_email: string;
-  customer_phone: string;
-  company_name: string;
+  customer_phone: string | null;
+  company_name: string | null;
   building_name: string;
   building_address: string;
   building_height_stories: number;
-  building_height_feet: number;
-  building_type: string;
+  building_height_feet: number | null;
+  building_type: string | null;
   total_price: number;
-  status: string;
-  notes: string;
+  status: "draft" | "sent" | "approved" | "rejected";
+  notes: string | null;
   created_at: string;
   updated_at: string;
   services: EstimateService[];
@@ -73,17 +74,17 @@ interface EstimateData {
 interface EstimateService {
   id: string;
   service_type: string;
-  area_sqft: number;
-  glass_sqft: number;
+  area_sqft: number | null;
+  glass_sqft: number | null;
   price: number;
-  labor_hours: number;
-  setup_hours: number;
-  rig_hours: number;
-  total_hours: number;
-  crew_size: number;
-  equipment_type: string;
-  equipment_days: number;
-  equipment_cost: number;
+  labor_hours: number | null;
+  setup_hours: number | null;
+  rig_hours: number | null;
+  total_hours: number | null;
+  crew_size: number | null;
+  equipment_type: string | null;
+  equipment_days: number | null;
+  equipment_cost: number | null;
   calculation_details: any;
 }
 
@@ -114,10 +115,12 @@ function EstimateDetailContent() {
       setLoading(true);
       setError(null);
 
+      const estimateId = Array.isArray(params.id) ? params.id[0] : params.id;
+
       const { data: estimateData, error: estimateError } = await supabase
         .from("estimates")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", estimateId)
         .single();
 
       if (estimateError) throw estimateError;
@@ -125,12 +128,14 @@ function EstimateDetailContent() {
       const { data: servicesData, error: servicesError } = await supabase
         .from("estimate_services")
         .select("*")
-        .eq("estimate_id", params.id);
+        .eq("quote_id", estimateId);
 
       if (servicesError) throw servicesError;
 
       setEstimate({
         ...estimateData,
+        estimate_number:
+          estimateData.quote_number || (estimateData as any).estimate_number, // Map quote_number to estimate_number
         services: servicesData,
       });
     } catch (error: any) {
@@ -155,14 +160,21 @@ function EstimateDetailContent() {
       const { error } = await supabase
         .from("estimates")
         .update({
-          status: newStatus,
+          status: newStatus as "draft" | "sent" | "approved" | "rejected",
           updated_at: new Date().toISOString(),
         })
         .eq("id", estimate.id);
 
       if (error) throw error;
 
-      setEstimate((prev) => (prev ? { ...prev, status: newStatus } : null));
+      setEstimate((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: newStatus as "draft" | "sent" | "approved" | "rejected",
+            }
+          : null,
+      );
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -223,8 +235,8 @@ function EstimateDetailContent() {
       // Duplicate services
       if (estimate.services.length > 0) {
         const serviceInserts = estimate.services.map((service) => ({
-          estimate_id: newEstimate.id,
-          service_type: service.service_type,
+          quote_id: newEstimate.id, // Changed from estimate_id to quote_id
+          service_type: service.service_type as any, // Type cast for service_type
           area_sqft: service.area_sqft,
           glass_sqft: service.glass_sqft,
           price: service.price,

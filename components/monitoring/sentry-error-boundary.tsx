@@ -351,8 +351,9 @@ Timestamp: ${new Date().toISOString()}
               <div className="text-sm text-muted-foreground">
                 {isChunkError ? (
                   <p>
-                    This usually happens when the app is updated while you're
-                    using it. Refreshing the page will load the latest version.
+                    This usually happens when the app is updated while
+                    you&apos;re using it. Refreshing the page will load the
+                    latest version.
                   </p>
                 ) : (
                   <p>

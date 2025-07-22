@@ -194,7 +194,7 @@ export function DroneDashboard({
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Plane className="w-6 h-6 text-blue-500" />
+          <Plane className="w-6 h-6 text-primary-600" />
           Drone Operations Center
         </h2>
         <p className="text-muted-foreground">
@@ -223,28 +223,28 @@ export function DroneDashboard({
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <Wind className="w-6 h-6 mx-auto mb-2 text-blue-500" />
+                  <Wind className="w-6 h-6 mx-auto mb-2 text-primary-600" />
                   <p className="text-sm text-muted-foreground">Wind Speed</p>
                   <p className="text-lg font-bold">
                     {weatherConditions.windSpeed} mph
                   </p>
                 </div>
                 <div className="text-center">
-                  <Eye className="w-6 h-6 mx-auto mb-2 text-green-500" />
+                  <Eye className="w-6 h-6 mx-auto mb-2 text-success-600" />
                   <p className="text-sm text-muted-foreground">Visibility</p>
                   <p className="text-lg font-bold">
                     {weatherConditions.visibility}m
                   </p>
                 </div>
                 <div className="text-center">
-                  <Thermometer className="w-6 h-6 mx-auto mb-2 text-orange-500" />
+                  <Thermometer className="w-6 h-6 mx-auto mb-2 text-warning-600" />
                   <p className="text-sm text-muted-foreground">Temperature</p>
                   <p className="text-lg font-bold">
                     {weatherConditions.temperature}°F
                   </p>
                 </div>
                 <div className="text-center">
-                  <Navigation className="w-6 h-6 mx-auto mb-2 text-purple-500" />
+                  <Navigation className="w-6 h-6 mx-auto mb-2 text-primary-600" />
                   <p className="text-sm text-muted-foreground">Ceiling</p>
                   <p className="text-lg font-bold">
                     {weatherConditions.cloudCeiling}ft
@@ -255,7 +255,9 @@ export function DroneDashboard({
               <div className="mt-4">
                 <Badge
                   className={`w-full justify-center ${
-                    suitability.suitable ? "bg-green-500" : "bg-red-500"
+                    suitability.suitable
+                      ? "bg-success-600 text-white"
+                      : "bg-error-600 text-white"
                   }`}
                 >
                   {suitability.suitable
@@ -403,7 +405,7 @@ export function DroneDashboard({
                       className="flex items-center justify-between p-3 border rounded"
                     >
                       <div className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        <CheckCircle className="w-5 h-5 text-success-600" />
                         <div>
                           <p className="font-medium">
                             Flight {result.flightId}
@@ -414,7 +416,9 @@ export function DroneDashboard({
                           </p>
                         </div>
                       </div>
-                      <Badge className="bg-green-500">Completed</Badge>
+                      <Badge className="bg-success-600 text-white">
+                        Completed
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -434,7 +438,9 @@ export function DroneDashboard({
               <Card
                 key={drone.id}
                 className={
-                  selectedDrone?.id === drone.id ? "ring-2 ring-blue-500" : ""
+                  selectedDrone?.id === drone.id
+                    ? "ring-2 ring-primary-500"
+                    : ""
                 }
               >
                 <CardHeader>
@@ -533,10 +539,10 @@ export function DroneDashboard({
                           <Badge
                             className={
                               plan.status === "completed"
-                                ? "bg-green-500"
+                                ? "bg-success-600 text-white"
                                 : plan.status === "in_progress"
-                                  ? "bg-blue-500"
-                                  : "bg-gray-500"
+                                  ? "bg-primary-600 text-white"
+                                  : "bg-bg-muted text-text-secondary"
                             }
                           >
                             {plan.status}
@@ -629,13 +635,13 @@ export function DroneDashboard({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="text-center p-4 border rounded">
                       <h4 className="font-medium mb-2">Total Flights</h4>
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-2xl font-bold text-primary-600">
                         {flightResults.length}
                       </p>
                     </div>
                     <div className="text-center p-4 border rounded">
                       <h4 className="font-medium mb-2">Photos Captured</h4>
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-2xl font-bold text-success-600">
                         {flightResults.reduce(
                           (sum, result) => sum + result.photosCapture,
                           0,
@@ -644,7 +650,7 @@ export function DroneDashboard({
                     </div>
                     <div className="text-center p-4 border rounded">
                       <h4 className="font-medium mb-2">Flight Hours</h4>
-                      <p className="text-2xl font-bold text-purple-600">
+                      <p className="text-2xl font-bold text-primary-600">
                         {(
                           flightResults.reduce(
                             (sum, result) => sum + result.actualDuration,
@@ -662,7 +668,7 @@ export function DroneDashboard({
                           <h5 className="font-medium">
                             Flight {result.flightId}
                           </h5>
-                          <Badge className="bg-green-500">
+                          <Badge className="bg-success-600 text-white">
                             {result.dataQuality} Quality
                           </Badge>
                         </div>

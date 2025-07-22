@@ -7,7 +7,19 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function createSampleData() {
+  // Production safety check
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "❌ PRODUCTION SAFETY: Sample data creation is disabled in production.",
+    );
+    console.error(
+      "   To create sample data in production, set NODE_ENV=development",
+    );
+    process.exit(1);
+  }
+
   console.log("Creating sample data for analytics testing...");
+  console.log("⚠️  WARNING: This will create test data in your database");
 
   try {
     // Create sample estimates

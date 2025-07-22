@@ -1,7 +1,13 @@
 // Service Worker Registration Script
 // This script registers the service worker and initializes PWA functionality
 
-if ("serviceWorker" in navigator) {
+// Temporarily disable service worker in development
+const isDevelopment =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.includes("localhost");
+
+if ("serviceWorker" in navigator && !isDevelopment) {
   window.addEventListener("load", async () => {
     try {
       const registration = await navigator.serviceWorker.register("/sw.js", {
@@ -33,7 +39,7 @@ if ("serviceWorker" in navigator) {
         console.log("Message from SW:", event.data);
 
         // Handle different message types
-        const { type, payload } = event.data;
+        const { type, payload } = event.data || {};
 
         switch (type) {
           case "CACHE_UPDATED":
@@ -45,12 +51,54 @@ if ("serviceWorker" in navigator) {
           case "ONLINE_MODE":
             console.log("App is now online");
             break;
+          default:
+            // Handle messages without type safely
+            break;
         }
       });
+
+      // Handle service worker errors
+      registration.addEventListener("error", (error) => {
+        console.error("Service Worker error:", error);
+      });
+
+      // Periodically check for updates
+      setInterval(() => {
+        registration.update().catch(console.error);
+      }, 60000); // Check every minute
     } catch (registrationError) {
       console.log("SW registration failed: ", registrationError);
+
+      // Retry registration after a delay if it fails
+      setTimeout(() => {
+        navigator.serviceWorker
+          .register("/sw.js", { scope: "/" })
+          .then(() => console.log("SW registered on retry"))
+          .catch(() => console.log("SW retry failed - continuing without SW"));
+      }, 5000);
     }
   });
+
+  // Handle offline/online events
+  window.addEventListener("online", () => {
+    console.log("Application is online");
+  });
+
+  window.addEventListener("offline", () => {
+    console.log("Application is offline");
+  });
+} else if (isDevelopment) {
+  console.log("Service Worker disabled in development mode");
+
+  // Unregister any existing service workers in development
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+      for (let registration of registrations) {
+        console.log("Unregistering existing service worker");
+        registration.unregister();
+      }
+    });
+  }
 }
 
 // Initialize offline manager when available
@@ -65,17 +113,6 @@ if (typeof window !== "undefined") {
     }
   });
 }
-
-// Handle offline/online events
-window.addEventListener("online", () => {
-  console.log("App is online");
-  document.body.classList.remove("offline");
-});
-
-window.addEventListener("offline", () => {
-  console.log("App is offline");
-  document.body.classList.add("offline");
-});
 
 // Add CSS for offline state
 const style = document.createElement("style");

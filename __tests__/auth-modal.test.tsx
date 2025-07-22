@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import AuthModal from "@/components/auth/auth-modal";
+import { AuthModal } from "@/components/auth/auth-modal";
 
 // Mock auth context
 const mockSignIn = jest.fn();
@@ -26,6 +26,7 @@ describe("AuthModal Component", () => {
   const defaultProps = {
     isOpen: true,
     onClose: jest.fn(),
+    onSuccess: jest.fn(),
   };
 
   beforeEach(() => {

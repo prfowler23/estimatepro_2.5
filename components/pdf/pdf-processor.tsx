@@ -760,7 +760,7 @@ export function PDFProcessor() {
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              Raw text: "{measurement.rawText}"
+                              Raw text: &ldquo;{measurement.rawText}&rdquo;
                             </p>
                           </div>
                           <div className="text-right">

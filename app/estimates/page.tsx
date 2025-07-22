@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import {
   Search,
   Plus,
@@ -297,6 +298,14 @@ function EstimatesContent() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumb
+        items={[
+          { title: "Dashboard", href: "/dashboard" },
+          { title: "Estimates" },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

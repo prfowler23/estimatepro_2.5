@@ -365,7 +365,7 @@ export function EnhancedWeatherDisplay({
               <div>
                 <p className="text-sm text-gray-500">Precipitation</p>
                 <p className="text-lg font-semibold">
-                  {weatherData.current.metrics.precipitation}"
+                  {weatherData.current.metrics.precipitation}&rdquo;
                 </p>
                 <p className="text-xs text-gray-400">
                   {weatherData.current.metrics.humidity}% humidity

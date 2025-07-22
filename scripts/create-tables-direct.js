@@ -36,7 +36,11 @@ async function createTablesDirectly() {
       console.log("");
 
       // Read and display the simplified SQL needed
-      const sqlPath = path.join(__dirname, "create-essential-tables.sql");
+      const sqlPath = path.join(
+        __dirname,
+        "..",
+        "sql/scripts/create-essential-tables.sql",
+      );
       if (fs.existsSync(sqlPath)) {
         const sqlContent = fs.readFileSync(sqlPath, "utf8");
         console.log("--- COPY THIS SQL TO SUPABASE SQL EDITOR ---");

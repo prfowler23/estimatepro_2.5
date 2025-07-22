@@ -43,9 +43,10 @@ async function handleGET(request: NextRequest) {
     } else if (action === "violations") {
       // Get compliance violations
       const { data: violations, error } = await supabase
-        .from("compliance_violations")
+        .from("audit_events")
         .select("*")
-        .order("detected_at", { ascending: false })
+        .eq("event_type", "compliance_violation")
+        .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) {
@@ -60,13 +61,11 @@ async function handleGET(request: NextRequest) {
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const endDate = searchParams.get("end_date") || new Date().toISOString();
 
-      const { data: stats, error } = await supabase.rpc(
-        "get_compliance_statistics",
-        {
-          start_date: startDate,
-          end_date: endDate,
-        },
-      );
+      const { data: stats, error } = await supabase
+        .from("compliance_reports")
+        .select("*")
+        .gte("created_at", startDate)
+        .lte("created_at", endDate);
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -170,14 +169,21 @@ async function handlePOST(request: NextRequest) {
     } else if (action === "detect_suspicious") {
       const { user_id, hours_back = 24 } = params;
 
-      // Detect suspicious activity
-      const { data: suspiciousActivity, error } = await supabase.rpc(
-        "detect_suspicious_activity",
-        {
-          target_user_id: user_id || null,
-          hours_back: hours_back,
-        },
-      );
+      // Detect suspicious activity from audit events
+      const hoursAgo = new Date(
+        Date.now() - (hours_back || 24) * 60 * 60 * 1000,
+      ).toISOString();
+      let query = supabase
+        .from("audit_events")
+        .select("*")
+        .gte("created_at", hoursAgo)
+        .in("event_type", ["failed_login", "suspicious_access", "data_breach"]);
+
+      if (user_id) {
+        query = query.eq("user_id", user_id);
+      }
+
+      const { data: suspiciousActivity, error } = await query;
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

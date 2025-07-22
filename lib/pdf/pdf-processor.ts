@@ -3,7 +3,7 @@
 
 import * as pdfjsLib from "pdfjs-dist";
 import { createWorker } from "tesseract.js";
-import { pdf2pic } from "pdf2pic";
+import pdf2pic from "pdf2pic";
 import { withRetry } from "@/lib/utils/retry-logic";
 import { isNotNull, safeString, safeNumber } from "@/lib/utils/null-safety";
 

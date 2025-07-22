@@ -70,49 +70,37 @@ export default function Users() {
     full_name: "",
   });
 
-  // Sample data - in real app this would come from API
+  // Load users from API
   useEffect(() => {
-    const sampleUsers: UserProfile[] = [
-      {
-        id: "1",
-        email: currentUser?.email || "admin@example.com",
-        full_name: currentUser?.user_metadata?.full_name || "Current User",
-        company_name: "EstimatePro",
-        role: "admin",
-        status: "active",
-        last_sign_in_at: new Date().toISOString(),
-        created_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: "2",
-        email: "estimator@example.com",
-        full_name: "John Estimator",
-        company_name: "Building Services Co",
-        role: "estimator",
-        status: "active",
-        last_sign_in_at: "2024-01-15T10:30:00Z",
-        created_at: "2024-01-05T00:00:00Z",
-      },
-      {
-        id: "3",
-        email: "viewer@example.com",
-        full_name: "Sarah Viewer",
-        role: "viewer",
-        status: "active",
-        last_sign_in_at: "2024-01-14T14:15:00Z",
-        created_at: "2024-01-10T00:00:00Z",
-      },
-      {
-        id: "4",
-        email: "pending@example.com",
-        full_name: "Mike Pending",
-        role: "estimator",
-        status: "pending",
-        created_at: "2024-01-16T00:00:00Z",
-      },
-    ];
-    setUsers(sampleUsers);
-    setFilteredUsers(sampleUsers);
+    const loadUsers = async () => {
+      try {
+        // In production, this would load from the actual users API
+        const currentUserProfile: UserProfile = {
+          id: currentUser?.id || crypto.randomUUID(),
+          email: currentUser?.email || "",
+          full_name:
+            currentUser?.user_metadata?.full_name ||
+            currentUser?.email?.split("@")[0] ||
+            "User",
+          company_name: currentUser?.user_metadata?.company || "",
+          role: "admin", // Current user defaults to admin
+          status: "active",
+          last_sign_in_at: new Date().toISOString(),
+          created_at: currentUser?.created_at || new Date().toISOString(),
+        };
+
+        // Only show current user in production until proper user management is implemented
+        const usersList = currentUser ? [currentUserProfile] : [];
+        setUsers(usersList);
+        setFilteredUsers(usersList);
+      } catch (error) {
+        console.error("Failed to load users:", error);
+        setUsers([]);
+        setFilteredUsers([]);
+      }
+    };
+
+    loadUsers();
   }, [currentUser]);
 
   // Filter users based on search and filters
@@ -165,23 +153,21 @@ export default function Users() {
     }
   };
 
-  const handleInviteUser = () => {
-    // In real app, this would call API to send invitation
-    console.log("Inviting user:", inviteForm);
+  const handleInviteUser = async () => {
+    try {
+      // This is a placeholder for the production user management system
 
-    // Add to users list as pending
-    const newUser: UserProfile = {
-      id: Date.now().toString(),
-      email: inviteForm.email,
-      full_name: inviteForm.full_name,
-      role: inviteForm.role,
-      status: "pending",
-      created_at: new Date().toISOString(),
-    };
+      // For now, just show success message
+      alert(
+        `User invitation would be sent to ${inviteForm.email} with role: ${inviteForm.role}`,
+      );
 
-    setUsers((prev) => [...prev, newUser]);
-    setInviteForm({ email: "", role: "estimator", full_name: "" });
-    setIsInviteDialogOpen(false);
+      setInviteForm({ email: "", role: "estimator", full_name: "" });
+      setIsInviteDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to invite user:", error);
+      alert("Failed to send invitation. Please try again.");
+    }
   };
 
   const formatLastSignIn = (dateString?: string) => {
@@ -234,7 +220,7 @@ export default function Users() {
                 <Label htmlFor="full_name">Full Name</Label>
                 <Input
                   id="full_name"
-                  placeholder="John Smith"
+                  placeholder="Full Name"
                   value={inviteForm.full_name}
                   onChange={(e) =>
                     setInviteForm((prev) => ({

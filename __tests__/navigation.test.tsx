@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import Navigation from "@/components/layout/navigation";
+import { Navigation } from "@/components/layout/navigation";
 
 // Mock the navigation hook
 const mockPush = jest.fn();

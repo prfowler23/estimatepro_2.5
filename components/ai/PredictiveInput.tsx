@@ -198,12 +198,15 @@ export function PredictiveInput({
           <div className="py-1">
             {predictions.predictions.map((prediction, index) => (
               <button
-                key={`${prediction.value}-${index}`}
+                key={`prediction-${field}-${prediction.value}-${index}`}
                 type="button"
                 onClick={() => handleSelectPrediction(prediction.value)}
-                className={`w-full text-left px-3 py-2 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none ${
+                onMouseDown={(e) => e.preventDefault()} // Prevent focus issues
+                className={`w-full text-left px-3 py-2 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
                   index === selectedIndex ? "bg-blue-50" : ""
                 }`}
+                role="option"
+                aria-selected={index === selectedIndex}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-900">

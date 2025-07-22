@@ -109,7 +109,7 @@ export default function Dashboard() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <Button
                   variant="outline"
                   asChild
@@ -148,6 +148,16 @@ export default function Dashboard() {
                   <Link href="/calculator">
                     <Calculator className="h-5 w-5 mb-1" />
                     <span className="text-xs">Calculator</span>
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  asChild
+                  className="h-auto p-3 flex-col border-purple-200 bg-purple-50"
+                >
+                  <Link href="/ai-assistant">
+                    <Bot className="h-5 w-5 mb-1 text-purple-600" />
+                    <span className="text-xs">AI Assistant</span>
                   </Link>
                 </Button>
               </div>

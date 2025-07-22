@@ -93,6 +93,26 @@ async function handlePOST(
 ) {
   const { user } = context;
 
+  // Transform services to match database structure
+  const transformedServices = data.services.map((service: any) => ({
+    serviceType: service.type || service.serviceType,
+    description: service.description || `${service.type} service`,
+    quantity: service.area || 1,
+    unit: "sqft",
+    unitPrice: service.price / (service.area || 1),
+    totalPrice: service.price,
+    duration: service.totalHours || 8, // Default to 8 hours if not provided
+    dependencies: service.dependencies || [], // Default to empty array
+    laborHours: service.laborHours,
+    totalHours: service.totalHours,
+    crewSize: service.crewSize,
+    area_sqft: service.area,
+    price: service.price,
+    labor_hours: service.laborHours,
+    total_hours: service.totalHours,
+    crew_size: service.crewSize,
+  }));
+
   // Create estimate using the business service
   const estimateId = await EstimateBusinessService.createEstimate({
     customerName: data.customerName,
@@ -105,7 +125,7 @@ async function handlePOST(
     buildingHeightFeet: data.buildingHeightFeet,
     buildingType: data.buildingType,
     notes: data.notes,
-    services: data.services,
+    services: transformedServices,
   });
 
   if (!estimateId) {

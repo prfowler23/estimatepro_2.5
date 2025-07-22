@@ -22,7 +22,7 @@ async function runCollaborationMigration() {
     // Read the SQL file
     const migrationFile = path.join(
       __dirname,
-      "../14-add-collaboration-tables.sql",
+      "../sql/migrations/14-add-collaboration-tables.sql",
     );
     const sql = fs.readFileSync(migrationFile, "utf8");
 

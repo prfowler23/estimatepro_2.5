@@ -31,7 +31,11 @@ async function runSecurityFixes() {
     console.log("🔒 Starting database security fixes...\n");
 
     // Read the security fix SQL file
-    const sqlFilePath = path.join(__dirname, "..", "fix-database-security.sql");
+    const sqlFilePath = path.join(
+      __dirname,
+      "..",
+      "sql/fixes/fix-database-security.sql",
+    );
     const sqlContent = fs.readFileSync(sqlFilePath, "utf8");
 
     console.log("📄 Loaded security fix SQL script");

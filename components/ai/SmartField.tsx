@@ -125,8 +125,11 @@ export function SmartField({
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+              {options.map((option, index) => (
+                <SelectItem
+                  key={`${field}-option-${option.value}-${index}`}
+                  value={option.value}
+                >
                   {option.label}
                 </SelectItem>
               ))}
