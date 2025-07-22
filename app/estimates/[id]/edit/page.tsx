@@ -355,7 +355,7 @@ function EstimateEditContent() {
               <Label htmlFor="customer_phone">Phone</Label>
               <Input
                 id="customer_phone"
-                value={estimate.customer_phone}
+                value={estimate.customer_phone || ""}
                 onChange={(e) =>
                   updateEstimateField("customer_phone", e.target.value)
                 }
@@ -518,10 +518,10 @@ function EstimateEditContent() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm space-y-1">
-                        {service.area_sqft > 0 && (
+                        {service.area_sqft && service.area_sqft > 0 && (
                           <div>{service.area_sqft.toLocaleString()} sq ft</div>
                         )}
-                        {service.glass_sqft > 0 && (
+                        {service.glass_sqft && service.glass_sqft > 0 && (
                           <div>
                             {service.glass_sqft.toLocaleString()} sq ft glass
                           </div>
@@ -534,12 +534,12 @@ function EstimateEditContent() {
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium">
-                          {service.total_hours.toFixed(1)} total
+                          {service.total_hours ? service.total_hours.toFixed(1) : '0.0'} total
                         </div>
                         <div className="text-gray-500">
-                          {service.labor_hours.toFixed(1)} +{" "}
-                          {service.setup_hours.toFixed(1)} +{" "}
-                          {service.rig_hours.toFixed(1)}
+                          {service.labor_hours ? service.labor_hours.toFixed(1) : '0.0'} +{" "}
+                          {service.setup_hours ? service.setup_hours.toFixed(1) : '0.0'} +{" "}
+                          {service.rig_hours ? service.rig_hours.toFixed(1) : '0.0'}
                         </div>
                       </div>
                     </TableCell>
@@ -547,7 +547,7 @@ function EstimateEditContent() {
                       {service.equipment_type ? (
                         <div className="text-sm">
                           <div>{service.equipment_type}</div>
-                          {service.equipment_cost > 0 && (
+                          {service.equipment_cost && service.equipment_cost > 0 && (
                             <div className="text-gray-500">
                               ${service.equipment_cost.toLocaleString()}
                             </div>
