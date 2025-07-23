@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AIPricingEngine } from "@/lib/pricing/ai-pricing-engine";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { MarketAnalysisService } from "@/lib/pricing/market-analysis";
 import { WinProbabilityCalculator } from "@/components/pricing/WinProbabilityCalculator";
 import { StrategyComparison } from "@/components/pricing/StrategyComparison";
@@ -194,144 +195,170 @@ export function Pricing({
   const totalRiskImpact = riskFactors.reduce((sum, r) => sum + r.impact, 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Pricing Strategy</h2>
-        <p className="text-gray-600">
-          AI-optimized pricing based on market conditions and win probability.
-        </p>
-      </div>
-
-      {/* Pricing Summary */}
-      <div className="bg-blue-50 rounded-lg p-6">
-        <div className="grid grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm text-gray-600">Base Cost</p>
-            <p className="text-xl font-bold">${baseCost.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">With Margins</p>
-            <p className="text-xl font-bold">
-              ${markedUpTotal.toLocaleString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">AI Recommended</p>
-            <p className="text-xl font-bold text-blue-600">
-              ${pricingRecommendation?.recommendedPrice.toLocaleString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Final Price</p>
-            <p className="text-2xl font-bold text-green-600">
-              ${finalPrice.toLocaleString()}
-            </p>
-          </div>
+    <ErrorBoundary
+      stepId="pricing"
+      stepNumber={8}
+      userId={data?.userId}
+      flowData={data}
+      fallback={
+        <div className="p-6 text-center">
+          <Sparkles className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Pricing Engine Error
+          </h3>
+          <p className="text-gray-600 mb-4">
+            There was an issue with the AI pricing engine or market analysis.
+            You can set prices manually.
+          </p>
+          <Button onClick={onNext} className="mr-2">
+            Continue with Manual Pricing
+          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry AI Engine
+          </Button>
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Pricing Strategy</h2>
+          <p className="text-gray-600">
+            AI-optimized pricing based on market conditions and win probability.
+          </p>
+        </div>
 
-      {/* Strategy Comparison */}
-      <StrategyComparison
-        strategies={[
-          selectedStrategy,
-          ...pricingRecommendation.alternativeStrategies,
-        ]}
-        currentStrategy={selectedStrategy}
-        onSelectStrategy={handleStrategySelect as any}
-      />
-
-      {/* Win Probability Calculator */}
-      <WinProbabilityCalculator
-        currentPrice={finalPrice}
-        winProbability={selectedStrategy?.winProbability || 0.5}
-        pricePoints={pricingRecommendation.alternativeStrategies.map(
-          (s: any) => ({
-            price: s.price,
-            probability: s.winProbability,
-          }),
-        )}
-        optimalPrice={pricingRecommendation.recommendedPrice}
-        onPriceChange={(price) => setFinalPrice(price)}
-      />
-
-      <div className="grid grid-cols-2 gap-6">
-        {/* Risk Factors */}
-        <RiskFactorAnalysis
-          riskFactors={riskFactors as any}
-          totalImpact={totalRiskImpact}
-          projectValue={finalPrice}
-        />
-
-        {/* Manual Override */}
-        <ManualPriceOverride
-          currentPrice={finalPrice}
-          onOverride={handlePriceOverride as any}
-        />
-      </div>
-
-      {/* AI Insights */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="font-semibold text-lg mb-4 flex items-center">
-          <Sparkles className="w-5 h-5 mr-2 text-blue-500" />
-          AI Pricing Insights
-        </h3>
-        <div className="space-y-3">
-          {pricingRecommendation?.insights?.map((insight: any, i: number) => (
-            <div key={i} className="flex items-start">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0" />
-              <p className="text-gray-700">{insight}</p>
+        {/* Pricing Summary */}
+        <div className="bg-blue-50 rounded-lg p-6">
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">Base Cost</p>
+              <p className="text-xl font-bold">${baseCost.toLocaleString()}</p>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Discount Approval Modal */}
-      {showDiscountApproval && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="max-w-2xl w-full mx-4">
-            <DiscountApproval
-              basePrice={markedUpTotal}
-              requestedPrice={finalPrice}
-              discountPercentage={
-                ((markedUpTotal - finalPrice) / markedUpTotal) * 100
-              }
-              reason={
-                selectedStrategy?.adjustments?.[0]?.reason || "Manual override"
-              }
-              onApprove={() => setShowDiscountApproval(false)}
-              onReject={() => {
-                setFinalPrice(markedUpTotal);
-                setShowDiscountApproval(false);
-              }}
-            />
+            <div>
+              <p className="text-sm text-gray-600">With Margins</p>
+              <p className="text-xl font-bold">
+                ${markedUpTotal.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">AI Recommended</p>
+              <p className="text-xl font-bold text-blue-600">
+                ${pricingRecommendation?.recommendedPrice.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Final Price</p>
+              <p className="text-2xl font-bold text-green-600">
+                ${finalPrice.toLocaleString()}
+              </p>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button
-          onClick={() => {
-            onUpdate({
-              pricing: {
-                basePrice: markedUpTotal,
-                finalPrice,
-                strategy: selectedStrategy,
-                winProbability: selectedStrategy?.winProbability || 0.5,
-                adjustments: selectedStrategy?.adjustments || [],
-                riskFactors,
-                confidence: pricingRecommendation?.confidence || 85,
-              },
-            });
-            onNext();
-          }}
-        >
-          Continue to Summary
-        </Button>
+        {/* Strategy Comparison */}
+        <StrategyComparison
+          strategies={[
+            selectedStrategy,
+            ...pricingRecommendation.alternativeStrategies,
+          ]}
+          currentStrategy={selectedStrategy}
+          onSelectStrategy={handleStrategySelect as any}
+        />
+
+        {/* Win Probability Calculator */}
+        <WinProbabilityCalculator
+          currentPrice={finalPrice}
+          winProbability={selectedStrategy?.winProbability || 0.5}
+          pricePoints={pricingRecommendation.alternativeStrategies.map(
+            (s: any) => ({
+              price: s.price,
+              probability: s.winProbability,
+            }),
+          )}
+          optimalPrice={pricingRecommendation.recommendedPrice}
+          onPriceChange={(price) => setFinalPrice(price)}
+        />
+
+        <div className="grid grid-cols-2 gap-6">
+          {/* Risk Factors */}
+          <RiskFactorAnalysis
+            riskFactors={riskFactors as any}
+            totalImpact={totalRiskImpact}
+            projectValue={finalPrice}
+          />
+
+          {/* Manual Override */}
+          <ManualPriceOverride
+            currentPrice={finalPrice}
+            onOverride={handlePriceOverride as any}
+          />
+        </div>
+
+        {/* AI Insights */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h3 className="font-semibold text-lg mb-4 flex items-center">
+            <Sparkles className="w-5 h-5 mr-2 text-blue-500" />
+            AI Pricing Insights
+          </h3>
+          <div className="space-y-3">
+            {pricingRecommendation?.insights?.map((insight: any, i: number) => (
+              <div key={i} className="flex items-start">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0" />
+                <p className="text-gray-700">{insight}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Discount Approval Modal */}
+        {showDiscountApproval && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="max-w-2xl w-full mx-4">
+              <DiscountApproval
+                basePrice={markedUpTotal}
+                requestedPrice={finalPrice}
+                discountPercentage={
+                  ((markedUpTotal - finalPrice) / markedUpTotal) * 100
+                }
+                reason={
+                  selectedStrategy?.adjustments?.[0]?.reason ||
+                  "Manual override"
+                }
+                onApprove={() => setShowDiscountApproval(false)}
+                onReject={() => {
+                  setFinalPrice(markedUpTotal);
+                  setShowDiscountApproval(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex justify-between pt-6">
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button
+            onClick={() => {
+              onUpdate({
+                pricing: {
+                  basePrice: markedUpTotal,
+                  finalPrice,
+                  strategy: selectedStrategy,
+                  winProbability: selectedStrategy?.winProbability || 0.5,
+                  adjustments: selectedStrategy?.adjustments || [],
+                  riskFactors,
+                  confidence: pricingRecommendation?.confidence || 85,
+                },
+              });
+              onNext();
+            }}
+          >
+            Continue to Summary
+          </Button>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

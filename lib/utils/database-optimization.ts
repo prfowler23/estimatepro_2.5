@@ -26,11 +26,7 @@ interface EstimateServiceRow {
   equipment_type: string | null;
   equipment_days: number | null;
   equipment_cost: number | null;
-  calculation_details: {
-    breakdown: any[];
-    warnings: string[];
-    formData: any;
-  };
+  calculation_details: any; // Use any to match Json from Supabase
 }
 
 // Database row interface for estimates

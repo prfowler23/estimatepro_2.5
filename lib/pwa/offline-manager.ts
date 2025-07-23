@@ -1,569 +1,412 @@
-// Offline Manager
-// Manages offline functionality, data synchronization, and offline actions
+// PHASE 3 FIX: Offline Manager for handling offline functionality
+// Manages offline state, pending actions, and background sync
 
-import { performanceMonitor } from "@/lib/performance/performance-monitor";
-
-// Offline action types
 export interface OfflineAction {
   id: string;
-  type: "create" | "update" | "delete";
-  resource: "estimate" | "customer" | "photo" | "calculation";
+  type: "estimate" | "customer" | "photo" | "generic";
+  endpoint: string;
+  method: string;
   data: any;
   timestamp: number;
   retryCount: number;
   maxRetries: number;
-  url?: string;
-  method?: string;
-  headers?: Record<string, string>;
+  metadata?: {
+    estimateId?: string;
+    customerId?: string;
+    description?: string;
+  };
 }
 
-// Offline status
 export interface OfflineStatus {
   isOnline: boolean;
-  isServiceWorkerSupported: boolean;
-  isServiceWorkerRegistered: boolean;
   pendingActions: number;
-  lastSync: number | null;
+  lastSync: Date | null;
   syncInProgress: boolean;
+  queueSize: number;
+  storageUsed: number;
 }
 
-// Offline configuration
-export interface OfflineConfig {
-  enabled: boolean;
-  maxRetries: number;
-  retryDelay: number;
-  syncInterval: number;
-  maxCacheSize: number;
-  enableBackgroundSync: boolean;
-  enableNotifications: boolean;
-}
+type OfflineStatusCallback = (status: OfflineStatus) => void;
 
-// Default configuration
-const DEFAULT_CONFIG: OfflineConfig = {
-  enabled: true,
-  maxRetries: 3,
-  retryDelay: 5000,
-  syncInterval: 30000,
-  maxCacheSize: 50 * 1024 * 1024, // 50MB
-  enableBackgroundSync: true,
-  enableNotifications: true,
-};
-
-// Offline Manager
 export class OfflineManager {
   private static instance: OfflineManager;
-  private config: OfflineConfig;
-  private status: OfflineStatus;
-  private serviceWorker: ServiceWorkerRegistration | null = null;
-  private pendingActions: Map<string, OfflineAction> = new Map();
-  private syncTimer: NodeJS.Timeout | null = null;
-  private subscribers: Set<(status: OfflineStatus) => void> = new Set();
+  private isEnabled: boolean = true;
+  private pendingActions: OfflineAction[] = [];
+  private subscribers: Set<OfflineStatusCallback> = new Set();
+  private syncInProgress: boolean = false;
+  private lastSync: Date | null = null;
+  private retryTimeout: NodeJS.Timeout | null = null;
+  private storageKey = "estimatepro-offline-actions";
 
-  private constructor(config: OfflineConfig = DEFAULT_CONFIG) {
-    this.config = config;
-    this.status = {
-      isOnline: navigator.onLine,
-      isServiceWorkerSupported: "serviceWorker" in navigator,
-      isServiceWorkerRegistered: false,
-      pendingActions: 0,
-      lastSync: null,
-      syncInProgress: false,
-    };
-
-    if (this.config.enabled) {
-      this.initialize();
-    }
+  private constructor() {
+    this.loadPendingActions();
   }
 
-  static getInstance(config?: OfflineConfig): OfflineManager {
+  static getInstance(): OfflineManager {
     if (!OfflineManager.instance) {
-      OfflineManager.instance = new OfflineManager(config);
+      OfflineManager.instance = new OfflineManager();
     }
     return OfflineManager.instance;
   }
 
-  private async initialize(): Promise<void> {
-    // Register service worker
-    if (this.status.isServiceWorkerSupported) {
-      await this.registerServiceWorker();
-    }
+  // Initialize offline manager
+  initialize(): void {
+    if (!this.isEnabled) return;
 
-    // Set up event listeners
-    this.setupEventListeners();
+    // Listen for online/offline events
+    window.addEventListener("online", this.handleOnline.bind(this));
+    window.addEventListener("offline", this.handleOffline.bind(this));
 
     // Load pending actions from storage
-    await this.loadPendingActions();
+    this.loadPendingActions();
 
-    // Start sync timer
-    this.startSyncTimer();
-
-    // Initial sync if online
-    if (this.status.isOnline) {
-      await this.sync();
-    }
-  }
-
-  private async registerServiceWorker(): Promise<void> {
-    try {
-      this.serviceWorker = await navigator.serviceWorker.register("/sw.js");
-      this.status.isServiceWorkerRegistered = true;
-
-      console.log("Service Worker registered successfully");
-
-      // Listen for service worker messages
-      navigator.serviceWorker.addEventListener("message", (event) => {
-        this.handleServiceWorkerMessage(event);
-      });
-    } catch (error) {
-      console.error("Service Worker registration failed:", error);
-    }
-  }
-
-  private setupEventListeners(): void {
-    // Online/offline events
-    window.addEventListener("online", () => {
-      this.status.isOnline = true;
-      this.notifySubscribers();
+    // If online, try to sync
+    if (navigator.onLine) {
       this.sync();
-    });
-
-    window.addEventListener("offline", () => {
-      this.status.isOnline = false;
-      this.notifySubscribers();
-    });
-
-    // Page visibility change
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && this.status.isOnline) {
-        this.sync();
-      }
-    });
-  }
-
-  private async loadPendingActions(): Promise<void> {
-    try {
-      const stored = localStorage.getItem("offline-actions");
-      if (stored) {
-        const actions = JSON.parse(stored);
-        for (const action of actions) {
-          this.pendingActions.set(action.id, action);
-        }
-        this.status.pendingActions = this.pendingActions.size;
-      }
-    } catch (error) {
-      console.error("Failed to load pending actions:", error);
     }
   }
 
-  private async savePendingActions(): Promise<void> {
-    try {
-      const actions = Array.from(this.pendingActions.values());
-      localStorage.setItem("offline-actions", JSON.stringify(actions));
-    } catch (error) {
-      console.error("Failed to save pending actions:", error);
+  // Handle online event
+  private handleOnline(): void {
+    console.log("Offline Manager: Device is online");
+    this.notifySubscribers();
+
+    // Attempt to sync pending actions
+    if (this.pendingActions.length > 0) {
+      this.sync();
     }
   }
 
-  private startSyncTimer(): void {
-    if (this.syncTimer) {
-      clearInterval(this.syncTimer);
-    }
-
-    this.syncTimer = setInterval(() => {
-      if (this.status.isOnline && !this.status.syncInProgress) {
-        this.sync();
-      }
-    }, this.config.syncInterval);
+  // Handle offline event
+  private handleOffline(): void {
+    console.log("Offline Manager: Device is offline");
+    this.notifySubscribers();
   }
 
-  private handleServiceWorkerMessage(event: MessageEvent): void {
-    const { type, payload } = event.data;
-
-    switch (type) {
-      case "SYNC_COMPLETE":
-        this.status.lastSync = Date.now();
-        this.status.syncInProgress = false;
-        this.notifySubscribers();
-        break;
-      case "SYNC_FAILED":
-        this.status.syncInProgress = false;
-        this.notifySubscribers();
-        break;
-      case "CACHE_UPDATED":
-        this.notifySubscribers();
-        break;
-    }
-  }
-
-  // Add offline action
-  async addOfflineAction(
+  // Add action to offline queue
+  addAction(
     action: Omit<OfflineAction, "id" | "timestamp" | "retryCount">,
-  ): Promise<void> {
-    const offlineAction: OfflineAction = {
+  ): string {
+    const fullAction: OfflineAction = {
       ...action,
       id: this.generateId(),
       timestamp: Date.now(),
       retryCount: 0,
+      maxRetries: action.maxRetries || 3,
     };
 
-    this.pendingActions.set(offlineAction.id, offlineAction);
-    this.status.pendingActions = this.pendingActions.size;
-
-    await this.savePendingActions();
+    this.pendingActions.push(fullAction);
+    this.savePendingActions();
     this.notifySubscribers();
 
-    // Try to sync immediately if online
-    if (this.status.isOnline) {
-      await this.sync();
-    }
-  }
+    console.log("Offline Manager: Added action to queue", fullAction.type);
 
-  // Remove offline action
-  async removeOfflineAction(actionId: string): Promise<void> {
-    this.pendingActions.delete(actionId);
-    this.status.pendingActions = this.pendingActions.size;
-
-    await this.savePendingActions();
-    this.notifySubscribers();
-  }
-
-  // Sync all pending actions
-  async sync(): Promise<void> {
-    if (!this.status.isOnline || this.status.syncInProgress) {
-      return;
+    // If online, try to sync immediately
+    if (navigator.onLine && !this.syncInProgress) {
+      setTimeout(() => this.sync(), 100);
     }
 
-    this.status.syncInProgress = true;
-    this.notifySubscribers();
+    return fullAction.id;
+  }
 
-    const actions = Array.from(this.pendingActions.values());
-    const syncPromises = actions.map((action) => this.syncAction(action));
-
-    try {
-      await Promise.allSettled(syncPromises);
-      this.status.lastSync = Date.now();
-    } catch (error) {
-      console.error("Sync failed:", error);
-    } finally {
-      this.status.syncInProgress = false;
+  // Remove action from queue
+  removeAction(actionId: string): void {
+    const index = this.pendingActions.findIndex(
+      (action) => action.id === actionId,
+    );
+    if (index !== -1) {
+      this.pendingActions.splice(index, 1);
+      this.savePendingActions();
       this.notifySubscribers();
     }
   }
 
-  // Sync individual action
-  private async syncAction(action: OfflineAction): Promise<void> {
-    try {
-      const response = await performanceMonitor.measure(
-        `offline-sync-${action.type}-${action.resource}`,
-        "api",
-        () => this.executeAction(action),
-      );
+  // Get pending actions
+  getPendingActions(): OfflineAction[] {
+    return [...this.pendingActions];
+  }
 
-      if (response.ok) {
-        await this.removeOfflineAction(action.id);
-        console.log(`Offline action synced: ${action.type} ${action.resource}`);
-      } else {
-        throw new Error(`HTTP ${response.status}`);
-      }
-    } catch (error) {
-      console.error(`Failed to sync action ${action.id}:`, error);
+  // Get offline status
+  getStatus(): OfflineStatus {
+    return {
+      isOnline: navigator.onLine,
+      pendingActions: this.pendingActions.length,
+      lastSync: this.lastSync,
+      syncInProgress: this.syncInProgress,
+      queueSize: this.pendingActions.length,
+      storageUsed: this.getStorageSize(),
+    };
+  }
 
-      action.retryCount++;
+  // Sync pending actions
+  async sync(): Promise<void> {
+    if (!navigator.onLine || this.syncInProgress || !this.isEnabled) {
+      return;
+    }
 
-      if (action.retryCount >= action.maxRetries) {
-        console.error(`Max retries reached for action ${action.id}, removing`);
-        await this.removeOfflineAction(action.id);
-      } else {
-        // Update retry count
-        this.pendingActions.set(action.id, action);
-        await this.savePendingActions();
+    if (this.pendingActions.length === 0) {
+      return;
+    }
 
-        // Schedule retry
-        setTimeout(() => {
-          if (this.status.isOnline) {
-            this.syncAction(action);
+    this.syncInProgress = true;
+    this.notifySubscribers();
+
+    console.log(
+      `Offline Manager: Starting sync of ${this.pendingActions.length} actions`,
+    );
+
+    const actionsToProcess = [...this.pendingActions];
+    let syncedCount = 0;
+    let failedCount = 0;
+
+    for (const action of actionsToProcess) {
+      try {
+        const success = await this.processAction(action);
+
+        if (success) {
+          this.removeAction(action.id);
+          syncedCount++;
+        } else {
+          // Increment retry count
+          action.retryCount++;
+          if (action.retryCount >= action.maxRetries) {
+            console.error(
+              `Offline Manager: Action ${action.id} exceeded max retries, removing`,
+            );
+            this.removeAction(action.id);
           }
-        }, this.config.retryDelay * action.retryCount);
+          failedCount++;
+        }
+
+        // Small delay between requests to avoid overwhelming the server
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(
+          `Offline Manager: Failed to process action ${action.id}:`,
+          error,
+        );
+        action.retryCount++;
+        if (action.retryCount >= action.maxRetries) {
+          this.removeAction(action.id);
+        }
+        failedCount++;
       }
+    }
+
+    this.syncInProgress = false;
+    this.lastSync = new Date();
+    this.savePendingActions();
+    this.notifySubscribers();
+
+    console.log(
+      `Offline Manager: Sync complete. Synced: ${syncedCount}, Failed: ${failedCount}`,
+    );
+
+    // Schedule retry for failed actions if any remain
+    if (this.pendingActions.length > 0) {
+      this.scheduleRetry();
     }
   }
 
-  // Execute offline action
-  private async executeAction(action: OfflineAction): Promise<Response> {
-    const { type, resource, data } = action;
-
-    // Custom URL and method if provided
-    if (action.url && action.method) {
-      return fetch(action.url, {
+  // Process a single offline action
+  private async processAction(action: OfflineAction): Promise<boolean> {
+    try {
+      const response = await fetch(action.endpoint, {
         method: action.method,
         headers: {
           "Content-Type": "application/json",
-          ...action.headers,
+          ...action.data.headers,
         },
-        body: JSON.stringify(data),
+        body: action.method !== "GET" ? JSON.stringify(action.data) : undefined,
       });
-    }
 
-    // Default API endpoints
-    const endpoints = {
-      estimate: "/api/estimates",
-      customer: "/api/customers",
-      photo: "/api/photos",
-      calculation: "/api/calculations",
-    };
-
-    const baseUrl = endpoints[resource];
-    if (!baseUrl) {
-      throw new Error(`Unknown resource: ${resource}`);
-    }
-
-    let url = baseUrl;
-    let method = "POST";
-
-    if (type === "update") {
-      url = `${baseUrl}/${data.id}`;
-      method = "PUT";
-    } else if (type === "delete") {
-      url = `${baseUrl}/${data.id}`;
-      method = "DELETE";
-    }
-
-    return fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        ...action.headers,
-      },
-      body: type !== "delete" ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  // Cache data for offline access
-  async cacheData(key: string, data: any): Promise<void> {
-    if (!this.serviceWorker) return;
-
-    try {
-      this.serviceWorker.active?.postMessage({
-        type: "CACHE_DATA",
-        payload: { key, data },
-      });
-    } catch (error) {
-      console.error("Failed to cache data:", error);
-    }
-  }
-
-  // Get cached data
-  async getCachedData(key: string): Promise<any> {
-    if (!this.serviceWorker) return null;
-
-    try {
-      return new Promise((resolve) => {
-        const channel = new MessageChannel();
-        channel.port1.onmessage = (event) => {
-          resolve(event.data);
-        };
-
-        this.serviceWorker!.active?.postMessage(
-          {
-            type: "GET_CACHED_DATA",
-            payload: { key },
-          },
-          [channel.port2],
+      if (response.ok) {
+        console.log(
+          `Offline Manager: Successfully synced ${action.type} action`,
         );
-      });
-    } catch (error) {
-      console.error("Failed to get cached data:", error);
-      return null;
-    }
-  }
-
-  // Clear cache
-  async clearCache(): Promise<void> {
-    if (!this.serviceWorker) return;
-
-    try {
-      this.serviceWorker.active?.postMessage({
-        type: "CLEAR_CACHE",
-      });
-    } catch (error) {
-      console.error("Failed to clear cache:", error);
-    }
-  }
-
-  // Get cache status
-  async getCacheStatus(): Promise<any> {
-    if (!this.serviceWorker) return null;
-
-    try {
-      return new Promise((resolve) => {
-        const channel = new MessageChannel();
-        channel.port1.onmessage = (event) => {
-          resolve(event.data);
-        };
-
-        this.serviceWorker!.active?.postMessage(
-          {
-            type: "GET_CACHE_STATUS",
-          },
-          [channel.port2],
+        return true;
+      } else {
+        console.error(
+          `Offline Manager: Failed to sync action ${action.id}:`,
+          response.statusText,
         );
-      });
+        return false;
+      }
     } catch (error) {
-      console.error("Failed to get cache status:", error);
-      return null;
+      console.error(
+        `Offline Manager: Network error syncing action ${action.id}:`,
+        error,
+      );
+      return false;
     }
+  }
+
+  // Schedule retry for failed actions
+  private scheduleRetry(): void {
+    if (this.retryTimeout) {
+      clearTimeout(this.retryTimeout);
+    }
+
+    // Exponential backoff: start with 30 seconds, double each time
+    const baseDelay = 30 * 1000;
+    const maxRetries = Math.max(
+      ...this.pendingActions.map((a) => a.retryCount),
+    );
+    const delay = Math.min(baseDelay * Math.pow(2, maxRetries), 5 * 60 * 1000); // Max 5 minutes
+
+    this.retryTimeout = setTimeout(() => {
+      if (navigator.onLine && this.pendingActions.length > 0) {
+        this.sync();
+      }
+    }, delay);
   }
 
   // Subscribe to status changes
-  subscribe(callback: (status: OfflineStatus) => void): () => void {
+  subscribe(callback: OfflineStatusCallback): () => void {
     this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
+
+    // Return unsubscribe function
+    return () => {
+      this.subscribers.delete(callback);
+    };
   }
 
-  // Get current status
-  getStatus(): OfflineStatus {
-    return { ...this.status };
+  // Notify all subscribers of status change
+  private notifySubscribers(): void {
+    const status = this.getStatus();
+    this.subscribers.forEach((callback) => callback(status));
   }
 
-  // Get pending actions
-  getPendingActions(): OfflineAction[] {
-    return Array.from(this.pendingActions.values());
+  // Save pending actions to localStorage
+  private savePendingActions(): void {
+    try {
+      localStorage.setItem(
+        this.storageKey,
+        JSON.stringify(this.pendingActions),
+      );
+    } catch (error) {
+      console.error("Offline Manager: Failed to save pending actions:", error);
+    }
   }
 
-  // Clear all pending actions
-  async clearPendingActions(): Promise<void> {
-    this.pendingActions.clear();
-    this.status.pendingActions = 0;
-    await this.savePendingActions();
-    this.notifySubscribers();
+  // Load pending actions from localStorage
+  private loadPendingActions(): void {
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+      if (stored) {
+        this.pendingActions = JSON.parse(stored);
+        console.log(
+          `Offline Manager: Loaded ${this.pendingActions.length} pending actions`,
+        );
+      }
+    } catch (error) {
+      console.error("Offline Manager: Failed to load pending actions:", error);
+      this.pendingActions = [];
+    }
+  }
+
+  // Get storage size estimate
+  private getStorageSize(): number {
+    try {
+      const data = localStorage.getItem(this.storageKey);
+      return data ? new Blob([data]).size : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  // Generate unique ID for actions
+  private generateId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   // Enable/disable offline functionality
   setEnabled(enabled: boolean): void {
-    this.config.enabled = enabled;
-
-    if (enabled) {
-      this.initialize();
-    } else {
-      this.cleanup();
+    this.isEnabled = enabled;
+    if (!enabled) {
+      // Clear pending actions when disabled
+      this.pendingActions = [];
+      this.savePendingActions();
+      this.notifySubscribers();
     }
   }
 
-  // Cleanup resources
-  private cleanup(): void {
-    if (this.syncTimer) {
-      clearInterval(this.syncTimer);
-      this.syncTimer = null;
+  // Clear all pending actions
+  clearPendingActions(): void {
+    this.pendingActions = [];
+    this.savePendingActions();
+    this.notifySubscribers();
+  }
+
+  // Cleanup
+  destroy(): void {
+    if (this.retryTimeout) {
+      clearTimeout(this.retryTimeout);
+      this.retryTimeout = null;
     }
+
+    window.removeEventListener("online", this.handleOnline.bind(this));
+    window.removeEventListener("offline", this.handleOffline.bind(this));
 
     this.subscribers.clear();
-    this.pendingActions.clear();
-  }
-
-  // Notify subscribers
-  private notifySubscribers(): void {
-    this.subscribers.forEach((callback) => callback(this.status));
-  }
-
-  // Generate unique ID
-  private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }
 
 // Global offline manager instance
 export const offlineManager = OfflineManager.getInstance();
 
-// Offline-aware API helpers
-export const offlineAPI = {
-  // Create estimate offline
-  createEstimate: async (estimate: any) => {
-    if (offlineManager.getStatus().isOnline) {
-      try {
-        const response = await fetch("/api/estimates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(estimate),
-        });
-        return await response.json();
-      } catch (error) {
-        // Fallback to offline
-        await offlineManager.addOfflineAction({
-          type: "create",
-          resource: "estimate",
-          data: estimate,
-          maxRetries: 3,
-        });
-        return { ...estimate, id: `offline-${Date.now()}`, offline: true };
-      }
-    } else {
-      await offlineManager.addOfflineAction({
-        type: "create",
-        resource: "estimate",
-        data: estimate,
-        maxRetries: 3,
-      });
-      return { ...estimate, id: `offline-${Date.now()}`, offline: true };
-    }
+// Helper functions for common offline operations
+export const offlineUtils = {
+  // Queue estimate save for offline sync
+  queueEstimateSave: (estimateId: string, data: any) => {
+    return offlineManager.addAction({
+      type: "estimate",
+      endpoint: `/api/estimates/${estimateId}`,
+      method: "PUT",
+      data,
+      maxRetries: 3,
+      metadata: { estimateId, description: "Save estimate" },
+    });
   },
 
-  // Update estimate offline
-  updateEstimate: async (id: string, estimate: any) => {
-    if (offlineManager.getStatus().isOnline) {
-      try {
-        const response = await fetch(`/api/estimates/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(estimate),
-        });
-        return await response.json();
-      } catch (error) {
-        await offlineManager.addOfflineAction({
-          type: "update",
-          resource: "estimate",
-          data: { ...estimate, id },
-          maxRetries: 3,
-        });
-        return { ...estimate, id, offline: true };
-      }
-    } else {
-      await offlineManager.addOfflineAction({
-        type: "update",
-        resource: "estimate",
-        data: { ...estimate, id },
-        maxRetries: 3,
-      });
-      return { ...estimate, id, offline: true };
-    }
+  // Queue customer save for offline sync
+  queueCustomerSave: (customerId: string, data: any) => {
+    return offlineManager.addAction({
+      type: "customer",
+      endpoint: `/api/customers/${customerId}`,
+      method: "PUT",
+      data,
+      maxRetries: 3,
+      metadata: { customerId, description: "Save customer" },
+    });
   },
 
-  // Delete estimate offline
-  deleteEstimate: async (id: string) => {
-    if (offlineManager.getStatus().isOnline) {
-      try {
-        const response = await fetch(`/api/estimates/${id}`, {
-          method: "DELETE",
-        });
-        return await response.json();
-      } catch (error) {
-        await offlineManager.addOfflineAction({
-          type: "delete",
-          resource: "estimate",
-          data: { id },
-          maxRetries: 3,
-        });
-        return { id, deleted: true, offline: true };
-      }
-    } else {
-      await offlineManager.addOfflineAction({
-        type: "delete",
-        resource: "estimate",
-        data: { id },
-        maxRetries: 3,
-      });
-      return { id, deleted: true, offline: true };
-    }
+  // Queue photo upload for offline sync
+  queuePhotoUpload: (estimateId: string, photoData: any) => {
+    return offlineManager.addAction({
+      type: "photo",
+      endpoint: `/api/estimates/${estimateId}/photos`,
+      method: "POST",
+      data: photoData,
+      maxRetries: 5,
+      metadata: { estimateId, description: "Upload photo" },
+    });
+  },
+
+  // Queue generic API call for offline sync
+  queueApiCall: (
+    endpoint: string,
+    method: string,
+    data: any,
+    description?: string,
+  ) => {
+    return offlineManager.addAction({
+      type: "generic",
+      endpoint,
+      method,
+      data,
+      maxRetries: 3,
+      metadata: { description: description || "API call" },
+    });
   },
 };
-
-export default offlineManager;

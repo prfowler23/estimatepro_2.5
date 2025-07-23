@@ -1,46 +1,54 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AnalyticsOverview } from "@/components/analytics/analytics-overview";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  RefreshCw,
-  BarChart3,
-  AlertTriangle,
-  TrendingUp,
-  Bot,
-  Camera,
-  Mail,
-  Calculator,
-  Mic,
-  Zap,
-  Clock,
-  Target,
-  Brain,
-} from "lucide-react";
-import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { AnalyticsService, type AnalyticsData } from "@/lib/analytics/data";
 
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { AICreateEstimateCard } from "@/components/dashboard/AICreateEstimateCard";
+import { AIBusinessInsights } from "@/components/dashboard/AIBusinessInsights";
+import { DashboardLoadingState } from "@/components/dashboard/DashboardLoadingState";
+import { DashboardEmptyState } from "@/components/dashboard/DashboardEmptyState";
+import { DashboardErrorState } from "@/components/dashboard/DashboardErrorState";
+
 export default function Dashboard() {
+  const router = useRouter();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const navigateTo = (path: string) => {
+    console.log(`Navigating to: ${path}`);
+    try {
+      if (isClient) {
+        console.log("Client is ready, attempting navigation...");
+        router.push(path);
+      } else {
+        console.warn("Client not ready for navigation");
+      }
+    } catch (error) {
+      console.error("Navigation error:", error);
+      if (typeof window !== "undefined") {
+        console.log("Falling back to window.location");
+        window.location.href = path;
+      }
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Check database connection first
       const isConnected = await AnalyticsService.checkDatabaseConnection();
       if (!isConnected) {
         throw new Error(
@@ -65,151 +73,12 @@ export default function Dashboard() {
   return (
     <ProtectedRoute>
       <div className="container py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Business overview and key metrics
-            </p>
-          </div>
-          <Button
-            onClick={fetchDashboardData}
-            disabled={loading}
-            variant="outline"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
-        </div>
+        <DashboardHeader onRefresh={fetchDashboardData} loading={loading} />
 
-        {/* AI-First Action Section */}
-        <div className="mb-8">
-          <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50">
-            <CardContent className="p-6">
-              <div className="text-center mb-6">
-                <Bot className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Create AI Estimate
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  Drop email, photos, or describe your project - AI does the
-                  rest
-                </p>
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-                >
-                  <Link href="/estimates/new/guided">
-                    <Bot className="mr-2 h-5 w-5" />
-                    Start AI Estimation
-                  </Link>
-                </Button>
-              </div>
+        <AICreateEstimateCard navigateTo={navigateTo} />
 
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <Button
-                  variant="outline"
-                  asChild
-                  className="h-auto p-3 flex-col"
-                >
-                  <Link href="/estimates/new/guided?start=photos">
-                    <Camera className="h-5 w-5 mb-1" />
-                    <span className="text-xs">Photo Analysis</span>
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  asChild
-                  className="h-auto p-3 flex-col"
-                >
-                  <Link href="/estimates/new/guided?start=email">
-                    <Mail className="h-5 w-5 mb-1" />
-                    <span className="text-xs">Email Parse</span>
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  asChild
-                  className="h-auto p-3 flex-col"
-                >
-                  <Link href="/estimates/new/guided?start=voice">
-                    <Mic className="h-5 w-5 mb-1" />
-                    <span className="text-xs">Voice Input</span>
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  asChild
-                  className="h-auto p-3 flex-col"
-                >
-                  <Link href="/calculator">
-                    <Calculator className="h-5 w-5 mb-1" />
-                    <span className="text-xs">Calculator</span>
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  asChild
-                  className="h-auto p-3 flex-col border-purple-200 bg-purple-50"
-                >
-                  <Link href="/ai-assistant">
-                    <Bot className="h-5 w-5 mb-1 text-purple-600" />
-                    <span className="text-xs">AI Assistant</span>
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <AIBusinessInsights />
 
-        {/* AI Performance Insights */}
-        <div className="mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-purple-600" />
-                AI Business Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <Clock className="h-6 w-6 text-green-600 mx-auto mb-1" />
-                  <div className="text-lg font-bold text-green-700">
-                    40+ hrs
-                  </div>
-                  <div className="text-xs text-green-600">
-                    AI saved this month
-                  </div>
-                </div>
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <Target className="h-6 w-6 text-blue-600 mx-auto mb-1" />
-                  <div className="text-lg font-bold text-blue-700">95%</div>
-                  <div className="text-xs text-blue-600">
-                    Photo analysis accuracy
-                  </div>
-                </div>
-                <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <Zap className="h-6 w-6 text-purple-600 mx-auto mb-1" />
-                  <div className="text-lg font-bold text-purple-700">3 min</div>
-                  <div className="text-xs text-purple-600">
-                    Avg estimate time
-                  </div>
-                </div>
-                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <Bot className="h-6 w-6 text-orange-600 mx-auto mb-1" />
-                  <div className="text-lg font-bold text-orange-700">85%</div>
-                  <div className="text-xs text-orange-600">Automation rate</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Error Alert */}
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="h-4 w-4" />
@@ -217,75 +86,21 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {/* Loading State */}
-        {loading && !data && (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-                <h3 className="text-lg font-medium mb-2">Loading Dashboard</h3>
-                <p className="text-muted-foreground">
-                  Fetching your business data...
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {loading && !data && <DashboardLoadingState />}
+
+        {!loading && data && !error && data.overview.totalQuotes === 0 && (
+          <DashboardEmptyState
+            fetchDashboardData={fetchDashboardData}
+            navigateTo={navigateTo}
+          />
         )}
 
-        {/* Dashboard Content */}
-        {!loading &&
-          data &&
-          !error &&
-          (data.overview.totalQuotes === 0 ? (
-            <Card>
-              <CardContent className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No Data Available
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create your first estimate to start seeing dashboard
-                    insights
-                  </p>
-                  <div className="flex gap-2 justify-center">
-                    <Button variant="outline" onClick={fetchDashboardData}>
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Refresh
-                    </Button>
-                    <Button asChild>
-                      <Link href="/estimates/new/guided">
-                        <Bot className="h-4 w-4 mr-2" />
-                        Create AI Estimate
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <AnalyticsOverview data={data} />
-          ))}
+        {!loading && data && !error && data.overview.totalQuotes > 0 && (
+          <AnalyticsOverview data={data} />
+        )}
 
-        {/* Empty State */}
         {!loading && !data && !error && (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Dashboard Unavailable
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Unable to load dashboard data
-                </p>
-                <Button onClick={fetchDashboardData}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Try Again
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <DashboardErrorState fetchDashboardData={fetchDashboardData} />
         )}
       </div>
     </ProtectedRoute>

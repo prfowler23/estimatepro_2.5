@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Building,
   Layers,
+  Sparkles,
 } from "lucide-react";
 import { DrawingCanvas } from "@/components/canvas/DrawingCanvas";
 import { ToolPalette } from "@/components/canvas/ToolPalette";
@@ -22,6 +23,7 @@ import { Shape, Measurement } from "@/lib/canvas/drawing-service";
 import { AreaOfWorkData, GuidedFlowData } from "@/lib/types/estimate-types";
 import { calculationError as logError } from "@/lib/utils/logger";
 import { config } from "@/lib/config";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 type DrawingTool = "select" | "rectangle" | "polygon" | "measure";
 
@@ -32,7 +34,7 @@ interface AreaOfWorkProps {
   onBack: () => void;
 }
 
-export function AreaOfWork({
+function AreaOfWorkComponent({
   data,
   onUpdate,
   onNext,
@@ -294,195 +296,254 @@ export function AreaOfWork({
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Area of Work Mapping</h2>
-        <p className="text-gray-600">
-          Define work areas using 2D mapping or advanced 3D visualization tools.
-        </p>
-      </div>
+    <ErrorBoundary
+      stepId="area-of-work"
+      stepNumber={4}
+      userId={data?.userId}
+      flowData={data}
+      fallback={
+        <div className="p-6 text-center">
+          <Building className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Area Mapping Error
+          </h3>
+          <p className="text-gray-600 mb-4">
+            There was an issue with the drawing tools or 3D visualization. You
+            can enter work areas manually.
+          </p>
+          <Button onClick={onNext} className="mr-2">
+            Continue with Manual Entry
+          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry Tools
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Area of Work Mapping</h2>
+          <p className="text-gray-600">
+            Define work areas using 2D mapping or advanced 3D visualization
+            tools.
+          </p>
+        </div>
 
-      <Tabs defaultValue="2d-mapping" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="2d-mapping" className="flex items-center gap-2">
-            <Map className="w-4 h-4" />
-            2D Mapping
-          </TabsTrigger>
-          <TabsTrigger
-            value="3d-visualization"
-            className="flex items-center gap-2"
-          >
-            <Building className="w-4 h-4" />
-            3D Visualization
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="2d-mapping" className="space-y-6">
-          <div>
-            <p className="text-sm text-gray-600 mb-4">
-              Upload building photos or maps and define work areas with
-              measurements.
-            </p>
-          </div>
-
-          {/* Upload Section */}
-          <Card className="p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold">Map Upload</h3>
-              {backgroundImage && (
-                <div className="text-sm text-gray-600">
-                  Current: {areaData.imageName}
-                </div>
+        {/* Auto-populated Data Indicator */}
+        {data?.areaOfWork?.autoPopulated && (
+          <Alert variant="info">
+            <Sparkles className="h-4 w-4" />
+            <div>
+              <h4 className="font-medium mb-1">✨ Areas Auto-generated</h4>
+              <p className="text-sm">
+                Work areas were automatically created based on your building
+                type and requirements. You can refine these areas using the
+                mapping tools below.
+              </p>
+              {data?.areaOfWork?.notes && (
+                <p className="text-xs text-gray-600 mt-1 italic">
+                  {data.areaOfWork.notes}
+                </p>
               )}
             </div>
+          </Alert>
+        )}
 
-            <div className="flex gap-2 mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                <Upload className="w-4 h-4 mr-1" />
-                {isUploading ? "Uploading..." : "Upload Image"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExport}
-                disabled={!backgroundImage || shapes.length === 0}
-              >
-                <Download className="w-4 h-4 mr-1" />
-                Export Map
-              </Button>
+        <Tabs defaultValue="2d-mapping" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="2d-mapping" className="flex items-center gap-2">
+              <Map className="w-4 h-4" />
+              2D Mapping
+            </TabsTrigger>
+            <TabsTrigger
+              value="3d-visualization"
+              className="flex items-center gap-2"
+            >
+              <Building className="w-4 h-4" />
+              3D Visualization
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="2d-mapping" className="space-y-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload building photos or maps and define work areas with
+                measurements.
+              </p>
             </div>
 
-            {uploadError && (
-              <Alert className="mb-4">
-                <AlertCircle className="w-4 h-4" />
-                {uploadError}
-              </Alert>
-            )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-          </Card>
-
-          {/* Main Drawing Interface */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            {/* Canvas Area */}
-            <div className="lg:col-span-3">
-              <Card className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold">Drawing Area</h3>
+            {/* Upload Section */}
+            <Card className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold">Map Upload</h3>
+                {backgroundImage && (
                   <div className="text-sm text-gray-600">
-                    Total Area: {totalArea.toFixed(0)} sq ft
-                  </div>
-                </div>
-
-                {backgroundImage ? (
-                  <div className="space-y-4">
-                    <ToolPalette
-                      currentTool={currentTool}
-                      onToolChange={(tool: string) =>
-                        setCurrentTool(tool as DrawingTool)
-                      }
-                      onClearAll={handleClearAll}
-                    />
-                    <DrawingCanvas
-                      backgroundImage={backgroundImage}
-                      currentTool={currentTool}
-                      scale={
-                        typeof areaData.scale === "number"
-                          ? { pixelsPerFoot: areaData.scale }
-                          : areaData.scale
-                      }
-                      onShapesChange={handleShapesChange}
-                      onScaleChange={handleScaleChange}
-                      width={canvasSize.width}
-                      height={canvasSize.height}
-                    />
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 p-8 text-center">
-                    <FileImage className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      No Map Loaded
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Upload a building image or site map to start defining work
-                      areas.
-                    </p>
-                    <Button onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Image
-                    </Button>
+                    Current: {areaData.imageName}
                   </div>
                 )}
-              </Card>
-            </div>
+              </div>
 
-            {/* Side Panel */}
-            <div className="space-y-4">
-              <ScaleSetter
-                currentScale={
-                  typeof areaData.scale === "number"
-                    ? areaData.scale
-                    : areaData.scale?.pixelsPerFoot
-                }
-                onScaleSet={(pixelsPerFoot) =>
-                  setAreaData((prev) => ({
-                    ...prev,
-                    scale: pixelsPerFoot,
-                  }))
-                }
-                isActive={isScaleMode}
-                onActivate={() => setIsScaleMode(true)}
-                onDeactivate={() => setIsScaleMode(false)}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <Upload className="w-4 h-4 mr-1" />
+                  {isUploading ? "Uploading..." : "Upload Image"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExport}
+                  disabled={!backgroundImage || shapes.length === 0}
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Export Map
+                </Button>
+              </div>
+
+              {uploadError && (
+                <Alert className="mb-4">
+                  <AlertCircle className="w-4 h-4" />
+                  {uploadError}
+                </Alert>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
               />
-              <AreaSummary shapes={shapes} measurements={measurements as any} />
+            </Card>
+
+            {/* Main Drawing Interface */}
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+              {/* Canvas Area */}
+              <div className="lg:col-span-3">
+                <Card className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold">Drawing Area</h3>
+                    <div className="text-sm text-gray-600">
+                      Total Area: {totalArea.toFixed(0)} sq ft
+                    </div>
+                  </div>
+
+                  {backgroundImage ? (
+                    <div className="space-y-4">
+                      <ToolPalette
+                        currentTool={currentTool}
+                        onToolChange={(tool: string) =>
+                          setCurrentTool(tool as DrawingTool)
+                        }
+                        onClearAll={handleClearAll}
+                      />
+                      <DrawingCanvas
+                        backgroundImage={backgroundImage}
+                        currentTool={currentTool}
+                        scale={
+                          typeof areaData.scale === "number"
+                            ? { pixelsPerFoot: areaData.scale }
+                            : areaData.scale
+                        }
+                        onShapesChange={handleShapesChange}
+                        onScaleChange={handleScaleChange}
+                        width={canvasSize.width}
+                        height={canvasSize.height}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 p-8 text-center">
+                      <FileImage className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        No Map Loaded
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Upload a building image or site map to start defining
+                        work areas.
+                      </p>
+                      <Button onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Image
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              </div>
+
+              {/* Side Panel */}
+              <div className="space-y-4">
+                <ScaleSetter
+                  currentScale={
+                    typeof areaData.scale === "number"
+                      ? areaData.scale
+                      : areaData.scale?.pixelsPerFoot
+                  }
+                  onScaleSet={(pixelsPerFoot) =>
+                    setAreaData((prev) => ({
+                      ...prev,
+                      scale: pixelsPerFoot,
+                    }))
+                  }
+                  isActive={isScaleMode}
+                  onActivate={() => setIsScaleMode(true)}
+                  onDeactivate={() => setIsScaleMode(false)}
+                />
+                <AreaSummary
+                  shapes={shapes}
+                  measurements={measurements as any}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Additional Notes
-            </label>
-            <textarea
-              className="w-full p-3 border rounded-lg"
-              rows={3}
-              placeholder="Any additional notes about the work areas..."
-              value={areaData.notes}
-              onChange={(e) =>
-                setAreaData((prev) => ({ ...prev, notes: e.target.value }))
-              }
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Additional Notes
+              </label>
+              <textarea
+                className="w-full p-3 border rounded-lg"
+                rows={3}
+                placeholder="Any additional notes about the work areas..."
+                value={areaData.notes}
+                onChange={(e) =>
+                  setAreaData((prev) => ({ ...prev, notes: e.target.value }))
+                }
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="3d-visualization" className="space-y-6">
+            <EnhancedBuilding3D
+              buildingData={buildingData}
+              measurements={measurements}
+              serviceAreas={areaData.workAreas}
+              onAnalysisUpdate={handle3DAnalysisUpdate}
             />
-          </div>
-        </TabsContent>
+          </TabsContent>
+        </Tabs>
 
-        <TabsContent value="3d-visualization" className="space-y-6">
-          <EnhancedBuilding3D
-            buildingData={buildingData}
-            measurements={measurements}
-            serviceAreas={areaData.workAreas}
-            onAnalysisUpdate={handle3DAnalysisUpdate}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button onClick={handleNext}>Continue to Takeoff</Button>
+        {/* Navigation */}
+        <div className="flex justify-between pt-6">
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button onClick={handleNext}>Continue to Takeoff</Button>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
+
+// PHASE 3 FIX: Memoize to prevent expensive 3D visualization and canvas re-initialization
+export const AreaOfWork = memo(AreaOfWorkComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.data?.areaOfWork === nextProps.data?.areaOfWork &&
+    prevProps.onUpdate === nextProps.onUpdate &&
+    prevProps.onNext === nextProps.onNext &&
+    prevProps.onBack === nextProps.onBack
+  );
+});

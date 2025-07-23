@@ -1352,6 +1352,125 @@ export interface Database {
         };
         Relationships: [];
       };
+      photos: {
+        Row: {
+          id: string;
+          estimate_id: string;
+          file_name: string;
+          file_path: string;
+          file_size: number;
+          mime_type: string;
+          analysis_data: Json | null;
+          ai_analysis: Json | null;
+          tags: string[] | null;
+          is_analyzed: boolean | null;
+          uploaded_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          estimate_id: string;
+          file_name: string;
+          file_path: string;
+          file_size: number;
+          mime_type: string;
+          analysis_data?: Json | null;
+          ai_analysis?: Json | null;
+          tags?: string[] | null;
+          is_analyzed?: boolean | null;
+          uploaded_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          estimate_id?: string;
+          file_name?: string;
+          file_path?: string;
+          file_size?: number;
+          mime_type?: string;
+          analysis_data?: Json | null;
+          ai_analysis?: Json | null;
+          tags?: string[] | null;
+          is_analyzed?: boolean | null;
+          uploaded_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "photos_estimate_id_fkey";
+            columns: ["estimate_id"];
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photos_uploaded_by_fkey";
+            columns: ["uploaded_by"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      photo_analysis_results: {
+        Row: {
+          id: string;
+          photo_id: string;
+          analysis_type:
+            | "facade"
+            | "building_measurement"
+            | "material_detection"
+            | "3d_reconstruction"
+            | "before_after_comparison";
+          analysis_data: Json;
+          confidence_score: number | null;
+          processing_time_ms: number | null;
+          processed_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          photo_id: string;
+          analysis_type:
+            | "facade"
+            | "building_measurement"
+            | "material_detection"
+            | "3d_reconstruction"
+            | "before_after_comparison";
+          analysis_data: Json;
+          confidence_score?: number | null;
+          processing_time_ms?: number | null;
+          processed_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          photo_id?: string;
+          analysis_type?:
+            | "facade"
+            | "building_measurement"
+            | "material_detection"
+            | "3d_reconstruction"
+            | "before_after_comparison";
+          analysis_data?: Json;
+          confidence_score?: number | null;
+          processing_time_ms?: number | null;
+          processed_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "photo_analysis_results_photo_id_fkey";
+            columns: ["photo_id"];
+            referencedRelation: "photos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       quote_summary: {

@@ -12,15 +12,18 @@ import {
 
 export interface PhotoData {
   id: string;
-  estimate_id?: string;
-  user_id: string;
+  estimate_id: string;
   file_name: string;
+  file_path: string;
   file_size: number;
   mime_type: string;
-  storage_path: string;
-  public_url?: string;
-  metadata?: Record<string, any>;
-  uploaded_at: string;
+  analysis_data: any;
+  ai_analysis: any;
+  tags: string[] | null;
+  is_analyzed: boolean | null;
+  uploaded_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PhotoAnalysisData {
@@ -520,7 +523,7 @@ export class PhotoService {
   private async downloadPhotoFile(photo: PhotoData): Promise<File> {
     const { data: fileData } = await this.supabase.storage
       .from(this.STORAGE_BUCKET)
-      .download(photo.storage_path);
+      .download(photo.file_path);
 
     if (!fileData) {
       throw new Error(`Failed to download photo: ${photo.file_name}`);

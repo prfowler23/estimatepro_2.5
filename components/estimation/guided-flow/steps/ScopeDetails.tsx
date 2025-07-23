@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert } from "@/components/ui/alert";
-import { AlertTriangle, Info, Package } from "lucide-react";
+import { AlertTriangle, Info, Package, Sparkles } from "lucide-react";
 import { SERVICE_RULES } from "@/lib/estimation/service-rules";
 import {
   ScopeDetailsData,
   ServiceType,
   SERVICE_METADATA,
+  GuidedFlowData,
 } from "@/lib/types/estimate-types";
+import { IntelligentServiceSuggestions } from "@/components/ai/IntelligentServiceSuggestions";
 
 // Convert SERVICE_METADATA to array format for easier iteration
 const SERVICES = Object.entries(SERVICE_METADATA).map(([id, metadata]) => ({
@@ -38,13 +40,13 @@ const COMMON_BUNDLES = [
 ];
 
 interface ScopeDetailsProps {
-  data: any;
+  data: GuidedFlowData;
   onUpdate: (data: any) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function ScopeDetails({
+function ScopeDetailsComponent({
   data,
   onUpdate,
   onNext,
@@ -163,6 +165,18 @@ export function ScopeDetails({
     }));
   };
 
+  const handleAcceptSuggestion = (serviceType: ServiceType) => {
+    setScopeData((prev) => ({
+      ...prev,
+      selectedServices: [...prev.selectedServices, serviceType],
+    }));
+  };
+
+  const handleRejectSuggestion = (serviceType: ServiceType) => {
+    // Just ignore the suggestion - no action needed
+    console.log("Rejected suggestion:", serviceType);
+  };
+
   const selectBundle = (bundle: (typeof COMMON_BUNDLES)[0]) => {
     setScopeData((prev) => ({
       ...prev,
@@ -204,6 +218,30 @@ export function ScopeDetails({
           managed.
         </p>
       </div>
+
+      {/* Auto-populated Data Indicator */}
+      {data?.scopeDetails?.autoPopulated && (
+        <Alert variant="info">
+          <Sparkles className="h-4 w-4" />
+          <div>
+            <h4 className="font-medium mb-1">
+              ✨ Auto-populated from Initial Contact
+            </h4>
+            <p className="text-sm">
+              Services and scope details were automatically suggested based on
+              your extracted requirements. You can review and modify them below.
+            </p>
+            {data?.scopeDetails?.autoPopulationDate && (
+              <p className="text-xs text-gray-500 mt-1">
+                Generated:{" "}
+                {new Date(
+                  data.scopeDetails.autoPopulationDate,
+                ).toLocaleString()}
+              </p>
+            )}
+          </div>
+        </Alert>
+      )}
 
       {/* Common Bundles */}
       <div>
@@ -317,6 +355,17 @@ export function ScopeDetails({
         </div>
       </div>
 
+      {/* Intelligent Service Suggestions */}
+      {data.initialContact?.aiExtractedData && (
+        <IntelligentServiceSuggestions
+          flowData={data}
+          currentServices={scopeData.selectedServices}
+          onAcceptSuggestion={handleAcceptSuggestion}
+          onRejectSuggestion={handleRejectSuggestion}
+          className="mt-6"
+        />
+      )}
+
       {/* Service Order Display */}
       {scopeData.serviceOrder && scopeData.serviceOrder.length > 0 && (
         <div className="bg-gray-50 p-4 rounded-lg">
@@ -391,3 +440,16 @@ export function ScopeDetails({
     </div>
   );
 }
+
+// PHASE 3 FIX: Memoize to prevent expensive service validation and dependency calculations
+export const ScopeDetails = memo(
+  ScopeDetailsComponent,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.data?.scopeDetails === nextProps.data?.scopeDetails &&
+      prevProps.onUpdate === nextProps.onUpdate &&
+      prevProps.onNext === nextProps.onNext &&
+      prevProps.onBack === nextProps.onBack
+    );
+  },
+);

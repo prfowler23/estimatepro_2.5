@@ -57,19 +57,10 @@ import { format } from "date-fns";
 import { QuotePDFGenerator } from "@/lib/pdf/generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
-interface Estimate {
-  id: string;
+import { EstimateData } from "@/lib/types/estimate-types";
+
+interface Estimate extends EstimateData {
   estimate_number: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  company_name: string;
-  building_name: string;
-  building_address: string;
-  total_price: number;
-  status: "draft" | "sent" | "approved" | "rejected";
-  created_at: string;
-  updated_at: string;
   services_count?: number;
 }
 
@@ -107,8 +98,11 @@ function EstimatesContent() {
         `);
 
       // Apply status filter
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+      if (statusFilter !== "all" && (statusFilter as any)) {
+        query = query.eq(
+          "status",
+          statusFilter as "draft" | "sent" | "approved" | "rejected",
+        );
       }
 
       // Apply sorting
@@ -124,9 +118,11 @@ function EstimatesContent() {
 
       if (error) throw error;
 
-      // Add services count to each estimate
+      // Add services count to each estimate and map quote_number to estimate_number
       const estimatesWithCounts = data.map((estimate) => ({
         ...estimate,
+        estimate_number:
+          (estimate as any).quote_number || (estimate as any).estimate_number,
         services_count: estimate.estimate_services?.[0]?.count || 0,
       }));
 
@@ -213,13 +209,15 @@ function EstimatesContent() {
       const { data: newEstimate, error: estimateError } = await supabase
         .from("estimates")
         .insert({
-          estimate_number: newEstimateNumber,
+          quote_number: newEstimateNumber,
           customer_name: estimate.customer_name + " (Copy)",
           customer_email: estimate.customer_email,
           customer_phone: estimate.customer_phone,
           company_name: estimate.company_name,
           building_name: estimate.building_name,
           building_address: estimate.building_address,
+          building_height_stories: estimate.building_height_stories,
+          building_height_feet: estimate.building_height_feet,
           total_price: estimate.total_price,
           status: "draft",
         })
@@ -232,14 +230,14 @@ function EstimatesContent() {
       const { data: services, error: servicesError } = await supabase
         .from("estimate_services")
         .select("*")
-        .eq("estimate_id", estimate.id);
+        .eq("quote_id", estimate.id);
 
       if (servicesError) throw servicesError;
 
       // Duplicate services
       if (services.length > 0) {
         const serviceInserts = services.map((service) => ({
-          estimate_id: newEstimate.id,
+          quote_id: newEstimate.id,
           service_type: service.service_type,
           area_sqft: service.area_sqft,
           glass_sqft: service.glass_sqft,
@@ -253,6 +251,8 @@ function EstimatesContent() {
           equipment_days: service.equipment_days,
           equipment_cost: service.equipment_cost,
           calculation_details: service.calculation_details,
+          quote_id: newEstimate.id, // Ensure quote_id is explicitly set
+          totalPrice: service.price, // Map totalPrice to price
         }));
 
         const { error: duplicateServicesError } = await supabase

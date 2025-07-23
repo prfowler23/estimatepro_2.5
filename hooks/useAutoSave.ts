@@ -57,61 +57,78 @@ export function useAutoSave({
     enabledRef.current = enabled;
   }, [enabled]);
 
+  // Memoize callbacks to prevent excessive re-renders
+  const onSaveSuccessRef = useRef(onSaveSuccess);
+  const onSaveErrorRef = useRef(onSaveError);
+  const onConflictDetectedRef = useRef(onConflictDetected);
+
+  useEffect(() => {
+    onSaveSuccessRef.current = onSaveSuccess;
+    onSaveErrorRef.current = onSaveError;
+    onConflictDetectedRef.current = onConflictDetected;
+  });
+
   // Initialize auto-save
   useEffect(() => {
     if (!estimateId || isInitialized) return;
+
+    let pollInterval: NodeJS.Timeout | null = null;
 
     try {
       AutoSaveService.initializeAutoSave(estimateId, dataRef.current, config);
       setIsInitialized(true);
 
-      // Start polling for save state updates
-      const pollInterval = setInterval(() => {
+      // Start polling for save state updates with reduced frequency
+      pollInterval = setInterval(() => {
+        if (!enabledRef.current) return;
+
         const currentState = AutoSaveService.getSaveState(estimateId);
         if (currentState) {
-          setSaveState({ ...currentState });
+          setSaveState((prevState) => {
+            // Only update if state actually changed to prevent unnecessary re-renders
+            if (JSON.stringify(prevState) === JSON.stringify(currentState)) {
+              return prevState;
+            }
+            return { ...currentState };
+          });
 
           // Trigger callbacks based on state changes
-          if (currentState.saveError && onSaveError) {
-            onSaveError(currentState.saveError);
+          if (currentState.saveError && onSaveErrorRef.current) {
+            onSaveErrorRef.current(currentState.saveError);
           }
 
-          if (currentState.conflictDetected && onConflictDetected) {
-            onConflictDetected(currentState);
+          if (currentState.conflictDetected && onConflictDetectedRef.current) {
+            onConflictDetectedRef.current(currentState);
           }
 
           if (
             !currentState.isDirty &&
             !currentState.isSaving &&
             !currentState.saveError &&
-            onSaveSuccess
+            onSaveSuccessRef.current
           ) {
-            onSaveSuccess();
+            onSaveSuccessRef.current();
           }
         }
-      }, 1000); // Poll every second
+      }, 3000); // Reduced polling frequency to every 3 seconds
 
       return () => {
-        clearInterval(pollInterval);
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
       };
     } catch (error) {
       console.error("Failed to initialize auto-save:", error);
-      if (onSaveError) {
-        onSaveError(
+      if (onSaveErrorRef.current) {
+        onSaveErrorRef.current(
           error instanceof Error
             ? error.message
             : "Failed to initialize auto-save",
         );
       }
     }
-  }, [
-    estimateId,
-    config,
-    onSaveSuccess,
-    onSaveError,
-    onConflictDetected,
-    isInitialized,
-  ]);
+  }, [estimateId, isInitialized]); // Removed volatile dependencies to prevent interval recreation
 
   // Cleanup on unmount
   useEffect(() => {
@@ -255,19 +272,31 @@ export function useAutoSaveData<T extends GuidedFlowData>(
         autoSaveHook.markDirty();
         setHasLocalChanges(true);
 
-        // Clear existing timeout
+        // Clear existing timeout to prevent memory leaks
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = undefined;
         }
 
         if (immediate) {
           // Save immediately
-          autoSaveHook.saveNow(newData, currentStep, "data-update-immediate");
+          autoSaveHook
+            .saveNow(newData, currentStep, "data-update-immediate")
+            .catch((error) => {
+              console.error("Immediate save failed:", error);
+            });
         } else {
           // Debounced save after 2 seconds of no changes
           saveTimeoutRef.current = setTimeout(() => {
-            autoSaveHook.saveNow(newData, currentStep, "data-update-debounced");
-            setHasLocalChanges(false);
+            autoSaveHook
+              .saveNow(newData, currentStep, "data-update-debounced")
+              .then(() => {
+                setHasLocalChanges(false);
+              })
+              .catch((error) => {
+                console.error("Debounced save failed:", error);
+              });
+            saveTimeoutRef.current = undefined;
           }, 2000);
         }
 
@@ -281,9 +310,16 @@ export function useAutoSaveData<T extends GuidedFlowData>(
   const saveImmediately = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = undefined;
     }
-    autoSaveHook.saveNow(data, currentStep, "force-save");
-    setHasLocalChanges(false);
+    autoSaveHook
+      .saveNow(data, currentStep, "force-save")
+      .then(() => {
+        setHasLocalChanges(false);
+      })
+      .catch((error) => {
+        console.error("Force save failed:", error);
+      });
   }, [autoSaveHook, data, currentStep]);
 
   // Cleanup timeout on unmount
@@ -291,6 +327,7 @@ export function useAutoSaveData<T extends GuidedFlowData>(
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = undefined;
       }
     };
   }, []);

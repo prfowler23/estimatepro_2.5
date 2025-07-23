@@ -112,7 +112,7 @@ export class VendorService {
           email: vendor.contact_email,
           address: vendor.contact_address,
         },
-        paymentTerms: vendor.paymentTerms,
+        paymentTerms: vendor.paymentTerms || undefined,
         deliveryRadius: vendor.deliveryRadius,
         specialties: (vendor.specialties as string[]) || [],
         notes: vendor.notes,

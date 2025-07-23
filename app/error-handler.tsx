@@ -35,21 +35,39 @@ export function ClientErrorHandler() {
 
     // Handle regular JavaScript errors
     const handleError = (event: ErrorEvent) => {
-      console.error("JavaScript error:", event.error);
+      // Use try-catch to prevent recursive errors from console.error
+      try {
+        console.error("JavaScript error:", event.error);
+      } catch (logError) {
+        // Silently ignore console errors to prevent recursion
+      }
 
-      // Check if this is a webpack/module loading error
+      // Check if this is a webpack/module loading error or React component error
       if (
         event.error?.message?.includes("Cannot read properties of undefined") ||
         event.error?.stack?.includes("webpack") ||
         event.error?.stack?.includes("requireModule") ||
+        event.error?.stack?.includes("react") ||
+        event.error?.stack?.includes("radix-ui") ||
         event.filename?.includes("webpack")
       ) {
-        console.log("Detected webpack error, attempting recovery...");
+        try {
+          console.log("Detected webpack/React error, attempting recovery...");
+        } catch (logError) {
+          // Silently ignore console errors
+        }
 
         // Try to recover silently first
         setTimeout(() => {
-          // Force a re-render by triggering a state change
-          window.dispatchEvent(new Event("resize"));
+          try {
+            // Force a re-render by triggering a state change
+            window.dispatchEvent(new Event("resize"));
+          } catch (recoveryError) {
+            // If recovery fails, try a page reload as last resort
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          }
         }, 100);
       }
     };

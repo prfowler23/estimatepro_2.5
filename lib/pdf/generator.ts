@@ -7,8 +7,8 @@ interface EstimateData {
   estimate_number: string;
   customer_name: string;
   customer_email: string;
-  customer_phone: string;
-  company_name?: string;
+  customer_phone: string | null;
+  company_name?: string | null;
   building_name: string;
   building_address: string;
   building_height_stories: number;
@@ -135,7 +135,7 @@ export class EstimatePDFGenerator {
       estimate.customer_name,
       estimate.company_name || "",
       estimate.customer_email,
-      estimate.customer_phone,
+      estimate.customer_phone || "",
     ].filter(Boolean);
 
     customerLines.forEach((line, index) => {

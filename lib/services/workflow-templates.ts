@@ -429,11 +429,11 @@ export class WorkflowTemplateService {
       throw new Error(`Template ${templateId} not found`);
     }
 
-    // Merge template defaults with existing data (existing data takes precedence)
-    const mergedData: GuidedFlowData = {
-      ...template.defaultData,
-      ...existingData,
-    };
+    // PHASE 2 FIX: Improve deep merging for complex nested objects
+    const mergedData: GuidedFlowData = this.deepMerge(
+      template.defaultData,
+      existingData,
+    ) as GuidedFlowData;
 
     // Apply template-specific customizations
     if (template.customSteps) {
@@ -441,7 +441,45 @@ export class WorkflowTemplateService {
       // This would modify the workflow steps based on template requirements
     }
 
+    // Add template metadata for tracking
+    mergedData._templateMetadata = {
+      templateId: template.id,
+      templateName: template.name,
+      appliedAt: new Date().toISOString(),
+    };
+
     return mergedData;
+  }
+
+  // PHASE 2 FIX: Add deep merge utility for proper object merging
+  private static deepMerge(target: any, source: any): any {
+    if (!source || typeof source !== "object") return target;
+    if (!target || typeof target !== "object") return source;
+
+    const result = { ...target };
+
+    Object.keys(source).forEach((key) => {
+      if (source[key] === null || source[key] === undefined) {
+        // Keep existing value if source value is null/undefined
+        return;
+      }
+
+      if (Array.isArray(source[key])) {
+        // For arrays, prefer source over target
+        result[key] = [...source[key]];
+      } else if (
+        typeof source[key] === "object" &&
+        !Array.isArray(source[key])
+      ) {
+        // Recursively merge objects
+        result[key] = this.deepMerge(result[key] || {}, source[key]);
+      } else {
+        // For primitives, source takes precedence
+        result[key] = source[key];
+      }
+    });
+
+    return result;
   }
 
   static getTemplateRecommendations(templateId: string): string[] {
@@ -607,6 +645,94 @@ export class WorkflowTemplateService {
     };
 
     return customTemplate;
+  }
+
+  // Get similar templates based on category, complexity, and services
+  static getSimilarTemplates(
+    templateId: string,
+    limit: number = 3,
+  ): WorkflowTemplate[] {
+    const template = this.getTemplateById(templateId);
+    if (!template) {
+      return [];
+    }
+
+    const allTemplates = this.getAllTemplates();
+
+    // Calculate similarity scores for each template
+    const similarTemplates = allTemplates
+      .filter((t) => t.id !== templateId) // Exclude the original template
+      .map((t) => ({
+        template: t,
+        similarity: this.calculateSimilarityScore(template, t),
+      }))
+      .sort((a, b) => b.similarity - a.similarity) // Sort by highest similarity
+      .slice(0, limit)
+      .map((item) => item.template);
+
+    return similarTemplates;
+  }
+
+  // Calculate similarity score between two templates
+  private static calculateSimilarityScore(
+    template1: WorkflowTemplate,
+    template2: WorkflowTemplate,
+  ): number {
+    let score = 0;
+
+    // Category match (30% weight)
+    if (template1.category === template2.category) {
+      score += 30;
+    }
+
+    // Complexity match (20% weight)
+    if (template1.complexity === template2.complexity) {
+      score += 20;
+    }
+
+    // Required services overlap (25% weight)
+    const requiredOverlap = template1.requiredServices.filter((service) =>
+      template2.requiredServices.includes(service),
+    ).length;
+    const requiredTotal =
+      template1.requiredServices.length + template2.requiredServices.length;
+    if (requiredTotal > 0) {
+      score +=
+        (requiredOverlap /
+          Math.max(
+            template1.requiredServices.length,
+            template2.requiredServices.length,
+          )) *
+        25;
+    }
+
+    // Optional services overlap (15% weight)
+    const optionalOverlap = template1.optionalServices.filter((service) =>
+      template2.optionalServices.includes(service),
+    ).length;
+    const optionalTotal =
+      template1.optionalServices.length + template2.optionalServices.length;
+    if (optionalTotal > 0) {
+      score +=
+        (optionalOverlap /
+          Math.max(
+            template1.optionalServices.length,
+            template2.optionalServices.length,
+          )) *
+        15;
+    }
+
+    // Tags overlap (10% weight)
+    const tagOverlap = template1.tags.filter((tag) =>
+      template2.tags.includes(tag),
+    ).length;
+    if (template1.tags.length > 0 && template2.tags.length > 0) {
+      score +=
+        (tagOverlap / Math.max(template1.tags.length, template2.tags.length)) *
+        10;
+    }
+
+    return Math.round(score);
   }
 
   // Template validation

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { error as logError } from "@/lib/utils/logger";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import {
   Calendar,
   Cloud,
@@ -344,158 +345,184 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Duration & Timeline</h2>
-        <p className="text-muted-foreground">
-          Intelligent duration calculation with weather analysis and timeline
-          optimization
-        </p>
-      </div>
+    <ErrorBoundary
+      stepId="duration"
+      stepNumber={6}
+      userId={data?.userId}
+      flowData={data}
+      fallback={
+        <div className="p-6 text-center">
+          <Clock className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Timeline Calculation Error
+          </h3>
+          <p className="text-gray-600 mb-4">
+            There was an issue calculating the project timeline or accessing
+            weather data. You can set a manual duration.
+          </p>
+          <Button onClick={onNext} className="mr-2">
+            Continue with Manual Entry
+          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Duration & Timeline</h2>
+          <p className="text-muted-foreground">
+            Intelligent duration calculation with weather analysis and timeline
+            optimization
+          </p>
+        </div>
 
-      {/* Start Date Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Schedule</CardTitle>
-          <CardDescription>
-            Set start date and view calculated timeline
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Proposed Start Date
-              </label>
-              <Input
-                type="date"
-                value={proposedStartDate.toISOString().split("T")[0]}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Optimal Start Date
-              </label>
-              <div className="flex space-x-2">
+        {/* Start Date Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Schedule</CardTitle>
+            <CardDescription>
+              Set start date and view calculated timeline
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Proposed Start Date
+                </label>
                 <Input
-                  value={getOptimalStartDate()}
-                  disabled
-                  className="bg-muted"
+                  type="date"
+                  value={proposedStartDate.toISOString().split("T")[0]}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
                 />
-                <Button
-                  variant="outline"
-                  onClick={() => handleStartDateChange(getOptimalStartDate())}
-                >
-                  Use
-                </Button>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Optimal Start Date
+                </label>
+                <div className="flex space-x-2">
+                  <Input
+                    value={getOptimalStartDate()}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => handleStartDateChange(getOptimalStartDate())}
+                  >
+                    Use
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Weather Risk
+                </label>
+                <p className="text-sm px-3 py-2 bg-muted rounded">
+                  {weatherAnalysis?.riskScore
+                    ? weatherAnalysis.riskScore < 0.3
+                      ? "✅ Low Risk"
+                      : weatherAnalysis.riskScore < 0.6
+                        ? "⚠️ Medium Risk"
+                        : "❌ High Risk"
+                    : "Calculating..."}
+                </p>
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Weather Risk
-              </label>
-              <p className="text-sm px-3 py-2 bg-muted rounded">
-                {weatherAnalysis?.riskScore
-                  ? weatherAnalysis.riskScore < 0.3
-                    ? "✅ Low Risk"
-                    : weatherAnalysis.riskScore < 0.6
-                      ? "⚠️ Medium Risk"
-                      : "❌ High Risk"
-                  : "Calculating..."}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Timeline Visualization */}
-      {timeline && (
-        <TimelineVisualization
-          timeline={timeline.entries.map((entry: any) => ({
-            ...entry,
-            serviceName:
-              SERVICE_RATES[entry.service as keyof typeof SERVICE_RATES]?.name,
-            weatherRisk:
-              (weatherAnalysis?.serviceImpacts?.[entry.service]?.delayRisk ||
-                0) > 0.6
-                ? "high"
-                : (weatherAnalysis?.serviceImpacts?.[entry.service]
-                      ?.delayRisk || 0) > 0.3
-                  ? "medium"
-                  : "low",
-            isOnCriticalPath: timeline.criticalPath.includes(entry.service),
-            confidence:
-              serviceDurations.find((sd: any) => sd.service === entry.service)
-                ?.confidence || "medium",
-          }))}
-          onAdjust={(service, newStart) => {
-            // Handle timeline adjustments if needed
-          }}
-        />
-      )}
-
-      {/* Weather Analysis */}
-      {weatherAnalysis && (
-        <WeatherImpactChart
-          historical={weatherAnalysis.historical as any}
-          services={selectedServices}
-          location={location}
-        />
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Duration Summary */}
-        <div className="lg:col-span-2">
-          {weatherAnalysis && timeline && (
-            <DurationSummary
-              serviceDurations={serviceDurations}
-              totalDuration={totalDuration}
-              weatherAnalysis={weatherAnalysis as any}
-              timeline={timeline}
-            />
-          )}
-        </div>
-
-        {/* Manual Overrides */}
-        <div>
-          <ManualOverride
-            serviceDurations={serviceDurations}
-            onOverride={handleManualOverride}
-            allowRemoval={true}
+        {/* Timeline Visualization */}
+        {timeline && (
+          <TimelineVisualization
+            timeline={timeline.entries.map((entry: any) => ({
+              ...entry,
+              serviceName:
+                SERVICE_RATES[entry.service as keyof typeof SERVICE_RATES]
+                  ?.name,
+              weatherRisk:
+                (weatherAnalysis?.serviceImpacts?.[entry.service]?.delayRisk ||
+                  0) > 0.6
+                  ? "high"
+                  : (weatherAnalysis?.serviceImpacts?.[entry.service]
+                        ?.delayRisk || 0) > 0.3
+                    ? "medium"
+                    : "low",
+              isOnCriticalPath: timeline.criticalPath.includes(entry.service),
+              confidence:
+                serviceDurations.find((sd: any) => sd.service === entry.service)
+                  ?.confidence || "medium",
+            }))}
+            onAdjust={(service, newStart) => {
+              // Handle timeline adjustments if needed
+            }}
           />
+        )}
+
+        {/* Weather Analysis */}
+        {weatherAnalysis && (
+          <WeatherImpactChart
+            historical={weatherAnalysis.historical as any}
+            services={selectedServices}
+            location={location}
+          />
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Duration Summary */}
+          <div className="lg:col-span-2">
+            {weatherAnalysis && timeline && (
+              <DurationSummary
+                serviceDurations={serviceDurations}
+                totalDuration={totalDuration}
+                weatherAnalysis={weatherAnalysis as any}
+                timeline={timeline}
+              />
+            )}
+          </div>
+
+          {/* Manual Overrides */}
+          <div>
+            <ManualOverride
+              serviceDurations={serviceDurations}
+              onOverride={handleManualOverride}
+              allowRemoval={true}
+            />
+          </div>
+        </div>
+
+        {/* Export Options */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Export Options</CardTitle>
+            <CardDescription>Export timeline and schedule data</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Button onClick={handleExportCalendar} disabled={!timeline}>
+                <Download className="h-4 w-4 mr-2" />
+                Export to Calendar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Navigation */}
+        <div className="flex justify-between">
+          <Button onClick={onBack} variant="outline">
+            Back
+          </Button>
+          <Button
+            onClick={handleNext}
+            disabled={!proposedStartDate || serviceDurations.length === 0}
+          >
+            Continue to Expenses
+          </Button>
         </div>
       </div>
-
-      {/* Export Options */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Export Options</CardTitle>
-          <CardDescription>Export timeline and schedule data</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Button onClick={handleExportCalendar} disabled={!timeline}>
-              <Download className="h-4 w-4 mr-2" />
-              Export to Calendar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button onClick={onBack} variant="outline">
-          Back
-        </Button>
-        <Button
-          onClick={handleNext}
-          disabled={!proposedStartDate || serviceDurations.length === 0}
-        >
-          Continue to Expenses
-        </Button>
-      </div>
-    </div>
+    </ErrorBoundary>
   );
 }

@@ -108,20 +108,35 @@ text-warning-600, text-warning-700
 
 ## 🧩 Component Guidelines
 
-### Button Components
+### Enhanced Button Components (UPDATED)
 
 ```tsx
-// ✅ CORRECT: Use semantic variants
+// ✅ CORRECT: Use semantic variants with new features
 <Button variant="default">Primary Action</Button>
 <Button variant="secondary">Secondary Action</Button>
 <Button variant="outline">Outline Style</Button>
 <Button variant="success">Success Action</Button>
 <Button variant="destructive">Delete Action</Button>
 
+// ✅ CORRECT: Enhanced button features (NEW)
+<Button ripple haptic>Mobile-optimized button</Button>
+<Button loading>Processing...</Button>
+<Button
+  variant="default"
+  motionProps={{
+    whileHover: { scale: 1.02 },
+    whileTap: { scale: 0.98 }
+  }}
+>
+  Custom interaction
+</Button>
+
 // ✅ CORRECT: Proper size variants
 <Button size="xs">Small</Button>
 <Button size="default">Normal</Button>
 <Button size="lg">Large</Button>
+<Button size="icon">Icon only</Button>
+<Button size="icon-sm">Small icon</Button>
 
 // ❌ AVOID: Custom styling that overrides theme
 <Button className="bg-blue-500 text-white">Bad</Button>
@@ -150,6 +165,106 @@ text-warning-600, text-warning-700
 <Input label="Email" type="email" />
 <Input label="Phone" leftIcon={Phone} />
 <Input label="Notes" rightIcon={Edit} />
+```
+
+### Skeleton Loading Components (NEW)
+
+```tsx
+// ✅ CORRECT: Basic skeleton patterns
+<Skeleton variant="shimmer" size="lg" rounded="md" />
+<Skeleton variant="pulse" className="w-full h-4" />
+<Skeleton variant="wave" className="w-3/4 h-6" />
+
+// ✅ CORRECT: Composite skeleton components
+<SkeletonText lines={3} lineHeight="relaxed" lastLineWidth="1/2" />
+<SkeletonCard hasHeader hasFooter contentLines={4} variant="elevated" />
+<SkeletonList items={5} showAvatar showActions />
+<SkeletonTable rows={5} columns={4} hasHeader />
+
+// ✅ CORRECT: Staggered loading animations
+<div className="space-y-4">
+  {Array.from({ length: 3 }).map((_, index) => (
+    <SkeletonCard key={index} delay={index * 0.1} />
+  ))}
+</div>
+```
+
+### Error Alert Components (NEW)
+
+```tsx
+// ✅ CORRECT: Contextual error handling
+<ErrorAlert
+  title="Connection Failed"
+  description="Unable to save your changes"
+  errorType="network"
+  retryable
+  onRetry={handleRetry}
+  onAction={handleAction}
+  dismissible
+  onDismiss={handleDismiss}
+/>
+
+// ✅ CORRECT: Specialized error components
+<NetworkErrorAlert
+  description="Check your internet connection"
+  onRetry={handleRetry}
+/>
+<ValidationErrorAlert
+  title="Form Validation Error"
+  description="Please correct the highlighted fields"
+/>
+<ServerErrorAlert
+  errorCode="500"
+  details="Internal server error details..."
+  showDetails
+/>
+
+// ✅ CORRECT: Custom recovery actions
+<ErrorAlert
+  title="Upload Failed"
+  description="File size too large"
+  recoveryActions={[
+    { label: "Compress file", action: "compress", icon: Compress },
+    { label: "Choose different file", action: "choose", icon: Upload },
+  ]}
+/>
+```
+
+### Empty State Components (NEW)
+
+```tsx
+// ✅ CORRECT: Pre-configured empty states
+<EstimatesEmptyState />
+<CustomersEmptyState />
+<PhotosEmptyState />
+<AnalyticsEmptyState />
+
+// ✅ CORRECT: Custom empty states
+<EmptyState
+  type="searchResults"
+  primaryAction={{
+    label: "Clear filters",
+    onClick: handleClearFilters
+  }}
+  secondaryActions={[
+    { label: "Search help", icon: MessageCircle, variant: "ghost" }
+  ]}
+/>
+
+// ✅ CORRECT: Custom empty state with illustration
+<EmptyState
+  icon={Camera}
+  title="No photos uploaded"
+  description="Upload project photos to enable AI analysis"
+  variant="feature"
+  size="lg"
+  illustration={<CustomIllustration />}
+  primaryAction={{
+    label: "Upload Photos",
+    icon: Upload,
+    onClick: handleUpload
+  }}
+/>
 ```
 
 ---
@@ -207,7 +322,7 @@ text-3xl     /* Hero headings */
 
 ## ⚡ Animation & Transitions
 
-### Professional Motion
+### Professional Motion with Framer Motion
 
 ```css
 duration-normal     /* Standard 200ms transitions */
@@ -217,14 +332,58 @@ duration-slow       /* Smooth 300ms transitions */
 ease-out           /* Smooth deceleration */
 ```
 
-### Micro-Interactions
+### Advanced Micro-Interactions (NEW)
 
 ```tsx
-// ✅ CORRECT: Subtle button feedback
-<Button className="active:scale-[0.98]">Click me</Button>
+// ✅ CORRECT: Enhanced button with ripple effects
+<Button ripple haptic>Advanced Interaction</Button>
 
-// ✅ CORRECT: Hover elevations
-<Card className="hover:shadow-md transition-all duration-normal">
+// ✅ CORRECT: Button with custom motion props
+<Button
+  motionProps={{
+    whileHover: { scale: 1.02 },
+    whileTap: { scale: 0.98 }
+  }}
+>
+  Custom Animation
+</Button>
+
+// ✅ CORRECT: Skeleton loading states
+<SkeletonCard hasHeader hasFooter contentLines={3} />
+<SkeletonList items={5} showAvatar showActions />
+
+// ✅ CORRECT: Spring animations for mobile
+<motion.div
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  transition={{
+    type: "spring",
+    stiffness: 400,
+    damping: 30
+  }}
+>
+  Touch-friendly element
+</motion.div>
+```
+
+### Loading State Patterns (NEW)
+
+```tsx
+// ✅ CORRECT: Contextual skeleton loaders
+<SkeletonText lines={2} lineHeight="relaxed" lastLineWidth="3/4" />
+<SkeletonTable rows={5} columns={4} hasHeader />
+
+// ✅ CORRECT: Staggered loading animations
+{items.map((item, index) => (
+  <motion.div
+    key={item.id}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
+  >
+    {item.content}
+  </motion.div>
+))}
 ```
 
 ---
@@ -247,20 +406,87 @@ ease-out           /* Smooth deceleration */
 - Use ThemeToggle component for testing
 - Ensure sufficient contrast in both modes
 
+## 📱 Mobile-First Patterns (NEW)
+
+### Touch-Friendly Interactions
+
+```tsx
+// ✅ CORRECT: Mobile-optimized button with haptic feedback
+<Button ripple haptic size="lg" className="min-h-[44px]">
+  Mobile Action
+</Button>
+
+// ✅ CORRECT: Touch targets with proper spacing
+<div className="flex flex-col gap-4 p-4">
+  <Button className="w-full min-h-[44px]">Primary Action</Button>
+  <Button variant="outline" className="w-full min-h-[44px]">
+    Secondary Action
+  </Button>
+</div>
+
+// ✅ CORRECT: Swipe-friendly cards
+<motion.div
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  className="touch-manipulation cursor-pointer"
+>
+  <Card variant="interactive">Swipeable content</Card>
+</motion.div>
+```
+
+### Mobile Navigation Patterns
+
+```tsx
+// ✅ CORRECT: Enhanced mobile bottom navigation
+<MobileBottomNav /> {/* Includes haptic feedback, animations, badges */}
+
+// ✅ CORRECT: Mobile-specific loading states
+<div className="md:hidden">
+  <SkeletonList items={3} showActions className="space-y-2" />
+</div>
+<div className="hidden md:block">
+  <SkeletonTable rows={5} columns={4} hasHeader />
+</div>
+```
+
+### Responsive Component Usage
+
+```tsx
+// ✅ CORRECT: Responsive empty states
+<EmptyState
+  size="sm"              // Mobile
+  className="md:size-lg" // Desktop
+  variant="minimal"
+  type="estimates"
+/>
+
+// ✅ CORRECT: Adaptive error handling
+<ErrorAlert
+  size="sm"
+  className="md:size-default"
+  variant="error"
+  dismissible={!isMobile} // Only dismissible on desktop
+/>
+```
+
 ---
 
-## 🔧 Implementation Checklist
+## 🔧 Implementation Checklist (UPDATED)
 
 ### When Creating New Components
 
 - [ ] Use only semantic color tokens
 - [ ] Implement proper focus states with `focus:ring-border-focus`
 - [ ] Add hover states with appropriate elevation/color changes
-- [ ] Include loading states where applicable
+- [ ] Include loading states with skeleton components (NEW)
 - [ ] Support disabled states with proper opacity/colors
 - [ ] Test in all theme modes (light/dark/system)
 - [ ] Follow consistent spacing patterns
 - [ ] Use appropriate typography scales
+- [ ] Add Framer Motion animations where appropriate (NEW)
+- [ ] Ensure touch-friendly mobile interactions (NEW)
+- [ ] Include haptic feedback for mobile (NEW)
+- [ ] Test with screen readers and keyboard navigation
 
 ### When Modifying Existing Components
 
@@ -269,38 +495,140 @@ ease-out           /* Smooth deceleration */
 - [ ] Ensure animations use consistent duration/easing
 - [ ] Verify theme switching works correctly
 - [ ] Test accessibility (contrast, focus visibility)
+- [ ] Add skeleton loading states where applicable (NEW)
+- [ ] Implement contextual error handling (NEW)
+- [ ] Add empty state components for data-driven UIs (NEW)
+- [ ] Optimize for mobile touch interactions (NEW)
+- [ ] Test animations on low-powered devices
 
 ---
 
-## 📋 Common Patterns
+## 📋 Common Patterns (UPDATED)
 
-### Professional Card Layout
+### Professional Card with Loading States
 
 ```tsx
-<Card variant="elevated" size="default">
-  <CardHeader size="default">
-    <CardTitle size="default">Professional Title</CardTitle>
-    <CardDescription size="default">Supporting text</CardDescription>
-  </CardHeader>
-  <CardContent size="default">{/* Content */}</CardContent>
-  <CardFooter size="default">
-    <Button variant="default">Primary Action</Button>
-    <Button variant="secondary">Cancel</Button>
-  </CardFooter>
-</Card>
+{
+  loading ? (
+    <SkeletonCard hasHeader hasFooter contentLines={3} variant="elevated" />
+  ) : (
+    <Card variant="elevated" size="default">
+      <CardHeader size="default">
+        <CardTitle size="default">Professional Title</CardTitle>
+        <CardDescription size="default">Supporting text</CardDescription>
+      </CardHeader>
+      <CardContent size="default">{/* Content */}</CardContent>
+      <CardFooter size="default">
+        <Button variant="default" ripple loading={isSubmitting}>
+          Primary Action
+        </Button>
+        <Button variant="secondary">Cancel</Button>
+      </CardFooter>
+    </Card>
+  );
+}
 ```
 
-### Form Field Pattern
+### Enhanced Form with Error Handling
 
 ```tsx
 <div className="space-y-6">
+  {/* Error Alert */}
+  <AnimatePresence>
+    {error && (
+      <ValidationErrorAlert
+        title="Form Error"
+        description={error.message}
+        dismissible
+        onDismiss={clearError}
+        recoveryActions={[
+          { label: "Reset form", action: "reset", icon: RefreshCw },
+        ]}
+      />
+    )}
+  </AnimatePresence>
+
+  {/* Form Fields */}
   <Input label="Company Name" required placeholder="Enter company name" />
   <Input label="Email Address" type="email" leftIcon={Mail} />
+
+  {/* Action Buttons */}
   <div className="flex gap-4">
-    <Button type="submit" loading={isSubmitting}>
+    <Button
+      type="submit"
+      loading={isSubmitting}
+      ripple
+      haptic
+      motionProps={{
+        whileHover: { scale: 1.02 },
+        whileTap: { scale: 0.98 },
+      }}
+    >
       Save Changes
     </Button>
     <Button variant="outline">Cancel</Button>
+  </div>
+</div>
+```
+
+### Data List with Empty States
+
+```tsx
+<div className="space-y-4">
+  {loading ? (
+    <SkeletonList items={5} showAvatar showActions />
+  ) : data.length === 0 ? (
+    <EstimatesEmptyState />
+  ) : (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-2"
+    >
+      {data.map((item, index) => (
+        <motion.div
+          key={item.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+        >
+          <Card variant="interactive">{/* Item content */}</Card>
+        </motion.div>
+      ))}
+    </motion.div>
+  )}
+</div>
+```
+
+### Mobile-First Dashboard Layout
+
+```tsx
+<div className="space-y-6">
+  {/* Mobile: Show skeleton, Desktop: Show table */}
+  <div className="block md:hidden">
+    {loading ? (
+      <SkeletonList items={3} showActions />
+    ) : (
+      <div className="space-y-2">
+        {items.map((item) => (
+          <motion.div
+            key={item.id}
+            whileTap={{ scale: 0.98 }}
+            className="touch-manipulation"
+          >
+            <Card variant="interactive">{/* Mobile card layout */}</Card>
+          </motion.div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div className="hidden md:block">
+    {loading ? (
+      <SkeletonTable rows={5} columns={4} hasHeader />
+    ) : (
+      <Table>{/* Desktop table layout */}</Table>
+    )}
   </div>
 </div>
 ```
@@ -340,7 +668,7 @@ border-gray-200 → border-border-secondary
 
 ---
 
-## 💡 Pro Tips for AI Assistants
+## 💡 Pro Tips for AI Assistants (UPDATED)
 
 1. **Always prioritize semantic tokens** over generic Tailwind colors
 2. **Check both light and dark themes** when making changes
@@ -349,6 +677,14 @@ border-gray-200 → border-border-secondary
 5. **Maintain consistent spacing patterns** throughout the app
 6. **Test theme switching** after any styling changes
 7. **Preserve accessibility** by keeping focus states visible
+8. **Add skeleton loading states** for better perceived performance (NEW)
+9. **Implement contextual error handling** with recovery suggestions (NEW)
+10. **Use empty states** to guide users through workflows (NEW)
+11. **Optimize for mobile interactions** with haptic feedback and proper touch targets (NEW)
+12. **Leverage Framer Motion** for professional micro-interactions (NEW)
+13. **Test animations on low-powered devices** to ensure smooth performance (NEW)
+14. **Consider progressive enhancement** - ensure functionality without JavaScript (NEW)
+15. **Use staggered animations** for lists and grids to create engaging loading experiences (NEW)
 
 ---
 

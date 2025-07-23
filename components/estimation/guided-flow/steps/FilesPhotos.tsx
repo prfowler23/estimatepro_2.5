@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, memo } from "react";
 import { error as logError, warn as logWarn } from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import {
 } from "@/lib/types/estimate-types";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
 import { MobilePhotoCapture } from "@/components/ui/mobile/MobilePhotoCapture";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 interface FileData {
   id: string;
@@ -78,7 +79,7 @@ interface FilesPhotosProps {
   onBack: () => void;
 }
 
-export function FilesPhotos({
+function FilesPhotosComponent({
   data,
   onUpdate,
   onNext,
@@ -505,282 +506,322 @@ export function FilesPhotos({
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold mb-4">Files & Photos</h2>
-        <p className="text-gray-600 text-sm sm:text-base">
-          {isMobile
-            ? "Capture or upload building photos for AI analysis."
-            : "Upload building photos, videos, plans, and measurements for AI analysis."}
-        </p>
-      </div>
-
-      {/* Mobile-optimized photo capture */}
-      {isMobile ? (
-        <MobilePhotoCapture
-          onPhotosChange={handleMobilePhotosChange}
-          maxPhotos={10}
-          enableAIAnalysis={true}
-        />
-      ) : (
-        /* Desktop Upload Area */
-        <Card
-          className={`border-2 border-dashed p-6 sm:p-8 text-center transition-colors touch-manipulation ${
-            dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-          }`}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
-          <input
-            type="file"
-            multiple
-            accept="image/*,video/*,.pdf"
-            onChange={handleFileInputChange}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="cursor-pointer block py-4 touch-manipulation"
-          >
-            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2">
-              Drop files here or click to upload
-            </h3>
-            <p className="text-sm sm:text-base text-gray-500">
-              Support for photos, videos, plans, and measurement screenshots
-            </p>
-          </label>
-        </Card>
-      )}
-
-      {/* Files Grid */}
-      {filesData.files.length > 0 && !isMobile && (
+    <ErrorBoundary
+      stepId="files-photos"
+      stepNumber={3}
+      userId={data?.userId}
+      flowData={data}
+      fallback={
+        <div className="p-6 text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            File Upload Error
+          </h3>
+          <p className="text-gray-600 mb-4">
+            There was an issue with file uploading or photo analysis. You can
+            continue with the estimation without photos.
+          </p>
+          <Button onClick={onNext} className="mr-2">
+            Continue Without Photos
+          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-6">
         <div>
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-            <h3 className="text-lg font-semibold">
-              Uploaded Files ({filesData.files.length})
-            </h3>
-            <Button
-              onClick={analyzeAllPhotos}
-              disabled={
-                isAnalyzing ||
-                filesData.files.filter((f) => f.type === "photo").length === 0
-              }
-              className="flex items-center justify-center w-full sm:w-auto"
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Files & Photos</h2>
+          <p className="text-gray-600 text-sm sm:text-base">
+            {isMobile
+              ? "Capture or upload building photos for AI analysis."
+              : "Upload building photos, videos, plans, and measurements for AI analysis."}
+          </p>
+        </div>
+
+        {/* Mobile-optimized photo capture */}
+        {isMobile ? (
+          <MobilePhotoCapture
+            onPhotosChange={handleMobilePhotosChange}
+            maxPhotos={10}
+            enableAIAnalysis={true}
+          />
+        ) : (
+          /* Desktop Upload Area */
+          <Card
+            className={`border-2 border-dashed p-6 sm:p-8 text-center transition-colors touch-manipulation ${
+              dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+            }`}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              multiple
+              accept="image/*,video/*,.pdf"
+              onChange={handleFileInputChange}
+              className="hidden"
+              id="file-upload"
+            />
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer block py-4 touch-manipulation"
             >
-              {isAnalyzing ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Camera className="w-4 h-4 mr-2" />
-              )}
-              Analyze All Photos
+              <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">
+                Drop files here or click to upload
+              </h3>
+              <p className="text-sm sm:text-base text-gray-500">
+                Support for photos, videos, plans, and measurement screenshots
+              </p>
+            </label>
+          </Card>
+        )}
+
+        {/* Files Grid */}
+        {filesData.files.length > 0 && !isMobile && (
+          <div>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+              <h3 className="text-lg font-semibold">
+                Uploaded Files ({filesData.files.length})
+              </h3>
+              <Button
+                onClick={analyzeAllPhotos}
+                disabled={
+                  isAnalyzing ||
+                  filesData.files.filter((f) => f.type === "photo").length === 0
+                }
+                className="flex items-center justify-center w-full sm:w-auto"
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4 mr-2" />
+                )}
+                Analyze All Photos
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filesData.files.map((fileData) => {
+                const IconComponent =
+                  FILE_TYPE_ICONS[getIconType(fileData.type)];
+
+                return (
+                  <Card key={fileData.id} className="p-4 relative">
+                    <button
+                      onClick={() => removeFile(fileData.id)}
+                      className="absolute top-2 right-2 p-2 bg-red-100 hover:bg-red-200 rounded-full touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4 text-red-600" />
+                    </button>
+
+                    <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                      {fileData.type.startsWith("image/") ? (
+                        <img
+                          src={fileData.url}
+                          alt={fileData.file?.name || fileData.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <IconComponent className="w-12 h-12 text-gray-400" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                          {FILE_TYPE_LABELS[
+                            fileData.type as keyof typeof FILE_TYPE_LABELS
+                          ] || "File"}
+                        </span>
+                        {getStatusIcon(fileData.status || "pending")}
+                      </div>
+
+                      <h4
+                        className="text-sm font-medium truncate"
+                        title={fileData.file?.name || fileData.name}
+                      >
+                        {fileData.file?.name || fileData.name}
+                      </h4>
+
+                      {/* Analysis Results */}
+                      {fileData.analysis && fileData.status === "complete" && (
+                        <div className="text-xs space-y-1 bg-gray-50 p-2 rounded">
+                          {fileData.analysis.windowCount && (
+                            <div>Windows: {fileData.analysis.windowCount}</div>
+                          )}
+                          {fileData.analysis.totalArea && (
+                            <div>
+                              Area:{" "}
+                              {fileData.analysis.totalArea.toLocaleString()} sq
+                              ft
+                            </div>
+                          )}
+                          {fileData.analysis.damageLevel && (
+                            <div
+                              className={`capitalize ${
+                                fileData.analysis.damageLevel === "severe"
+                                  ? "text-red-600"
+                                  : fileData.analysis.damageLevel === "moderate"
+                                    ? "text-yellow-600"
+                                    : fileData.analysis.damageLevel === "minor"
+                                      ? "text-blue-600"
+                                      : "text-green-600"
+                              }`}
+                            >
+                              Damage: {fileData.analysis.damageLevel}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Error Messages */}
+                      {fileData.status === "error" && (
+                        <div className="text-xs space-y-2 bg-red-50 p-2 rounded border border-red-200">
+                          <div className="text-red-600 font-medium">
+                            Analysis Failed
+                          </div>
+                          <div className="text-red-500">
+                            {fileData.errorMessage || "Unknown error occurred"}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => retryAnalysis(fileData.id)}
+                            className="w-full text-xs h-8 min-h-[44px] sm:h-6 sm:min-h-[32px] border-red-300 text-red-600 hover:bg-red-50 touch-manipulation"
+                          >
+                            <RefreshCw className="w-3 h-3 mr-1" />
+                            Retry Analysis
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Summary */}
+        {filesData.summary.analyzedPhotos > 0 && (
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <BarChart3 className="w-5 h-5 mr-2" />
+              Analysis Summary
+            </h3>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {filesData.summary.analyzedPhotos}/
+                  {filesData.summary.totalPhotos}
+                </div>
+                <div className="text-sm text-gray-500">Photos Analyzed</div>
+              </div>
+
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {filesData.summary.totalWindows}
+                </div>
+                <div className="text-sm text-gray-500">Total Windows</div>
+              </div>
+
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {filesData.summary.totalArea.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-500">Total Area (sq ft)</div>
+              </div>
+
+              <div className="text-center">
+                <div
+                  className={`text-2xl font-bold capitalize ${
+                    filesData.summary.avgDamageLevel === "severe"
+                      ? "text-red-600"
+                      : filesData.summary.avgDamageLevel === "moderate"
+                        ? "text-yellow-600"
+                        : filesData.summary.avgDamageLevel === "minor"
+                          ? "text-blue-600"
+                          : "text-green-600"
+                  }`}
+                >
+                  {filesData.summary.avgDamageLevel}
+                </div>
+                <div className="text-sm text-gray-500">Avg Damage</div>
+              </div>
+            </div>
+
+            {/* Materials Breakdown */}
+            {Object.keys(filesData.summary.materials).length > 0 && (
+              <div className="mb-4">
+                <h4 className="font-medium mb-2">Material Breakdown</h4>
+                <div className="space-y-2">
+                  {Object.entries(filesData.summary.materials).map(
+                    ([material, percentage]) => (
+                      <div
+                        key={material}
+                        className="flex justify-between text-sm"
+                      >
+                        <span>{material}</span>
+                        <span>{Math.round(Number(percentage))}%</span>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Safety Hazards */}
+            {filesData.summary.safetyHazards.length > 0 && (
+              <Alert variant="warning">
+                <AlertCircle className="h-4 w-4" />
+                <span>
+                  <strong>Safety Hazards Detected:</strong>{" "}
+                  {filesData.summary.safetyHazards.join(", ")}
+                </span>
+              </Alert>
+            )}
+          </Card>
+        )}
+
+        {/* Navigation - Hidden on mobile (handled by MobileStepNavigation) */}
+        {!isMobile && (
+          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6">
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="w-full sm:w-auto"
+            >
+              Back
+            </Button>
+            <Button
+              onClick={handleNext}
+              disabled={filesData.files.length === 0}
+              className="w-full sm:w-auto"
+            >
+              Continue to Area Map
             </Button>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filesData.files.map((fileData) => {
-              const IconComponent = FILE_TYPE_ICONS[getIconType(fileData.type)];
-
-              return (
-                <Card key={fileData.id} className="p-4 relative">
-                  <button
-                    onClick={() => removeFile(fileData.id)}
-                    className="absolute top-2 right-2 p-2 bg-red-100 hover:bg-red-200 rounded-full touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  >
-                    <X className="w-4 h-4 text-red-600" />
-                  </button>
-
-                  <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
-                    {fileData.type.startsWith("image/") ? (
-                      <img
-                        src={fileData.url}
-                        alt={fileData.file?.name || fileData.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <IconComponent className="w-12 h-12 text-gray-400" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
-                        {FILE_TYPE_LABELS[
-                          fileData.type as keyof typeof FILE_TYPE_LABELS
-                        ] || "File"}
-                      </span>
-                      {getStatusIcon(fileData.status || "pending")}
-                    </div>
-
-                    <h4
-                      className="text-sm font-medium truncate"
-                      title={fileData.file?.name || fileData.name}
-                    >
-                      {fileData.file?.name || fileData.name}
-                    </h4>
-
-                    {/* Analysis Results */}
-                    {fileData.analysis && fileData.status === "complete" && (
-                      <div className="text-xs space-y-1 bg-gray-50 p-2 rounded">
-                        {fileData.analysis.windowCount && (
-                          <div>Windows: {fileData.analysis.windowCount}</div>
-                        )}
-                        {fileData.analysis.totalArea && (
-                          <div>
-                            Area: {fileData.analysis.totalArea.toLocaleString()}{" "}
-                            sq ft
-                          </div>
-                        )}
-                        {fileData.analysis.damageLevel && (
-                          <div
-                            className={`capitalize ${
-                              fileData.analysis.damageLevel === "severe"
-                                ? "text-red-600"
-                                : fileData.analysis.damageLevel === "moderate"
-                                  ? "text-yellow-600"
-                                  : fileData.analysis.damageLevel === "minor"
-                                    ? "text-blue-600"
-                                    : "text-green-600"
-                            }`}
-                          >
-                            Damage: {fileData.analysis.damageLevel}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Error Messages */}
-                    {fileData.status === "error" && (
-                      <div className="text-xs space-y-2 bg-red-50 p-2 rounded border border-red-200">
-                        <div className="text-red-600 font-medium">
-                          Analysis Failed
-                        </div>
-                        <div className="text-red-500">
-                          {fileData.errorMessage || "Unknown error occurred"}
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => retryAnalysis(fileData.id)}
-                          className="w-full text-xs h-8 min-h-[44px] sm:h-6 sm:min-h-[32px] border-red-300 text-red-600 hover:bg-red-50 touch-manipulation"
-                        >
-                          <RefreshCw className="w-3 h-3 mr-1" />
-                          Retry Analysis
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Analysis Summary */}
-      {filesData.summary.analyzedPhotos > 0 && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <BarChart3 className="w-5 h-5 mr-2" />
-            Analysis Summary
-          </h3>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {filesData.summary.analyzedPhotos}/
-                {filesData.summary.totalPhotos}
-              </div>
-              <div className="text-sm text-gray-500">Photos Analyzed</div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {filesData.summary.totalWindows}
-              </div>
-              <div className="text-sm text-gray-500">Total Windows</div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {filesData.summary.totalArea.toLocaleString()}
-              </div>
-              <div className="text-sm text-gray-500">Total Area (sq ft)</div>
-            </div>
-
-            <div className="text-center">
-              <div
-                className={`text-2xl font-bold capitalize ${
-                  filesData.summary.avgDamageLevel === "severe"
-                    ? "text-red-600"
-                    : filesData.summary.avgDamageLevel === "moderate"
-                      ? "text-yellow-600"
-                      : filesData.summary.avgDamageLevel === "minor"
-                        ? "text-blue-600"
-                        : "text-green-600"
-                }`}
-              >
-                {filesData.summary.avgDamageLevel}
-              </div>
-              <div className="text-sm text-gray-500">Avg Damage</div>
-            </div>
-          </div>
-
-          {/* Materials Breakdown */}
-          {Object.keys(filesData.summary.materials).length > 0 && (
-            <div className="mb-4">
-              <h4 className="font-medium mb-2">Material Breakdown</h4>
-              <div className="space-y-2">
-                {Object.entries(filesData.summary.materials).map(
-                  ([material, percentage]) => (
-                    <div
-                      key={material}
-                      className="flex justify-between text-sm"
-                    >
-                      <span>{material}</span>
-                      <span>{Math.round(Number(percentage))}%</span>
-                    </div>
-                  ),
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Safety Hazards */}
-          {filesData.summary.safetyHazards.length > 0 && (
-            <Alert variant="warning">
-              <AlertCircle className="h-4 w-4" />
-              <span>
-                <strong>Safety Hazards Detected:</strong>{" "}
-                {filesData.summary.safetyHazards.join(", ")}
-              </span>
-            </Alert>
-          )}
-        </Card>
-      )}
-
-      {/* Navigation - Hidden on mobile (handled by MobileStepNavigation) */}
-      {!isMobile && (
-        <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            className="w-full sm:w-auto"
-          >
-            Back
-          </Button>
-          <Button
-            onClick={handleNext}
-            disabled={filesData.files.length === 0}
-            className="w-full sm:w-auto"
-          >
-            Continue to Area Map
-          </Button>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
+
+// PHASE 3 FIX: Memoize to prevent expensive file processing and AI photo analysis
+export const FilesPhotos = memo(
+  FilesPhotosComponent,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.data?.filesPhotos === nextProps.data?.filesPhotos &&
+      prevProps.onUpdate === nextProps.onUpdate &&
+      prevProps.onNext === nextProps.onNext &&
+      prevProps.onBack === nextProps.onBack
+    );
+  },
+);

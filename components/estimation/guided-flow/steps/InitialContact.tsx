@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
@@ -21,6 +21,8 @@ import {
   useNetworkErrorHandler,
 } from "@/hooks/useErrorHandler";
 import { useErrorRecovery } from "@/components/error/ErrorRecoveryProvider";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { CrossStepPopulationService } from "@/lib/services/cross-step-population-service";
 
 const CONTACT_METHODS = [
   {
@@ -56,7 +58,7 @@ interface InitialContactProps {
   onBack: () => void;
 }
 
-export function InitialContact({
+function InitialContactComponent({
   data,
   onUpdate,
   onNext,
@@ -71,6 +73,8 @@ export function InitialContact({
 
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionComplete, setExtractionComplete] = useState(false);
+  const [isAutoPopulating, setIsAutoPopulating] = useState(false);
+  const [autoPopulationResult, setAutoPopulationResult] = useState<any>(null);
 
   // Error handling hooks
   const aiErrorHandler = useAIErrorHandler();
@@ -198,6 +202,10 @@ export function InitialContact({
         }));
 
         setExtractionComplete(true);
+
+        // Trigger auto-population of subsequent steps
+        await triggerAutoPopulation(extractedDataWithRedFlags);
+
         return extractedDataWithRedFlags;
       },
       {
@@ -233,6 +241,59 @@ export function InitialContact({
         return "Enter details from the in-person discussion, including project scope and customer requirements...";
       default:
         return "Enter the contact information and project details...";
+    }
+  };
+
+  const triggerAutoPopulation = async (extractedData: any) => {
+    try {
+      setIsAutoPopulating(true);
+
+      // Create updated flow data with the new extracted data
+      const updatedInitialData = {
+        ...data,
+        initialContact: {
+          ...contactData,
+          aiExtractedData: extractedData,
+        },
+      };
+
+      // Trigger cross-step population
+      const { updatedFlowData, result } =
+        await CrossStepPopulationService.populateFromExtractedData(
+          updatedInitialData,
+          {
+            enableServiceSuggestions: true,
+            enableScopeGeneration: true,
+            enableTimelineEstimation: true,
+          },
+        );
+
+      setAutoPopulationResult(result);
+
+      // Update the parent flow data with auto-populated information
+      if (result.success) {
+        onUpdate(updatedFlowData);
+
+        // Show success message
+        reportError(
+          `✅ Auto-populated ${result.populatedSteps.join(", ")} based on extracted information (${Math.round(result.confidence)}% confidence)`,
+          {
+            errorType: "success",
+            errorCode: "AUTO_POPULATION_SUCCESS",
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Auto-population failed:", error);
+      reportError(
+        "Auto-population failed, but you can continue manually filling out the steps.",
+        {
+          errorType: "ai_service",
+          errorCode: "AUTO_POPULATION_FAILED",
+        },
+      );
+    } finally {
+      setIsAutoPopulating(false);
     }
   };
 
@@ -357,7 +418,11 @@ export function InitialContact({
           >
             <Button
               onClick={handleEmailExtraction}
-              disabled={!contactData.initialNotes?.trim() || isExtracting}
+              disabled={
+                !contactData.initialNotes?.trim() ||
+                isExtracting ||
+                isAutoPopulating
+              }
               className="flex items-center"
               data-tutorial="ai-extract"
             >
@@ -365,6 +430,11 @@ export function InitialContact({
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Extracting...
+                </>
+              ) : isAutoPopulating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Auto-populating steps...
                 </>
               ) : (
                 <>
@@ -388,6 +458,38 @@ export function InitialContact({
           }
         />
       </div>
+
+      {/* Auto-population Result Display */}
+      {autoPopulationResult && autoPopulationResult.success && (
+        <Alert variant="info" className="mb-6">
+          <Info className="h-4 w-4" />
+          <div>
+            <h4 className="font-medium mb-2">✨ Steps Auto-populated</h4>
+            <p className="text-sm mb-2">
+              Successfully pre-filled:{" "}
+              {autoPopulationResult.populatedSteps.join(", ")}
+            </p>
+            <p className="text-xs text-gray-600">
+              Confidence: {Math.round(autoPopulationResult.confidence)}% • You
+              can review and modify the auto-populated data in subsequent steps.
+            </p>
+            {autoPopulationResult.suggestions.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs font-medium text-gray-700">
+                  Suggestions:
+                </p>
+                <ul className="text-xs text-gray-600 list-disc list-inside">
+                  {autoPopulationResult.suggestions.map(
+                    (suggestion: string, index: number) => (
+                      <li key={index}>{suggestion}</li>
+                    ),
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        </Alert>
+      )}
 
       {/* Extracted Data Display */}
       {contactData.aiExtractedData && (
@@ -689,39 +791,57 @@ export function InitialContact({
             <div className="space-y-4">
               <h4 className="font-medium">Project Requirements</h4>
 
-              <SmartField
-                field="requirements.buildingType"
-                value={
-                  (contactData.aiExtractedData as any)?.requirements
-                    ?.buildingType || ""
-                }
-                onChange={(value) =>
-                  setContactData((prev) => ({
-                    ...prev,
-                    aiExtractedData: {
-                      ...(prev.aiExtractedData as any),
-                      requirements: {
-                        ...(prev.aiExtractedData as any)?.requirements,
-                        buildingType: value,
-                      },
-                    } as any,
-                  }))
-                }
-                type="select"
-                label="Building Type"
-                options={[
-                  { value: "office", label: "Office Building" },
-                  { value: "retail", label: "Retail Store" },
-                  { value: "restaurant", label: "Restaurant" },
-                  { value: "hospital", label: "Hospital/Medical" },
-                  { value: "school", label: "School/Educational" },
-                  { value: "industrial", label: "Industrial" },
-                  { value: "residential", label: "Residential" },
-                ]}
-                enableSmartDefaults
+              <ErrorBoundary
+                stepId="initial-contact"
+                stepNumber={1}
+                userId={data?.userId}
                 flowData={data}
-                currentStep={1}
-              />
+                fallback={
+                  <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+                    <p className="text-sm text-red-600">
+                      Building type selector encountered an error. Please
+                      refresh the page or continue manually.
+                    </p>
+                  </div>
+                }
+              >
+                <SmartField
+                  field="requirements.buildingType"
+                  value={
+                    (contactData.aiExtractedData as any)?.requirements
+                      ?.buildingType || ""
+                  }
+                  onChange={(value) =>
+                    setContactData((prev) => ({
+                      ...prev,
+                      aiExtractedData: {
+                        ...(prev.aiExtractedData as any),
+                        customer: {
+                          ...(prev.aiExtractedData as any)?.customer,
+                        },
+                        requirements: {
+                          ...(prev.aiExtractedData as any)?.requirements,
+                          buildingType: value,
+                        },
+                      } as any,
+                    }))
+                  }
+                  type="select"
+                  label="Building Type"
+                  options={[
+                    { value: "office", label: "Office Building" },
+                    { value: "retail", label: "Retail Store" },
+                    { value: "restaurant", label: "Restaurant" },
+                    { value: "hospital", label: "Hospital/Medical" },
+                    { value: "school", label: "School/Educational" },
+                    { value: "industrial", label: "Industrial" },
+                    { value: "residential", label: "Residential" },
+                  ]}
+                  enableSmartDefaults
+                  flowData={data}
+                  currentStep={1}
+                />
+              </ErrorBoundary>
 
               <SmartField
                 field="requirements.buildingSize"
@@ -823,3 +943,17 @@ export function InitialContact({
     </div>
   );
 }
+
+// PHASE 3 FIX: Memoize to prevent expensive re-renders with AI extraction and validation
+export const InitialContact = memo(
+  InitialContactComponent,
+  (prevProps, nextProps) => {
+    // Custom comparison - only re-render if relevant data changes
+    return (
+      prevProps.data?.initialContact === nextProps.data?.initialContact &&
+      prevProps.onUpdate === nextProps.onUpdate &&
+      prevProps.onNext === nextProps.onNext &&
+      prevProps.onBack === nextProps.onBack
+    );
+  },
+);

@@ -48,7 +48,7 @@ export interface RiskFactor {
 // Form data types for different services
 export interface BaseServiceFormData {
   area: number;
-  buildingHeight: number;
+  building_height_feet: number | null;
   accessType: "ladder" | "lift" | "scaffold" | "rope";
   timeConstraints?: string;
   specialRequirements?: string;
@@ -222,7 +222,7 @@ export interface AIAnalysisResult {
   confidence: number;
   findings: {
     surfaceArea?: number;
-    buildingHeight?: number;
+    buildingHeight: number | null;
     windowCount?: number;
     accessPoints?: string[];
     complications?: string[];
@@ -430,12 +430,15 @@ export interface FinalEstimate {
 }
 
 export interface ServiceEstimate {
+  quote_id: string;
   serviceType: string;
   description: string;
   quantity: number;
   unit: string;
   unitPrice: number;
-  totalPrice: number;
+  price: number;
+  area_sqft: number | null;
+  glass_sqft: number | null;
   duration: number;
   startDate?: Date;
   endDate?: Date;
@@ -529,7 +532,9 @@ export type ServiceType =
   | "FC" // Final Clean
   | "GRC" // Granite Reconditioning
   | "PWS" // Pressure Wash & Seal
-  | "PD"; // Parking Deck
+  | "PD" // Parking Deck
+  | "BR" // Biofilm Removal
+  | "GC"; // General Cleaning
 
 // Service mapping for display names and metadata
 export const SERVICE_METADATA: Record<
@@ -607,6 +612,18 @@ export const SERVICE_METADATA: Record<
     basePrice: "$16-23/space",
     category: "specialty",
   },
+  BR: {
+    name: "Biofilm Removal",
+    fullName: "biofilm-removal",
+    basePrice: "$0.75/sq ft",
+    category: "specialty",
+  },
+  GC: {
+    name: "General Cleaning",
+    fullName: "general-cleaning",
+    basePrice: "$50-100/hr",
+    category: "cleaning",
+  },
 };
 
 export type EstimateStatus =
@@ -638,6 +655,7 @@ export interface ScopeDetailsData {
   scopeNotes?: string;
   accessRestrictions?: string[];
   specialRequirements?: string[];
+  autoPopulated?: boolean;
 }
 
 export interface FilesPhotosData {
@@ -656,6 +674,8 @@ export interface AreaOfWorkData {
   backgroundImage?: string;
   imageName?: string;
   notes?: string;
+  autoPopulated?: boolean;
+  autoPopulationSource?: string;
 }
 
 export interface TakeoffStepData {
@@ -664,7 +684,7 @@ export interface TakeoffStepData {
 }
 
 export interface DurationStepData {
-  estimatedDuration: number;
+  estimatedDuration: number | { days: number; hours: number };
   weatherAnalysis?: WeatherAnalysis;
   weatherFactors?: any; // Required by workflow templates
   schedulingConstraints?: any; // Required by workflow templates
@@ -672,6 +692,8 @@ export interface DurationStepData {
   timeline?: any;
   manualOverrides?: Record<string, number>;
   projectStartDate?: string;
+  autoPopulated?: boolean;
+  autoPopulationSource?: string;
 }
 
 export interface ExpensesStepData {
@@ -742,6 +764,12 @@ export interface GuidedFlowData {
   expenses?: ExpensesStepData;
   pricing?: PricingStepData;
   summary?: SummaryStepData;
+  // PHASE 2 FIX: Add template metadata tracking
+  _templateMetadata?: {
+    templateId: string;
+    templateName: string;
+    appliedAt: string;
+  };
 }
 
 // Main estimate interfaces for backward compatibility

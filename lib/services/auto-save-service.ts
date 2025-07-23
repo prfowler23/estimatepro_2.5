@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { getUser } from "@/lib/auth/server";
+import { offlineUtils } from "@/lib/pwa/offline-manager";
 
 export interface AutoSaveState {
   lastSaved: Date;
@@ -294,6 +295,35 @@ export class AutoSaveService {
         conflictError,
       );
       // Continue with save even if conflict detection fails
+    }
+
+    // PHASE 3 FIX: Check if we're offline and queue for later sync
+    if (!navigator.onLine) {
+      console.log("Device offline, queuing estimate save for later sync");
+
+      // Queue the save for offline sync
+      offlineUtils.queueEstimateSave(estimateId, {
+        flow_data: this.config.compressionEnabled
+          ? this.compressData(data)
+          : data,
+        current_step: this.getCurrentStepNumber(stepId),
+        version: state.localVersion + 1,
+        last_modified: new Date().toISOString(),
+        device_info: this.getDeviceInfo(),
+        description,
+        userId,
+      });
+
+      // Mark as saved locally (optimistic update)
+      this.updateSaveState(estimateId, {
+        lastSaved: new Date(),
+        isDirty: false,
+        isSaving: false,
+        saveError: null,
+        localVersion: state.localVersion + 1,
+      });
+
+      return true; // Return success for offline save
     }
 
     const result = await withDatabaseRetry(async () => {

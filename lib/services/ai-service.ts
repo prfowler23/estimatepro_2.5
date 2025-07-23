@@ -15,6 +15,13 @@ import {
   WorkArea,
   ServiceDependency,
 } from "@/lib/types/estimate-types";
+import {
+  getBuildingAnalysisPrompt,
+  getContactExtractionPrompt,
+  getServiceRecommendationPrompt,
+  getScopeValidationPrompt,
+  getFacadeAnalysisPrompt,
+} from "../ai/prompts/prompt-constants";
 
 export interface PhotoAnalysisParams {
   imageUrl: string;
@@ -51,10 +58,11 @@ export class AIService {
   private static readonly OPENAI_API_KEY = process.env.OPENAI_API_KEY;
   private static readonly API_BASE_URL = "https://api.openai.com/v1";
 
-  // Photo analysis methods
-  static async analyzeBuilding(
-    params: PhotoAnalysisParams,
-  ): Promise<AIAnalysisResult | null> {
+  private static async fetchOpenAI(
+    model: string,
+    messages: any[],
+    max_tokens: number,
+  ) {
     if (!this.OPENAI_API_KEY) {
       throw new Error("OpenAI API key not configured");
     }
@@ -67,25 +75,9 @@ export class AIService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: this.getBuildingAnalysisPrompt(params),
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: params.imageUrl,
-                  },
-                },
-              ],
-            },
-          ],
-          max_tokens: 1000,
+          model,
+          messages,
+          max_tokens,
         }),
       });
 
@@ -94,196 +86,133 @@ export class AIService {
       }
 
       const data = await response.json();
-      return this.parseBuildingAnalysis(data.choices[0].message.content);
+      return data.choices[0].message.content;
     });
 
     return result.success ? result.data || null : null;
+  }
+
+  // Photo analysis methods
+  static async analyzeBuilding(
+    params: PhotoAnalysisParams,
+  ): Promise<AIAnalysisResult | null> {
+    const content = await this.fetchOpenAI(
+      "gpt-4o",
+      [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: getBuildingAnalysisPrompt(params),
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: params.imageUrl,
+              },
+            },
+          ],
+        },
+      ],
+      1000,
+    );
+
+    return this.parseBuildingAnalysis(content);
   }
 
   static async extractContactInfo(
     params: ContactExtractionParams,
   ): Promise<AIExtractedData | null> {
-    if (!this.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured");
-    }
-
-    const result = await withAIRetry(async () => {
-      const response = await fetch(`${this.API_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
+    const content = await this.fetchOpenAI(
+      "gpt-4",
+      [
+        {
+          role: "system",
+          content: getContactExtractionPrompt(params.contentType),
         },
-        body: JSON.stringify({
-          model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: this.getContactExtractionPrompt(params.contentType),
-            },
-            {
-              role: "user",
-              content: params.content,
-            },
-          ],
-          max_tokens: 800,
-        }),
-      });
+        {
+          role: "user",
+          content: params.content,
+        },
+      ],
+      800,
+    );
 
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return this.parseContactExtraction(data.choices[0].message.content);
-    });
-
-    return result.success ? result.data || null : null;
+    return this.parseContactExtraction(content);
   }
 
   static async recommendServices(
     params: ServiceRecommendationParams,
   ): Promise<ServiceType[]> {
-    if (!this.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured");
-    }
-
-    const result = await withAIRetry(async () => {
-      const response = await fetch(`${this.API_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
+    const content = await this.fetchOpenAI(
+      "gpt-4",
+      [
+        {
+          role: "system",
+          content: getServiceRecommendationPrompt(),
         },
-        body: JSON.stringify({
-          model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: this.getServiceRecommendationPrompt(),
-            },
-            {
-              role: "user",
-              content: JSON.stringify({
-                buildingAnalysis: params.buildingAnalysis,
-                userPreferences: params.userPreferences,
-                budgetRange: params.budgetRange,
-              }),
-            },
-          ],
-          max_tokens: 600,
-        }),
-      });
+        {
+          role: "user",
+          content: JSON.stringify({
+            buildingAnalysis: params.buildingAnalysis,
+            userPreferences: params.userPreferences,
+            budgetRange: params.budgetRange,
+          }),
+        },
+      ],
+      600,
+    );
 
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return this.parseServiceRecommendations(data.choices[0].message.content);
-    });
-
-    return result.success ? result.data || [] : [];
+    return this.parseServiceRecommendations(content);
   }
 
   static async analyzeFacadeComprehensive(
     imageUrl: string,
     buildingType: string = "commercial",
   ): Promise<any> {
-    if (!this.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured");
-    }
-
-    const result = await withAIRetry(async () => {
-      const response = await fetch(`${this.API_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
+    const content = await this.fetchOpenAI(
+      "gpt-4o",
+      [
+        {
+          role: "user",
+          content: [
             {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: this.getFacadeAnalysisPrompt(buildingType),
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: imageUrl,
-                  },
-                },
-              ],
+              type: "text",
+              text: getFacadeAnalysisPrompt(buildingType),
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageUrl,
+              },
             },
           ],
-          max_tokens: 2000,
-        }),
-      });
+        },
+      ],
+      2000,
+    );
 
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return this.parseFacadeAnalysis(data.choices[0].message.content);
-    });
-
-    return result.success ? result.data || null : null;
+    return this.parseFacadeAnalysis(content);
   }
 
   static async validateScope(content: string): Promise<AIValidationResult> {
-    if (!this.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured");
-    }
-
-    const result = await withAIRetry(async () => {
-      const response = await fetch(`${this.API_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
+    const validationContent = await this.fetchOpenAI(
+      "gpt-4",
+      [
+        {
+          role: "system",
+          content: getScopeValidationPrompt(),
         },
-        body: JSON.stringify({
-          model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: this.getScopeValidationPrompt(),
-            },
-            {
-              role: "user",
-              content: content,
-            },
-          ],
-          max_tokens: 500,
-        }),
-      });
+        {
+          role: "user",
+          content: content,
+        },
+      ],
+      500,
+    );
 
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return this.parseScopeValidation(data.choices[0].message.content);
-    });
-
-    return result.success
-      ? result.data || {
-          isValid: false,
-          confidence: 0,
-          warnings: ["AI validation failed"],
-          suggestions: [],
-        }
-      : {
-          isValid: false,
-          confidence: 0,
-          warnings: ["AI validation failed"],
-          suggestions: [],
-        };
+    return this.parseScopeValidation(validationContent);
   }
 
   // Business logic methods
@@ -515,158 +444,6 @@ export class AIService {
   }
 
   // Private helper methods
-  private static getBuildingAnalysisPrompt(
-    params: PhotoAnalysisParams,
-  ): string {
-    const context = params.buildingContext || {};
-
-    return `Analyze this building image and provide a JSON response with the following structure:
-{
-  "buildingFeatures": ["list of visible building features"],
-  "serviceRequirements": ["list of recommended cleaning services"],
-  "riskFactors": [{"factor": "description", "severity": "low|medium|high"}],
-  "measurements": {"approximate_height": "value", "window_count": "value", "surface_area": "value"},
-  "confidence": 0.85,
-  "analysisType": "${params.analysisType}"
-}
-
-Building context: ${JSON.stringify(context)}
-
-Focus on identifying cleaning and maintenance needs, potential hazards, and measurable dimensions.`;
-  }
-
-  private static getContactExtractionPrompt(contentType: string): string {
-    return `Extract contact information and project details from this ${contentType} and return as JSON:
-{
-  "customerName": "extracted name",
-  "customerEmail": "extracted email",
-  "customerPhone": "extracted phone",
-  "companyName": "extracted company",
-  "buildingName": "extracted building name",
-  "buildingAddress": "extracted address",
-  "serviceRequests": ["list of requested services"],
-  "timeline": "extracted timeline",
-  "budget": "extracted budget info",
-  "notes": "additional context",
-  "confidence": 0.90
-}
-
-Return null for any field that cannot be reliably extracted.`;
-  }
-
-  private static getServiceRecommendationPrompt(): string {
-    return `Based on the building analysis and user preferences, recommend appropriate cleaning services.
-Available services: window-cleaning, pressure-washing, soft-washing, biofilm-removal, glass-restoration, frame-restoration, high-dusting, final-clean, granite-reconditioning, pressure-wash-seal, parking-deck.
-
-Return a JSON array of recommended service types: ["service1", "service2", ...]
-
-Consider:
-- Building condition and material
-- Risk factors and complexity
-- Service dependencies
-- Budget constraints
-- User preferences`;
-  }
-
-  private static getScopeValidationPrompt(): string {
-    return `Validate this project scope and provide feedback as JSON:
-{
-  "isValid": true,
-  "confidence": 0.85,
-  "warnings": ["list of potential issues"],
-  "suggestions": ["list of improvements"]
-}
-
-Check for:
-- Completeness of scope
-- Realistic timeline
-- Service compatibility
-- Safety considerations
-- Cost reasonableness`;
-  }
-
-  private static getFacadeAnalysisPrompt(buildingType: string): string {
-    const buildingTypeModifier =
-      buildingType === "commercial"
-        ? "This appears to be a commercial building. Consider larger window sizes (typically 3-5ft wide), higher floor-to-floor heights (12-14ft), professional appearance requirements, and business hour access restrictions."
-        : buildingType === "residential"
-          ? "This appears to be a residential building. Consider smaller window sizes (typically 2-3ft wide), standard floor heights (8-10ft), privacy concerns during cleaning, and residential safety considerations."
-          : "This appears to be an industrial building. Consider large window sizes, high ceilings, industrial safety requirements, and specialized cleaning needs.";
-
-    return `Perform a complete building facade analysis covering all aspects. ${buildingTypeModifier}
-
-WINDOWS:
-- Count all visible windows including partially obscured ones
-- Identify grid pattern and window types
-- Estimate total glass area for cleaning calculations
-
-MATERIALS:
-- Identify and quantify all facade materials by percentage
-- Assess material condition and weathering
-- Rate cleaning difficulty based on material type and condition
-
-DAMAGE & STAINING:
-- Document all visible staining, oxidation, and physical damage
-- Rate severity and repair urgency
-- Note areas requiring special attention
-
-SAFETY CONSIDERATIONS:
-- Identify all potential hazards for cleaning crews
-- Assess access challenges and required safety equipment
-- Rate overall safety risk level
-
-MEASUREMENTS:
-- Estimate building dimensions using available reference points
-- Calculate total facade square footage
-- Provide confidence rating based on visual cues available
-
-Return comprehensive JSON with this exact structure:
-{
-  "windows": {
-    "count": number,
-    "totalArea": number,
-    "gridPattern": "string",
-    "confidence": number,
-    "cleaningDifficulty": "low|medium|high"
-  },
-  "materials": {
-    "breakdown": {"material": percentage},
-    "conditions": ["list of conditions"],
-    "cleaningDifficulty": number,
-    "dominant": "string",
-    "weathering": "none|light|moderate|heavy"
-  },
-  "damage": {
-    "staining": ["list of staining types"],
-    "oxidation": ["list of oxidation issues"],
-    "damage": ["list of physical damage"],
-    "severity": "low|medium|high",
-    "affectedArea": number,
-    "repairUrgency": "none|minor|moderate|urgent"
-  },
-  "safety": {
-    "hazards": ["list of hazards"],
-    "requirements": ["list of safety requirements"],
-    "riskLevel": "low|medium|high",
-    "accessChallenges": ["list of access issues"],
-    "equipmentNeeded": ["list of required equipment"]
-  },
-  "measurements": {
-    "buildingHeight": number,
-    "facadeWidth": number,
-    "confidence": number,
-    "estimatedSqft": number,
-    "stories": number
-  },
-  "recommendations": {
-    "services": ["list of recommended services"],
-    "timeline": "string",
-    "priority": "low|medium|high",
-    "estimatedCost": {"min": number, "max": number}
-  }
-}`;
-  }
-
   private static parseBuildingAnalysis(content: string): AIAnalysisResult {
     try {
       const parsed = JSON.parse(content);
@@ -895,6 +672,127 @@ Return comprehensive JSON with this exact structure:
         confidence: 0,
         warnings: ["Failed to validate scope"],
         suggestions: [],
+      };
+    }
+  }
+
+  // Template recommendation service
+  static async generateTemplateRecommendations(params: {
+    buildingType?: string;
+    services?: string[];
+    existingData?: any;
+    projectContext?: string;
+  }): Promise<{
+    score: number;
+    reasoning: string;
+    pros: string[];
+    cons: string[];
+    alternatives: string[];
+    confidence: number;
+  }> {
+    try {
+      const content = await this.fetchOpenAI(
+        "gpt-4",
+        [
+          {
+            role: "system",
+            content: this.getTemplateRecommendationPrompt(),
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              buildingType: params.buildingType,
+              services: params.services,
+              existingData: params.existingData,
+              projectContext: params.projectContext,
+            }),
+          },
+        ],
+        800,
+      );
+
+      return this.parseTemplateRecommendation(content);
+    } catch (error) {
+      console.error("Error generating template recommendations:", error);
+      return {
+        score: 50,
+        reasoning: "Unable to generate AI recommendation at this time",
+        pros: ["Template provides structured workflow"],
+        cons: ["Unable to analyze specific match"],
+        alternatives: [],
+        confidence: 30,
+      };
+    }
+  }
+
+  private static getTemplateRecommendationPrompt(): string {
+    return `You are an AI assistant specialized in analyzing building service projects and recommending workflow templates.
+
+Your task is to analyze project requirements and provide template recommendations with detailed reasoning.
+
+Analyze the provided project data and return a JSON response with this structure:
+{
+  "score": 85,
+  "reasoning": "This template scores highly because...",
+  "pros": [
+    "Template includes all required services",
+    "Optimized for this building type",
+    "Well-tested workflow"
+  ],
+  "cons": [
+    "May include unnecessary optional services",
+    "Complex workflow requires more time"
+  ],
+  "alternatives": ["alternative-template-1", "alternative-template-2"],
+  "confidence": 85
+}
+
+Scoring criteria:
+- Service match (30%): How well template services align with required services
+- Building type compatibility (25%): Template category matches building type
+- Complexity appropriateness (20%): Template complexity suits project requirements
+- Risk mitigation (15%): Template addresses project-specific risks
+- Efficiency (10%): Template optimizes workflow for this scenario
+
+Consider:
+- Required vs optional services
+- Building type and complexity
+- Timeline constraints
+- Risk factors
+- Historical success rates
+- User experience level
+
+Provide practical, actionable insights that help users make informed template decisions.`;
+  }
+
+  private static parseTemplateRecommendation(content: string): {
+    score: number;
+    reasoning: string;
+    pros: string[];
+    cons: string[];
+    alternatives: string[];
+    confidence: number;
+  } {
+    try {
+      const parsed = JSON.parse(content);
+      return {
+        score: Math.max(0, Math.min(100, safeNumber(parsed.score))),
+        reasoning:
+          safeString(parsed.reasoning) || "Template analysis completed",
+        pros: withDefaultArray(parsed.pros),
+        cons: withDefaultArray(parsed.cons),
+        alternatives: withDefaultArray(parsed.alternatives),
+        confidence: Math.max(0, Math.min(100, safeNumber(parsed.confidence))),
+      };
+    } catch (error) {
+      console.error("Error parsing template recommendation:", error);
+      return {
+        score: 50,
+        reasoning: "Template analysis could not be completed",
+        pros: ["Structured workflow approach"],
+        cons: ["Limited analysis available"],
+        alternatives: [],
+        confidence: 30,
       };
     }
   }

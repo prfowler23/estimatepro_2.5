@@ -11,6 +11,14 @@ import {
   WorkflowTemplate,
 } from "@/lib/services/workflow-templates";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
+import { TemplatePreviewModal } from "./TemplatePreviewModal";
+// PHASE 3 FIX: Import template caching system
+import {
+  getCachedTemplateSuggestions,
+  cacheTemplateSuggestions,
+  getCachedTemplateApplication,
+  cacheTemplateApplication,
+} from "@/lib/ai/template-cache";
 import {
   Search,
   Clock,
@@ -53,23 +61,53 @@ export function TemplateSelector({
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    // Load all templates
-    const allTemplates = WorkflowTemplateService.getAllTemplates();
-    setTemplates(allTemplates);
+    // PHASE 3 FIX: Use cached template suggestions for improved performance
+    const loadTemplates = async () => {
+      try {
+        // Load all templates
+        const allTemplates = WorkflowTemplateService.getAllTemplates();
+        setTemplates(allTemplates);
 
-    // Get AI suggestions based on existing data
-    const suggestions = WorkflowTemplateService.suggestTemplates(
-      buildingType,
-      services,
-      undefined,
-      undefined,
-    );
-    setSuggestedTemplates(suggestions);
+        // PHASE 3 FIX: Check cache first for template suggestions
+        const flowData = existingData as GuidedFlowData;
+        const cached = await getCachedTemplateSuggestions(flowData);
 
-    // Get popular templates
-    const popular = WorkflowTemplateService.getPopularTemplates(3);
-    setPopularTemplates(popular);
-  }, [buildingType, services && services.length > 0 ? services.join(",") : ""]);
+        if (cached) {
+          console.log("🎯 Using cached template suggestions");
+          setSuggestedTemplates(cached.suggestions);
+        } else {
+          // Get AI suggestions based on existing data
+          const suggestions = WorkflowTemplateService.suggestTemplates(
+            buildingType,
+            services,
+            undefined,
+            undefined,
+          );
+          setSuggestedTemplates(suggestions);
+
+          // PHASE 3 FIX: Cache the suggestions for future use
+          await cacheTemplateSuggestions(
+            flowData,
+            suggestions,
+            85, // confidence score
+            "Based on building type and selected services",
+          );
+        }
+
+        // Get popular templates
+        const popular = WorkflowTemplateService.getPopularTemplates(3);
+        setPopularTemplates(popular);
+      } catch (error) {
+        console.error("Error loading templates:", error);
+        // Fallback to empty arrays to prevent UI crashes
+        setTemplates([]);
+        setSuggestedTemplates([]);
+        setPopularTemplates([]);
+      }
+    };
+
+    loadTemplates();
+  }, [buildingType, JSON.stringify(services)]); // Use JSON.stringify to prevent array reference issues
 
   // Filter templates based on search and filters
   const filteredTemplates = templates.filter((template) => {
@@ -90,19 +128,61 @@ export function TemplateSelector({
     return matchesSearch && matchesCategory && matchesComplexity;
   });
 
-  const handleSelectTemplate = (template: WorkflowTemplate) => {
+  const handleSelectTemplate = async (template: WorkflowTemplate) => {
+    // PHASE 3 FIX: Use cached template applications for improved performance
     try {
-      const appliedData = WorkflowTemplateService.applyTemplate(
+      // Validate template before applying
+      const validation = WorkflowTemplateService.validateTemplate(template);
+      if (!validation.isValid) {
+        console.error("Template validation failed:", validation.errors);
+        // Show user-friendly error or fallback
+        return;
+      }
+
+      // PHASE 3 FIX: Check cache first for template application
+      const flowData = existingData as GuidedFlowData;
+      const cachedApplication = await getCachedTemplateApplication(
         template.id,
-        existingData,
+        flowData,
       );
+
+      let appliedData: GuidedFlowData;
+
+      if (cachedApplication) {
+        console.log("🎯 Using cached template application");
+        appliedData = cachedApplication.appliedData;
+      } else {
+        appliedData = WorkflowTemplateService.applyTemplate(
+          template.id,
+          existingData,
+        );
+
+        // PHASE 3 FIX: Cache the application result for future use
+        if (appliedData) {
+          await cacheTemplateApplication(template.id, flowData, appliedData);
+        }
+      }
+
+      // Ensure applied data is valid before proceeding
+      if (!appliedData) {
+        console.error("Failed to apply template data");
+        return;
+      }
+
       onSelectTemplate(template, appliedData);
     } catch (error) {
       console.error("Error applying template:", error);
+      // Provide user feedback for template application errors
     }
   };
 
   const handlePreviewTemplate = (template: WorkflowTemplate) => {
+    // PHASE 2 FIX: Add validation for preview state
+    if (!template || !template.id) {
+      console.error("Invalid template for preview:", template);
+      return;
+    }
+
     setSelectedTemplate(template);
     setShowPreview(true);
   };
@@ -384,94 +464,19 @@ export function TemplateSelector({
         </Button>
       </div>
 
-      {/* Template Preview Modal */}
-      {showPreview && selectedTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">
-                    {selectedTemplate.name}
-                  </h2>
-                  <p className="text-gray-600">
-                    {selectedTemplate.description}
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setShowPreview(false)}
-                  variant="ghost"
-                  size="sm"
-                >
-                  ✕
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Required Services</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTemplate.requiredServices.map((service) => (
-                      <Badge
-                        key={service}
-                        className="bg-blue-100 text-blue-800"
-                      >
-                        {service}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Optional Services</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTemplate.optionalServices.map((service) => (
-                      <Badge key={service} variant="secondary">
-                        {service}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Recommendations</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-                    {selectedTemplate.recommendations.map((rec, index) => (
-                      <li key={index}>{rec}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Risk Factors</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-                    {selectedTemplate.riskFactors.map((risk, index) => (
-                      <li key={index} className="text-orange-700">
-                        {risk}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6 pt-4 border-t">
-                <Button
-                  onClick={() => {
-                    handleSelectTemplate(selectedTemplate);
-                    setShowPreview(false);
-                  }}
-                  className="flex-1"
-                >
-                  Use This Template
-                </Button>
-                <Button onClick={() => setShowPreview(false)} variant="outline">
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Enhanced Template Preview Modal */}
+      <TemplatePreviewModal
+        template={selectedTemplate}
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        onSelectTemplate={(template) => {
+          handleSelectTemplate(template);
+          setShowPreview(false);
+        }}
+        existingData={existingData}
+        buildingType={buildingType}
+        services={services}
+      />
     </div>
   );
 }

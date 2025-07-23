@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { PredictiveInput } from "./PredictiveInput";
 import { useSmartDefaults } from "./SmartDefaultsProvider";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ interface SmartFieldProps {
   description?: string;
 }
 
-export function SmartField({
+function SmartFieldComponent({
   field,
   value,
   onChange,
@@ -95,7 +95,14 @@ export function SmartField({
       value: value || "",
       onChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-      ) => onChange(e.target.value),
+      ) => {
+        try {
+          onChange(e.target.value);
+        } catch (error) {
+          console.warn("SmartField onChange error:", error);
+          // Silently ignore onChange errors to prevent crashes
+        }
+      },
       placeholder,
       disabled,
       required,
@@ -113,10 +120,39 @@ export function SmartField({
         );
 
       case "select":
+        // Ensure options is always an array and has valid entries
+        const safeOptions = Array.isArray(options)
+          ? options.filter(
+              (option) =>
+                option &&
+                typeof option.value === "string" &&
+                typeof option.label === "string",
+            )
+          : [];
+
+        // Return a fallback if no valid options
+        if (safeOptions.length === 0) {
+          return (
+            <Input
+              {...commonProps}
+              placeholder={placeholder || "No options available"}
+              disabled={true}
+              className="bg-gray-50"
+            />
+          );
+        }
+
         return (
           <Select
             value={value || ""}
-            onValueChange={onChange}
+            onValueChange={(newValue) => {
+              try {
+                onChange(newValue);
+              } catch (error) {
+                console.warn("SmartField Select onChange error:", error);
+                // Silently ignore onChange errors to prevent crashes
+              }
+            }}
             disabled={disabled}
           >
             <SelectTrigger
@@ -125,14 +161,22 @@ export function SmartField({
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-              {options.map((option, index) => (
-                <SelectItem
-                  key={`${field}-option-${option.value}-${index}`}
-                  value={option.value}
-                >
-                  {option.label}
-                </SelectItem>
-              ))}
+              {safeOptions.map((option, index) => {
+                // Additional safety check for individual options
+                const safeValue = String(option.value || `option-${index}`);
+                const safeLabel = String(
+                  option.label || option.value || `Option ${index + 1}`,
+                );
+
+                return (
+                  <SelectItem
+                    key={`${field}-option-${safeValue}-${index}`}
+                    value={safeValue}
+                  >
+                    {safeLabel}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         );
@@ -256,5 +300,17 @@ export function SmartField({
     </div>
   );
 }
+
+// PHASE 3 FIX: Memoize to prevent expensive AI predictions and validation re-runs
+export const SmartField = memo(SmartFieldComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.value === nextProps.value &&
+    prevProps.field === nextProps.field &&
+    prevProps.flowData === nextProps.flowData &&
+    prevProps.currentStep === nextProps.currentStep &&
+    prevProps.disabled === nextProps.disabled &&
+    prevProps.onChange === nextProps.onChange
+  );
+});
 
 export default SmartField;

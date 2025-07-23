@@ -52,10 +52,6 @@ if (CLIENT_SENTRY_DSN) {
     // Additional configuration
     integrations: [
       Sentry.replayIntegration({
-        // Capture 10% of all sessions,
-        // plus always capture sessions with an error
-        errorSampleRate: 1.0,
-
         // Mask sensitive data
         maskAllText: true,
         maskAllInputs: true,

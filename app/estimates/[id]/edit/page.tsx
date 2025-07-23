@@ -534,12 +534,23 @@ function EstimateEditContent() {
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium">
-                          {service.total_hours ? service.total_hours.toFixed(1) : '0.0'} total
+                          {service.total_hours
+                            ? service.total_hours.toFixed(1)
+                            : "0.0"}{" "}
+                          total
                         </div>
                         <div className="text-gray-500">
-                          {service.labor_hours ? service.labor_hours.toFixed(1) : '0.0'} +{" "}
-                          {service.setup_hours ? service.setup_hours.toFixed(1) : '0.0'} +{" "}
-                          {service.rig_hours ? service.rig_hours.toFixed(1) : '0.0'}
+                          {service.labor_hours
+                            ? service.labor_hours.toFixed(1)
+                            : "0.0"}{" "}
+                          +{" "}
+                          {service.setup_hours
+                            ? service.setup_hours.toFixed(1)
+                            : "0.0"}{" "}
+                          +{" "}
+                          {service.rig_hours
+                            ? service.rig_hours.toFixed(1)
+                            : "0.0"}
                         </div>
                       </div>
                     </TableCell>
@@ -547,11 +558,12 @@ function EstimateEditContent() {
                       {service.equipment_type ? (
                         <div className="text-sm">
                           <div>{service.equipment_type}</div>
-                          {service.equipment_cost && service.equipment_cost > 0 && (
-                            <div className="text-gray-500">
-                              ${service.equipment_cost.toLocaleString()}
-                            </div>
-                          )}
+                          {service.equipment_cost &&
+                            service.equipment_cost > 0 && (
+                              <div className="text-gray-500">
+                                ${service.equipment_cost.toLocaleString()}
+                              </div>
+                            )}
                         </div>
                       ) : (
                         <span className="text-gray-400">None</span>

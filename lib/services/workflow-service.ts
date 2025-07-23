@@ -409,9 +409,12 @@ export class WorkflowService {
     const completedSteps: string[] = [];
     const availableSteps: string[] = [];
 
+    // Ensure guidedFlowData is not null/undefined
+    const safeFlowData = guidedFlowData || {};
+
     // Check which steps are completed
     this.WORKFLOW_STEPS.forEach((step) => {
-      const stepData = guidedFlowData[step.id as keyof GuidedFlowData];
+      const stepData = safeFlowData[step.id as keyof GuidedFlowData];
       const isCompleted = this.isStepCompleted(step.id, stepData);
 
       if (isCompleted) {
@@ -419,7 +422,7 @@ export class WorkflowService {
       }
 
       // Step is available if it's not required to be sequential or previous steps are completed
-      const isAvailable = this.isStepAvailable(step.id, guidedFlowData);
+      const isAvailable = this.isStepAvailable(step.id, safeFlowData);
       if (isAvailable) {
         availableSteps.push(step.id);
       }
@@ -532,9 +535,12 @@ export class WorkflowService {
     const allErrors: Record<string, string[]> = {};
     const allWarnings: Record<string, string[]> = {};
 
+    // Ensure guidedFlowData is not null/undefined
+    const safeFlowData = guidedFlowData || {};
+
     // Validate each step
     this.WORKFLOW_STEPS.forEach((step) => {
-      const stepData = guidedFlowData[step.id as keyof GuidedFlowData];
+      const stepData = safeFlowData[step.id as keyof GuidedFlowData];
       const stepValidation = this.validateStep(step.id, stepData);
 
       Object.keys(stepValidation.errors).forEach((field) => {
@@ -549,7 +555,7 @@ export class WorkflowService {
     });
 
     // Cross-step validation
-    const crossValidation = this.validateCrossStepDependencies(guidedFlowData);
+    const crossValidation = this.validateCrossStepDependencies(safeFlowData);
     Object.keys(crossValidation.errors).forEach((field) => {
       allErrors[field] = crossValidation.errors[field];
     });
@@ -573,19 +579,21 @@ export class WorkflowService {
     condition: ConditionExpression,
     guidedFlowData: GuidedFlowData,
   ): boolean {
+    const safeFlowData = guidedFlowData || {};
+
     switch (condition.type) {
       case "service-selected":
         const selectedServices =
-          guidedFlowData.scopeDetails?.selectedServices || [];
+          safeFlowData.scopeDetails?.selectedServices || [];
         return selectedServices.includes(condition.value);
 
       case "service-not-selected":
-        const services = guidedFlowData.scopeDetails?.selectedServices || [];
+        const services = safeFlowData.scopeDetails?.selectedServices || [];
         return !services.includes(condition.value);
 
       case "field-value":
         const fieldValue = this.getFieldValue(
-          guidedFlowData,
+          safeFlowData,
           condition.field || "",
         );
         return this.evaluateFieldCondition(
@@ -595,14 +603,13 @@ export class WorkflowService {
         );
 
       case "step-completed":
-        const stepData =
-          guidedFlowData[condition.value as keyof GuidedFlowData];
+        const stepData = safeFlowData[condition.value as keyof GuidedFlowData];
         return this.isStepCompleted(condition.value, stepData);
 
       case "composite":
         if (!condition.conditions) return false;
         const results = condition.conditions.map((c) =>
-          this.evaluateCondition(c, guidedFlowData),
+          this.evaluateCondition(c, safeFlowData),
         );
         return condition.logic === "and"
           ? results.every((r) => r)
@@ -798,37 +805,69 @@ export class WorkflowService {
   }
 
   static getAvailableSteps(guidedFlowData: GuidedFlowData): WorkflowStep[] {
-    const availableSteps: WorkflowStep[] = [];
+    // PHASE 1 FIX: Enable free navigation - return all steps as available
+    // Users should be able to navigate freely between steps
+    return [...this.WORKFLOW_STEPS];
+  }
 
-    for (const step of this.WORKFLOW_STEPS) {
-      // Skip if already completed
-      const stepData = guidedFlowData[step.id as keyof GuidedFlowData];
-      if (this.isStepCompleted(step.id, stepData)) {
-        continue;
-      }
+  // New method to get step navigation warnings instead of blocking
+  static getStepNavigationInfo(
+    stepId: string,
+    guidedFlowData: GuidedFlowData,
+  ): {
+    canNavigate: boolean;
+    warnings: string[];
+    isCompleted: boolean;
+    hasRequiredData: boolean;
+  } {
+    const safeFlowData = guidedFlowData || {};
+    const step = this.getStepById(stepId);
 
-      // Skip if step should be skipped based on conditions
-      if (this.shouldSkipStep(step.id, guidedFlowData).skip) {
-        continue;
-      }
-
-      // Check dependencies
-      if (step.dependencies) {
-        const unmetDependencies = step.dependencies.filter((depId) => {
-          const depData = guidedFlowData[depId as keyof GuidedFlowData];
-          return !this.isStepCompleted(depId, depData);
-        });
-
-        // If has unmet dependencies and doesn't allow parallel work, skip
-        if (unmetDependencies.length > 0 && !step.allowParallel) {
-          continue;
-        }
-      }
-
-      availableSteps.push(step);
+    if (!step) {
+      return {
+        canNavigate: false,
+        warnings: ["Invalid step"],
+        isCompleted: false,
+        hasRequiredData: false,
+      };
     }
 
-    return availableSteps;
+    const stepData = safeFlowData[step.id as keyof GuidedFlowData];
+    const isCompleted = this.isStepCompleted(step.id, stepData);
+    const warnings: string[] = [];
+
+    // Check if step should be skipped
+    const skipResult = this.shouldSkipStep(step.id, safeFlowData);
+    if (skipResult.skip && skipResult.reason) {
+      warnings.push(skipResult.reason);
+    }
+
+    // Check dependencies and add warnings instead of blocking
+    if (step.dependencies) {
+      const unmetDependencies = step.dependencies.filter((depId) => {
+        const depData = safeFlowData[depId as keyof GuidedFlowData];
+        return !this.isStepCompleted(depId, depData);
+      });
+
+      if (unmetDependencies.length > 0) {
+        const depNames = unmetDependencies
+          .map((depId) => this.getStepById(depId)?.title || depId)
+          .join(", ");
+        warnings.push(
+          `Recommended: Complete ${depNames} first for optimal workflow`,
+        );
+      }
+    }
+
+    // Check if step has required data
+    const hasRequiredData = isCompleted || !step.isRequired;
+
+    return {
+      canNavigate: true, // Always allow navigation in Phase 1
+      warnings,
+      isCompleted,
+      hasRequiredData,
+    };
   }
 
   static calculateEstimatedTimeRemaining(

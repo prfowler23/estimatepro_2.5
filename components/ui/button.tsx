@@ -1,11 +1,19 @@
+"use client";
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { motion, MotionProps, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import {
+  useFocusable,
+  useFocusManager,
+  AccessibilityAnnouncer,
+} from "./focus-management";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed select-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed select-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
   {
     variants: {
       variant: {
@@ -48,6 +56,15 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
+  motionProps?: Omit<MotionProps, "children">;
+  ripple?: boolean;
+  haptic?: boolean;
+  // Enhanced accessibility props
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  focusId?: string;
+  focusPriority?: number;
+  announceChanges?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -60,11 +77,100 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       loading = false,
       children,
       disabled,
+      motionProps,
+      ripple = false,
+      haptic = false,
+      onClick,
+      // Enhanced accessibility props
+      ariaLabel,
+      ariaDescribedBy,
+      focusId,
+      focusPriority = 0,
+      announceChanges = false,
       ...props
     },
     ref,
   ) => {
-    const Comp = asChild ? Slot : "button";
+    const [rippleArray, setRippleArray] = React.useState<
+      Array<{ x: number; y: number; id: number }>
+    >([]);
+
+    const rippleIdRef = React.useRef(0);
+
+    // Enhanced focus management integration
+    const { announceToScreenReader } = useFocusManager();
+    const focusRef = useFocusable(
+      focusId || `button-${React.useId()}`,
+      focusPriority,
+      [disabled, loading],
+    );
+
+    // Merge refs for focus management
+    const mergedRef = React.useCallback(
+      (node: HTMLButtonElement) => {
+        focusRef.current = node;
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
+        }
+      },
+      [focusRef, ref],
+    );
+
+    // State change announcements
+    const [previousLoading, setPreviousLoading] = React.useState(loading);
+    React.useEffect(() => {
+      if (announceChanges && previousLoading !== loading) {
+        if (loading) {
+          announceToScreenReader("Button is loading");
+        } else if (previousLoading) {
+          announceToScreenReader("Button loading complete");
+        }
+        setPreviousLoading(loading);
+      }
+    }, [loading, previousLoading, announceToScreenReader, announceChanges]);
+
+    const handleClick = React.useCallback(
+      (e: React.MouseEvent<HTMLButtonElement>) => {
+        // Haptic feedback for mobile devices
+        if (haptic && "vibrate" in navigator) {
+          navigator.vibrate(10);
+        }
+
+        // Ripple effect
+        if (ripple && !disabled && !loading) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const id = rippleIdRef.current++;
+
+          setRippleArray((prev) => [...prev, { x, y, id }]);
+
+          // Remove ripple after animation
+          setTimeout(() => {
+            setRippleArray((prev) => prev.filter((r) => r.id !== id));
+          }, 600);
+        }
+
+        onClick?.(e);
+      },
+      [haptic, ripple, disabled, loading, onClick],
+    );
+
+    const defaultMotionProps: MotionProps = {
+      whileHover: disabled || loading ? {} : { scale: 1.02 },
+      whileTap: disabled || loading ? {} : { scale: 0.98 },
+      transition: {
+        type: "spring",
+        stiffness: 500,
+        damping: 30,
+        mass: 0.5,
+      },
+      ...motionProps,
+    };
+
+    const Comp = asChild ? Slot : motion.button;
 
     // Filter out button-specific props when using asChild to prevent prop conflicts
     if (asChild) {
@@ -72,7 +178,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         // Remove button-specific props that might conflict with child components
         type,
         value,
-        onClick,
         onSubmit,
         form,
         formAction,
@@ -84,31 +189,100 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       } = props;
 
       return (
-        <Comp
+        <Slot
           className={cn(buttonVariants({ variant, size, className }))}
           ref={ref}
-          // Only pass through safe props, let the child handle its own events
+          // Don't override child's onClick when using asChild - let Link handle navigation
+          // {...(onClick ? { onClick: handleClick } : {})}
           {...filteredProps}
         >
           {children}
-        </Comp>
+        </Slot>
       );
     }
 
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-          </div>
+      <>
+        <Comp
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={mergedRef}
+          disabled={disabled || loading}
+          onClick={handleClick}
+          aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
+          aria-busy={loading}
+          {...defaultMotionProps}
+          {...props}
+        >
+          {/* Loading spinner with enhanced animation */}
+          <AnimatePresence>
+            {loading && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  className="rounded-full h-4 w-4 border-2 border-current border-t-transparent"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Ripple effects */}
+          {ripple && (
+            <AnimatePresence>
+              {rippleArray.map((rippleItem) => (
+                <motion.span
+                  key={rippleItem.id}
+                  className="absolute rounded-full bg-current opacity-20 pointer-events-none"
+                  initial={{
+                    width: 0,
+                    height: 0,
+                    x: rippleItem.x,
+                    y: rippleItem.y,
+                    opacity: 0.4,
+                  }}
+                  animate={{
+                    width: 200,
+                    height: 200,
+                    x: rippleItem.x - 100,
+                    y: rippleItem.y - 100,
+                    opacity: 0,
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                />
+              ))}
+            </AnimatePresence>
+          )}
+
+          {/* Button content with loading state */}
+          <motion.span
+            animate={{ opacity: loading ? 0 : 1 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center justify-center gap-2"
+          >
+            {children}
+          </motion.span>
+        </Comp>
+
+        {/* Accessibility announcements for state changes */}
+        {announceChanges && loading && (
+          <AccessibilityAnnouncer
+            message="Button is loading"
+            priority="polite"
+          />
         )}
-        <span className={cn(loading && "opacity-0")}>{children}</span>
-      </Comp>
+      </>
     );
   },
 );

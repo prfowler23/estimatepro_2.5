@@ -2,15 +2,16 @@
   "name": "EstimatePro - Building Services Estimation",
   "short_name": "EstimatePro",
   "description": "Professional building services estimation platform with AI-powered analysis and comprehensive calculation tools",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "theme_color": "#2563eb",
   "background_color": "#ffffff",
   "categories": ["business", "productivity", "utilities"],
   "lang": "en",
   "dir": "ltr",
+  "id": "/?source=pwa",
   "icons": [
     {
       "src": "/icon-72x72.png",
@@ -94,7 +95,7 @@
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Go to the main dashboard",
-      "url": "/dashboard",
+      "url": "/dashboard?source=shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -107,7 +108,7 @@
       "name": "New Estimate",
       "short_name": "New Estimate",
       "description": "Create a new estimate",
-      "url": "/estimates/new",
+      "url": "/estimates/new/guided?source=shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -120,7 +121,7 @@
       "name": "Calculator",
       "short_name": "Calculator",
       "description": "Open the service calculator",
-      "url": "/calculator",
+      "url": "/calculator?source=shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -130,10 +131,10 @@
       ]
     },
     {
-      "name": "Customers",
-      "short_name": "Customers",
-      "description": "Manage customers",
-      "url": "/customers",
+      "name": "Quick Photo Analysis",
+      "short_name": "Photo AI",
+      "description": "Analyze building photos with AI",
+      "url": "/estimates/new/guided?step=files-photos&source=shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",

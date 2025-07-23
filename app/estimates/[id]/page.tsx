@@ -277,7 +277,7 @@ function EstimateDetailContent() {
   const calculateTotalLaborHours = () => {
     if (!estimate) return 0;
     return estimate.services.reduce(
-      (sum, service) => sum + service.total_hours,
+      (sum, service) => sum + (service.total_hours || 0),
       0,
     );
   };

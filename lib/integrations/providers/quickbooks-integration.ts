@@ -612,12 +612,14 @@ export class QuickBooksIntegration implements BaseIntegration {
       },
     );
 
-    return result.success && result.data
-      ? result.data
-      : {
-          success: false,
-          error: result.error?.message || "Sync failed",
-        };
+    if (result.success && result.data) {
+      return result.data;
+    } else {
+      return {
+        success: false,
+        error: result.error?.message || "Sync failed",
+      };
+    }
   }
 
   private async syncItemsFromQuickBooks(): Promise<IntegrationResponse> {
@@ -675,6 +677,15 @@ export class QuickBooksIntegration implements BaseIntegration {
         warnings: errors.length > 0 ? errors : undefined,
       };
     });
+
+    if (result.success && result.data) {
+      return result.data;
+    } else {
+      return {
+        success: false,
+        error: result.error?.message || "Sync failed",
+      };
+    }
   }
 
   private async syncEstimatesToQuickBooks(): Promise<IntegrationResponse> {
@@ -761,6 +772,15 @@ export class QuickBooksIntegration implements BaseIntegration {
         warnings: errors.length > 0 ? errors : undefined,
       };
     });
+
+    if (result.success && result.data) {
+      return result.data;
+    } else {
+      return {
+        success: false,
+        error: result.error?.message || "Sync failed",
+      };
+    }
   }
 
   private async syncApprovedEstimatesAsInvoices(): Promise<IntegrationResponse> {
@@ -848,6 +868,15 @@ export class QuickBooksIntegration implements BaseIntegration {
         warnings: errors.length > 0 ? errors : undefined,
       };
     });
+
+    if (result.success && result.data) {
+      return result.data;
+    } else {
+      return {
+        success: false,
+        error: result.error?.message || "Sync failed",
+      };
+    }
   }
 
   private async createQuickBooksEstimate(
