@@ -6,7 +6,7 @@ import {
   offlineManager,
   OfflineStatus,
   OfflineAction,
-  offlineAPI,
+  offlineUtils,
 } from "@/lib/pwa/offline-manager";
 
 // Main offline status hook
@@ -109,15 +109,25 @@ export const useOfflineAPI = () => {
   const { addAction } = useOfflineActions();
 
   const createEstimate = useCallback(async (estimate: any) => {
-    return offlineAPI.createEstimate(estimate);
+    return offlineUtils.queueApiCall(
+      "/api/estimates",
+      "POST",
+      estimate,
+      "Create estimate",
+    );
   }, []);
 
   const updateEstimate = useCallback(async (id: string, estimate: any) => {
-    return offlineAPI.updateEstimate(id, estimate);
+    return offlineUtils.queueEstimateSave(id, estimate);
   }, []);
 
   const deleteEstimate = useCallback(async (id: string) => {
-    return offlineAPI.deleteEstimate(id);
+    return offlineUtils.queueApiCall(
+      `/api/estimates/${id}`,
+      "DELETE",
+      {},
+      "Delete estimate",
+    );
   }, []);
 
   const createCustomer = useCallback(

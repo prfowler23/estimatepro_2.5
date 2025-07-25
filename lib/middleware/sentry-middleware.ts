@@ -58,7 +58,7 @@ export function withSentryMonitoring(
       },
     });
 
-    Sentry.getCurrentHub().configureScope((scope) => {
+    Sentry.getCurrentHub().configureScope((scope: any) => {
       scope.setSpan(transaction);
       scope.setTag("api.method", method);
       scope.setTag("api.path", pathname);

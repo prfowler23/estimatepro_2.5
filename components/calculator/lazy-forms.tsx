@@ -23,7 +23,7 @@ function createLazyFormComponent<T extends React.ComponentType<any>>(
               Retry
             </button>
           </div>
-        )) as T,
+        )) as unknown as T,
       };
     }),
   );

@@ -1,123 +1,340 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { performClientStartupValidation } from "@/lib/config/startup-validation";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import {
+  startupValidator,
+  StartupValidationResult,
+} from "@/lib/config/startup-validation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  RefreshCw,
+  Database,
+  Settings,
+  Zap,
+} from "lucide-react";
+
+interface StartupValidationContextType {
+  validationResult: StartupValidationResult | null;
+  isValid: boolean;
+  isLoading: boolean;
+  retryValidation: () => Promise<void>;
+  clearValidation: () => void;
+}
+
+const StartupValidationContext = createContext<
+  StartupValidationContextType | undefined
+>(undefined);
+
+export function useStartupValidation() {
+  const context = useContext(StartupValidationContext);
+  if (context === undefined) {
+    throw new Error(
+      "useStartupValidation must be used within a StartupValidationProvider",
+    );
+  }
+  return context;
+}
 
 interface StartupValidationProviderProps {
   children: React.ReactNode;
+  showValidationUI?: boolean;
 }
 
 export function StartupValidationProvider({
   children,
+  showValidationUI = true,
 }: StartupValidationProviderProps) {
-  const [isValidated, setIsValidated] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [validationResult, setValidationResult] =
+    useState<StartupValidationResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showValidationScreen, setShowValidationScreen] = useState(false);
+
+  const performValidation = async () => {
+    try {
+      setIsLoading(true);
+      const result = await startupValidator.validateStartup();
+      setValidationResult(result);
+
+      // Show validation screen if there are critical errors
+      if (!result.isValid && result.errors.length > 0) {
+        setShowValidationScreen(true);
+      }
+    } catch (error) {
+      console.error("Startup validation failed:", error);
+      setValidationResult({
+        isValid: false,
+        errors: ["Startup validation failed"],
+        warnings: [],
+        missingConfig: [],
+        databaseStatus: "error",
+        features: {},
+      });
+      setShowValidationScreen(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const retryValidation = async () => {
+    startupValidator.clearValidationResult();
+    await performValidation();
+  };
+
+  const clearValidation = () => {
+    setValidationResult(null);
+    setShowValidationScreen(false);
+  };
 
   useEffect(() => {
-    const runValidation = async () => {
-      try {
-        // Add a small delay to allow Next.js to inject environment variables
-        if (
-          typeof window !== "undefined" &&
-          process.env.NODE_ENV === "development"
-        ) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-
-        performClientStartupValidation();
-        setIsValidated(true);
-      } catch (error) {
-        setValidationError(
-          error instanceof Error ? error.message : "Unknown validation error",
-        );
-
-        // In development, show error but continue
-        if (process.env.NODE_ENV === "development") {
-          console.error(
-            "Startup validation failed, continuing in development mode:",
-            error,
-          );
-          setIsValidated(true);
-        }
-      }
-    };
-
-    runValidation();
+    performValidation();
   }, []);
 
-  // In production, show error screen if validation fails
-  if (validationError && process.env.NODE_ENV === "production") {
-    return (
-      <div className="min-h-screen bg-error-50 flex items-center justify-center p-4">
-        <div className="bg-bg-elevated rounded-lg shadow-lg p-8 max-w-2xl w-full">
-          <div className="text-center">
-            <div className="text-error-600 text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-text-primary mb-4">
-              Configuration Error
-            </h1>
-            <p className="text-text-secondary mb-6">
-              The application could not start due to configuration issues:
-            </p>
-            <div className="bg-error-50 border border-error-200 rounded-md p-4 mb-6">
-              <pre className="text-sm text-error-700 text-left whitespace-pre-wrap">
-                {validationError}
-              </pre>
-            </div>
-            <p className="text-sm text-text-muted">
-              Please check your environment configuration and try again.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const contextValue: StartupValidationContextType = {
+    validationResult,
+    isValid: validationResult?.isValid ?? false,
+    isLoading,
+    retryValidation,
+    clearValidation,
+  };
 
-  // In development, show warning but continue
-  if (validationError && process.env.NODE_ENV === "development") {
+  // Show loading state
+  if (isLoading) {
     return (
-      <>
-        <div className="bg-warning-50 border-l-4 border-warning-400 p-4 mb-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-warning-500"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-warning-700">
-                <strong>Development Mode:</strong> Configuration issues detected
-                but continuing anyway.
+      <StartupValidationContext.Provider value={contextValue}>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Starting EstimatePro</h2>
+              <p className="text-muted-foreground">
+                Validating system configuration...
               </p>
             </div>
           </div>
         </div>
-        {children}
-      </>
+      </StartupValidationContext.Provider>
     );
   }
 
-  // Show loading state during validation
-  if (!isValidated) {
+  // Show validation screen if there are critical issues
+  if (
+    showValidationUI &&
+    showValidationScreen &&
+    validationResult &&
+    !validationResult.isValid
+  ) {
     return (
-      <div className="min-h-screen bg-bg-subtle flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-text-primary mb-2">
-            Initializing EstimatePro
-          </h2>
-          <p className="text-text-secondary">Validating configuration...</p>
+      <StartupValidationContext.Provider value={contextValue}>
+        <div className="min-h-screen bg-background p-4">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h1 className="text-3xl font-bold text-destructive">
+                System Configuration Issues
+              </h1>
+              <p className="text-muted-foreground">
+                EstimatePro detected some configuration problems that need to be
+                resolved
+              </p>
+            </div>
+
+            {/* Database Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Database Connection
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  {validationResult.databaseStatus === "connected" ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-green-600 font-medium">
+                        Connected
+                      </span>
+                    </>
+                  ) : validationResult.databaseStatus === "disconnected" ? (
+                    <>
+                      <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                      <span className="text-yellow-600 font-medium">
+                        Disconnected
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-5 w-5 text-red-600" />
+                      <span className="text-red-600 font-medium">Error</span>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Feature Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Feature Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(validationResult.features).map(
+                    ([feature, enabled]) => (
+                      <div key={feature} className="flex items-center gap-2">
+                        {enabled ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="text-sm capitalize">
+                          {feature.replace(/([A-Z])/g, " $1").trim()}
+                        </span>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Errors */}
+            {validationResult.errors.length > 0 && (
+              <Card className="border-destructive">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <XCircle className="h-5 w-5" />
+                    Critical Errors ({validationResult.errors.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {validationResult.errors.map((error, index) => (
+                      <Alert key={index} variant="destructive">
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Warnings */}
+            {validationResult.warnings.length > 0 && (
+              <Card className="border-yellow-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-yellow-600">
+                    <AlertTriangle className="h-5 w-5" />
+                    Warnings ({validationResult.warnings.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {validationResult.warnings.map((warning, index) => (
+                      <Alert
+                        key={index}
+                        variant="default"
+                        className="border-yellow-200 bg-yellow-50"
+                      >
+                        <AlertDescription>{warning}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Missing Configuration */}
+            {validationResult.missingConfig.length > 0 && (
+              <Card className="border-orange-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-orange-600">
+                    <Settings className="h-5 w-5" />
+                    Missing Configuration (
+                    {validationResult.missingConfig.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {validationResult.missingConfig.map((config, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 bg-orange-50 rounded border border-orange-200"
+                      >
+                        <AlertTriangle className="h-4 w-4 text-orange-600" />
+                        <code className="text-sm font-mono text-orange-800">
+                          {config}
+                        </code>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <strong>Solution:</strong> Add these environment variables
+                      to your <code>.env.local</code> file. Check the
+                      documentation for setup instructions.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={retryValidation}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry Validation
+              </Button>
+              {validationResult.errors.length === 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowValidationScreen(false)}
+                  className="flex items-center gap-2"
+                >
+                  Continue Anyway
+                </Button>
+              )}
+            </div>
+
+            {/* Development Mode Notice */}
+            {process.env.NODE_ENV === "development" && (
+              <Alert className="border-blue-200 bg-blue-50">
+                <AlertTriangle className="h-4 w-4 text-blue-600" />
+                <AlertTitle>Development Mode</AlertTitle>
+                <AlertDescription>
+                  You're running in development mode. Some features may not work
+                  correctly without proper configuration, but the app will
+                  continue to function.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
         </div>
-      </div>
+      </StartupValidationContext.Provider>
     );
   }
 
-  return <>{children}</>;
+  // Show children normally
+  return (
+    <StartupValidationContext.Provider value={contextValue}>
+      {children}
+    </StartupValidationContext.Provider>
+  );
 }

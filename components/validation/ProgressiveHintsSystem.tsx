@@ -779,7 +779,7 @@ function getStepSpecificHints(
   // Add step-specific hints based on step number and data
   switch (stepNumber) {
     case 1: // Initial Contact
-      if (!flowData.initialContact?.extractedData?.customer?.name) {
+      if (!flowData.initialContact?.aiExtractedData?.customer?.name) {
         hints.push({
           id: "customer-name-hint",
           type: "info",

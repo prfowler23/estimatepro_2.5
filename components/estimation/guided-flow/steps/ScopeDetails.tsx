@@ -12,6 +12,7 @@ import {
   GuidedFlowData,
 } from "@/lib/types/estimate-types";
 import { IntelligentServiceSuggestions } from "@/components/ai/IntelligentServiceSuggestions";
+import { StepComponentProps } from "../index";
 
 // Convert SERVICE_METADATA to array format for easier iteration
 const SERVICES = Object.entries(SERVICE_METADATA).map(([id, metadata]) => ({
@@ -39,12 +40,7 @@ const COMMON_BUNDLES = [
   },
 ];
 
-interface ScopeDetailsProps {
-  data: GuidedFlowData;
-  onUpdate: (data: any) => void;
-  onNext: () => void;
-  onBack: () => void;
-}
+interface ScopeDetailsProps extends StepComponentProps {}
 
 function ScopeDetailsComponent({
   data,
@@ -54,7 +50,7 @@ function ScopeDetailsComponent({
 }: ScopeDetailsProps) {
   const [scopeData, setScopeData] = useState<ScopeDetailsData>({
     selectedServices: (data?.scopeDetails?.selectedServices ||
-      data?.initialContact?.extractedData?.requirements?.services ||
+      data?.initialContact?.aiExtractedData?.requirements?.services ||
       []) as ServiceType[],
     serviceOrder: data?.scopeDetails?.serviceOrder || [],
     autoAddedServices: data?.scopeDetails?.autoAddedServices || [],
@@ -231,11 +227,11 @@ function ScopeDetailsComponent({
               Services and scope details were automatically suggested based on
               your extracted requirements. You can review and modify them below.
             </p>
-            {data?.scopeDetails?.autoPopulationDate && (
+            {(data?.scopeDetails as any)?.autoPopulationDate && (
               <p className="text-xs text-gray-500 mt-1">
                 Generated:{" "}
                 {new Date(
-                  data.scopeDetails.autoPopulationDate,
+                  (data.scopeDetails as any).autoPopulationDate,
                 ).toLocaleString()}
               </p>
             )}

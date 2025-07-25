@@ -10,6 +10,7 @@ import {
   endOfQuarter,
 } from "date-fns";
 import { getServiceById } from "@/lib/constants/services";
+import { OptimizedQueryService } from "@/lib/optimization/database-query-optimization";
 
 export interface AnalyticsData {
   overview: OverviewMetrics;
@@ -302,29 +303,9 @@ export class AnalyticsService {
 
   static async getRevenueData(): Promise<RevenueData> {
     try {
-      // Monthly revenue for last 12 months
-      const monthlyData: MonthlyRevenue[] = [];
-      for (let i = 11; i >= 0; i--) {
-        const month = subMonths(new Date(), i);
-        const { data: estimates } = await supabase
-          .from("estimates")
-          .select("total_price")
-          .eq("status", "approved")
-          .gte("created_at", startOfMonth(month).toISOString())
-          .lte("created_at", endOfMonth(month).toISOString());
-
-        const revenue =
-          estimates?.reduce((sum, q) => sum + q.total_price, 0) || 0;
-        const quoteCount = estimates?.length || 0;
-        const avgValue = quoteCount ? revenue / quoteCount : 0;
-
-        monthlyData.push({
-          month: format(month, "MMM yyyy"),
-          revenue,
-          estimates: quoteCount,
-          avgValue,
-        });
-      }
+      // Optimized monthly revenue query - replaces N+1 loop with single query
+      const monthlyData =
+        await OptimizedQueryService.getOptimizedMonthlyRevenue();
 
       // Service revenue breakdown
       const { data: serviceData } = await supabase
@@ -384,114 +365,23 @@ export class AnalyticsService {
 
   static async getServiceMetrics(): Promise<ServiceMetrics[]> {
     try {
-      const { data: serviceData, error } = await supabase.from(
-        "estimate_services",
-      ).select(`
-          service_type,
-          price,
-          total_hours,
-          estimates!inner(status, created_at)
-        `);
+      // Use optimized service metrics query - eliminates complex reduce operations
+      const serviceData =
+        await OptimizedQueryService.getOptimizedServiceMetrics();
 
-      if (error) {
-        console.warn("Error fetching service metrics:", error);
-        return [];
-      }
-
-      if (!serviceData || serviceData.length === 0) {
-        console.log("No service data found");
-        return [];
-      }
-
-      const currentMonth = new Date();
-      const lastMonth = subMonths(currentMonth, 1);
-
-      const serviceMetrics =
-        serviceData.reduce((acc, service) => {
-          const existing = acc.find(
-            (s) => s.serviceType === service.service_type,
-          );
-          const quote = Array.isArray(service.estimates)
-            ? service.estimates[0]
-            : service.estimates;
-          const isApproved = quote?.status === "approved";
-          const isCurrentMonth =
-            new Date(quote?.created_at || "") >= startOfMonth(currentMonth);
-          const isLastMonth =
-            new Date(quote?.created_at || "") >= startOfMonth(lastMonth) &&
-            new Date(quote?.created_at || "") < startOfMonth(currentMonth);
-
-          if (existing) {
-            existing.totalQuotes += 1;
-            if (isApproved) {
-              existing.totalRevenue += service.price;
-            }
-            existing.avgHours =
-              (existing.avgHours * (existing.totalQuotes - 1) +
-                service.total_hours) /
-              existing.totalQuotes;
-
-            if (isCurrentMonth) existing.currentMonthQuotes += 1;
-            if (isLastMonth) existing.lastMonthQuotes += 1;
-          } else {
-            acc.push({
-              serviceType: service.service_type,
-              serviceName: this.mapServiceName(service.service_type),
-              totalQuotes: 1,
-              totalRevenue: isApproved ? service.price : 0,
-              avgPrice: 0, // Will calculate below
-              avgHours: service.total_hours,
-              conversionRate: 0, // Will calculate below
-              trend: "stable" as const,
-              monthlyGrowth: 0,
-              currentMonthQuotes: isCurrentMonth ? 1 : 0,
-              lastMonthQuotes: isLastMonth ? 1 : 0,
-            });
-          }
-          return acc;
-        }, [] as any[]) || [];
-
-      // Calculate final metrics
-      serviceMetrics.forEach((service) => {
-        service.avgPrice = service.totalQuotes
-          ? service.totalRevenue / service.totalQuotes
-          : 0;
-
-        // Calculate conversion rate (approved / total)
-        const approvedCount =
-          serviceData?.filter((s) => {
-            const quote = Array.isArray(s.estimates)
-              ? s.estimates[0]
-              : s.estimates;
-            return (
-              s.service_type === service.serviceType &&
-              quote?.status === "approved"
-            );
-          }).length || 0;
-        service.conversionRate = service.totalQuotes
-          ? (approvedCount / service.totalQuotes) * 100
-          : 0;
-
-        // Calculate monthly growth and trend
-        service.monthlyGrowth = service.lastMonthQuotes
-          ? ((service.currentMonthQuotes - service.lastMonthQuotes) /
-              service.lastMonthQuotes) *
-            100
-          : 0;
-
-        service.trend =
-          service.monthlyGrowth > 5
-            ? "up"
-            : service.monthlyGrowth < -5
-              ? "down"
-              : "stable";
-
-        // Clean up temporary fields
-        delete service.currentMonthQuotes;
-        delete service.lastMonthQuotes;
-      });
-
-      return serviceMetrics.sort((a, b) => b.totalRevenue - a.totalRevenue);
+      // Map to expected ServiceMetrics interface
+      return serviceData.map((service) => ({
+        serviceType: service.serviceType,
+        serviceName: service.serviceName,
+        totalQuotes: service.totalQuotes,
+        totalEstimates: service.totalEstimates,
+        totalRevenue: service.totalRevenue,
+        avgPrice: service.avgPrice,
+        avgHours: service.avgHours,
+        conversionRate: service.conversionRate,
+        trend: service.trend,
+        monthlyGrowth: service.monthlyGrowth,
+      }));
     } catch (error) {
       console.error("Error fetching service metrics:", error);
       throw error;

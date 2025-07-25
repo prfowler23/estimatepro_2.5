@@ -140,7 +140,7 @@ const SERVICES = [
     color: "bg-pink-50 text-pink-700",
   },
   {
-    id: "BR",
+    id: "BF",
     name: "Biofilm Removal",
     description: "Remove biological growth and staining",
     pricing: "$0.75-1.00/sq ft",
@@ -536,7 +536,7 @@ export function ServiceCalculator() {
                 />
               </FormWrapper>
             )}
-            {currentService === "BR" && (
+            {currentService === "BF" && (
               <FormWrapper>
                 <LazyBiofilmRemovalForm
                   onSubmit={handleServiceCalculated}
@@ -556,7 +556,7 @@ export function ServiceCalculator() {
                 "SW",
                 "PD",
                 "GRC",
-                "BR",
+                "BF",
               ].includes(currentService) && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">

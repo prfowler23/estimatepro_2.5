@@ -7,7 +7,7 @@ import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 
 export interface SessionDraft {
   id: string;
-  estimateId: string;
+  estimateId: string | null;
   userId: string;
   sessionId: string;
   currentStep: string;
@@ -198,7 +198,7 @@ export class SessionRecoveryService {
 
       // Save updated draft
       await this.saveDraft(
-        draft.estimateId,
+        draft.estimateId || "",
         draft.data,
         draft.currentStep,
         "manual-save",
@@ -288,7 +288,7 @@ export class SessionRecoveryService {
         // Save emergency draft before tab closes
         if (this.recoveryState.currentSession) {
           await this.saveDraft(
-            this.recoveryState.currentSession.estimateId,
+            this.recoveryState.currentSession.estimateId || "",
             this.recoveryState.currentSession.data,
             this.recoveryState.currentSession.currentStep,
             "tab-close",
@@ -307,7 +307,7 @@ export class SessionRecoveryService {
       if (document.hidden && this.recoveryState.currentSession) {
         // Save draft when tab becomes hidden
         this.saveDraft(
-          this.recoveryState.currentSession.estimateId,
+          this.recoveryState.currentSession.estimateId || "",
           this.recoveryState.currentSession.data,
           this.recoveryState.currentSession.currentStep,
           "auto-save",
@@ -418,18 +418,21 @@ export class SessionRecoveryService {
 
   private static async saveToDatabase(draft: SessionDraft): Promise<void> {
     await withDatabaseRetry(async () => {
-      const { error } = await supabase.from("session_drafts").upsert({
+      const upsertData = {
         id: draft.id,
         estimate_id: draft.estimateId,
         user_id: draft.userId,
         session_id: draft.sessionId,
         current_step: draft.currentStep,
-        data: draft.data,
-        progress: draft.progress,
-        metadata: draft.metadata,
-        recovery: draft.recovery,
+        flow_data: draft.data as any,
+        metadata: draft.metadata as any,
+        recovery: draft.recovery as any,
         expires_at: draft.expiresAt.toISOString(),
-      });
+      };
+
+      const { error } = await supabase
+        .from("session_drafts")
+        .upsert([upsertData]);
 
       if (error) throw error;
     });
@@ -438,7 +441,7 @@ export class SessionRecoveryService {
   private static async getFromDatabase(
     userId: string,
   ): Promise<SessionDraft[]> {
-    return withDatabaseRetry(async () => {
+    const result = await withDatabaseRetry(async () => {
       const { data, error } = await supabase
         .from("session_drafts")
         .select("*")
@@ -454,15 +457,22 @@ export class SessionRecoveryService {
         userId: row.user_id,
         sessionId: row.session_id,
         currentStep: row.current_step,
-        data: row.data,
-        progress: row.progress,
-        metadata: row.metadata,
-        recovery: row.recovery,
+        data: row.flow_data as GuidedFlowData,
+        progress: {
+          completedSteps: [],
+          currentStepIndex: 0,
+          totalSteps: 6,
+          progressPercentage: 0,
+        },
+        metadata: row.metadata as unknown as SessionDraft["metadata"],
+        recovery: row.recovery as unknown as SessionDraft["recovery"],
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
         expiresAt: new Date(row.expires_at),
       }));
     });
+
+    return result.data || [];
   }
 
   private static async deleteFromDatabase(draftId: string): Promise<void> {

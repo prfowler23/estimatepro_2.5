@@ -104,7 +104,7 @@ export function useSwipeGestures(
 
   // Handle touch start
   const handleTouchStart = useCallback(
-    (event: TouchEvent) => {
+    (event: React.TouchEvent<HTMLElement>) => {
       if (event.touches.length !== 1) return;
 
       const touch = event.touches[0];
@@ -129,7 +129,7 @@ export function useSwipeGestures(
 
   // Handle touch move
   const handleTouchMove = useCallback(
-    (event: TouchEvent) => {
+    (event: React.TouchEvent<HTMLElement>) => {
       if (!touchData.current.isActive || event.touches.length !== 1) return;
 
       const touch = event.touches[0];
@@ -157,7 +157,7 @@ export function useSwipeGestures(
 
   // Handle touch end
   const handleTouchEnd = useCallback(
-    (event: TouchEvent) => {
+    (event: React.TouchEvent<HTMLElement>) => {
       if (!touchData.current.isActive) return;
 
       const touch = event.changedTouches[0];
@@ -203,6 +203,46 @@ export function useSwipeGestures(
     swipeDirection.current = null;
   }, [callbacks]);
 
+  // DOM event handlers for addEventListener (different from React handlers)
+  const handleDOMTouchStart = useCallback(
+    (event: TouchEvent) => {
+      const reactEvent = {
+        ...event,
+        touches: event.touches,
+        changedTouches: event.changedTouches,
+        targetTouches: event.targetTouches,
+      } as React.TouchEvent<HTMLElement>;
+      handleTouchStart(reactEvent);
+    },
+    [handleTouchStart],
+  );
+
+  const handleDOMTouchMove = useCallback(
+    (event: TouchEvent) => {
+      const reactEvent = {
+        ...event,
+        touches: event.touches,
+        changedTouches: event.changedTouches,
+        targetTouches: event.targetTouches,
+      } as React.TouchEvent<HTMLElement>;
+      handleTouchMove(reactEvent);
+    },
+    [handleTouchMove],
+  );
+
+  const handleDOMTouchEnd = useCallback(
+    (event: TouchEvent) => {
+      const reactEvent = {
+        ...event,
+        touches: event.touches,
+        changedTouches: event.changedTouches,
+        targetTouches: event.targetTouches,
+      } as React.TouchEvent<HTMLElement>;
+      handleTouchEnd(reactEvent);
+    },
+    [handleTouchEnd],
+  );
+
   // Get gesture handlers for binding to element
   const getSwipeHandlers = useCallback(() => {
     return {
@@ -218,13 +258,13 @@ export function useSwipeGestures(
     (element: HTMLElement | null) => {
       if (!element) return () => {};
 
-      element.addEventListener("touchstart", handleTouchStart, {
+      element.addEventListener("touchstart", handleDOMTouchStart, {
         passive: !finalConfig.preventScroll,
       });
-      element.addEventListener("touchmove", handleTouchMove, {
+      element.addEventListener("touchmove", handleDOMTouchMove, {
         passive: !finalConfig.preventScroll,
       });
-      element.addEventListener("touchend", handleTouchEnd, {
+      element.addEventListener("touchend", handleDOMTouchEnd, {
         passive: !finalConfig.preventScroll,
       });
       element.addEventListener("touchcancel", handleTouchCancel, {
@@ -232,16 +272,16 @@ export function useSwipeGestures(
       });
 
       return () => {
-        element.removeEventListener("touchstart", handleTouchStart);
-        element.removeEventListener("touchmove", handleTouchMove);
-        element.removeEventListener("touchend", handleTouchEnd);
+        element.removeEventListener("touchstart", handleDOMTouchStart);
+        element.removeEventListener("touchmove", handleDOMTouchMove);
+        element.removeEventListener("touchend", handleDOMTouchEnd);
         element.removeEventListener("touchcancel", handleTouchCancel);
       };
     },
     [
-      handleTouchStart,
-      handleTouchMove,
-      handleTouchEnd,
+      handleDOMTouchStart,
+      handleDOMTouchMove,
+      handleDOMTouchEnd,
       handleTouchCancel,
       finalConfig.preventScroll,
     ],

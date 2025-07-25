@@ -23,7 +23,7 @@ interface CacheStats {
 
 // Simple in-memory cache implementation
 export class AICache {
-  private cache = new Map<string, CacheEntry<any>>();
+  private cache = new Map<string, CacheEntry<unknown>>();
   private stats = {
     hits: 0,
     misses: 0,
@@ -35,14 +35,24 @@ export class AICache {
   ) {}
 
   // Generate cache key from input data
-  private generateKey(prefix: string, data: any): string {
-    const serialized = JSON.stringify(data, Object.keys(data).sort());
+  private generateKey(prefix: string, data: unknown): string {
+    const serialized = JSON.stringify(data, (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        return Object.keys(value)
+          .sort()
+          .reduce((sorted: Record<string, unknown>, k) => {
+            sorted[k] = (value as Record<string, unknown>)[k];
+            return sorted;
+          }, {});
+      }
+      return value;
+    });
     const hash = crypto.createHash("sha256").update(serialized).digest("hex");
     return `${prefix}:${hash.substring(0, 16)}`;
   }
 
   // Compress data if enabled
-  private compress(data: any): { data: string; compressed: boolean } {
+  private compress(data: unknown): { data: unknown; compressed: boolean } {
     const cacheConfig = getAIConfig().getCacheConfig();
 
     if (!cacheConfig.compression) {
@@ -60,7 +70,7 @@ export class AICache {
   }
 
   // Decompress data if needed
-  private decompress(entry: CacheEntry<any>): any {
+  private decompress(entry: CacheEntry<unknown>): unknown {
     if (!entry.compressed) {
       return entry.data;
     }
@@ -74,7 +84,7 @@ export class AICache {
   }
 
   // Set cache entry
-  set<T>(prefix: string, key: any, value: T, ttl?: number): void {
+  set<T>(prefix: string, key: unknown, value: T, ttl?: number): void {
     const cacheConfig = getAIConfig().getCacheConfig();
 
     if (!cacheConfig.enabled) {
@@ -101,7 +111,7 @@ export class AICache {
   }
 
   // Get cache entry
-  get<T>(prefix: string, key: any): T | null {
+  get<T>(prefix: string, key: unknown): T | null {
     const cacheConfig = getAIConfig().getCacheConfig();
 
     if (!cacheConfig.enabled) {
@@ -131,12 +141,12 @@ export class AICache {
   }
 
   // Check if key exists and is valid
-  has(prefix: string, key: any): boolean {
+  has(prefix: string, key: unknown): boolean {
     return this.get(prefix, key) !== null;
   }
 
   // Delete cache entry
-  delete(prefix: string, key: any): boolean {
+  delete(prefix: string, key: unknown): boolean {
     const cacheConfig = getAIConfig().getCacheConfig();
     const cacheKey = this.generateKey(cacheConfig.keyPrefix + prefix, key);
     return this.cache.delete(cacheKey);
@@ -206,12 +216,18 @@ export class AICache {
   }
 
   // Get entries by prefix
-  getEntriesByPrefix(
-    prefix: string,
-  ): Array<{ key: string; value: any; metadata: any }> {
+  getEntriesByPrefix(prefix: string): Array<{
+    key: string;
+    value: unknown;
+    metadata: { timestamp: number; hits: number; expiresAt: number };
+  }> {
     const cacheConfig = getAIConfig().getCacheConfig();
     const fullPrefix = cacheConfig.keyPrefix + prefix;
-    const results: Array<{ key: string; value: any; metadata: any }> = [];
+    const results: Array<{
+      key: string;
+      value: unknown;
+      metadata: { timestamp: number; hits: number; expiresAt: number };
+    }> = [];
 
     for (const [key, entry] of this.cache.entries()) {
       if (key.startsWith(fullPrefix)) {
@@ -235,8 +251,8 @@ export class AICache {
   async warmUp(
     operations: Array<{
       prefix: string;
-      key: any;
-      generator: () => Promise<any>;
+      key: unknown;
+      generator: () => Promise<unknown>;
     }>,
   ): Promise<void> {
     console.info(`Warming up cache with ${operations.length} operations...`);
@@ -304,8 +320,8 @@ export class AICacheWrapper {
 
   // Cached quote generation
   async cachedQuoteGeneration<T>(
-    extractedData: any,
-    options: any,
+    extractedData: unknown,
+    options: unknown,
     generator: () => Promise<T>,
     ttl?: number,
   ): Promise<T> {

@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
@@ -9,9 +9,14 @@ import {
   Phone,
   Users,
   MessageSquare,
+  Info,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { InitialContactData, GuidedFlowData } from "@/lib/types/estimate-types";
+import {
+  InitialContactData,
+  GuidedFlowData,
+  AIExtractedData,
+} from "@/lib/types/estimate-types";
 import { SmartField } from "@/components/ai/SmartField";
 import { MobileOptimizedSmartField } from "@/components/ui/mobile/MobileOptimizedSmartField";
 import { useMobileDetection } from "@/hooks/useMobileDetection";
@@ -23,6 +28,7 @@ import {
 import { useErrorRecovery } from "@/components/error/ErrorRecoveryProvider";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { CrossStepPopulationService } from "@/lib/services/cross-step-population-service";
+import { StepComponentProps } from "../index";
 
 const CONTACT_METHODS = [
   {
@@ -51,12 +57,7 @@ const CONTACT_METHODS = [
   },
 ];
 
-interface InitialContactProps {
-  data: GuidedFlowData;
-  onUpdate: (stepData: Partial<GuidedFlowData>) => void;
-  onNext: () => void;
-  onBack: () => void;
-}
+interface InitialContactProps extends StepComponentProps {}
 
 function InitialContactComponent({
   data,
@@ -74,68 +75,79 @@ function InitialContactComponent({
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionComplete, setExtractionComplete] = useState(false);
   const [isAutoPopulating, setIsAutoPopulating] = useState(false);
-  const [autoPopulationResult, setAutoPopulationResult] = useState<any>(null);
+  const [autoPopulationResult, setAutoPopulationResult] = useState<{
+    success: boolean;
+    populatedSteps: string[];
+    confidence: number;
+    warnings: string[];
+    suggestions: string[];
+  } | null>(null);
 
   // Error handling hooks
   const aiErrorHandler = useAIErrorHandler();
   const networkErrorHandler = useNetworkErrorHandler();
   const { reportError } = useErrorRecovery();
 
-  // Sync local state with parent data
+  // Sync local state with parent data - with conditional update to prevent loops
   useEffect(() => {
-    if (data?.initialContact) {
+    // Use deep comparison to prevent infinite loops from parent re-renders.
+    if (
+      data?.initialContact &&
+      JSON.stringify(data.initialContact) !== JSON.stringify(contactData)
+    ) {
       setContactData(data.initialContact);
     }
-  }, [data?.initialContact]);
+  }, [data?.initialContact, contactData]);
 
   useEffect(() => {
     setExtractionComplete(!!contactData.aiExtractedData);
   }, [contactData.aiExtractedData]);
 
-  const handleContactMethodChange = (
-    method: InitialContactData["contactMethod"],
-  ) => {
-    setContactData((prev) => ({
-      ...prev,
-      contactMethod: method,
-      initialNotes: "", // Clear content when changing methods
-      aiExtractedData: undefined, // Clear extracted data
-    }));
-    setExtractionComplete(false);
-  };
+  const handleContactMethodChange = useCallback(
+    (method: InitialContactData["contactMethod"]) => {
+      setContactData((prev) => ({
+        ...prev,
+        contactMethod: method,
+        initialNotes: "", // Clear content when changing methods
+        aiExtractedData: undefined, // Clear extracted data
+      }));
+      setExtractionComplete(false);
+    },
+    [],
+  );
 
   const detectRedFlags = (
-    extractedData: InitialContactData["aiExtractedData"],
+    aiExtractedData: InitialContactData["aiExtractedData"],
   ): string[] => {
     const redFlags: string[] = [];
 
-    if (!extractedData) return redFlags;
+    if (!aiExtractedData) return redFlags;
 
     // Timeline urgency check
     if (
-      extractedData.requirements.timeline?.toLowerCase().includes("urgent") ||
-      extractedData.requirements.timeline?.toLowerCase().includes("asap")
+      aiExtractedData.requirements.timeline?.toLowerCase().includes("urgent") ||
+      aiExtractedData.requirements.timeline?.toLowerCase().includes("asap")
     ) {
       redFlags.push("Urgent timeline mentioned - may require rush pricing");
     }
 
     // Budget constraints
     if (
-      extractedData.requirements.budget &&
-      extractedData.requirements.budget.toLowerCase().includes("budget")
+      aiExtractedData.requirements.budget &&
+      aiExtractedData.requirements.budget.toLowerCase().includes("budget")
     ) {
       redFlags.push("Budget constraints mentioned - price sensitivity likely");
     }
 
     // Complex service requirements
-    if (extractedData.requirements.services.length > 4) {
+    if (aiExtractedData.requirements.services.length > 4) {
       redFlags.push(
         "Multiple services requested - complex coordination required",
       );
     }
 
     // Confidence check
-    if (extractedData.confidence < 0.6) {
+    if (aiExtractedData.confidence < 0.6) {
       redFlags.push("Low extraction confidence - verify details manually");
     }
 
@@ -189,24 +201,24 @@ function InitialContactComponent({
         const result = await response.json();
 
         // Detect red flags based on extracted data
-        const redFlags = detectRedFlags(result.extractedData);
+        const redFlags = detectRedFlags(result.aiExtractedData);
 
-        const extractedDataWithRedFlags = {
-          ...result.extractedData,
+        const aiExtractedDataWithRedFlags = {
+          ...result.aiExtractedData,
           redFlags,
         };
 
         setContactData((prev) => ({
           ...prev,
-          aiExtractedData: extractedDataWithRedFlags,
+          aiExtractedData: aiExtractedDataWithRedFlags,
         }));
 
         setExtractionComplete(true);
 
         // Trigger auto-population of subsequent steps
-        await triggerAutoPopulation(extractedDataWithRedFlags);
+        await triggerAutoPopulation(aiExtractedDataWithRedFlags);
 
-        return extractedDataWithRedFlags;
+        return aiExtractedDataWithRedFlags;
       },
       {
         errorType: "ai_service",
@@ -244,7 +256,7 @@ function InitialContactComponent({
     }
   };
 
-  const triggerAutoPopulation = async (extractedData: any) => {
+  const triggerAutoPopulation = async (aiExtractedData: AIExtractedData) => {
     try {
       setIsAutoPopulating(true);
 
@@ -253,7 +265,7 @@ function InitialContactComponent({
         ...data,
         initialContact: {
           ...contactData,
-          aiExtractedData: extractedData,
+          aiExtractedData: aiExtractedData,
         },
       };
 
@@ -275,12 +287,9 @@ function InitialContactComponent({
         onUpdate(updatedFlowData);
 
         // Show success message
-        reportError(
+        // Report success as info rather than error
+        console.log(
           `✅ Auto-populated ${result.populatedSteps.join(", ")} based on extracted information (${Math.round(result.confidence)}% confidence)`,
-          {
-            errorType: "success",
-            errorCode: "AUTO_POPULATION_SUCCESS",
-          },
         );
       }
     } catch (error) {
@@ -297,10 +306,10 @@ function InitialContactComponent({
     }
   };
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     onUpdate({ initialContact: contactData });
     onNext();
-  };
+  }, [contactData, onUpdate, onNext]);
 
   return (
     <div className="space-y-6">
@@ -672,9 +681,9 @@ function InitialContactComponent({
                     setContactData((prev) => ({
                       ...prev,
                       aiExtractedData: {
-                        ...(prev.aiExtractedData as any),
+                        ...(prev.aiExtractedData || {}),
                         customer: {
-                          ...(prev.aiExtractedData as any)?.customer,
+                          ...(prev.aiExtractedData?.customer || {}),
                           name: value,
                         },
                       } as any,
@@ -697,9 +706,9 @@ function InitialContactComponent({
                     setContactData((prev) => ({
                       ...prev,
                       aiExtractedData: {
-                        ...(prev.aiExtractedData as any),
+                        ...(prev.aiExtractedData || {}),
                         customer: {
-                          ...(prev.aiExtractedData as any)?.customer,
+                          ...(prev.aiExtractedData?.customer || {}),
                           name: value,
                         },
                       } as any,

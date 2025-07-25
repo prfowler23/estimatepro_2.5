@@ -304,7 +304,12 @@ export class RealTimePricingService {
     }
 
     // Check for missing critical data
-    if (!flowData.areaOfWork?.measurements?.totalArea) {
+    const calculatedTotalArea =
+      flowData.areaOfWork?.measurements?.reduce(
+        (sum, m) => sum + (m.type === "area" ? m.value : 0),
+        0,
+      ) || 0;
+    if (!calculatedTotalArea) {
       missingData.push("Total area measurement");
     }
     if (!flowData.duration?.timeline?.estimatedHours) {
@@ -338,12 +343,24 @@ export class RealTimePricingService {
   ): ServicePricingBreakdown | null {
     try {
       // Extract service-specific data
-      const takeoffData = flowData.takeoff?.measurements?.[serviceType];
+      const takeoffData =
+        flowData.takeoff?.measurements?.[
+          serviceType as keyof typeof flowData.takeoff.measurements
+        ];
       const areaData = flowData.areaOfWork?.measurements;
-      const durationData = flowData.duration?.serviceTimelines?.[serviceType];
+      const durationData =
+        flowData.duration?.serviceTimelines?.[
+          serviceType as keyof typeof flowData.duration.serviceTimelines
+        ];
 
       // Determine service area
-      const area = takeoffData?.area || areaData?.totalArea || 0;
+      const area =
+        takeoffData?.calculations?.totalArea ||
+        areaData?.reduce(
+          (sum, m) => sum + (m.type === "area" ? m.value : 0),
+          0,
+        ) ||
+        0;
 
       if (area === 0) {
         return {
@@ -399,11 +416,18 @@ export class RealTimePricingService {
     serviceType: ServiceType,
     flowData: GuidedFlowData,
   ): ServiceFormData {
-    const takeoffData = flowData.takeoff?.measurements?.[serviceType];
     const areaData = flowData.areaOfWork?.measurements;
+    const takeoffArea =
+      flowData.takeoff?.takeoffData?.calculations?.totalArea || 0;
 
     const baseData = {
-      area: takeoffData?.area || areaData?.totalArea || 0,
+      area:
+        takeoffArea ||
+        areaData?.reduce(
+          (sum, m) => sum + (m.type === "area" ? m.value : 0),
+          0,
+        ) ||
+        0,
       building_height_feet:
         flowData.areaOfWork?.buildingDetails?.height || null,
       accessType: this.determineAccessType(flowData) as

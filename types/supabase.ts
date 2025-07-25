@@ -6,1568 +6,2052 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          id: string;
-          full_name: string | null;
-          email: string | null;
-          role: "admin" | "sales" | "viewer" | null;
-          company_name: string | null;
-          phone: string | null;
-          avatar_url: string | null;
-          drone_pilot_license: string | null;
-          part_107_expiry: string | null;
-          pilot_certifications: Json;
-          flight_hours: number | null;
-          last_medical_exam: string | null;
-          is_certified_pilot: boolean | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          full_name?: string | null;
-          email?: string | null;
-          role?: "admin" | "sales" | "viewer" | null;
-          company_name?: string | null;
-          phone?: string | null;
-          avatar_url?: string | null;
-          drone_pilot_license?: string | null;
-          part_107_expiry?: string | null;
-          pilot_certifications?: Json;
-          flight_hours?: number | null;
-          last_medical_exam?: string | null;
-          is_certified_pilot?: boolean | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          full_name?: string | null;
-          email?: string | null;
-          role?: "admin" | "sales" | "viewer" | null;
-          company_name?: string | null;
-          phone?: string | null;
-          avatar_url?: string | null;
-          drone_pilot_license?: string | null;
-          part_107_expiry?: string | null;
-          pilot_certifications?: Json;
-          flight_hours?: number | null;
-          last_medical_exam?: string | null;
-          is_certified_pilot?: boolean | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey";
-            columns: ["id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      customers: {
-        Row: {
-          id: string;
-          name: string;
-          email: string;
-          phone: string | null;
-          company: string | null;
-          address: string | null;
-          city: string | null;
-          state: string | null;
-          zip_code: string | null;
-          notes: string | null;
-          created_by: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          email: string;
-          phone?: string | null;
-          company?: string | null;
-          address?: string | null;
-          city?: string | null;
-          state?: string | null;
-          zip_code?: string | null;
-          notes?: string | null;
-          created_by: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          email?: string;
-          phone?: string | null;
-          company?: string | null;
-          address?: string | null;
-          city?: string | null;
-          state?: string | null;
-          zip_code?: string | null;
-          notes?: string | null;
-          created_by?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "customers_created_by_fkey";
-            columns: ["created_by"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      estimates: {
-        Row: {
-          id: string;
-          quote_number: string;
-          customer_name: string;
-          customer_email: string;
-          customer_phone: string | null;
-          company_name: string | null;
-          building_name: string;
-          building_address: string;
-          building_height_stories: number;
-          building_height_feet: number | null;
-          building_type: string | null;
-          total_price: number;
-          status: "draft" | "sent" | "approved" | "rejected";
-          notes: string | null;
-          created_by: string | null;
-          sent_at: string | null;
-          approved_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          quote_number?: string;
-          customer_name: string;
-          customer_email: string;
-          customer_phone?: string | null;
-          company_name?: string | null;
-          building_name: string;
-          building_address: string;
-          building_height_stories: number;
-          building_height_feet?: number | null;
-          building_type?: string | null;
-          total_price?: number;
-          status?: "draft" | "sent" | "approved" | "rejected";
-          notes?: string | null;
-          created_by?: string | null;
-          sent_at?: string | null;
-          approved_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          quote_number?: string;
-          customer_name?: string;
-          customer_email?: string;
-          customer_phone?: string | null;
-          company_name?: string | null;
-          building_name?: string;
-          building_address?: string;
-          building_height_stories?: number;
-          building_height_feet?: number | null;
-          building_type?: string | null;
-          total_price?: number;
-          status?: "draft" | "sent" | "approved" | "rejected";
-          notes?: string | null;
-          created_by?: string | null;
-          sent_at?: string | null;
-          approved_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "estimates_created_by_fkey";
-            columns: ["created_by"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      estimate_services: {
-        Row: {
-          id: string;
-          quote_id: string;
-          service_type:
-            | "GR"
-            | "WC"
-            | "PW"
-            | "PWS"
-            | "FC"
-            | "FR"
-            | "HD"
-            | "SW"
-            | "PD"
-            | "GRC"
-            | "BR";
-          area_sqft: number | null;
-          glass_sqft: number | null;
-          price: number;
-          labor_hours: number | null;
-          setup_hours: number | null;
-          rig_hours: number | null;
-          total_hours: number | null;
-          crew_size: number | null;
-          equipment_type: string | null;
-          equipment_days: number | null;
-          equipment_cost: number | null;
-          calculation_details: Json | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          quote_id: string;
-          service_type:
-            | "GR"
-            | "WC"
-            | "PW"
-            | "PWS"
-            | "FC"
-            | "FR"
-            | "HD"
-            | "SW"
-            | "PD"
-            | "GRC"
-            | "BR";
-          area_sqft?: number | null;
-          glass_sqft?: number | null;
-          price: number;
-          labor_hours?: number | null;
-          setup_hours?: number | null;
-          rig_hours?: number | null;
-          total_hours?: number | null;
-          crew_size?: number | null;
-          equipment_type?: string | null;
-          equipment_days?: number | null;
-          equipment_cost?: number | null;
-          calculation_details?: Json | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          quote_id?: string;
-          service_type?:
-            | "GR"
-            | "WC"
-            | "PW"
-            | "PWS"
-            | "FC"
-            | "FR"
-            | "HD"
-            | "SW"
-            | "PD"
-            | "GRC"
-            | "BR";
-          area_sqft?: number | null;
-          glass_sqft?: number | null;
-          price?: number;
-          labor_hours?: number | null;
-          setup_hours?: number | null;
-          rig_hours?: number | null;
-          total_hours?: number | null;
-          crew_size?: number | null;
-          equipment_type?: string | null;
-          equipment_days?: number | null;
-          equipment_cost?: number | null;
-          calculation_details?: Json | null;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "estimate_services_quote_id_fkey";
-            columns: ["quote_id"];
-            referencedRelation: "estimates";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      estimation_flows: {
-        Row: {
-          id: string;
-          user_id: string;
-          estimate_id: string | null;
-          flow_data: Json;
-          current_step: number;
-          total_steps: number;
-          is_complete: boolean;
-          template_used: string | null;
-          auto_save_enabled: boolean;
-          last_saved_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          estimate_id?: string | null;
-          flow_data?: Json;
-          current_step?: number;
-          total_steps?: number;
-          is_complete?: boolean;
-          template_used?: string | null;
-          auto_save_enabled?: boolean;
-          last_saved_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          estimate_id?: string | null;
-          flow_data?: Json;
-          current_step?: number;
-          total_steps?: number;
-          is_complete?: boolean;
-          template_used?: string | null;
-          auto_save_enabled?: boolean;
-          last_saved_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "estimation_flows_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "estimation_flows_estimate_id_fkey";
-            columns: ["estimate_id"];
-            referencedRelation: "estimates";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      service_rates: {
-        Row: {
-          id: string;
-          service_type: string;
-          location: "raleigh" | "charlotte" | "greensboro";
-          base_rate: number;
-          unit_type:
-            | "per_hour"
-            | "per_sqft"
-            | "per_window"
-            | "per_frame"
-            | "per_space";
-          effective_date: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          service_type: string;
-          location: "raleigh" | "charlotte" | "greensboro";
-          base_rate: number;
-          unit_type:
-            | "per_hour"
-            | "per_sqft"
-            | "per_window"
-            | "per_frame"
-            | "per_space";
-          effective_date?: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          service_type?: string;
-          location?: "raleigh" | "charlotte" | "greensboro";
-          base_rate?: number;
-          unit_type?:
-            | "per_hour"
-            | "per_sqft"
-            | "per_window"
-            | "per_frame"
-            | "per_space";
-          effective_date?: string;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      analytics_events: {
-        Row: {
-          id: string;
-          event_type: string;
-          event_data: Json;
-          user_id: string | null;
-          session_id: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          event_type: string;
-          event_data: Json;
-          user_id?: string | null;
-          session_id?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          event_type?: string;
-          event_data?: Json;
-          user_id?: string | null;
-          session_id?: string | null;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      workflow_analytics: {
-        Row: {
-          id: string;
-          estimate_id: string;
-          user_id: string;
-          user_name: string;
-          user_role: string;
-          template_used: string | null;
-          start_time: string;
-          end_time: string | null;
-          current_step: number;
-          total_steps: number;
-          total_duration: number | null;
-          step_durations: Json | null;
-          ai_interactions: Json | null;
-          validation_score: number | null;
-          error_count: number | null;
-          warning_count: number | null;
-          auto_fixes_applied: number | null;
-          collaborator_count: number | null;
-          conflict_count: number | null;
-          average_conflict_resolution_time: number | null;
-          completion_rate: number | null;
-          abandonment_point: number | null;
-          completion_quality: Json | null;
-          user_satisfaction_score: number | null;
-          usability_score: number | null;
-          estimate_value: number | null;
-          conversion_rate: number | null;
-          revision_count: number | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          estimate_id: string;
-          user_id: string;
-          user_name: string;
-          user_role: string;
-          template_used?: string | null;
-          start_time?: string;
-          end_time?: string | null;
-          current_step?: number;
-          total_steps?: number;
-          total_duration?: number | null;
-          step_durations?: Json | null;
-          ai_interactions?: Json | null;
-          validation_score?: number | null;
-          error_count?: number | null;
-          warning_count?: number | null;
-          auto_fixes_applied?: number | null;
-          collaborator_count?: number | null;
-          conflict_count?: number | null;
-          average_conflict_resolution_time?: number | null;
-          completion_rate?: number | null;
-          abandonment_point?: number | null;
-          completion_quality?: Json | null;
-          user_satisfaction_score?: number | null;
-          usability_score?: number | null;
-          estimate_value?: number | null;
-          conversion_rate?: number | null;
-          revision_count?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          estimate_id?: string;
-          user_id?: string;
-          user_name?: string;
-          user_role?: string;
-          template_used?: string | null;
-          start_time?: string;
-          end_time?: string | null;
-          current_step?: number;
-          total_steps?: number;
-          total_duration?: number | null;
-          step_durations?: Json | null;
-          ai_interactions?: Json | null;
-          validation_score?: number | null;
-          error_count?: number | null;
-          warning_count?: number | null;
-          auto_fixes_applied?: number | null;
-          collaborator_count?: number | null;
-          conflict_count?: number | null;
-          average_conflict_resolution_time?: number | null;
-          completion_rate?: number | null;
-          abandonment_point?: number | null;
-          completion_quality?: Json | null;
-          user_satisfaction_score?: number | null;
-          usability_score?: number | null;
-          estimate_value?: number | null;
-          conversion_rate?: number | null;
-          revision_count?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "workflow_analytics_estimate_id_fkey";
-            columns: ["estimate_id"];
-            referencedRelation: "estimates";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "workflow_analytics_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       ai_analysis_results: {
         Row: {
-          id: string;
-          quote_id: string;
-          analysis_type:
-            | "facade"
-            | "building_measurement"
-            | "material_detection";
-          image_url: string | null;
           analysis_data: Json;
+          analysis_type: string;
           confidence_score: number | null;
-          created_at: string;
+          created_at: string | null;
+          id: string;
+          image_url: string | null;
+          quote_id: string | null;
         };
         Insert: {
-          id?: string;
-          quote_id: string;
-          analysis_type:
-            | "facade"
-            | "building_measurement"
-            | "material_detection";
-          image_url?: string | null;
           analysis_data: Json;
+          analysis_type: string;
           confidence_score?: number | null;
-          created_at?: string;
+          created_at?: string | null;
+          id?: string;
+          image_url?: string | null;
+          quote_id?: string | null;
         };
         Update: {
-          id?: string;
-          quote_id?: string;
-          analysis_type?:
-            | "facade"
-            | "building_measurement"
-            | "material_detection";
-          image_url?: string | null;
           analysis_data?: Json;
+          analysis_type?: string;
           confidence_score?: number | null;
-          created_at?: string;
+          created_at?: string | null;
+          id?: string;
+          image_url?: string | null;
+          quote_id?: string | null;
         };
         Relationships: [
           {
             foreignKeyName: "ai_analysis_results_quote_id_fkey";
             columns: ["quote_id"];
+            isOneToOne: false;
             referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_analysis_results_quote_id_fkey";
+            columns: ["quote_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
             referencedColumns: ["id"];
           },
         ];
       };
-      estimate_collaborators: {
+      analytics_events: {
         Row: {
+          created_at: string | null;
+          event_data: Json;
+          event_type: string;
           id: string;
-          estimate_id: string;
-          user_id: string;
-          role: "owner" | "editor" | "viewer";
-          permissions: Json | null;
-          invited_by: string | null;
-          invited_at: string;
-          accepted_at: string | null;
-          created_at: string;
-          updated_at: string;
+          session_id: string | null;
+          user_id: string | null;
         };
         Insert: {
+          created_at?: string | null;
+          event_data: Json;
+          event_type: string;
           id?: string;
-          estimate_id: string;
-          user_id: string;
-          role: "owner" | "editor" | "viewer";
-          permissions?: Json | null;
-          invited_by?: string | null;
-          invited_at?: string;
-          accepted_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          session_id?: string | null;
+          user_id?: string | null;
         };
         Update: {
+          created_at?: string | null;
+          event_data?: Json;
+          event_type?: string;
           id?: string;
-          estimate_id?: string;
-          user_id?: string;
-          role?: "owner" | "editor" | "viewer";
-          permissions?: Json | null;
-          invited_by?: string | null;
-          invited_at?: string;
-          accepted_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          session_id?: string | null;
+          user_id?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: "estimate_collaborators_estimate_id_fkey";
-            columns: ["estimate_id"];
-            referencedRelation: "estimates";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "estimate_collaborators_user_id_fkey";
+            foreignKeyName: "analytics_events_user_id_fkey";
             columns: ["user_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "estimate_collaborators_invited_by_fkey";
-            columns: ["invited_by"];
+            isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
       };
-      estimate_changes: {
+      audit_configurations: {
         Row: {
+          alert_thresholds: Json | null;
+          anonymization_rules: Json | null;
+          auto_purge: boolean | null;
+          compliance_standards: string[] | null;
+          created_at: string | null;
+          enabled: boolean | null;
+          encryption_enabled: boolean | null;
+          excluded_events: string[] | null;
           id: string;
-          estimate_id: string;
+          real_time_alerts: boolean | null;
+          retention_days: number | null;
+          sensitive_fields: string[] | null;
+          updated_at: string | null;
           user_id: string;
-          change_id: string;
-          change_type:
-            | "field_update"
-            | "step_navigation"
-            | "file_upload"
-            | "calculation_update";
-          step_id: string;
-          field_path: string;
-          old_value: Json | null;
-          new_value: Json | null;
-          metadata: Json | null;
-          created_at: string;
         };
         Insert: {
+          alert_thresholds?: Json | null;
+          anonymization_rules?: Json | null;
+          auto_purge?: boolean | null;
+          compliance_standards?: string[] | null;
+          created_at?: string | null;
+          enabled?: boolean | null;
+          encryption_enabled?: boolean | null;
+          excluded_events?: string[] | null;
           id?: string;
-          estimate_id: string;
+          real_time_alerts?: boolean | null;
+          retention_days?: number | null;
+          sensitive_fields?: string[] | null;
+          updated_at?: string | null;
           user_id: string;
-          change_id: string;
-          change_type:
-            | "field_update"
-            | "step_navigation"
-            | "file_upload"
-            | "calculation_update";
-          step_id: string;
-          field_path: string;
-          old_value?: Json | null;
-          new_value?: Json | null;
-          metadata?: Json | null;
-          created_at?: string;
         };
         Update: {
+          alert_thresholds?: Json | null;
+          anonymization_rules?: Json | null;
+          auto_purge?: boolean | null;
+          compliance_standards?: string[] | null;
+          created_at?: string | null;
+          enabled?: boolean | null;
+          encryption_enabled?: boolean | null;
+          excluded_events?: string[] | null;
           id?: string;
-          estimate_id?: string;
+          real_time_alerts?: boolean | null;
+          retention_days?: number | null;
+          sensitive_fields?: string[] | null;
+          updated_at?: string | null;
           user_id?: string;
-          change_id?: string;
-          change_type?:
-            | "field_update"
-            | "step_navigation"
-            | "file_upload"
-            | "calculation_update";
-          step_id?: string;
-          field_path?: string;
-          old_value?: Json | null;
-          new_value?: Json | null;
-          metadata?: Json | null;
-          created_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "estimate_changes_estimate_id_fkey";
-            columns: ["estimate_id"];
-            referencedRelation: "estimates";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "estimate_changes_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
+      };
+      audit_events: {
+        Row: {
+          created_at: string | null;
+          details: Json | null;
+          event_type: string;
+          id: string;
+          ip_address: unknown | null;
+          resource_id: string | null;
+          resource_type: string;
+          user_agent: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          details?: Json | null;
+          event_type: string;
+          id?: string;
+          ip_address?: unknown | null;
+          resource_id?: string | null;
+          resource_type: string;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          details?: Json | null;
+          event_type?: string;
+          id?: string;
+          ip_address?: unknown | null;
+          resource_id?: string | null;
+          resource_type?: string;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
+      cache_performance: {
+        Row: {
+          cache_key: string;
+          cache_type: string;
+          created_at: string | null;
+          eviction_count: number;
+          hit_count: number;
+          hit_rate: number | null;
+          id: string;
+          last_accessed: string | null;
+          miss_count: number;
+          total_requests: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          cache_key: string;
+          cache_type: string;
+          created_at?: string | null;
+          eviction_count?: number;
+          hit_count?: number;
+          hit_rate?: number | null;
+          id?: string;
+          last_accessed?: string | null;
+          miss_count?: number;
+          total_requests?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          cache_key?: string;
+          cache_type?: string;
+          created_at?: string | null;
+          eviction_count?: number;
+          hit_count?: number;
+          hit_rate?: number | null;
+          id?: string;
+          last_accessed?: string | null;
+          miss_count?: number;
+          total_requests?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [];
       };
       collaboration_sessions: {
         Row: {
+          created_at: string | null;
+          estimate_id: string | null;
           id: string;
-          estimate_id: string;
-          user_id: string;
-          session_id: string;
-          presence_data: Json | null;
           is_active: boolean | null;
-          last_seen: string;
-          created_at: string;
-          updated_at: string;
+          last_seen: string | null;
+          presence_data: Json | null;
+          session_id: string;
+          updated_at: string | null;
+          user_id: string | null;
         };
         Insert: {
+          created_at?: string | null;
+          estimate_id?: string | null;
           id?: string;
-          estimate_id: string;
-          user_id: string;
-          session_id: string;
-          presence_data?: Json | null;
           is_active?: boolean | null;
-          last_seen?: string;
-          created_at?: string;
-          updated_at?: string;
+          last_seen?: string | null;
+          presence_data?: Json | null;
+          session_id: string;
+          updated_at?: string | null;
+          user_id?: string | null;
         };
         Update: {
+          created_at?: string | null;
+          estimate_id?: string | null;
           id?: string;
-          estimate_id?: string;
-          user_id?: string;
-          session_id?: string;
-          presence_data?: Json | null;
           is_active?: boolean | null;
-          last_seen?: string;
-          created_at?: string;
-          updated_at?: string;
+          last_seen?: string | null;
+          presence_data?: Json | null;
+          session_id?: string;
+          updated_at?: string | null;
+          user_id?: string | null;
         };
         Relationships: [
           {
             foreignKeyName: "collaboration_sessions_estimate_id_fkey";
             columns: ["estimate_id"];
+            isOneToOne: false;
             referencedRelation: "estimates";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "collaboration_sessions_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      integrations: {
-        Row: {
-          id: string;
-          provider:
-            | "quickbooks"
-            | "sage"
-            | "xero"
-            | "salesforce"
-            | "hubspot"
-            | "zapier"
-            | "microsoft_dynamics"
-            | "stripe"
-            | "square"
-            | "buildium"
-            | "appfolio"
-            | "custom_webhook"
-            | "custom_api";
-          name: string;
-          enabled: boolean;
-          settings: Json;
-          authentication: Json;
-          webhooks: Json;
-          sync_settings: Json;
-          field_mappings: Json;
-          created_at: string;
-          updated_at: string;
-          created_by: string;
-        };
-        Insert: {
-          id?: string;
-          provider:
-            | "quickbooks"
-            | "sage"
-            | "xero"
-            | "salesforce"
-            | "hubspot"
-            | "zapier"
-            | "microsoft_dynamics"
-            | "stripe"
-            | "square"
-            | "buildium"
-            | "appfolio"
-            | "custom_webhook"
-            | "custom_api";
-          name: string;
-          enabled?: boolean;
-          settings?: Json;
-          authentication?: Json;
-          webhooks?: Json;
-          sync_settings?: Json;
-          field_mappings?: Json;
-          created_at?: string;
-          updated_at?: string;
-          created_by: string;
-        };
-        Update: {
-          id?: string;
-          provider?:
-            | "quickbooks"
-            | "sage"
-            | "xero"
-            | "salesforce"
-            | "hubspot"
-            | "zapier"
-            | "microsoft_dynamics"
-            | "stripe"
-            | "square"
-            | "buildium"
-            | "appfolio"
-            | "custom_webhook"
-            | "custom_api";
-          name?: string;
-          enabled?: boolean;
-          settings?: Json;
-          authentication?: Json;
-          webhooks?: Json;
-          sync_settings?: Json;
-          field_mappings?: Json;
-          created_at?: string;
-          updated_at?: string;
-          created_by?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "integrations_created_by_fkey";
-            columns: ["created_by"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      integration_events: {
-        Row: {
-          id: string;
-          integration_id: string;
-          event_type: string;
-          event_data: Json;
-          status: "pending" | "processing" | "completed" | "failed";
-          retries: number;
-          max_retries: number;
-          error_message: string | null;
-          created_at: string;
-          processed_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          integration_id: string;
-          event_type: string;
-          event_data?: Json;
-          status?: "pending" | "processing" | "completed" | "failed";
-          retries?: number;
-          max_retries?: number;
-          error_message?: string | null;
-          created_at?: string;
-          processed_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          integration_id?: string;
-          event_type?: string;
-          event_data?: Json;
-          status?: "pending" | "processing" | "completed" | "failed";
-          retries?: number;
-          max_retries?: number;
-          error_message?: string | null;
-          created_at?: string;
-          processed_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "integration_events_integration_id_fkey";
-            columns: ["integration_id"];
-            referencedRelation: "integrations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      audit_events: {
-        Row: {
-          id: string;
-          user_id: string;
-          event_type: string;
-          resource_type: string;
-          resource_id: string | null;
-          details: Json | null;
-          ip_address: string | null;
-          user_agent: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          event_type: string;
-          resource_type: string;
-          resource_id?: string | null;
-          details?: Json | null;
-          ip_address?: string | null;
-          user_agent?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          event_type?: string;
-          resource_type?: string;
-          resource_id?: string | null;
-          details?: Json | null;
-          ip_address?: string | null;
-          user_agent?: string | null;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "audit_events_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "profiles";
+            foreignKeyName: "collaboration_sessions_estimate_id_fkey";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
             referencedColumns: ["id"];
           },
         ];
       };
       compliance_reports: {
         Row: {
-          id: string;
-          user_id: string;
-          report_type: string;
-          period_start: string | null;
-          period_end: string | null;
+          created_at: string | null;
           data: Json | null;
+          id: string;
+          period_end: string | null;
+          period_start: string | null;
+          report_type: string;
           status: string | null;
-          created_at: string;
-          updated_at: string;
+          updated_at: string | null;
+          user_id: string | null;
         };
         Insert: {
-          id?: string;
-          user_id: string;
-          report_type: string;
-          period_start?: string | null;
-          period_end?: string | null;
+          created_at?: string | null;
           data?: Json | null;
+          id?: string;
+          period_end?: string | null;
+          period_start?: string | null;
+          report_type: string;
           status?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          updated_at?: string | null;
+          user_id?: string | null;
         };
         Update: {
-          id?: string;
-          user_id?: string;
-          report_type?: string;
-          period_start?: string | null;
-          period_end?: string | null;
+          created_at?: string | null;
           data?: Json | null;
+          id?: string;
+          period_end?: string | null;
+          period_start?: string | null;
+          report_type?: string;
           status?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
+      compliance_violations: {
+        Row: {
+          description: string;
+          detected_at: string | null;
+          event_ids: string[] | null;
+          id: string;
+          remediation_required: boolean | null;
+          remediation_steps: string[] | null;
+          report_id: string | null;
+          resolution_notes: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          rule: string;
+          severity: string;
+          standard: string;
+        };
+        Insert: {
+          description: string;
+          detected_at?: string | null;
+          event_ids?: string[] | null;
+          id?: string;
+          remediation_required?: boolean | null;
+          remediation_steps?: string[] | null;
+          report_id?: string | null;
+          resolution_notes?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          rule: string;
+          severity: string;
+          standard: string;
+        };
+        Update: {
+          description?: string;
+          detected_at?: string | null;
+          event_ids?: string[] | null;
+          id?: string;
+          remediation_required?: boolean | null;
+          remediation_steps?: string[] | null;
+          report_id?: string | null;
+          resolution_notes?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          rule?: string;
+          severity?: string;
+          standard?: string;
+        };
+        Relationships: [];
+      };
+      customers: {
+        Row: {
+          company_name: string | null;
+          created_at: string | null;
+          email: string | null;
+          id: string;
+          name: string;
+          phone: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          company_name?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          name: string;
+          phone?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          company_name?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          name?: string;
+          phone?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      estimate_changes: {
+        Row: {
+          change_id: string;
+          change_type: string;
+          created_at: string | null;
+          estimate_id: string | null;
+          field_path: string;
+          id: string;
+          metadata: Json | null;
+          new_value: Json | null;
+          old_value: Json | null;
+          step_id: string;
+          user_id: string | null;
+        };
+        Insert: {
+          change_id: string;
+          change_type: string;
+          created_at?: string | null;
+          estimate_id?: string | null;
+          field_path: string;
+          id?: string;
+          metadata?: Json | null;
+          new_value?: Json | null;
+          old_value?: Json | null;
+          step_id: string;
+          user_id?: string | null;
+        };
+        Update: {
+          change_id?: string;
+          change_type?: string;
+          created_at?: string | null;
+          estimate_id?: string | null;
+          field_path?: string;
+          id?: string;
+          metadata?: Json | null;
+          new_value?: Json | null;
+          old_value?: Json | null;
+          step_id?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: "compliance_reports_user_id_fkey";
-            columns: ["user_id"];
+            foreignKeyName: "estimate_changes_estimate_id_fkey";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "estimate_changes_estimate_id_fkey";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimate_collaborators: {
+        Row: {
+          accepted_at: string | null;
+          created_at: string | null;
+          estimate_id: string | null;
+          id: string;
+          invited_at: string | null;
+          invited_by: string | null;
+          permissions: Json | null;
+          role: string;
+          updated_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          created_at?: string | null;
+          estimate_id?: string | null;
+          id?: string;
+          invited_at?: string | null;
+          invited_by?: string | null;
+          permissions?: Json | null;
+          role: string;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          accepted_at?: string | null;
+          created_at?: string | null;
+          estimate_id?: string | null;
+          id?: string;
+          invited_at?: string | null;
+          invited_by?: string | null;
+          permissions?: Json | null;
+          role?: string;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "estimate_collaborators_estimate_id_fkey";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "estimate_collaborators_estimate_id_fkey";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimate_services: {
+        Row: {
+          area_sqft: number | null;
+          calculation_details: Json | null;
+          created_at: string | null;
+          crew_size: number | null;
+          equipment_cost: number | null;
+          equipment_days: number | null;
+          equipment_type: string | null;
+          glass_sqft: number | null;
+          id: string;
+          labor_hours: number | null;
+          price: number;
+          quote_id: string | null;
+          rig_hours: number | null;
+          service_type: string;
+          setup_hours: number | null;
+          total_hours: number | null;
+        };
+        Insert: {
+          area_sqft?: number | null;
+          calculation_details?: Json | null;
+          created_at?: string | null;
+          crew_size?: number | null;
+          equipment_cost?: number | null;
+          equipment_days?: number | null;
+          equipment_type?: string | null;
+          glass_sqft?: number | null;
+          id?: string;
+          labor_hours?: number | null;
+          price: number;
+          quote_id?: string | null;
+          rig_hours?: number | null;
+          service_type: string;
+          setup_hours?: number | null;
+          total_hours?: number | null;
+        };
+        Update: {
+          area_sqft?: number | null;
+          calculation_details?: Json | null;
+          created_at?: string | null;
+          crew_size?: number | null;
+          equipment_cost?: number | null;
+          equipment_days?: number | null;
+          equipment_type?: string | null;
+          glass_sqft?: number | null;
+          id?: string;
+          labor_hours?: number | null;
+          price?: number;
+          quote_id?: string | null;
+          rig_hours?: number | null;
+          service_type?: string;
+          setup_hours?: number | null;
+          total_hours?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quote_services_quote_id_fkey";
+            columns: ["quote_id"];
+            isOneToOne: false;
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "quote_services_quote_id_fkey";
+            columns: ["quote_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimates: {
+        Row: {
+          approved_at: string | null;
+          building_address: string;
+          building_height_feet: number | null;
+          building_height_stories: number;
+          building_name: string;
+          building_type: string | null;
+          company_name: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          customer_email: string;
+          customer_name: string;
+          customer_phone: string | null;
+          id: string;
+          notes: string | null;
+          quote_number: string;
+          sent_at: string | null;
+          status: string | null;
+          total_price: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          approved_at?: string | null;
+          building_address: string;
+          building_height_feet?: number | null;
+          building_height_stories: number;
+          building_name: string;
+          building_type?: string | null;
+          company_name?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          customer_email: string;
+          customer_name: string;
+          customer_phone?: string | null;
+          id?: string;
+          notes?: string | null;
+          quote_number: string;
+          sent_at?: string | null;
+          status?: string | null;
+          total_price?: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          approved_at?: string | null;
+          building_address?: string;
+          building_height_feet?: number | null;
+          building_height_stories?: number;
+          building_name?: string;
+          building_type?: string | null;
+          company_name?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          customer_email?: string;
+          customer_name?: string;
+          customer_phone?: string | null;
+          id?: string;
+          notes?: string | null;
+          quote_number?: string;
+          sent_at?: string | null;
+          status?: string | null;
+          total_price?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quotes_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimation_flow_auto_save_state: {
+        Row: {
+          conflict_detected: boolean | null;
+          estimate_id: string;
+          is_dirty: boolean | null;
+          is_saving: boolean | null;
+          last_save_attempt: string | null;
+          last_saved: string | null;
+          local_version: number | null;
+          save_error: string | null;
+          server_version: number | null;
+          session_id: string | null;
+        };
+        Insert: {
+          conflict_detected?: boolean | null;
+          estimate_id: string;
+          is_dirty?: boolean | null;
+          is_saving?: boolean | null;
+          last_save_attempt?: string | null;
+          last_saved?: string | null;
+          local_version?: number | null;
+          save_error?: string | null;
+          server_version?: number | null;
+          session_id?: string | null;
+        };
+        Update: {
+          conflict_detected?: boolean | null;
+          estimate_id?: string;
+          is_dirty?: boolean | null;
+          is_saving?: boolean | null;
+          last_save_attempt?: string | null;
+          last_saved?: string | null;
+          local_version?: number | null;
+          save_error?: string | null;
+          server_version?: number | null;
+          session_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_auto_save_state_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: true;
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_auto_save_state_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: true;
+            referencedRelation: "quote_summary";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimation_flow_conflicts: {
+        Row: {
+          conflicted_fields: string[] | null;
+          created_at: string | null;
+          estimate_id: string;
+          id: string;
+          local_data: Json;
+          resolution_strategy: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          resolved_data: Json | null;
+          server_data: Json;
+        };
+        Insert: {
+          conflicted_fields?: string[] | null;
+          created_at?: string | null;
+          estimate_id: string;
+          id?: string;
+          local_data: Json;
+          resolution_strategy?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          resolved_data?: Json | null;
+          server_data: Json;
+        };
+        Update: {
+          conflicted_fields?: string[] | null;
+          created_at?: string | null;
+          estimate_id?: string;
+          id?: string;
+          local_data?: Json;
+          resolution_strategy?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          resolved_data?: Json | null;
+          server_data?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_conflicts_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_conflicts_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimation_flow_versions: {
+        Row: {
+          change_description: string | null;
+          created_at: string | null;
+          data: Json;
+          device_info: Json | null;
+          estimate_id: string;
+          id: string;
+          step_id: string | null;
+          timestamp: string | null;
+          user_id: string | null;
+          version: number;
+        };
+        Insert: {
+          change_description?: string | null;
+          created_at?: string | null;
+          data: Json;
+          device_info?: Json | null;
+          estimate_id: string;
+          id?: string;
+          step_id?: string | null;
+          timestamp?: string | null;
+          user_id?: string | null;
+          version: number;
+        };
+        Update: {
+          change_description?: string | null;
+          created_at?: string | null;
+          data?: Json;
+          device_info?: Json | null;
+          estimate_id?: string;
+          id?: string;
+          step_id?: string | null;
+          timestamp?: string | null;
+          user_id?: string | null;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_versions_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_versions_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimation_flows: {
+        Row: {
+          ai_analysis_results: Json | null;
+          ai_extracted_data: Json | null;
+          auto_save_enabled: boolean | null;
+          conflict_detected: boolean | null;
+          contact_date: string | null;
+          contact_method: string | null;
+          created_at: string | null;
+          current_step: number | null;
+          customer_id: string | null;
+          device_info: Json | null;
+          equipment_costs: Json | null;
+          estimate_id: string;
+          estimated_duration: number | null;
+          final_estimate: Json | null;
+          flow_data: Json;
+          id: string;
+          initial_notes: string | null;
+          labor_costs: Json | null;
+          last_auto_save: string | null;
+          last_modified: string | null;
+          manual_overrides: Json | null;
+          material_costs: Json | null;
+          measurements: Json | null;
+          pricing_calculations: Json | null;
+          proposal_generated: boolean | null;
+          save_interval: number | null;
+          selected_services: string[] | null;
+          service_dependencies: Json | null;
+          status: string | null;
+          step: string | null;
+          takeoff_data: Json | null;
+          updated_at: string | null;
+          uploaded_files: Json | null;
+          user_id: string;
+          version: number | null;
+          weather_analysis: Json | null;
+          work_areas: Json | null;
+        };
+        Insert: {
+          ai_analysis_results?: Json | null;
+          ai_extracted_data?: Json | null;
+          auto_save_enabled?: boolean | null;
+          conflict_detected?: boolean | null;
+          contact_date?: string | null;
+          contact_method?: string | null;
+          created_at?: string | null;
+          current_step?: number | null;
+          customer_id?: string | null;
+          device_info?: Json | null;
+          equipment_costs?: Json | null;
+          estimate_id: string;
+          estimated_duration?: number | null;
+          final_estimate?: Json | null;
+          flow_data?: Json;
+          id?: string;
+          initial_notes?: string | null;
+          labor_costs?: Json | null;
+          last_auto_save?: string | null;
+          last_modified?: string | null;
+          manual_overrides?: Json | null;
+          material_costs?: Json | null;
+          measurements?: Json | null;
+          pricing_calculations?: Json | null;
+          proposal_generated?: boolean | null;
+          save_interval?: number | null;
+          selected_services?: string[] | null;
+          service_dependencies?: Json | null;
+          status?: string | null;
+          step?: string | null;
+          takeoff_data?: Json | null;
+          updated_at?: string | null;
+          uploaded_files?: Json | null;
+          user_id: string;
+          version?: number | null;
+          weather_analysis?: Json | null;
+          work_areas?: Json | null;
+        };
+        Update: {
+          ai_analysis_results?: Json | null;
+          ai_extracted_data?: Json | null;
+          auto_save_enabled?: boolean | null;
+          conflict_detected?: boolean | null;
+          contact_date?: string | null;
+          contact_method?: string | null;
+          created_at?: string | null;
+          current_step?: number | null;
+          customer_id?: string | null;
+          device_info?: Json | null;
+          equipment_costs?: Json | null;
+          estimate_id?: string;
+          estimated_duration?: number | null;
+          final_estimate?: Json | null;
+          flow_data?: Json;
+          id?: string;
+          initial_notes?: string | null;
+          labor_costs?: Json | null;
+          last_auto_save?: string | null;
+          last_modified?: string | null;
+          manual_overrides?: Json | null;
+          material_costs?: Json | null;
+          measurements?: Json | null;
+          pricing_calculations?: Json | null;
+          proposal_generated?: boolean | null;
+          save_interval?: number | null;
+          selected_services?: string[] | null;
+          service_dependencies?: Json | null;
+          status?: string | null;
+          step?: string | null;
+          takeoff_data?: Json | null;
+          updated_at?: string | null;
+          uploaded_files?: Json | null;
+          user_id?: string;
+          version?: number | null;
+          weather_analysis?: Json | null;
+          work_areas?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_estimation_flows_customer_id";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_estimation_flows_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_estimation_flows_estimate_id";
+            columns: ["estimate_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_summary";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimation_flows_backup: {
+        Row: {
+          ai_analysis_results: Json | null;
+          ai_extracted_data: Json | null;
+          auto_save_enabled: boolean | null;
+          backup_id: number;
+          contact_date: string | null;
+          contact_method: string | null;
+          created_at: string | null;
+          current_step: number | null;
+          customer_id: string | null;
+          device_info: Json | null;
+          equipment_costs: Json | null;
+          estimate_id: string | null;
+          estimated_duration: number | null;
+          final_estimate: Json | null;
+          flow_data: Json | null;
+          id: string | null;
+          initial_notes: string | null;
+          labor_costs: Json | null;
+          last_modified: string | null;
+          manual_overrides: Json | null;
+          material_costs: Json | null;
+          measurements: Json | null;
+          pricing_calculations: Json | null;
+          proposal_generated: boolean | null;
+          save_interval: number | null;
+          selected_services: string[] | null;
+          service_dependencies: Json | null;
+          status: string | null;
+          takeoff_data: Json | null;
+          updated_at: string | null;
+          uploaded_files: Json | null;
+          user_id: string | null;
+          version: number | null;
+          weather_analysis: Json | null;
+          work_areas: Json | null;
+        };
+        Insert: {
+          ai_analysis_results?: Json | null;
+          ai_extracted_data?: Json | null;
+          auto_save_enabled?: boolean | null;
+          backup_id?: number;
+          contact_date?: string | null;
+          contact_method?: string | null;
+          created_at?: string | null;
+          current_step?: number | null;
+          customer_id?: string | null;
+          device_info?: Json | null;
+          equipment_costs?: Json | null;
+          estimate_id?: string | null;
+          estimated_duration?: number | null;
+          final_estimate?: Json | null;
+          flow_data?: Json | null;
+          id?: string | null;
+          initial_notes?: string | null;
+          labor_costs?: Json | null;
+          last_modified?: string | null;
+          manual_overrides?: Json | null;
+          material_costs?: Json | null;
+          measurements?: Json | null;
+          pricing_calculations?: Json | null;
+          proposal_generated?: boolean | null;
+          save_interval?: number | null;
+          selected_services?: string[] | null;
+          service_dependencies?: Json | null;
+          status?: string | null;
+          takeoff_data?: Json | null;
+          updated_at?: string | null;
+          uploaded_files?: Json | null;
+          user_id?: string | null;
+          version?: number | null;
+          weather_analysis?: Json | null;
+          work_areas?: Json | null;
+        };
+        Update: {
+          ai_analysis_results?: Json | null;
+          ai_extracted_data?: Json | null;
+          auto_save_enabled?: boolean | null;
+          backup_id?: number;
+          contact_date?: string | null;
+          contact_method?: string | null;
+          created_at?: string | null;
+          current_step?: number | null;
+          customer_id?: string | null;
+          device_info?: Json | null;
+          equipment_costs?: Json | null;
+          estimate_id?: string | null;
+          estimated_duration?: number | null;
+          final_estimate?: Json | null;
+          flow_data?: Json | null;
+          id?: string | null;
+          initial_notes?: string | null;
+          labor_costs?: Json | null;
+          last_modified?: string | null;
+          manual_overrides?: Json | null;
+          material_costs?: Json | null;
+          measurements?: Json | null;
+          pricing_calculations?: Json | null;
+          proposal_generated?: boolean | null;
+          save_interval?: number | null;
+          selected_services?: string[] | null;
+          service_dependencies?: Json | null;
+          status?: string | null;
+          takeoff_data?: Json | null;
+          updated_at?: string | null;
+          uploaded_files?: Json | null;
+          user_id?: string | null;
+          version?: number | null;
+          weather_analysis?: Json | null;
+          work_areas?: Json | null;
+        };
+        Relationships: [];
+      };
+      integration_credentials: {
+        Row: {
+          created_at: string | null;
+          credential_type: string;
+          encrypted_value: string;
+          expires_at: string | null;
+          id: string;
+          integration_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          credential_type: string;
+          encrypted_value: string;
+          expires_at?: string | null;
+          id?: string;
+          integration_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          credential_type?: string;
+          encrypted_value?: string;
+          expires_at?: string | null;
+          id?: string;
+          integration_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "integration_credentials_integration_id_fkey";
+            columns: ["integration_id"];
+            isOneToOne: false;
+            referencedRelation: "integration_health_view";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "integration_credentials_integration_id_fkey";
+            columns: ["integration_id"];
+            isOneToOne: false;
+            referencedRelation: "integrations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      integration_events: {
+        Row: {
+          created_at: string | null;
+          error_message: string | null;
+          event_data: Json;
+          event_type: string;
+          id: string;
+          integration_id: string;
+          max_retries: number | null;
+          processed_at: string | null;
+          retries: number | null;
+          status: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          error_message?: string | null;
+          event_data?: Json;
+          event_type: string;
+          id?: string;
+          integration_id: string;
+          max_retries?: number | null;
+          processed_at?: string | null;
+          retries?: number | null;
+          status?: string;
+        };
+        Update: {
+          created_at?: string | null;
+          error_message?: string | null;
+          event_data?: Json;
+          event_type?: string;
+          id?: string;
+          integration_id?: string;
+          max_retries?: number | null;
+          processed_at?: string | null;
+          retries?: number | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "integration_events_integration_id_fkey";
+            columns: ["integration_id"];
+            isOneToOne: false;
+            referencedRelation: "integration_health_view";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "integration_events_integration_id_fkey";
+            columns: ["integration_id"];
+            isOneToOne: false;
+            referencedRelation: "integrations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      integration_field_mappings: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          integration_id: string;
+          is_active: boolean | null;
+          source_field: string;
+          target_field: string;
+          transformation_rules: Json | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          integration_id: string;
+          is_active?: boolean | null;
+          source_field: string;
+          target_field: string;
+          transformation_rules?: Json | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          integration_id?: string;
+          is_active?: boolean | null;
+          source_field?: string;
+          target_field?: string;
+          transformation_rules?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "integration_field_mappings_integration_id_fkey";
+            columns: ["integration_id"];
+            isOneToOne: false;
+            referencedRelation: "integration_health_view";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "integration_field_mappings_integration_id_fkey";
+            columns: ["integration_id"];
+            isOneToOne: false;
+            referencedRelation: "integrations";
             referencedColumns: ["id"];
           },
         ];
       };
       integration_sync_logs: {
         Row: {
+          completed_at: string | null;
+          error_message: string | null;
           id: string;
           integration_id: string;
-          sync_direction: "inbound" | "outbound" | "bidirectional";
-          status: "started" | "completed" | "failed";
-          records_processed: number;
-          records_successful: number;
-          records_failed: number;
-          sync_data: Json;
-          error_message: string | null;
-          started_at: string;
-          completed_at: string | null;
+          records_failed: number | null;
+          records_processed: number | null;
+          records_successful: number | null;
+          started_at: string | null;
+          status: string;
+          sync_data: Json | null;
+          sync_direction: string;
         };
         Insert: {
+          completed_at?: string | null;
+          error_message?: string | null;
           id?: string;
           integration_id: string;
-          sync_direction: "inbound" | "outbound" | "bidirectional";
-          status: "started" | "completed" | "failed";
-          records_processed?: number;
-          records_successful?: number;
-          records_failed?: number;
-          sync_data?: Json;
-          error_message?: string | null;
-          started_at?: string;
-          completed_at?: string | null;
+          records_failed?: number | null;
+          records_processed?: number | null;
+          records_successful?: number | null;
+          started_at?: string | null;
+          status: string;
+          sync_data?: Json | null;
+          sync_direction: string;
         };
         Update: {
+          completed_at?: string | null;
+          error_message?: string | null;
           id?: string;
           integration_id?: string;
-          sync_direction?: "inbound" | "outbound" | "bidirectional";
-          status?: "started" | "completed" | "failed";
-          records_processed?: number;
-          records_successful?: number;
-          records_failed?: number;
-          sync_data?: Json;
-          error_message?: string | null;
-          started_at?: string;
-          completed_at?: string | null;
+          records_failed?: number | null;
+          records_processed?: number | null;
+          records_successful?: number | null;
+          started_at?: string | null;
+          status?: string;
+          sync_data?: Json | null;
+          sync_direction?: string;
         };
         Relationships: [
           {
             foreignKeyName: "integration_sync_logs_integration_id_fkey";
             columns: ["integration_id"];
+            isOneToOne: false;
+            referencedRelation: "integration_health_view";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "integration_sync_logs_integration_id_fkey";
+            columns: ["integration_id"];
+            isOneToOne: false;
             referencedRelation: "integrations";
             referencedColumns: ["id"];
           },
         ];
       };
-      webhook_deliveries: {
+      integrations: {
         Row: {
+          authentication: Json;
+          created_at: string | null;
+          created_by: string;
+          enabled: boolean | null;
+          field_mappings: Json | null;
           id: string;
-          webhook_id: string;
-          event: string;
-          payload: Json;
-          status: "pending" | "delivered" | "failed" | "retrying";
-          attempts: number;
-          max_attempts: number;
-          response_status: number | null;
-          response_body: string | null;
+          name: string;
+          provider: string;
+          settings: Json | null;
+          sync_settings: Json | null;
+          updated_at: string | null;
+          webhooks: Json | null;
+        };
+        Insert: {
+          authentication?: Json;
+          created_at?: string | null;
+          created_by: string;
+          enabled?: boolean | null;
+          field_mappings?: Json | null;
+          id?: string;
+          name: string;
+          provider: string;
+          settings?: Json | null;
+          sync_settings?: Json | null;
+          updated_at?: string | null;
+          webhooks?: Json | null;
+        };
+        Update: {
+          authentication?: Json;
+          created_at?: string | null;
+          created_by?: string;
+          enabled?: boolean | null;
+          field_mappings?: Json | null;
+          id?: string;
+          name?: string;
+          provider?: string;
+          settings?: Json | null;
+          sync_settings?: Json | null;
+          updated_at?: string | null;
+          webhooks?: Json | null;
+        };
+        Relationships: [];
+      };
+      performance_alerts: {
+        Row: {
+          actual_value: number;
+          alert_type: string;
+          created_at: string | null;
+          id: string;
+          message: string;
+          metric_name: string;
+          resolved: boolean;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          threshold_value: number;
+        };
+        Insert: {
+          actual_value: number;
+          alert_type: string;
+          created_at?: string | null;
+          id?: string;
+          message: string;
+          metric_name: string;
+          resolved?: boolean;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          threshold_value: number;
+        };
+        Update: {
+          actual_value?: number;
+          alert_type?: string;
+          created_at?: string | null;
+          id?: string;
+          message?: string;
+          metric_name?: string;
+          resolved?: boolean;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          threshold_value?: number;
+        };
+        Relationships: [];
+      };
+      performance_config: {
+        Row: {
+          created_at: string | null;
+          enabled: boolean;
+          id: string;
+          setting_name: string;
+          setting_type: string;
+          setting_value: Json;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          enabled?: boolean;
+          id?: string;
+          setting_name: string;
+          setting_type: string;
+          setting_value: Json;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          enabled?: boolean;
+          id?: string;
+          setting_name?: string;
+          setting_type?: string;
+          setting_value?: Json;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      performance_logs: {
+        Row: {
+          created_at: string | null;
+          duration_ms: number;
           error_message: string | null;
-          created_at: string;
-          delivered_at: string | null;
-          next_retry_at: string | null;
+          id: string;
+          ip_address: unknown | null;
+          metadata: Json | null;
+          operation_name: string;
+          operation_type: string;
+          success: boolean;
+          user_agent: string | null;
+          user_id: string | null;
         };
         Insert: {
-          id?: string;
-          webhook_id: string;
-          event: string;
-          payload: Json;
-          status?: "pending" | "delivered" | "failed" | "retrying";
-          attempts?: number;
-          max_attempts?: number;
-          response_status?: number | null;
-          response_body?: string | null;
+          created_at?: string | null;
+          duration_ms: number;
           error_message?: string | null;
-          created_at?: string;
-          delivered_at?: string | null;
-          next_retry_at?: string | null;
+          id?: string;
+          ip_address?: unknown | null;
+          metadata?: Json | null;
+          operation_name: string;
+          operation_type: string;
+          success?: boolean;
+          user_agent?: string | null;
+          user_id?: string | null;
         };
         Update: {
-          id?: string;
-          webhook_id?: string;
-          event?: string;
-          payload?: Json;
-          status?: "pending" | "delivered" | "failed" | "retrying";
-          attempts?: number;
-          max_attempts?: number;
-          response_status?: number | null;
-          response_body?: string | null;
+          created_at?: string | null;
+          duration_ms?: number;
           error_message?: string | null;
-          created_at?: string;
-          delivered_at?: string | null;
-          next_retry_at?: string | null;
+          id?: string;
+          ip_address?: unknown | null;
+          metadata?: Json | null;
+          operation_name?: string;
+          operation_type?: string;
+          success?: boolean;
+          user_agent?: string | null;
+          user_id?: string | null;
         };
         Relationships: [];
       };
-      pdf_processing_history: {
+      profiles: {
         Row: {
+          avatar_url: string | null;
+          company_name: string | null;
+          created_at: string | null;
+          drone_pilot_license: string | null;
+          email: string | null;
+          flight_hours: number | null;
+          full_name: string | null;
           id: string;
-          user_id: string;
-          filename: string;
-          file_size: number;
-          pages_processed: number;
-          text_extracted: boolean;
-          images_found: number;
-          measurements_found: number;
-          building_analysis: Json | null;
-          processing_options: Json | null;
-          processing_duration_ms: number | null;
-          created_at: string;
-          updated_at: string;
+          is_certified_pilot: boolean | null;
+          last_medical_exam: string | null;
+          part_107_expiry: string | null;
+          phone: string | null;
+          pilot_certifications: Json | null;
+          role: string | null;
+          updated_at: string | null;
         };
         Insert: {
-          id?: string;
-          user_id: string;
-          filename: string;
-          file_size: number;
-          pages_processed?: number;
-          text_extracted?: boolean;
-          images_found?: number;
-          measurements_found?: number;
-          building_analysis?: Json | null;
-          processing_options?: Json | null;
-          processing_duration_ms?: number | null;
-          created_at?: string;
-          updated_at?: string;
+          avatar_url?: string | null;
+          company_name?: string | null;
+          created_at?: string | null;
+          drone_pilot_license?: string | null;
+          email?: string | null;
+          flight_hours?: number | null;
+          full_name?: string | null;
+          id: string;
+          is_certified_pilot?: boolean | null;
+          last_medical_exam?: string | null;
+          part_107_expiry?: string | null;
+          phone?: string | null;
+          pilot_certifications?: Json | null;
+          role?: string | null;
+          updated_at?: string | null;
         };
         Update: {
+          avatar_url?: string | null;
+          company_name?: string | null;
+          created_at?: string | null;
+          drone_pilot_license?: string | null;
+          email?: string | null;
+          flight_hours?: number | null;
+          full_name?: string | null;
           id?: string;
-          user_id?: string;
-          filename?: string;
-          file_size?: number;
-          pages_processed?: number;
-          text_extracted?: boolean;
-          images_found?: number;
-          measurements_found?: number;
-          building_analysis?: Json | null;
-          processing_options?: Json | null;
-          processing_duration_ms?: number | null;
-          created_at?: string;
-          updated_at?: string;
+          is_certified_pilot?: boolean | null;
+          last_medical_exam?: string | null;
+          part_107_expiry?: string | null;
+          phone?: string | null;
+          pilot_certifications?: Json | null;
+          role?: string | null;
+          updated_at?: string | null;
         };
         Relationships: [];
       };
-      equipment_categories: {
+      query_performance: {
         Row: {
+          cache_hit: boolean;
+          executed_at: string | null;
+          execution_time_ms: number;
           id: string;
-          name: string;
-          description: string | null;
-          created_at: string;
-          updated_at: string;
+          index_used: boolean;
+          query_hash: string;
+          query_plan: Json | null;
+          rows_examined: number;
+          rows_returned: number;
+          table_name: string;
+          user_id: string | null;
         };
         Insert: {
+          cache_hit?: boolean;
+          executed_at?: string | null;
+          execution_time_ms: number;
           id?: string;
-          name: string;
-          description?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          index_used?: boolean;
+          query_hash: string;
+          query_plan?: Json | null;
+          rows_examined?: number;
+          rows_returned?: number;
+          table_name: string;
+          user_id?: string | null;
         };
         Update: {
+          cache_hit?: boolean;
+          executed_at?: string | null;
+          execution_time_ms?: number;
           id?: string;
-          name?: string;
-          description?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          index_used?: boolean;
+          query_hash?: string;
+          query_plan?: Json | null;
+          rows_examined?: number;
+          rows_returned?: number;
+          table_name?: string;
+          user_id?: string | null;
         };
         Relationships: [];
       };
-      equipment: {
+      service_rates: {
         Row: {
+          base_rate: number;
+          created_at: string | null;
+          effective_date: string;
           id: string;
-          category_id: string | null;
-          name: string;
-          description: string | null;
-          manufacturer: string | null;
-          model: string | null;
-          daily_rate: number;
-          weekly_rate: number | null;
-          monthly_rate: number | null;
-          replacement_cost: number | null;
-          specifications: Json;
-          availability_status: "available" | "unavailable" | "maintenance";
-          created_at: string;
-          updated_at: string;
+          location: string;
+          service_type: string;
+          unit_type: string;
         };
         Insert: {
+          base_rate: number;
+          created_at?: string | null;
+          effective_date?: string;
           id?: string;
-          category_id?: string | null;
-          name: string;
-          description?: string | null;
-          manufacturer?: string | null;
-          model?: string | null;
-          daily_rate?: number;
-          weekly_rate?: number | null;
-          monthly_rate?: number | null;
-          replacement_cost?: number | null;
-          specifications?: Json;
-          availability_status?: "available" | "unavailable" | "maintenance";
-          created_at?: string;
-          updated_at?: string;
+          location: string;
+          service_type: string;
+          unit_type: string;
         };
         Update: {
+          base_rate?: number;
+          created_at?: string | null;
+          effective_date?: string;
           id?: string;
-          category_id?: string | null;
-          name?: string;
-          description?: string | null;
-          manufacturer?: string | null;
-          model?: string | null;
-          daily_rate?: number;
-          weekly_rate?: number | null;
-          monthly_rate?: number | null;
-          replacement_cost?: number | null;
-          specifications?: Json;
-          availability_status?: "available" | "unavailable" | "maintenance";
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "equipment_category_id_fkey";
-            columns: ["category_id"];
-            referencedRelation: "equipment_categories";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      equipment_vendors: {
-        Row: {
-          id: string;
-          name: string;
-          contact_email: string | null;
-          contact_phone: string | null;
-          address: string | null;
-          website: string | null;
-          rating: number | null;
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          contact_email?: string | null;
-          contact_phone?: string | null;
-          address?: string | null;
-          website?: string | null;
-          rating?: number | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          contact_email?: string | null;
-          contact_phone?: string | null;
-          address?: string | null;
-          website?: string | null;
-          rating?: number | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          location?: string;
+          service_type?: string;
+          unit_type?: string;
         };
         Relationships: [];
       };
-      materials_vendors: {
+      session_drafts: {
         Row: {
-          id: string;
-          name: string;
-          contact_email: string | null;
-          contact_phone: string | null;
-          address: string | null;
-          website: string | null;
-          rating: number | null;
-          minimum_order_amount: number | null;
-          notes: string | null;
           created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          contact_email?: string | null;
-          contact_phone?: string | null;
-          address?: string | null;
-          website?: string | null;
-          rating?: number | null;
-          minimum_order_amount?: number | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          contact_email?: string | null;
-          contact_phone?: string | null;
-          address?: string | null;
-          website?: string | null;
-          rating?: number | null;
-          minimum_order_amount?: number | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      vendors: {
-        Row: {
-          id: string;
-          name: string;
-          type: "equipment" | "materials" | "both";
-          rating: number | null;
-          reliability: number | null;
-          preferredVendor: boolean | null;
-          contact_name: string | null;
-          contact_phone: string | null;
-          contact_email: string | null;
-          contact_address: string | null;
-          paymentTerms: string | null;
-          deliveryRadius: number | null;
-          specialties: Json | null;
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          type: "equipment" | "materials" | "both";
-          rating?: number | null;
-          reliability?: number | null;
-          preferredVendor?: boolean | null;
-          contact_name?: string | null;
-          contact_phone?: string | null;
-          contact_email?: string | null;
-          contact_address?: string | null;
-          paymentTerms?: string | null;
-          deliveryRadius?: number | null;
-          specialties?: Json | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          type?: "equipment" | "materials" | "both";
-          rating?: number | null;
-          reliability?: number | null;
-          preferredVendor?: boolean | null;
-          contact_name?: string | null;
-          contact_phone?: string | null;
-          contact_email?: string | null;
-          contact_address?: string | null;
-          paymentTerms?: string | null;
-          deliveryRadius?: number | null;
-          specialties?: Json | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      photos: {
-        Row: {
-          id: string;
+          current_step: string;
+          data: Json;
           estimate_id: string;
-          file_name: string;
-          file_path: string;
-          file_size: number;
-          mime_type: string;
-          analysis_data: Json | null;
-          ai_analysis: Json | null;
-          tags: string[] | null;
-          is_analyzed: boolean | null;
-          uploaded_by: string;
-          created_at: string;
+          expires_at: string;
+          id: string;
+          metadata: Json;
+          progress: Json;
+          recovery: Json;
+          session_id: string;
           updated_at: string;
+          user_id: string;
         };
         Insert: {
-          id?: string;
-          estimate_id: string;
-          file_name: string;
-          file_path: string;
-          file_size: number;
-          mime_type: string;
-          analysis_data?: Json | null;
-          ai_analysis?: Json | null;
-          tags?: string[] | null;
-          is_analyzed?: boolean | null;
-          uploaded_by: string;
           created_at?: string;
+          current_step: string;
+          data: Json;
+          estimate_id: string;
+          expires_at: string;
+          id: string;
+          metadata: Json;
+          progress: Json;
+          recovery: Json;
+          session_id: string;
           updated_at?: string;
+          user_id: string;
         };
         Update: {
-          id?: string;
+          created_at?: string;
+          current_step?: string;
+          data?: Json;
           estimate_id?: string;
-          file_name?: string;
-          file_path?: string;
-          file_size?: number;
-          mime_type?: string;
-          analysis_data?: Json | null;
-          ai_analysis?: Json | null;
-          tags?: string[] | null;
-          is_analyzed?: boolean | null;
-          uploaded_by?: string;
-          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          metadata?: Json;
+          progress?: Json;
+          recovery?: Json;
+          session_id?: string;
           updated_at?: string;
+          user_id?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "photos_estimate_id_fkey";
-            columns: ["estimate_id"];
-            referencedRelation: "estimates";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "photos_uploaded_by_fkey";
-            columns: ["uploaded_by"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
-      photo_analysis_results: {
+      system_resources: {
+        Row: {
+          active_connections: number;
+          avg_response_time: number;
+          cpu_usage: number;
+          disk_usage: number;
+          error_count: number;
+          id: string;
+          memory_total: number;
+          memory_usage: number;
+          request_count: number;
+          timestamp: string | null;
+        };
+        Insert: {
+          active_connections?: number;
+          avg_response_time?: number;
+          cpu_usage: number;
+          disk_usage: number;
+          error_count?: number;
+          id?: string;
+          memory_total: number;
+          memory_usage: number;
+          request_count?: number;
+          timestamp?: string | null;
+        };
+        Update: {
+          active_connections?: number;
+          avg_response_time?: number;
+          cpu_usage?: number;
+          disk_usage?: number;
+          error_count?: number;
+          id?: string;
+          memory_total?: number;
+          memory_usage?: number;
+          request_count?: number;
+          timestamp?: string | null;
+        };
+        Relationships: [];
+      };
+      webhook_logs: {
         Row: {
           id: string;
-          photo_id: string;
-          analysis_type:
-            | "facade"
-            | "building_measurement"
-            | "material_detection"
-            | "3d_reconstruction"
-            | "before_after_comparison";
-          analysis_data: Json;
-          confidence_score: number | null;
-          processing_time_ms: number | null;
-          processed_at: string;
-          created_at: string;
-          updated_at: string;
+          payload: Json;
+          processed_at: string | null;
+          provider: string;
+          response: Json | null;
+          signature: string | null;
+          status_code: number | null;
         };
         Insert: {
           id?: string;
-          photo_id: string;
-          analysis_type:
-            | "facade"
-            | "building_measurement"
-            | "material_detection"
-            | "3d_reconstruction"
-            | "before_after_comparison";
-          analysis_data: Json;
-          confidence_score?: number | null;
-          processing_time_ms?: number | null;
-          processed_at?: string;
-          created_at?: string;
-          updated_at?: string;
+          payload: Json;
+          processed_at?: string | null;
+          provider: string;
+          response?: Json | null;
+          signature?: string | null;
+          status_code?: number | null;
         };
         Update: {
           id?: string;
-          photo_id?: string;
-          analysis_type?:
-            | "facade"
-            | "building_measurement"
-            | "material_detection"
-            | "3d_reconstruction"
-            | "before_after_comparison";
-          analysis_data?: Json;
-          confidence_score?: number | null;
-          processing_time_ms?: number | null;
-          processed_at?: string;
-          created_at?: string;
-          updated_at?: string;
+          payload?: Json;
+          processed_at?: string | null;
+          provider?: string;
+          response?: Json | null;
+          signature?: string | null;
+          status_code?: number | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: "photo_analysis_results_photo_id_fkey";
-            columns: ["photo_id"];
-            referencedRelation: "photos";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
+      };
+      workflow_analytics: {
+        Row: {
+          completion_rate: number | null;
+          created_at: string | null;
+          duration_seconds: number | null;
+          error_count: number | null;
+          id: string;
+          metadata: Json | null;
+          step_name: string;
+          user_id: string | null;
+          workflow_type: string;
+        };
+        Insert: {
+          completion_rate?: number | null;
+          created_at?: string | null;
+          duration_seconds?: number | null;
+          error_count?: number | null;
+          id?: string;
+          metadata?: Json | null;
+          step_name: string;
+          user_id?: string | null;
+          workflow_type: string;
+        };
+        Update: {
+          completion_rate?: number | null;
+          created_at?: string | null;
+          duration_seconds?: number | null;
+          error_count?: number | null;
+          id?: string;
+          metadata?: Json | null;
+          step_name?: string;
+          user_id?: string | null;
+          workflow_type?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {
+      integration_health_view: {
+        Row: {
+          created_at: string | null;
+          enabled: boolean | null;
+          failed_events: number | null;
+          failed_syncs: number | null;
+          health_status: string | null;
+          id: string | null;
+          last_sync: string | null;
+          name: string | null;
+          pending_events: number | null;
+          provider: string | null;
+          total_events: number | null;
+          total_syncs: number | null;
+          updated_at: string | null;
+        };
+        Relationships: [];
+      };
+      performance_dashboard_stats: {
+        Row: {
+          avg_duration: number | null;
+          error_count: number | null;
+          error_rate: number | null;
+          hour: string | null;
+          max_duration: number | null;
+          min_duration: number | null;
+          operation_count: number | null;
+          operation_type: string | null;
+        };
+        Relationships: [];
+      };
       quote_summary: {
         Row: {
+          building_address: string | null;
+          building_height_stories: number | null;
+          building_name: string | null;
+          created_at: string | null;
+          customer_email: string | null;
+          customer_name: string | null;
           id: string | null;
           quote_number: string | null;
-          customer_name: string | null;
-          customer_email: string | null;
-          building_name: string | null;
-          building_address: string | null;
-          status: "draft" | "sent" | "approved" | "rejected" | null;
-          total_price: number | null;
-          created_at: string | null;
-          sent_at: string | null;
-          approved_at: string | null;
-          created_by_name: string | null;
-          service_count: number | null;
+          status: string | null;
+          total: number | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          building_address?: string | null;
+          building_height_stories?: number | null;
+          building_name?: string | null;
+          created_at?: string | null;
+          customer_email?: string | null;
+          customer_name?: string | null;
+          id?: string | null;
+          quote_number?: string | null;
+          status?: string | null;
+          total?: number | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          building_address?: string | null;
+          building_height_stories?: number | null;
+          building_name?: string | null;
+          created_at?: string | null;
+          customer_email?: string | null;
+          customer_name?: string | null;
+          id?: string | null;
+          quote_number?: string | null;
+          status?: string | null;
+          total?: number | null;
+          updated_at?: string | null;
         };
         Relationships: [];
       };
       service_type_stats: {
         Row: {
-          service_type:
-            | "GR"
-            | "WC"
-            | "PW"
-            | "PWS"
-            | "FC"
-            | "FR"
-            | "HD"
-            | "SW"
-            | "PD"
-            | "GRC"
-            | "BR"
-            | null;
-          usage_count: number | null;
-          avg_price: number | null;
+          average_price: number | null;
+          last_used: string | null;
+          service_type: string | null;
+          total_estimates: number | null;
           total_revenue: number | null;
-          avg_hours: number | null;
         };
         Relationships: [];
       };
     };
     Functions: {
-      is_admin: {
+      anonymize_user_audit_data: {
+        Args: { target_user_id: string };
+        Returns: number;
+      };
+      calculate_quote_total: {
+        Args: { quote_id_param: string };
+        Returns: number;
+      };
+      cleanup_old_integration_events: {
         Args: Record<PropertyKey, never>;
-        Returns: boolean;
+        Returns: undefined;
+      };
+      cleanup_old_webhook_logs: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      cleanup_orphaned_files: {
+        Args: { retention_days?: number };
+        Returns: number;
+      };
+      cleanup_performance_data: {
+        Args: { retention_days?: number };
+        Returns: number;
+      };
+      detect_performance_anomalies: {
+        Args: { check_period_minutes?: number; threshold_multiplier?: number };
+        Returns: {
+          operation_type: string;
+          operation_name: string;
+          current_avg_duration: number;
+          historical_avg_duration: number;
+          anomaly_ratio: number;
+          severity: string;
+        }[];
+      };
+      detect_suspicious_activity: {
+        Args: { target_user_id?: string; hours_back?: number };
+        Returns: {
+          user_id: string;
+          suspicious_patterns: Json;
+          risk_score: number;
+          recommended_actions: string[];
+        }[];
+      };
+      generate_quote_number: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
+      };
+      get_cache_stats: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          cache_type: string;
+          total_keys: number;
+          avg_hit_rate: number;
+          total_requests: number;
+          total_hits: number;
+          total_misses: number;
+        }[];
+      };
+      get_compliance_statistics: {
+        Args: { start_date: string; end_date: string };
+        Returns: {
+          total_events: number;
+          events_by_type: Json;
+          events_by_severity: Json;
+          high_risk_events: number;
+          compliance_violations: number;
+          data_access_events: number;
+          data_modification_events: number;
+          security_events: number;
+        }[];
+      };
+      get_integration_stats: {
+        Args: { user_id: string };
+        Returns: {
+          provider: string;
+          total_integrations: number;
+          enabled_integrations: number;
+          healthy_integrations: number;
+          last_updated: string;
+        }[];
+      };
+      get_or_create_estimate_for_temp_id: {
+        Args: { temp_estimate_id: string; user_uuid: string };
+        Returns: string;
+      };
+      get_performance_stats: {
+        Args: { start_time?: string; end_time?: string };
+        Returns: {
+          total_operations: number;
+          avg_duration: number;
+          min_duration: number;
+          max_duration: number;
+          error_rate: number;
+          operations_by_type: Json;
+        }[];
+      };
+      get_signed_url: {
+        Args: { bucket_name: string; file_path: string; expires_in?: number };
+        Returns: string;
+      };
+      get_slow_queries: {
+        Args: { threshold_ms?: number; limit_count?: number };
+        Returns: {
+          table_name: string;
+          query_hash: string;
+          avg_execution_time: number;
+          execution_count: number;
+          last_executed: string;
+        }[];
       };
       get_user_role: {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
-      calculate_quote_total: {
+      handle_temp_estimate_auto_save: {
         Args: {
-          quote_id_param: string;
+          temp_estimate_id: string;
+          user_uuid: string;
+          flow_data_param: Json;
+          current_step_param?: number;
+          step_param?: string;
         };
+        Returns: string;
+      };
+      is_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      log_audit_event: {
+        Args: {
+          p_event_type: string;
+          p_resource_type: string;
+          p_resource_id?: string;
+          p_details?: Json;
+        };
+        Returns: string;
+      };
+      purge_expired_audit_events: {
+        Args: Record<PropertyKey, never>;
         Returns: number;
       };
-      create_demo_profile: {
+      refresh_performance_dashboard_stats: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      retry_failed_integration_events: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          event_id: string;
+          integration_id: string;
+          event_type: string;
+        }[];
+      };
+      setup_audit_triggers: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      test_production_readiness: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          table_name: string;
+          status: string;
+          rls_enabled: boolean;
+          policies_count: number;
+        }[];
+      };
+      update_integration_last_sync: {
+        Args: { integration_id: string };
+        Returns: undefined;
+      };
+      validate_file_upload: {
         Args: {
-          user_id: string;
+          bucket_name: string;
+          file_name: string;
+          file_size: number;
+          mime_type: string;
         };
-        Returns: void;
+        Returns: boolean;
+      };
+      verify_linting_fixes: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          check_name: string;
+          status: string;
+          details: string;
+        }[];
       };
     };
     Enums: {
-      service_type:
-        | "GR"
-        | "WC"
-        | "PW"
-        | "PWS"
-        | "FC"
-        | "FR"
-        | "HD"
-        | "SW"
-        | "PD"
-        | "GRC"
-        | "BR";
-      estimate_status: "draft" | "sent" | "approved" | "rejected";
-      user_role: "admin" | "sales" | "viewer";
-      collaboration_role: "owner" | "editor" | "viewer";
-      change_type:
-        | "field_update"
-        | "step_navigation"
-        | "file_upload"
-        | "calculation_update";
-      analysis_type: "facade" | "building_measurement" | "material_detection";
-      location: "raleigh" | "charlotte" | "greensboro";
-      unit_type:
-        | "per_hour"
-        | "per_sqft"
-        | "per_window"
-        | "per_frame"
-        | "per_space";
+      [_ in never]: never;
     };
     CompositeTypes: {
       [_ in never]: never;
     };
   };
-}
+};
+
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
+        Database["public"]["Views"])
+    ? (Database["public"]["Tables"] &
+        Database["public"]["Views"])[PublicTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+    ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+    ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  PublicEnumNameOrOptions extends
+    | keyof Database["public"]["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
+    ? Database["public"]["Enums"][PublicEnumNameOrOptions]
+    : never;

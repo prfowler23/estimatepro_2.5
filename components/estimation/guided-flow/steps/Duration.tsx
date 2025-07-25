@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { error as logError } from "@/lib/utils/logger";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import {
+  GuidedFlowData,
+  WeatherAnalysis as EstimateWeatherAnalysis,
+} from "@/lib/types/estimate-types";
+import {
   Calendar,
   Cloud,
   AlertTriangle,
@@ -91,8 +95,8 @@ interface TimelineEvent {
 }
 
 interface DurationProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: GuidedFlowData;
+  onUpdate: (data: Partial<GuidedFlowData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -188,8 +192,8 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
   const selectedServices = data.scopeDetails?.selectedServices || [];
   const measurements = Object.values(data.takeoff?.measurements || {}).flat();
   const location =
-    data.initialContact?.extractedData?.requirements?.location ||
-    data.initialContact?.extractedData?.location ||
+    data.initialContact?.aiExtractedData?.requirements?.location ||
+    data.initialContact?.aiExtractedData?.location ||
     "Unknown Location";
   const buildingHeight = Math.ceil(
     (data.filesPhotos?.summary?.measurements?.buildingHeight || 40) / 10,
@@ -292,12 +296,12 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
       const calendarService = new CalendarExportService();
       const projectInfo = {
         name:
-          data.initialContact?.extractedData?.customer?.company ||
+          data.initialContact?.aiExtractedData?.customer?.company ||
           "Cleaning Project",
         location: location,
-        clientName: data.initialContact?.extractedData?.customer?.name,
+        clientName: data.initialContact?.aiExtractedData?.customer?.name,
         projectManager: "EstimatePro",
-        estimateNumber: data.initialContact?.extractedData?.estimateNumber,
+        estimateNumber: data.initialContact?.aiExtractedData?.estimateNumber,
       };
       calendarService.downloadICS(timeline, projectInfo);
     }
@@ -321,10 +325,24 @@ export function Duration({ data, onUpdate, onNext, onBack }: DurationProps) {
   const handleNext = () => {
     onUpdate({
       duration: {
+        estimatedDuration: timeline?.totalDuration || totalDuration || 0,
         serviceDurations,
         totalDuration: timeline?.totalDuration || 0,
         timeline,
-        weatherAnalysis,
+        weatherAnalysis: weatherAnalysis
+          ? ({
+              location: {
+                latitude: 0,
+                longitude: 0,
+                address: location,
+              },
+              forecast: [],
+              workableWindows: [],
+              seasonalFactors: [],
+              recommendations: weatherAnalysis.recommendations,
+              riskScore: weatherAnalysis.riskScore || 0,
+            } as EstimateWeatherAnalysis)
+          : undefined,
         startDate: proposedStartDate,
       },
     });

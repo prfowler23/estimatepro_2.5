@@ -100,8 +100,19 @@ describe("SessionRecoveryService", () => {
     it("should save draft to storage", async () => {
       const testData: GuidedFlowData = {
         initialContact: {
-          customerName: "Test Customer",
           contactMethod: "email",
+          aiExtractedData: {
+            customer: {
+              name: "Test Customer",
+            },
+            requirements: {
+              services: [],
+              buildingType: "",
+            },
+            urgencyScore: 0.5,
+            confidence: 0.8,
+            extractionDate: new Date().toISOString(),
+          },
         },
       };
 
@@ -143,7 +154,18 @@ describe("SessionRecoveryService", () => {
         userId: "test-user-123",
         sessionId: "test-session-123",
         currentStep: "initial-contact",
-        data: { initialContact: { customerName: "Test" } },
+        data: {
+          initialContact: {
+            contactMethod: "email",
+            aiExtractedData: {
+              customer: { name: "Test" },
+              requirements: { services: [], buildingType: "" },
+              urgencyScore: 0.5,
+              confidence: 0.8,
+              extractionDate: new Date().toISOString(),
+            },
+          },
+        },
         progress: {
           completedSteps: ["initial-contact"],
           currentStepIndex: 0,
@@ -227,7 +249,16 @@ describe("SessionRecoveryService", () => {
         sessionId: "test-session-123",
         currentStep: "scope-details",
         data: {
-          initialContact: { customerName: "Test Customer" },
+          initialContact: {
+            contactMethod: "email",
+            aiExtractedData: {
+              customer: { name: "Test Customer" },
+              requirements: { services: [], buildingType: "" },
+              urgencyScore: 0.5,
+              confidence: 0.8,
+              extractionDate: new Date().toISOString(),
+            },
+          },
           scopeDetails: { selectedServices: ["WC"] },
         },
         progress: {
@@ -439,7 +470,16 @@ describe("Progress Calculation", () => {
   it("should calculate progress correctly", () => {
     // This tests the private calculateProgress method indirectly
     const testData: GuidedFlowData = {
-      initialContact: { customerName: "Test" },
+      initialContact: {
+        contactMethod: "email",
+        aiExtractedData: {
+          customer: { name: "Test" },
+          requirements: { services: [], buildingType: "" },
+          urgencyScore: 0.5,
+          confidence: 0.8,
+          extractionDate: new Date().toISOString(),
+        },
+      },
       scopeDetails: { selectedServices: ["WC"] },
     };
 

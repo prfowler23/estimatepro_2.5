@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AnalyticsOverview } from "@/components/analytics/analytics-overview";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,9 +13,11 @@ import { AIBusinessInsights } from "@/components/dashboard/AIBusinessInsights";
 import { DashboardLoadingState } from "@/components/dashboard/DashboardLoadingState";
 import { DashboardEmptyState } from "@/components/dashboard/DashboardEmptyState";
 import { DashboardErrorState } from "@/components/dashboard/DashboardErrorState";
+import { ConnectivityStatus } from "@/components/ui/connectivity-status";
+import { useAppNavigation } from "@/hooks/useNavigationState";
 
 export default function Dashboard() {
-  const router = useRouter();
+  const { navigateTo, isNavigating } = useAppNavigation();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,12 +27,12 @@ export default function Dashboard() {
     setIsClient(true);
   }, []);
 
-  const navigateTo = (path: string) => {
+  const handleNavigateTo = async (path: string) => {
     console.log(`Navigating to: ${path}`);
     try {
       if (isClient) {
         console.log("Client is ready, attempting navigation...");
-        router.push(path);
+        await navigateTo(path);
       } else {
         console.warn("Client not ready for navigation");
       }
@@ -75,7 +76,12 @@ export default function Dashboard() {
       <div className="container py-6">
         <DashboardHeader onRefresh={fetchDashboardData} loading={loading} />
 
-        <AICreateEstimateCard navigateTo={navigateTo} />
+        {/* System Status Section */}
+        <div className="mb-6">
+          <ConnectivityStatus />
+        </div>
+
+        <AICreateEstimateCard navigateTo={handleNavigateTo} />
 
         <AIBusinessInsights />
 
@@ -91,7 +97,7 @@ export default function Dashboard() {
         {!loading && data && !error && data.overview.totalQuotes === 0 && (
           <DashboardEmptyState
             fetchDashboardData={fetchDashboardData}
-            navigateTo={navigateTo}
+            navigateTo={handleNavigateTo}
           />
         )}
 

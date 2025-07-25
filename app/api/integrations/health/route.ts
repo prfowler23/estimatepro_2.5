@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      const healthReport = (integrations || []).map((integration) => ({
+      const healthReport = (integrations || []).map((integration: any) => ({
         integration_id: integration.id,
         provider: integration.provider,
         name: integration.name,
@@ -75,9 +75,11 @@ export async function GET(request: NextRequest) {
         last_sync: (integration.sync_settings as any)?.last_sync,
       }));
 
-      const healthyCount = healthReport.filter((r) => r.health.success).length;
+      const healthyCount = healthReport.filter(
+        (r: any) => r.health.success,
+      ).length;
       const unhealthyCount = healthReport.filter(
-        (r) => !r.health.success,
+        (r: any) => !r.health.success,
       ).length;
 
       return NextResponse.json({

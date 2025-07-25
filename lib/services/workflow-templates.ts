@@ -166,7 +166,7 @@ export class WorkflowTemplateService {
           id: "suggest-pressure-washing",
           condition: {
             type: "field-value",
-            field: "initialContact.extractedData.buildingType",
+            field: "initialContact.aiExtractedData.buildingType",
             operator: "contains",
             value: "house",
           },
@@ -362,7 +362,7 @@ export class WorkflowTemplateService {
           id: "require-safety-protocols",
           condition: {
             type: "field-value",
-            field: "initialContact.extractedData.buildingType",
+            field: "initialContact.aiExtractedData.buildingType",
             operator: "contains",
             value: "industrial",
           },

@@ -15,6 +15,7 @@ export interface PhotoData {
   estimate_id: string;
   file_name: string;
   file_path: string;
+  storage_path?: string;
   file_size: number;
   mime_type: string;
   analysis_data: any;
@@ -30,7 +31,7 @@ export interface PhotoAnalysisData {
   id: string;
   photo_id: string;
   analysis_type: string;
-  results: Record<string, any>;
+  analysis_data: Record<string, any>; // Changed from 'results' to match database schema
   confidence?: number;
   processing_time_ms?: number;
   processed_at: string;
@@ -238,7 +239,7 @@ export class PhotoService {
               .upsert({
                 photo_id: photoId,
                 analysis_type: analysisType,
-                results: analysisResult,
+                analysis_data: analysisResult,
                 confidence,
                 processing_time_ms: processingTime,
               })
@@ -251,7 +252,12 @@ export class PhotoService {
             );
           }
 
-          results.push(analysisData);
+          // Convert Json to Record<string, any> for type compatibility
+          const convertedAnalysisData: PhotoAnalysisData = {
+            ...analysisData,
+            analysis_data: analysisData.analysis_data as Record<string, any>,
+          };
+          results.push(convertedAnalysisData);
         }
 
         processedPhotos++;
@@ -305,7 +311,11 @@ export class PhotoService {
       throw new Error(`Failed to fetch analysis: ${error.message}`);
     }
 
-    return data || [];
+    // Convert Json fields to Record<string, any> for type compatibility
+    return (data || []).map((item) => ({
+      ...item,
+      analysis_data: item.analysis_data as Record<string, any>,
+    })) as PhotoAnalysisData[];
   }
 
   /**
@@ -391,7 +401,7 @@ export class PhotoService {
       .insert({
         photo_id: photoIds[0], // Associate with first photo
         analysis_type: "3d_reconstruction",
-        results: {
+        analysis_data: {
           ...result,
           sourcePhotos: photoIds,
           photoCount: photoIds.length,
@@ -438,7 +448,7 @@ export class PhotoService {
       .insert({
         photo_id: beforePhotoId,
         analysis_type: "before_after_comparison",
-        results: {
+        analysis_data: {
           ...result,
           beforePhotoId,
           afterPhotoId,
@@ -523,7 +533,7 @@ export class PhotoService {
   private async downloadPhotoFile(photo: PhotoData): Promise<File> {
     const { data: fileData } = await this.supabase.storage
       .from(this.STORAGE_BUCKET)
-      .download(photo.file_path);
+      .download(photo.storage_path || photo.file_path);
 
     if (!fileData) {
       throw new Error(`Failed to download photo: ${photo.file_name}`);

@@ -37,9 +37,9 @@ export class CrossStepPopulationService {
     flowData: GuidedFlowData,
     options: CrossStepPopulationOptions = {},
   ): Promise<{ updatedFlowData: GuidedFlowData; result: PopulationResult }> {
-    const extractedData = flowData.initialContact?.aiExtractedData;
+    const aiExtractedData = flowData.initialContact?.aiExtractedData;
 
-    if (!extractedData) {
+    if (!aiExtractedData) {
       return {
         updatedFlowData: flowData,
         result: {
@@ -65,7 +65,7 @@ export class CrossStepPopulationService {
     if (options.enableServiceSuggestions !== false) {
       const scopeResult = await this.populateScopeDetails(
         updatedFlowData,
-        extractedData,
+        aiExtractedData,
       );
       if (scopeResult.populated) {
         updatedFlowData.scopeDetails = {
@@ -83,7 +83,10 @@ export class CrossStepPopulationService {
     }
 
     // 2. Populate Area of Work from building analysis
-    const areaResult = this.populateAreaOfWork(updatedFlowData, extractedData);
+    const areaResult = this.populateAreaOfWork(
+      updatedFlowData,
+      aiExtractedData,
+    );
     if (areaResult.populated) {
       updatedFlowData.areaOfWork = {
         ...updatedFlowData.areaOfWork,
@@ -101,7 +104,7 @@ export class CrossStepPopulationService {
     if (options.enableTimelineEstimation !== false) {
       const durationResult = this.populateDuration(
         updatedFlowData,
-        extractedData,
+        aiExtractedData,
       );
       if (durationResult.populated) {
         updatedFlowData.duration = {
@@ -148,7 +151,7 @@ export class CrossStepPopulationService {
       restaurant: ["WC", "PW", "HD", "FC"],
       hospital: ["WC", "HD", "FC", "SW"],
       school: ["WC", "PW", "FC"],
-      industrial: ["PW", "SW", "BR"],
+      industrial: ["PW", "SW", "BF"],
       residential: ["WC", "PW"],
     };
 
@@ -214,12 +217,12 @@ export class CrossStepPopulationService {
    */
   private static async populateScopeDetails(
     flowData: GuidedFlowData,
-    extractedData: AIExtractedData,
+    aiExtractedData: AIExtractedData,
   ) {
-    const confidence = extractedData.confidence || 0;
+    const confidence = aiExtractedData.confidence || 0;
     const populated =
-      extractedData.requirements.services.length > 0 ||
-      extractedData.requirements.buildingType;
+      aiExtractedData.requirements.services.length > 0 ||
+      aiExtractedData.requirements.buildingType;
 
     if (!populated) {
       return { populated: false, confidence: 0 };
@@ -230,15 +233,15 @@ export class CrossStepPopulationService {
 
     // Map extracted services to our service types
     const mappedServices = this.mapExtractedServices(
-      extractedData.requirements.services,
+      aiExtractedData.requirements.services,
     );
 
     // Add building-type specific services
     const buildingServices = await this.suggestServicesFromBuilding(
-      extractedData.requirements.buildingType,
-      extractedData.requirements.buildingSize,
-      extractedData.requirements.floors,
-      extractedData.requirements.services,
+      aiExtractedData.requirements.buildingType,
+      aiExtractedData.requirements.buildingSize,
+      aiExtractedData.requirements.floors,
+      aiExtractedData.requirements.services,
     );
 
     const combinedServices = [
@@ -248,24 +251,24 @@ export class CrossStepPopulationService {
     // Generate scope notes based on extracted data
     let scopeNotes = `Auto-generated from initial contact:\n`;
 
-    if (extractedData.requirements.buildingType) {
-      scopeNotes += `- Building Type: ${extractedData.requirements.buildingType}\n`;
+    if (aiExtractedData.requirements.buildingType) {
+      scopeNotes += `- Building Type: ${aiExtractedData.requirements.buildingType}\n`;
     }
 
-    if (extractedData.requirements.buildingSize) {
-      scopeNotes += `- Building Size: ${extractedData.requirements.buildingSize}\n`;
+    if (aiExtractedData.requirements.buildingSize) {
+      scopeNotes += `- Building Size: ${aiExtractedData.requirements.buildingSize}\n`;
     }
 
-    if (extractedData.requirements.floors) {
-      scopeNotes += `- Floors: ${extractedData.requirements.floors}\n`;
+    if (aiExtractedData.requirements.floors) {
+      scopeNotes += `- Floors: ${aiExtractedData.requirements.floors}\n`;
     }
 
-    if (extractedData.requirements.timeline) {
-      scopeNotes += `- Timeline: ${extractedData.requirements.timeline}\n`;
+    if (aiExtractedData.requirements.timeline) {
+      scopeNotes += `- Timeline: ${aiExtractedData.requirements.timeline}\n`;
     }
 
-    if (extractedData.requirements.budget) {
-      scopeNotes += `- Budget: ${extractedData.requirements.budget}\n`;
+    if (aiExtractedData.requirements.budget) {
+      scopeNotes += `- Budget: ${aiExtractedData.requirements.budget}\n`;
     }
 
     // Add confidence warnings
@@ -302,11 +305,11 @@ export class CrossStepPopulationService {
    */
   private static populateAreaOfWork(
     flowData: GuidedFlowData,
-    extractedData: AIExtractedData,
+    aiExtractedData: AIExtractedData,
   ) {
-    const buildingType = extractedData.requirements.buildingType;
-    const buildingSize = extractedData.requirements.buildingSize;
-    const floors = extractedData.requirements.floors;
+    const buildingType = aiExtractedData.requirements.buildingType;
+    const buildingSize = aiExtractedData.requirements.buildingSize;
+    const floors = aiExtractedData.requirements.floors;
 
     if (!buildingType && !buildingSize) {
       return { populated: false, confidence: 0 };
@@ -350,12 +353,12 @@ export class CrossStepPopulationService {
    */
   private static populateDuration(
     flowData: GuidedFlowData,
-    extractedData: AIExtractedData,
+    aiExtractedData: AIExtractedData,
   ) {
-    const buildingSize = extractedData.requirements.buildingSize;
-    const floors = extractedData.requirements.floors;
-    const services = extractedData.requirements.services;
-    const timeline = extractedData.requirements.timeline;
+    const buildingSize = aiExtractedData.requirements.buildingSize;
+    const floors = aiExtractedData.requirements.floors;
+    const services = aiExtractedData.requirements.services;
+    const timeline = aiExtractedData.requirements.timeline;
 
     if (!buildingSize && !floors && services.length === 0) {
       return { populated: false, confidence: 0 };
@@ -381,7 +384,7 @@ export class CrossStepPopulationService {
     }
 
     // Add time based on service complexity
-    const complexServices = ["GR", "FR", "BR", "GC"];
+    const complexServices = ["GR", "FR", "BF", "GC"];
     const hasComplexServices = services.some((service) =>
       complexServices.some((complex) =>
         service.toLowerCase().includes(complex.toLowerCase()),
@@ -439,7 +442,7 @@ export class CrossStepPopulationService {
       "high dusting": "HD",
       "glass restoration": "GR",
       "frame restoration": "FR",
-      "biofilm removal": "BR",
+      "biofilm removal": "BF",
       "granite reconditioning": "GC",
       "pressure wash seal": "PWS",
       "final clean": "FC",

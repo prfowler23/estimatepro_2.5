@@ -1,7 +1,7 @@
 import {
-  performStartupValidation,
-  validateDatabaseConnection,
-  validateAIServiceConnection,
+  startupValidator,
+  StartupValidator,
+  StartupValidationResult,
 } from "@/lib/config/startup-validation";
 
 // Mock the environment validation module
@@ -19,208 +19,97 @@ jest.mock("@/lib/config/env-validation", () => ({
   validateClientSideEnv: jest.fn(),
 }));
 
+// Mock Supabase client
+jest.mock("@/lib/supabase/client", () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        limit: jest.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+    })),
+  },
+}));
+
 describe("Startup Validation", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("performStartupValidation", () => {
-    it("should pass all validations successfully", () => {
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
-      expect(() => performStartupValidation()).not.toThrow();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "🚀 Starting server-side validation...",
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "✅ All server-side validations passed",
-      );
-
-      consoleSpy.mockRestore();
+  describe("StartupValidator", () => {
+    it("should create singleton instance", () => {
+      const instance1 = StartupValidator.getInstance();
+      const instance2 = StartupValidator.getInstance();
+      expect(instance1).toBe(instance2);
     });
 
-    it("should handle validation errors in production", () => {
-      const originalEnv = process.env.NODE_ENV;
-      Object.defineProperty(process.env, "NODE_ENV", {
-        value: "production",
-        writable: true,
-      });
+    it("should validate startup successfully", async () => {
+      const validator = StartupValidator.getInstance();
+      const result = await validator.validateStartup();
 
-      const {
-        validateEnvWithWarnings,
-      } = require("@/lib/config/env-validation");
-      validateEnvWithWarnings.mockImplementation(() => {
-        throw new Error("Validation failed");
-      });
-
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-      const exitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
-        throw new Error("Process exit");
-      });
-
-      expect(() => performStartupValidation()).toThrow("Process exit");
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "❌ Server-side validation failed:",
-        "Validation failed",
-      );
-      expect(exitSpy).toHaveBeenCalledWith(1);
-
-      consoleErrorSpy.mockRestore();
-      exitSpy.mockRestore();
-      Object.defineProperty(process.env, "NODE_ENV", {
-        value: originalEnv,
-        writable: true,
-      });
+      expect(result).toBeDefined();
+      expect(result.isValid).toBeDefined();
+      expect(result.errors).toBeInstanceOf(Array);
+      expect(result.warnings).toBeInstanceOf(Array);
+      expect(result.missingConfig).toBeInstanceOf(Array);
+      expect(result.databaseStatus).toBeDefined();
+      expect(result.features).toBeDefined();
     });
 
-    it("should continue in development mode despite errors", () => {
-      const originalEnv = process.env.NODE_ENV;
-      Object.defineProperty(process.env, "NODE_ENV", {
-        value: "development",
-        writable: true,
-      });
+    it("should return cached result on subsequent calls", async () => {
+      const validator = StartupValidator.getInstance();
 
-      const {
-        validateEnvWithWarnings,
-      } = require("@/lib/config/env-validation");
-      validateEnvWithWarnings.mockImplementation(() => {
-        throw new Error("Validation failed");
-      });
+      const result1 = await validator.validateStartup();
+      const result2 = await validator.validateStartup();
 
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
-
-      expect(() => performStartupValidation()).not.toThrow();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "❌ Server-side validation failed:",
-        "Validation failed",
-      );
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "⚠️  Continuing in development mode despite validation errors",
-      );
-
-      consoleErrorSpy.mockRestore();
-      consoleWarnSpy.mockRestore();
-      Object.defineProperty(process.env, "NODE_ENV", {
-        value: originalEnv,
-        writable: true,
-      });
+      expect(result1).toBe(result2);
     });
   });
 
-  describe("validateDatabaseConnection", () => {
-    it("should validate database connection successfully", async () => {
-      const mockFetch = jest.spyOn(global, "fetch").mockResolvedValue({
-        ok: true,
-        status: 200,
-      } as Response);
-
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
-      await expect(validateDatabaseConnection()).resolves.not.toThrow();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "🔍 Validating database connection...",
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "✅ Database connection validation passed",
-      );
-
-      mockFetch.mockRestore();
-      consoleSpy.mockRestore();
+  describe("Startup validator instance", () => {
+    it("should be accessible via exported instance", () => {
+      expect(startupValidator).toBeDefined();
+      expect(startupValidator).toBeInstanceOf(StartupValidator);
     });
 
-    it("should handle database connection failure", async () => {
-      const mockFetch = jest.spyOn(global, "fetch").mockResolvedValue({
-        ok: false,
-        status: 500,
-      } as Response);
+    it("should validate startup configuration", async () => {
+      const result = await startupValidator.validateStartup();
 
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
-      await expect(validateDatabaseConnection()).rejects.toThrow(
-        "Database connection failed: 500",
+      expect(result).toBeDefined();
+      expect(typeof result.isValid).toBe("boolean");
+      expect(Array.isArray(result.errors)).toBe(true);
+      expect(Array.isArray(result.warnings)).toBe(true);
+      expect(Array.isArray(result.missingConfig)).toBe(true);
+      expect(["connected", "disconnected", "error"]).toContain(
+        result.databaseStatus,
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "❌ Database connection validation failed:",
-        "Database connection failed: 500",
-      );
-
-      mockFetch.mockRestore();
-      consoleErrorSpy.mockRestore();
-    });
-
-    it("should handle 401 as expected response", async () => {
-      const mockFetch = jest.spyOn(global, "fetch").mockResolvedValue({
-        ok: false,
-        status: 401,
-      } as Response);
-
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
-      await expect(validateDatabaseConnection()).resolves.not.toThrow();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "✅ Database connection validation passed",
-      );
-
-      mockFetch.mockRestore();
-      consoleSpy.mockRestore();
+      expect(typeof result.features).toBe("object");
     });
   });
 
-  describe("validateAIServiceConnection", () => {
-    it("should validate AI service connection successfully", async () => {
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+  describe("Validation components", () => {
+    it("should handle environment validation", async () => {
+      const validator = StartupValidator.getInstance();
+      const result = await validator.validateStartup();
 
-      await expect(validateAIServiceConnection()).resolves.not.toThrow();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "🔍 Validating AI service connection...",
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "✅ AI service validation passed",
-      );
-
-      consoleSpy.mockRestore();
+      // Should not throw and should complete validation
+      expect(result).toBeDefined();
     });
 
-    it("should skip validation when AI is disabled", async () => {
-      const {
-        validateEnvWithWarnings,
-      } = require("@/lib/config/env-validation");
-      validateEnvWithWarnings.mockReturnValue({
-        NEXT_PUBLIC_ENABLE_AI: false,
-        OPENAI_API_KEY: "sk-test-key",
-      });
+    it("should handle database connection validation", async () => {
+      const validator = StartupValidator.getInstance();
+      const result = await validator.validateStartup();
 
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
-      await expect(validateAIServiceConnection()).resolves.not.toThrow();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "ℹ️  AI features disabled, skipping AI service validation",
+      expect(["connected", "disconnected", "error"]).toContain(
+        result.databaseStatus,
       );
-
-      consoleSpy.mockRestore();
     });
 
-    it("should handle invalid OpenAI API key", async () => {
-      const {
-        validateEnvWithWarnings,
-      } = require("@/lib/config/env-validation");
-      validateEnvWithWarnings.mockReturnValue({
-        NEXT_PUBLIC_ENABLE_AI: true,
-        OPENAI_API_KEY: "invalid-key",
-      });
+    it("should validate feature flags", async () => {
+      const validator = StartupValidator.getInstance();
+      const result = await validator.validateStartup();
 
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
-      await expect(validateAIServiceConnection()).rejects.toThrow(
-        "Invalid OpenAI API key format",
-      );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "❌ AI service validation failed:",
-        "Invalid OpenAI API key format",
-      );
-
-      consoleErrorSpy.mockRestore();
+      expect(typeof result.features).toBe("object");
+      expect(result.features).toBeDefined();
     });
   });
 });

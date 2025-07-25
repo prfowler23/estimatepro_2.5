@@ -97,9 +97,9 @@ export function ProgressiveValidation({
               <Badge
                 variant={
                   validationResult.qualityScore >= 85
-                    ? "success"
+                    ? "default"
                     : validationResult.qualityScore >= 70
-                      ? "warning"
+                      ? "secondary"
                       : "destructive"
                 }
               >
@@ -115,7 +115,6 @@ export function ProgressiveValidation({
                 <Switch
                   checked={showCompletedTasks}
                   onCheckedChange={setShowCompletedTasks}
-                  size="sm"
                 />
                 <label className="text-gray-600">Show completed</label>
               </div>
@@ -124,7 +123,6 @@ export function ProgressiveValidation({
                 <Switch
                   checked={enableAutoFix}
                   onCheckedChange={setEnableAutoFix}
-                  size="sm"
                 />
                 <label className="text-gray-600">Auto-fix</label>
               </div>

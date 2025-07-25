@@ -39,13 +39,13 @@ import { HelpIntegratedFlow } from "@/components/help/HelpIntegratedFlow";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { SmartErrorNotification } from "@/components/error/SmartErrorNotification";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
-import { useGuidedFlowRecovery } from "@/hooks/useSessionRecovery";
+import { useSessionRecovery } from "@/hooks/useSessionRecovery";
 import { SessionRecoveryModal } from "@/components/ui/SessionRecoveryModal";
 import { SaveExitButton } from "@/components/ui/SaveExitButton";
 import { AutoSaveStatusDisplay } from "./components/AutoSaveStatusDisplay";
 import { TemplateStatusDisplay } from "./components/TemplateStatusDisplay";
 import { RealTimeCostBreakdown } from "./RealTimeCostBreakdown";
-import { useGuidedFlowRealTimePricing } from "@/hooks/useRealTimePricing";
+import { useRealTimePricing } from "@/hooks/useRealTimePricing";
 import { DesktopStepIndicator } from "./components/DesktopStepIndicator";
 import { StepContentArea } from "./components/StepContentArea";
 import { DesktopNavigationControls } from "./components/DesktopNavigationControls";
@@ -54,7 +54,7 @@ import { ConflictResolutionDialog } from "@/components/collaboration/ConflictRes
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 
 // StepComponentProps now uses unified GuidedFlowData
-interface StepComponentProps {
+export interface StepComponentProps {
   data: GuidedFlowData;
   onUpdate: (stepData: Partial<GuidedFlowData>) => void;
   onNext: () => void;
@@ -107,24 +107,32 @@ export function GuidedEstimationFlow({
   >([]);
   const [navigationResult, setNavigationResult] =
     useState<StepNavigationResult | null>(null);
-  const [availableSteps, setAvailableSteps] = useState<number[]>([]);
 
-  const {
-    currentError,
-    handleAsyncOperation,
-    clearError,
-    executeRecoveryAction,
-    handleFormValidation,
-  } = useErrorHandler({
-    stepId: STEPS[currentStep - 1]?.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "-"),
-    stepNumber: currentStep,
-    userId: customerId || "anonymous",
-    flowData,
-    enableAutoRecovery: true,
-    maxRetryAttempts: 3,
-  });
+  const getInitialAvailableSteps = () => {
+    try {
+      const workflowSteps = WorkflowService.getAvailableSteps({});
+      const stepIndices = workflowSteps
+        .map((step) =>
+          STEPS.findIndex(
+            (s) => s.name.toLowerCase().replace(/[^a-z0-9]/g, "-") === step.id,
+          ),
+        )
+        .filter((index) => index !== -1)
+        .map((index) => index + 1);
+
+      if (stepIndices.length === 0) {
+        return [1];
+      } else {
+        return stepIndices;
+      }
+    } catch (error) {
+      console.error("Error calculating initial available steps:", error);
+      return [1];
+    }
+  };
+  const [availableSteps, setAvailableSteps] = useState<number[]>(
+    getInitialAvailableSteps,
+  );
 
   const [currentEstimateId] = useState(
     () => estimateId || customerId || `temp-estimate-${Date.now()}`,
@@ -172,21 +180,6 @@ export function GuidedEstimationFlow({
     clearSaveError,
   } = useSmartAutoSaveData(baseFlowData, smartAutoSave, currentStepId);
 
-  useEffect(() => {
-    if (flowData && JSON.stringify(flowData) !== JSON.stringify(baseFlowData)) {
-      setBaseFlowData(flowData);
-      updateAvailableSteps(flowData);
-
-      // Update session recovery with current data
-      sessionRecovery.setCurrentSession(flowData, currentStepId);
-    }
-  }, [
-    flowData,
-    baseFlowData,
-    currentStepId,
-    sessionRecovery.setCurrentSession,
-  ]);
-
   const {
     showConflictDialog,
     conflictData,
@@ -197,7 +190,8 @@ export function GuidedEstimationFlow({
   } = useConflictResolution(smartAutoSave);
 
   // Session recovery integration
-  const sessionRecovery = useGuidedFlowRecovery(currentEstimateId, {
+  const sessionRecovery = useSessionRecovery({
+    estimateId: currentEstimateId,
     enabled: true,
     autoSaveInterval: 30000, // 30 seconds
     onRecoveryComplete: (draft) => {
@@ -216,8 +210,41 @@ export function GuidedEstimationFlow({
     },
   });
 
+  const {
+    currentError,
+    handleAsyncOperation,
+    clearError,
+    executeRecoveryAction,
+    handleFormValidation,
+  } = useErrorHandler({
+    stepId: STEPS[currentStep - 1]?.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-"),
+    stepNumber: currentStep,
+    userId: customerId || "anonymous",
+    flowData,
+    enableAutoRecovery: true,
+    maxRetryAttempts: 3,
+  });
+
+  useEffect(() => {
+    if (flowData && JSON.stringify(flowData) !== JSON.stringify(baseFlowData)) {
+      setBaseFlowData(flowData);
+      updateAvailableSteps(flowData);
+
+      // Update session recovery with current data (function call moved outside dependency)
+      sessionRecovery.setCurrentSession(flowData, currentStepId);
+    }
+  }, [
+    flowData,
+    baseFlowData,
+    currentStepId,
+    // Removed sessionRecovery.setCurrentSession from dependencies to prevent infinite loop
+  ]);
+
   // Real-time pricing and validation integration
-  const realTimePricing = useGuidedFlowRealTimePricing(currentEstimateId, {
+  const realTimePricing = useRealTimePricing({
+    estimateId: currentEstimateId,
     enabled: true,
     debounceMs: 1500,
     onPricingUpdate: (result) => {
@@ -248,8 +275,7 @@ export function GuidedEstimationFlow({
         const currentStepId = STEPS[currentStep - 1].name
           .toLowerCase()
           .replace(/[^a-z0-9]/g, "-");
-        realTimePricing.updateFlowData(updatedFlowData);
-        realTimePricing.updateCurrentStep(currentStepId);
+        realTimePricing.updatePricing(updatedFlowData, currentStepId);
 
         const currentStepData = GuidedFlowValidator.getStepData(
           currentStep,
@@ -288,9 +314,6 @@ export function GuidedEstimationFlow({
 
         updateAvailableSteps(updatedFlowData);
 
-        const currentStepId = STEPS[currentStep - 1].name
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "-");
         const actions = WorkflowService.applyConditionalActions(
           currentStepId,
           updatedFlowData,
@@ -471,10 +494,6 @@ export function GuidedEstimationFlow({
 
     updateAvailableSteps(initialFlowData);
   };
-
-  React.useEffect(() => {
-    updateAvailableSteps(flowData);
-  }, []);
 
   const currentValidation = validationResults[currentStep];
   const canProceed = !currentValidation || currentValidation.isValid;
@@ -667,10 +686,7 @@ export function GuidedEstimationFlow({
             <ConflictResolutionDialog
               isOpen={showConflictDialog}
               onClose={dismissConflict}
-              conflictData={conflictData}
-              onResolveWithLocal={resolveWithLocal}
-              onResolveWithServer={resolveWithServer}
-              onResolveWithMerge={resolveWithMerge}
+              conflict={conflictData}
             />
           )}
 
@@ -683,7 +699,9 @@ export function GuidedEstimationFlow({
             onRecoverSession={async (draftId) => {
               await sessionRecovery.acceptRecovery(draftId);
             }}
-            onDeleteDraft={sessionRecovery.deleteDraft}
+            onDeleteDraft={async (draftId) => {
+              await sessionRecovery.deleteDraft(draftId);
+            }}
             onDeclineAll={sessionRecovery.declineRecovery}
           />
         </HelpIntegratedFlow>

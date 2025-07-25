@@ -12,7 +12,7 @@ import { error as logError } from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle, Home } from "lucide-react";
 
-interface ErrorBoundaryProps {
+export interface ErrorBoundaryProps {
   children: ReactNode;
   stepId?: string;
   stepNumber?: number;
@@ -62,15 +62,65 @@ export class ErrorBoundary extends Component<
   }
 
   async componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Prevent infinite loops by limiting recovery attempts
+    if (this.state.recoveryAttempts >= 3) {
+      console.error(
+        "Max recovery attempts reached, preventing infinite loop:",
+        error,
+      );
+      return;
+    }
+
+    // Check for infinite update loop specifically
+    if (error.message.includes("Maximum update depth exceeded")) {
+      console.error(
+        "Infinite update loop detected, stopping error boundary processing:",
+        error,
+      );
+      this.setState({
+        recoveryAttempts: this.state.recoveryAttempts + 1,
+        errorMessage: {
+          id: "infinite-loop-error",
+          title: "Infinite Update Loop Detected",
+          message:
+            "React detected an infinite update loop. This is likely caused by state updates in render functions.",
+          severity: "error",
+          category: "system_error",
+          isRecoverable: false,
+          canRetry: true,
+          userFriendly:
+            "The page encountered a rendering issue. Please refresh to continue.",
+          recoveryActions: [
+            {
+              id: "refresh",
+              label: "Refresh Page",
+              description: "Reload the page to reset the application",
+              type: "user-action",
+              priority: 1,
+              execute: () => window.location.reload(),
+            },
+          ],
+        },
+      });
+      return;
+    }
+
     logError("ErrorBoundary caught an error", {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
       component: "ErrorBoundary",
+      recoveryAttempt: this.state.recoveryAttempts + 1,
     });
 
-    // Call custom error handler if provided
-    this.props.onError?.(error, errorInfo);
+    // Call custom error handler if provided (only on first attempt)
+    if (this.props.onError && this.state.recoveryAttempts === 0) {
+      try {
+        this.props.onError(error, errorInfo);
+      } catch (handlerError) {
+        console.warn("Error handler failed:", handlerError);
+      }
+    }
 
     // Process error through recovery engine
     try {

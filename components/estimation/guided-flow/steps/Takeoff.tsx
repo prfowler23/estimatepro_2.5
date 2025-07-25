@@ -37,11 +37,11 @@ import { TakeoffExportService } from "@/lib/takeoff/export-service";
 import { TakeoffValidationService } from "@/lib/takeoff/validation-service";
 import { TakeoffSuggestionsEngine } from "@/lib/takeoff/suggestions-engine";
 import { MeasurementEntry } from "@/lib/types/measurements";
-import { TakeoffStepData } from "@/lib/types/estimate-types";
+import { TakeoffStepData, GuidedFlowData } from "@/lib/types/estimate-types";
 
 interface TakeoffProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: GuidedFlowData;
+  onUpdate: (data: Partial<GuidedFlowData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -136,7 +136,14 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
   // Initialize from existing data
   useEffect(() => {
     if (data.takeoff) {
-      setMeasurements(data.takeoff.measurements || {});
+      // Handle measurements - ensure it's the correct type
+      const takeoffMeasurements = data.takeoff.measurements;
+      if (Array.isArray(takeoffMeasurements)) {
+        // Convert Measurement[] to Record<string, MeasurementEntry[]> if needed
+        setMeasurements({});
+      } else {
+        setMeasurements(takeoffMeasurements || {});
+      }
       setImportSource(data.takeoff.importSource || "manual");
       setNotes(data.takeoff.notes || "");
     }
@@ -190,7 +197,7 @@ export function Takeoff({ data, onUpdate, onNext, onBack }: TakeoffProps) {
 
     // Get suggestions
     const buildingType =
-      data.initialContact?.extractedData?.requirements?.buildingType ||
+      data.initialContact?.aiExtractedData?.requirements?.buildingType ||
       "office";
     const newSuggestions = engine.getSuggestionsForBuildingType(
       buildingType,

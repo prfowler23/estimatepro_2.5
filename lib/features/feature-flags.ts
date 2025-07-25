@@ -156,39 +156,22 @@ export class FeatureFlagManager {
       return this.flagCache.get(key)!;
     }
 
-    try {
-      const { data, error } = await this.supabase
-        .from("feature_flags")
-        .select("*")
-        .eq("key", key)
-        .eq("enabled", true)
-        .single();
-
-      if (error || !data) {
-        return null;
-      }
-
+    // For now, only support static flags since feature_flags table doesn't exist
+    // In the future, this could be extended to use a database table
+    if (key in this.staticFlags) {
       const flag: FeatureFlag = {
-        key: data.key,
-        name: data.name,
-        description: data.description,
-        enabled: data.enabled,
-        rolloutPercentage: data.rollout_percentage,
-        userWhitelist: data.user_whitelist,
-        userBlacklist: data.user_blacklist,
-        conditions: data.conditions,
-        metadata: data.metadata,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-        createdBy: data.created_by,
+        key,
+        name: key,
+        description: `Static flag for ${key}`,
+        enabled: this.staticFlags[key],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-
       this.flagCache.set(key, flag);
       return flag;
-    } catch (error) {
-      console.error("Error fetching feature flag:", error);
-      return null;
     }
+
+    return null;
   }
 
   /**
@@ -199,41 +182,24 @@ export class FeatureFlagManager {
       return Array.from(this.flagCache.values());
     }
 
-    try {
-      const { data, error } = await this.supabase
-        .from("feature_flags")
-        .select("*")
-        .eq("enabled", true);
+    // Return static flags only since feature_flags table doesn't exist
+    const flags: FeatureFlag[] = Object.entries(this.staticFlags).map(
+      ([key, enabled]) => ({
+        key,
+        name: key,
+        description: `Static flag for ${key}`,
+        enabled,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
 
-      if (error || !data) {
-        return [];
-      }
+    // Update cache
+    this.flagCache.clear();
+    flags.forEach((flag) => this.flagCache.set(flag.key, flag));
+    this.cacheExpiry = new Date(Date.now() + this.CACHE_TTL_MS);
 
-      const flags: FeatureFlag[] = data.map((item) => ({
-        key: item.key,
-        name: item.name,
-        description: item.description,
-        enabled: item.enabled,
-        rolloutPercentage: item.rollout_percentage,
-        userWhitelist: item.user_whitelist,
-        userBlacklist: item.user_blacklist,
-        conditions: item.conditions,
-        metadata: item.metadata,
-        createdAt: new Date(item.created_at),
-        updatedAt: new Date(item.updated_at),
-        createdBy: item.created_by,
-      }));
-
-      // Update cache
-      this.flagCache.clear();
-      flags.forEach((flag) => this.flagCache.set(flag.key, flag));
-      this.cacheExpiry = new Date(Date.now() + this.CACHE_TTL_MS);
-
-      return flags;
-    } catch (error) {
-      console.error("Error fetching feature flags:", error);
-      return [];
-    }
+    return flags;
   }
 
   /**
@@ -345,32 +311,10 @@ export class FeatureFlagManager {
   async createOrUpdateFlag(
     flag: Omit<FeatureFlag, "id" | "createdAt" | "updatedAt">,
   ): Promise<boolean> {
-    try {
-      const { error } = await this.supabase.from("feature_flags").upsert({
-        key: flag.key,
-        name: flag.name,
-        description: flag.description,
-        enabled: flag.enabled,
-        rollout_percentage: flag.rolloutPercentage,
-        user_whitelist: flag.userWhitelist,
-        user_blacklist: flag.userBlacklist,
-        conditions: flag.conditions,
-        metadata: flag.metadata,
-        created_by: flag.createdBy,
-      });
-
-      if (error) {
-        console.error("Error creating/updating feature flag:", error);
-        return false;
-      }
-
-      // Clear cache to force refresh
-      this.clearCache();
-      return true;
-    } catch (error) {
-      console.error("Error creating/updating feature flag:", error);
-      return false;
-    }
+    // Since we don't have a database table, we can't create/update flags
+    // This method is kept for API compatibility but returns false
+    console.warn("Cannot create/update feature flags without database table");
+    return false;
   }
 }
 

@@ -7,9 +7,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false, // Enable TypeScript checking during builds
   },
-  // Webpack configuration for better module handling
+  // Simplified webpack configuration for better performance
   webpack: (config, { isServer, dev, webpack }) => {
-    // Improve module resolution for lazy loading
+    // Essential module resolution fallbacks only
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -17,65 +17,47 @@ const nextConfig = {
       tls: false,
     };
 
-    // Add better error handling for failed chunk loading
+    // Add webpack define plugin for environment detection
     config.plugins.push(
       new webpack.DefinePlugin({
         "process.env.WEBPACK_DEV": JSON.stringify(dev),
       }),
     );
 
-    // Handle dynamic imports better – apply splitChunks only on the client bundle
-    if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          ...config.optimization.splitChunks,
-          chunks: "all",
-          cacheGroups: {
-            ...config.optimization.splitChunks?.cacheGroups,
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: "vendors",
-              chunks: "all",
-              minChunks: 1,
-              priority: 10,
-            },
-            common: {
-              minChunks: 2,
-              chunks: "all",
-              name: "common",
-              priority: 5,
-            },
-          },
-        },
-        // Add runtime chunk for better module loading (client-only)
-        runtimeChunk: "single",
-      };
-    }
-
-    // Reduce chunk size warnings in development
+    // Simplified development configuration
     if (dev) {
       config.performance = {
         hints: false,
       };
-
-      // Add better error handling for development
-      config.stats = {
-        ...config.stats,
-        errorDetails: true,
-        errors: true,
-        warnings: true,
+      // Disable complex optimizations in development for faster builds
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: false,
+        runtimeChunk: false,
       };
     }
 
     return config;
   },
   // Experimental features for better error handling
-  experimental: {
-    // Removed optimizePackageImports due to dev-time factory errors
-    serverComponentsExternalPackages: ["@react-pdf/renderer"],
-  },
+  serverExternalPackages: ["@react-pdf/renderer"],
   async headers() {
+    // Relax security headers in development
+    if (process.env.NODE_ENV === "development") {
+      return [
+        {
+          source: "/(.*)",
+          headers: [
+            {
+              key: "X-Content-Type-Options",
+              value: "nosniff",
+            },
+          ],
+        },
+      ];
+    }
+
+    // Full security headers in production
     return [
       {
         source: "/(.*)",

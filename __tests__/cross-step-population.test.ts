@@ -62,7 +62,7 @@ describe("CrossStepPopulationService", () => {
         );
 
       expect(result.populatedSteps).toContain("Area of Work");
-      expect(updatedFlowData.areaOfWork?.totalSquareFeet).toBeGreaterThan(0);
+      expect(updatedFlowData.areaOfWork?.totalArea).toBeGreaterThan(0);
       expect(updatedFlowData.areaOfWork?.workAreas).toBeDefined();
       expect(updatedFlowData.areaOfWork?.autoPopulated).toBe(true);
     });
@@ -74,12 +74,13 @@ describe("CrossStepPopulationService", () => {
         );
 
       expect(result.populatedSteps).toContain("Duration");
-      expect(updatedFlowData.duration?.estimatedDuration?.days).toBeGreaterThan(
-        0,
-      );
-      expect(
-        updatedFlowData.duration?.estimatedDuration?.hours,
-      ).toBeGreaterThan(0);
+      const duration = updatedFlowData.duration?.estimatedDuration;
+      if (typeof duration === "object" && duration !== null) {
+        expect(duration.days).toBeGreaterThan(0);
+        expect(duration.hours).toBeGreaterThan(0);
+      } else {
+        fail("estimatedDuration is not an object");
+      }
       expect(updatedFlowData.duration?.autoPopulated).toBe(true);
     });
 

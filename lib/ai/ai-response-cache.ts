@@ -230,12 +230,12 @@ export class AIResponseCache {
 
   // Cache auto quote response
   async cacheAutoQuote(
-    extractedData: any,
+    aiExtractedData: any,
     options: any,
     response: AIAutoQuoteResponse,
   ): Promise<void> {
     await aiCacheWrapper.cachedQuoteGeneration(
-      extractedData,
+      aiExtractedData,
       options,
       async () => response,
       this.config.auto_quote.ttl,
@@ -248,13 +248,13 @@ export class AIResponseCache {
 
   // Get cached auto quote response
   async getCachedAutoQuote(
-    extractedData: any,
+    aiExtractedData: any,
     options: any,
   ): Promise<AIAutoQuoteResponse | null> {
     const cacheKey = {
-      services: extractedData.requirements?.services,
-      buildingType: extractedData.requirements?.buildingType,
-      buildingSize: extractedData.requirements?.buildingSize,
+      services: aiExtractedData.requirements?.services,
+      buildingType: aiExtractedData.requirements?.buildingType,
+      buildingSize: aiExtractedData.requirements?.buildingSize,
       options,
     };
 
@@ -461,9 +461,9 @@ export class AIResponseCache {
             break;
           case "auto_quote":
             cacheKey = {
-              services: data.extractedData.requirements?.services,
-              buildingType: data.extractedData.requirements?.buildingType,
-              buildingSize: data.extractedData.requirements?.buildingSize,
+              services: data.aiExtractedData.requirements?.services,
+              buildingType: data.aiExtractedData.requirements?.buildingType,
+              buildingSize: data.aiExtractedData.requirements?.buildingSize,
               options: data.options,
             };
             cached = aiCache.get("quote_generation", cacheKey);
@@ -509,7 +509,7 @@ export class AIResponseCache {
               break;
             case "auto_quote":
               await this.cacheAutoQuote(
-                data.extractedData,
+                data.aiExtractedData,
                 data.options,
                 response,
               );
@@ -604,18 +604,18 @@ export async function cacheDocumentExtraction(
 }
 
 export async function getCachedAutoQuote(
-  extractedData: any,
+  aiExtractedData: any,
   options: any,
 ): Promise<AIAutoQuoteResponse | null> {
-  return aiResponseCache.getCachedAutoQuote(extractedData, options);
+  return aiResponseCache.getCachedAutoQuote(aiExtractedData, options);
 }
 
 export async function cacheAutoQuote(
-  extractedData: any,
+  aiExtractedData: any,
   options: any,
   response: AIAutoQuoteResponse,
 ): Promise<void> {
-  return aiResponseCache.cacheAutoQuote(extractedData, options, response);
+  return aiResponseCache.cacheAutoQuote(aiExtractedData, options, response);
 }
 
 // Export the cache manager for advanced usage

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { error as logError } from "@/lib/utils/logger";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,8 +43,14 @@ export function PredictiveInput({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Debounced prediction loading
+  // Memoize flowData to prevent unnecessary API calls
+  const stableFlowData = useMemo(() => {
+    return flowData;
+  }, [JSON.stringify(flowData)]);
+
+  // Debounced prediction loading with request cancellation
   useEffect(() => {
     if (value.length < 2) {
       setPredictions((prev) => ({
@@ -56,12 +62,20 @@ export function PredictiveInput({
       return;
     }
 
+    // Cancel any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     const timeoutId = setTimeout(async () => {
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
       setPredictions((prev) => ({ ...prev, isLoading: true }));
 
       try {
         const context = {
-          flowData,
+          flowData: stableFlowData,
           currentStep,
           userProfile: {
             experienceLevel: "intermediate" as const,
@@ -77,16 +91,25 @@ export function PredictiveInput({
             context,
           );
 
+        // Check if request was aborted
+        if (abortControllerRef.current?.signal.aborted) {
+          return;
+        }
+
         setPredictions(predictiveInput);
         setShowPredictions(predictiveInput.predictions.length > 0);
         setSelectedIndex(-1);
       } catch (error) {
-        logError("Failed to load predictions", {
-          error,
-          field,
-          component: "PredictiveInput",
-          action: "load_predictions",
-        });
+        // Don't log errors for aborted requests
+        if ((error as Error).name !== "AbortError") {
+          logError("Failed to load predictions", {
+            error,
+            field,
+            component: "PredictiveInput",
+            action: "load_predictions",
+          });
+        }
+
         setPredictions((prev) => ({
           ...prev,
           isLoading: false,
@@ -96,8 +119,13 @@ export function PredictiveInput({
       }
     }, 300); // 300ms debounce
 
-    return () => clearTimeout(timeoutId);
-  }, [value, field, flowData, currentStep]);
+    return () => {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [value, field, stableFlowData, currentStep]);
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {

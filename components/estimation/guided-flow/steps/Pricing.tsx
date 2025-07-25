@@ -9,7 +9,7 @@ import { DiscountApproval } from "@/components/pricing/DiscountApproval";
 import { ManualPriceOverride } from "@/components/pricing/ManualPriceOverride";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PricingStepData } from "@/lib/types/estimate-types";
+import { PricingStepData, GuidedFlowData } from "@/lib/types/estimate-types";
 
 export function Pricing({
   data,
@@ -17,23 +17,40 @@ export function Pricing({
   onNext,
   onBack,
 }: {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: GuidedFlowData;
+  onUpdate: (data: Partial<GuidedFlowData>) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
   const [loading, setLoading] = useState(true);
-  const [pricingRecommendation, setPricingRecommendation] = useState<any>(null);
-  const [selectedStrategy, setSelectedStrategy] = useState<any>(null);
+  const [pricingRecommendation, setPricingRecommendation] = useState<{
+    strategyId: string;
+    basePrice: number;
+    recommendedPrice: number;
+    confidence: number;
+    reasoning: string;
+    marketComparison: any;
+    alternativeStrategies: any[];
+    insights: any;
+    adjustments: any[];
+  } | null>(null);
+  const [selectedStrategy, setSelectedStrategy] = useState<{
+    id: string;
+    name: string;
+    multiplier: number;
+    description: string;
+    winProbability?: number;
+    adjustments?: any[];
+  } | null>(null);
   const [finalPrice, setFinalPrice] = useState(0);
   const [showDiscountApproval, setShowDiscountApproval] = useState(false);
 
-  const baseCost = data.expenses?.totalCosts?.total || 0;
-  const markedUpTotal = data.expenses?.markedUpTotals?.total || 0;
+  const baseCost = data.expenses?.totalCosts?.grand || 0;
+  const markedUpTotal = data.expenses?.markedUpTotals?.grand || 0;
   const services = data.scopeDetails?.selectedServices || [];
   const location =
-    data.initialContact?.extractedData?.requirements?.location || "";
-  const customerProfile = data.initialContact?.extractedData || {};
+    data.initialContact?.aiExtractedData?.requirements?.location || "";
+  const customerProfile = data.initialContact?.aiExtractedData || {};
 
   useEffect(() => {
     calculateOptimalPricing();
@@ -63,14 +80,16 @@ export function Pricing({
       },
       marketData,
       customerProfile: {
-        companySize: customerProfile.customer?.company ? "medium" : "small",
-        timeline: customerProfile.timeline || {},
+        companySize: (customerProfile as any).customer?.company
+          ? "medium"
+          : "small",
+        timeline: (customerProfile as any).timeline || {},
         priority:
-          customerProfile.timeline?.flexibility === "urgent"
+          (customerProfile as any).timeline?.flexibility === "urgent"
             ? "speed"
             : "value",
         previousVendors: [],
-        budgetIndicators: customerProfile.budget || {},
+        budgetIndicators: (customerProfile as any).budget || {},
       },
       projectComplexity: calculateComplexity(),
       competitorPricing: marketData.competitors,
@@ -85,18 +104,18 @@ export function Pricing({
       location,
     );
 
-    setPricingRecommendation(recommendation);
-    setSelectedStrategy(recommendation.alternativeStrategies[0]);
+    setPricingRecommendation(recommendation as any);
+    setSelectedStrategy(recommendation.alternativeStrategies[0] as any);
     setFinalPrice(recommendation.recommendedPrice);
     setLoading(false);
   };
 
   const calculateComplexity = () => {
     const heightScore =
-      data.filesPhotos?.summary?.measurements?.stories > 5 ? 0.8 : 0.5;
+      (data.filesPhotos?.summary?.measurements?.stories ?? 0) > 5 ? 0.8 : 0.5;
     const serviceScore = services.length > 3 ? 0.7 : 0.4;
     const accessScore =
-      data.scopeDetails?.accessRestrictions?.length > 0 ? 0.6 : 0.3;
+      (data.scopeDetails?.accessRestrictions?.length ?? 0) > 0 ? 0.6 : 0.3;
 
     return {
       overall: (heightScore + serviceScore + accessScore) / 3,
@@ -121,7 +140,7 @@ export function Pricing({
   };
 
   const handleStrategySelect = (strategy: PricingStepData) => {
-    setSelectedStrategy(strategy);
+    setSelectedStrategy(strategy as any);
     setFinalPrice(strategy.price || strategy.finalPrice || 0);
   };
 
@@ -140,18 +159,18 @@ export function Pricing({
     const risks = [];
 
     // Weather risk
-    if (data.duration?.weatherAnalysis?.riskScore > 0.5) {
+    if ((data.duration?.weatherAnalysis?.riskScore ?? 0) > 0.5) {
       risks.push({
         category: "Weather Risk",
         description: "High probability of weather delays",
-        impact: 5 + data.duration.weatherAnalysis.riskScore * 10,
+        impact: 5 + (data.duration?.weatherAnalysis?.riskScore || 0) * 10,
         mitigation: "Include weather contingency days and contract terms",
         factors: ["Seasonal patterns", "Service weather sensitivity"],
       });
     }
 
     // Height risk
-    if (data.filesPhotos?.summary?.measurements?.stories > 5) {
+    if ((data.filesPhotos?.summary?.measurements?.stories ?? 0) > 5) {
       risks.push({
         category: "Height Complexity",
         description:
@@ -167,13 +186,13 @@ export function Pricing({
     }
 
     // Access risk
-    if (data.scopeDetails?.accessRestrictions?.length > 0) {
+    if ((data.scopeDetails?.accessRestrictions?.length ?? 0) > 0) {
       risks.push({
         category: "Access Restrictions",
         description: "Limited access may impact productivity",
         impact: 6,
         mitigation: "Coordinate access windows and adjust timeline",
-        factors: data.scopeDetails.accessRestrictions,
+        factors: data.scopeDetails?.accessRestrictions ?? [],
       });
     }
 
@@ -259,23 +278,26 @@ export function Pricing({
         <StrategyComparison
           strategies={[
             selectedStrategy,
-            ...pricingRecommendation.alternativeStrategies,
+            ...(pricingRecommendation?.alternativeStrategies ?? []),
           ]}
           currentStrategy={selectedStrategy}
-          onSelectStrategy={handleStrategySelect as any}
+          onSelectStrategy={(strategy: any) => {
+            setSelectedStrategy(strategy);
+            setFinalPrice(strategy?.price || strategy?.finalPrice || 0);
+          }}
         />
 
         {/* Win Probability Calculator */}
         <WinProbabilityCalculator
           currentPrice={finalPrice}
           winProbability={selectedStrategy?.winProbability || 0.5}
-          pricePoints={pricingRecommendation.alternativeStrategies.map(
+          pricePoints={(pricingRecommendation?.alternativeStrategies ?? []).map(
             (s: any) => ({
               price: s.price,
               probability: s.winProbability,
             }),
           )}
-          optimalPrice={pricingRecommendation.recommendedPrice}
+          optimalPrice={pricingRecommendation?.recommendedPrice ?? 0}
           onPriceChange={(price) => setFinalPrice(price)}
         />
 
@@ -343,6 +365,24 @@ export function Pricing({
             onClick={() => {
               onUpdate({
                 pricing: {
+                  pricingCalculations: {
+                    basePrice: markedUpTotal,
+                    laborCost: 0,
+                    materialCost: 0,
+                    equipmentCost: 0,
+                    overheadCost: 0,
+                    markup: 0,
+                    margin: 0,
+                    totalPrice: finalPrice,
+                    pricePerUnit: 0,
+                    profitability: {
+                      netProfit: finalPrice - markedUpTotal,
+                      marginPercentage:
+                        ((finalPrice - markedUpTotal) / finalPrice) * 100,
+                      roi: 0,
+                      breakEvenPoint: markedUpTotal,
+                    },
+                  },
                   basePrice: markedUpTotal,
                   finalPrice,
                   strategy: selectedStrategy,

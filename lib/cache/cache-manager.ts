@@ -142,7 +142,7 @@ export class CacheManager {
           maxRetriesPerRequest: 3,
         });
 
-        this.redisClient.on("error", (error) => {
+        this.redisClient.on("error", (error: Error) => {
           console.error("Redis cache error:", error);
         });
 

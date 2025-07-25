@@ -314,8 +314,8 @@ export function PhotoUploadAnalysis({
                     <div className="text-xs text-green-600 mt-1">
                       {file.analysis.windows?.count &&
                         `${file.analysis.windows.count} windows`}
-                      {file.analysis.materials?.dominant &&
-                        `, ${file.analysis.materials.dominant}`}
+                      {file.analysis.materials?.breakdown &&
+                        `, ${Object.keys(file.analysis.materials.breakdown)[0] || "mixed materials"}`}
                     </div>
                   )}
                 </div>

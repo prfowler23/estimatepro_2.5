@@ -75,16 +75,22 @@ export function RealTimeCostBreakdown({
     [],
   );
 
+  // Memoize flowData to prevent unnecessary re-renders
+  const memoizedFlowData = useMemo(() => JSON.stringify(flowData), [flowData]);
+
   // Calculate pricing and subscribe to updates
   useEffect(() => {
-    if (!estimateId || !flowData) return;
+    if (!estimateId || !memoizedFlowData) return;
+
+    // Parse the memoized flow data
+    const currentFlowData = JSON.parse(memoizedFlowData);
 
     // Initial calculation
     const calculateInitial = () => {
       setIsLoading(true);
       try {
         const result = pricingService.calculateRealTimePricing(
-          flowData,
+          currentFlowData,
           estimateId,
         );
         setPreviousTotal(result.totalCost);
@@ -113,11 +119,10 @@ export function RealTimeCostBreakdown({
     }
   }, [
     estimateId,
-    flowData,
+    memoizedFlowData, // Use the memoized stringified data
     enableLiveUpdates,
     pricingService,
     onPricingUpdate,
-    pricingResult?.totalCost,
   ]);
 
   // Format currency

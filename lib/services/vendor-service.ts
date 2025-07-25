@@ -113,9 +113,9 @@ export class VendorService {
           address: vendor.contact_address,
         },
         paymentTerms: vendor.paymentTerms || undefined,
-        deliveryRadius: vendor.deliveryRadius,
+        deliveryRadius: vendor.deliveryRadius || undefined,
         specialties: (vendor.specialties as string[]) || [],
-        notes: vendor.notes,
+        notes: vendor.notes || undefined,
       }));
     } catch (error) {
       console.error("Error fetching vendors:", error);

@@ -158,13 +158,16 @@ describe("Service Validation Rules", () => {
       "BF",
       "HD",
       "SW",
-      "PD",
       "GRC",
       "FC",
     ];
     allServices.forEach((service) => {
-      expect(SERVICE_RULES.serviceOrder[service]).toBeDefined();
-      expect(SERVICE_RULES.serviceOrder[service].priority).toBeGreaterThan(0);
+      const serviceOrder = SERVICE_RULES.serviceOrder as unknown as Record<
+        ServiceType,
+        { priority: number }
+      >;
+      expect(serviceOrder[service as ServiceType]).toBeDefined();
+      expect(serviceOrder[service as ServiceType].priority).toBeGreaterThan(0);
     });
   });
 

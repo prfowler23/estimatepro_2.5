@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Health check endpoint for monitoring and deployment verification
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Database connection check
     try {
-      const supabase = createClient();
+      const supabase = createAdminClient();
       const { data, error } = await supabase
         .from("profiles")
         .select("id")
@@ -28,7 +28,14 @@ export async function GET(request: NextRequest) {
       if (error) {
         checks.database = {
           status: "unhealthy",
-          error: error.message,
+          error: `Database query failed: ${error.message}`,
+          latency: Date.now() - start,
+        };
+      } else if (!data || data.length === 0) {
+        checks.database = {
+          status: "unhealthy",
+          error:
+            "Query returned no data. Check RLS policies and table permissions.",
           latency: Date.now() - start,
         };
       } else {
@@ -134,7 +141,7 @@ export async function GET(request: NextRequest) {
 export async function HEAD(request: NextRequest) {
   try {
     // Quick health check without detailed response
-    const supabase = createClient();
+    const supabase = createAdminClient();
     await supabase.from("profiles").select("id").limit(1);
 
     return new NextResponse(null, {

@@ -265,14 +265,14 @@ async function generateIntelligentSuggestions(
   currentServices: ServiceType[],
 ): Promise<ServiceSuggestion[]> {
   const suggestions: ServiceSuggestion[] = [];
-  const extractedData = flowData.initialContact?.aiExtractedData;
+  const aiExtractedData = flowData.initialContact?.aiExtractedData;
 
-  if (!extractedData) return suggestions;
+  if (!aiExtractedData) return suggestions;
 
-  const buildingType = extractedData.requirements.buildingType?.toLowerCase();
-  const buildingSize = extractedData.requirements.buildingSize;
-  const floors = extractedData.requirements.floors;
-  const timeline = extractedData.requirements.timeline?.toLowerCase();
+  const buildingType = aiExtractedData.requirements.buildingType?.toLowerCase();
+  const buildingSize = aiExtractedData.requirements.buildingSize;
+  const floors = aiExtractedData.requirements.floors;
+  const timeline = aiExtractedData.requirements.timeline?.toLowerCase();
 
   // Building type specific suggestions
   if (buildingType) {
@@ -312,7 +312,10 @@ async function generateIntelligentSuggestions(
   suggestions.push(...dependencySuggestions);
 
   // Photo analysis suggestions (if photos are available)
-  if (flowData.filesPhotos?.uploadedFiles?.length > 0) {
+  if (
+    flowData.filesPhotos?.uploadedFiles?.length &&
+    flowData.filesPhotos.uploadedFiles.length > 0
+  ) {
     const photoSuggestions = await getPhotoBasedSuggestions(
       flowData.filesPhotos.uploadedFiles,
       currentServices,
@@ -386,7 +389,7 @@ function getBuildingTypeSuggestions(
     ],
     restaurant: [
       {
-        serviceType: "BR",
+        serviceType: "BF",
         confidence: 0.8,
         reason:
           "Food service environments are prone to biofilm and bacterial growth",
@@ -402,12 +405,12 @@ function getBuildingTypeSuggestions(
           "Restaurant kitchens generate significant grease and dust accumulation",
         priority: "high",
         estimatedValue: 1800,
-        compatibility: ["BR", "FC"],
+        compatibility: ["BF", "FC"],
       },
     ],
     hospital: [
       {
-        serviceType: "BR",
+        serviceType: "BF",
         confidence: 0.95,
         reason:
           "Healthcare facilities require biofilm removal for infection control",
@@ -423,7 +426,7 @@ function getBuildingTypeSuggestions(
           "Medical environments demand extensive final cleaning protocols",
         priority: "high",
         estimatedValue: 2000,
-        compatibility: ["BR", "HD"],
+        compatibility: ["BF", "HD"],
       },
     ],
     industrial: [
@@ -437,7 +440,7 @@ function getBuildingTypeSuggestions(
         compatibility: ["PW"],
       },
       {
-        serviceType: "BR",
+        serviceType: "BF",
         confidence: 0.7,
         reason: "Industrial environments often have biofilm in humid areas",
         priority: "medium",

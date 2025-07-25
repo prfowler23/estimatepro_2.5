@@ -28,6 +28,7 @@ import {
 import { useMobileDetection } from "@/hooks/useMobileDetection";
 import { MobilePhotoCapture } from "@/components/ui/mobile/MobilePhotoCapture";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { StepComponentProps } from "../index";
 
 interface FileData {
   id: string;
@@ -72,12 +73,7 @@ const FILE_TYPE_LABELS = {
   plan: "Floor Plan",
 };
 
-interface FilesPhotosProps {
-  data: GuidedFlowData;
-  onUpdate: (stepData: Partial<GuidedFlowData>) => void;
-  onNext: () => void;
-  onBack: () => void;
-}
+interface FilesPhotosProps extends StepComponentProps {}
 
 function FilesPhotosComponent({
   data,
@@ -294,24 +290,50 @@ function FilesPhotosComponent({
 
       // Transform API response to match our interface
       const apiResult = result.data;
+
+      // Handle case where apiResult might be undefined or have unexpected structure
+      if (!apiResult) {
+        return {
+          windowCount: 0,
+          totalArea: 0,
+          materials: [],
+          damageLevel: "none",
+          safetyHazards: [],
+          measurements: { height: 0, width: 0, stories: 1 },
+        };
+      }
+
       return {
-        windowCount: apiResult.windows?.count || 0,
-        totalArea: apiResult.measurements?.estimatedSqft || 0,
-        materials: apiResult.materials?.breakdown
-          ? Object.entries(apiResult.materials.breakdown).map(
+        windowCount: (apiResult as any)?.windows?.count || 0,
+        totalArea:
+          (apiResult as any)?.measurements?.estimatedSqft ||
+          (apiResult as any)?.estimatedSqft ||
+          0,
+        materials: (apiResult as any)?.materials?.breakdown
+          ? Object.entries((apiResult as any).materials.breakdown).map(
               ([type, percentage]) => ({
                 type: type.charAt(0).toUpperCase() + type.slice(1),
                 percentage: percentage as number,
-                condition: apiResult.materials?.weathering || "unknown",
+                condition:
+                  (apiResult as any)?.materials?.weathering || "unknown",
               }),
             )
           : [],
-        damageLevel: apiResult.damage?.severity || "none",
-        safetyHazards: apiResult.safety?.hazards || [],
+        damageLevel: (apiResult as any)?.damage?.severity || "none",
+        safetyHazards: (apiResult as any)?.safety?.hazards || [],
         measurements: {
-          height: apiResult.measurements?.buildingHeight || 0,
-          width: apiResult.measurements?.facadeWidth || 0,
-          stories: apiResult.measurements?.stories || 1,
+          height:
+            (apiResult as any)?.measurements?.buildingHeight ||
+            (apiResult as any)?.buildingHeight ||
+            0,
+          width:
+            (apiResult as any)?.measurements?.facadeWidth ||
+            (apiResult as any)?.facadeWidth ||
+            0,
+          stories:
+            (apiResult as any)?.measurements?.stories ||
+            (apiResult as any)?.stories ||
+            1,
         },
       };
     } catch (error) {

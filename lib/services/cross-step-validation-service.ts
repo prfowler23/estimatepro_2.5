@@ -916,6 +916,58 @@ export class CrossStepValidationService {
     // Implementation to enable/disable specific rules
   }
 
+  // Schedule validation with delay
+  scheduleValidation(
+    flowData: GuidedFlowData,
+    estimateId: string,
+    delay: number = 1000,
+  ): void {
+    this.clearValidationTimer(estimateId);
+
+    const timer = setTimeout(() => {
+      const result = this.validateCrossStepData(flowData, estimateId);
+      this.notifyListeners(estimateId, result);
+    }, delay);
+
+    this.validationTimers.set(estimateId, timer);
+  }
+
+  // Add validation listener
+  addListener(
+    estimateId: string,
+    callback: (result: CrossStepValidationResult) => void,
+  ): void {
+    if (!this.listeners.has(estimateId)) {
+      this.listeners.set(estimateId, []);
+    }
+    this.listeners.get(estimateId)!.push(callback);
+  }
+
+  // Remove validation listener
+  removeListener(
+    estimateId: string,
+    callback: (result: CrossStepValidationResult) => void,
+  ): void {
+    const callbacks = this.listeners.get(estimateId);
+    if (callbacks) {
+      const index = callbacks.indexOf(callback);
+      if (index > -1) {
+        callbacks.splice(index, 1);
+      }
+      if (callbacks.length === 0) {
+        this.listeners.delete(estimateId);
+        this.clearValidationTimer(estimateId);
+      }
+    }
+  }
+
+  // Clear estimate data from cache
+  clearEstimateData(estimateId: string): void {
+    this.lastResults.delete(estimateId);
+    this.listeners.delete(estimateId);
+    this.clearValidationTimer(estimateId);
+  }
+
   cleanup(): void {
     for (const timer of this.validationTimers.values()) {
       clearTimeout(timer);

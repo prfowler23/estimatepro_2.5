@@ -24,15 +24,11 @@ import { AreaOfWorkData, GuidedFlowData } from "@/lib/types/estimate-types";
 import { calculationError as logError } from "@/lib/utils/logger";
 import { config } from "@/lib/config";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { StepComponentProps } from "../index";
 
 type DrawingTool = "select" | "rectangle" | "polygon" | "measure";
 
-interface AreaOfWorkProps {
-  data: GuidedFlowData;
-  onUpdate: (stepData: Partial<GuidedFlowData>) => void;
-  onNext: () => void;
-  onBack: () => void;
-}
+interface AreaOfWorkProps extends StepComponentProps {}
 
 function AreaOfWorkComponent({
   data,

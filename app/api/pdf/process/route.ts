@@ -175,23 +175,24 @@ async function processPDFHandler(request: NextRequest) {
     };
 
     // Save processing result to database (optional - for history/caching)
-    try {
-      await supabase.from("pdf_processing_history").insert({
-        user_id: user.user.id,
-        filename: file.name,
-        file_size: file.size,
-        pages_processed: processingResult.metadata.pageCount,
-        text_extracted: processingResult.text.length > 0,
-        images_found: processingResult.images.length,
-        measurements_found: processingResult.measurements.length,
-        building_analysis: buildingDimensions,
-        processing_options: validatedOptions,
-        created_at: new Date().toISOString(),
-      });
-    } catch (dbError) {
-      // Don't fail the request if logging fails
-      console.warn("Failed to save PDF processing history:", dbError);
-    }
+    // TODO: Uncomment when pdf_processing_history table is created
+    // try {
+    //   await supabase.from("pdf_processing_history").insert({
+    //     user_id: user.user.id,
+    //     filename: file.name,
+    //     file_size: file.size,
+    //     pages_processed: processingResult.metadata.pageCount,
+    //     text_extracted: processingResult.text.length > 0,
+    //     images_found: processingResult.images.length,
+    //     measurements_found: processingResult.measurements.length,
+    //     building_analysis: buildingDimensions,
+    //     processing_options: validatedOptions,
+    //     created_at: new Date().toISOString(),
+    //   });
+    // } catch (dbError) {
+    //   // Don't fail the request if logging fails
+    //   console.warn("Failed to save PDF processing history:", dbError);
+    // }
 
     return NextResponse.json(responseData);
   } catch (error) {

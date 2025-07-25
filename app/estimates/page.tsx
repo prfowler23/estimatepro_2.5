@@ -57,12 +57,12 @@ import { format } from "date-fns";
 import { QuotePDFGenerator } from "@/lib/pdf/generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
-import { EstimateData } from "@/lib/types/estimate-types";
+import { Database } from "@/types/supabase";
 
-interface Estimate extends EstimateData {
-  estimate_number: string;
+type Estimate = Database["public"]["Tables"]["estimates"]["Row"] & {
+  estimate_number?: string;
   services_count?: number;
-}
+};
 
 const STATUS_COLORS = {
   draft: "bg-gray-100 text-gray-700",
@@ -144,7 +144,7 @@ function EstimatesContent() {
     return (
       estimate.customer_name.toLowerCase().includes(searchLower) ||
       estimate.building_name.toLowerCase().includes(searchLower) ||
-      estimate.estimate_number.toLowerCase().includes(searchLower) ||
+      (estimate.estimate_number || "").toLowerCase().includes(searchLower) ||
       estimate.customer_email.toLowerCase().includes(searchLower) ||
       (estimate.company_name || "").toLowerCase().includes(searchLower)
     );
@@ -251,8 +251,6 @@ function EstimatesContent() {
           equipment_days: service.equipment_days,
           equipment_cost: service.equipment_cost,
           calculation_details: service.calculation_details,
-          quote_id: newEstimate.id, // Ensure quote_id is explicitly set
-          totalPrice: service.price, // Map totalPrice to price
         }));
 
         const { error: duplicateServicesError } = await supabase

@@ -7,10 +7,11 @@ interface Shape {
 
 interface Measurement {
   id: string;
-  area: number;
-  perimeter: number;
-  label?: string;
+  start: { x: number; y: number };
+  end: { x: number; y: number };
   distance: number;
+  label?: string;
+  color: string;
 }
 
 interface AreaSummaryProps {

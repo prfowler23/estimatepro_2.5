@@ -396,10 +396,10 @@ export function useGuidedFlowRecovery(
     },
   });
 
-  // Auto-update session when data changes
+  // Auto-update session when data changes (removed function dependency to prevent infinite loop)
   useEffect(() => {
     recovery.setCurrentSession(currentData, currentStep);
-  }, [currentData, currentStep, recovery.setCurrentSession]);
+  }, [currentData, currentStep]);
 
   const updateData = useCallback(
     (

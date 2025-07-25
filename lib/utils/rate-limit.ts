@@ -90,7 +90,9 @@ function getClientIP(request: NextRequest): string {
     return realIP;
   }
 
-  return request.ip || "unknown";
+  // NextRequest.ip is not available in newer versions of Next.js
+  // Fall back to localhost IP as default
+  return "127.0.0.1";
 }
 
 function cleanupExpiredEntries() {

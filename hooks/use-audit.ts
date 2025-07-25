@@ -1,13 +1,14 @@
 // useAudit Hook
 // React hook for easy integration of audit logging throughout the application
 
-import { useCallback, useEffect } from "react";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import {
   auditSystem,
   AuditEventType,
   AuditSeverity,
 } from "@/lib/audit/audit-system";
+import type { User } from "@supabase/supabase-js";
 
 export interface UseAuditOptions {
   enabled?: boolean;
@@ -42,8 +43,28 @@ export const useAudit = (options: UseAuditOptions = {}) => {
     sessionId,
   } = options;
 
-  const supabase = useSupabaseClient();
-  const user = useUser();
+  const [user, setUser] = useState<User | null>(null);
+  const supabase = createClient();
+
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Get current session info
   const getSessionInfo = useCallback(() => {

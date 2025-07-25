@@ -18,6 +18,7 @@ export interface ServiceCalculationResult {
   warnings: string[];
   materials?: MaterialItem[];
   riskFactors?: RiskFactor[];
+  timestamp?: number;
 }
 
 export interface ServiceBreakdownItem {
@@ -49,6 +50,7 @@ export interface RiskFactor {
 export interface BaseServiceFormData {
   area: number;
   building_height_feet: number | null;
+  height?: number;
   accessType: "ladder" | "lift" | "scaffold" | "rope";
   timeConstraints?: string;
   specialRequirements?: string;
@@ -109,6 +111,8 @@ export interface AIExtractedData {
   confidence: number;
   extractionDate: string;
   redFlags?: string[];
+  location?: string; // Additional location field for compatibility
+  estimateNumber?: string; // Estimate number extracted from documents
 }
 
 // Enhanced AI analysis types
@@ -305,6 +309,7 @@ export interface WeatherAnalysis {
   workableWindows: WorkableWindow[];
   seasonalFactors: SeasonalFactor[];
   recommendations: string[];
+  riskScore: number; // 0-1 risk assessment score
 }
 
 export interface WeatherForecast {
@@ -533,7 +538,6 @@ export type ServiceType =
   | "GRC" // Granite Reconditioning
   | "PWS" // Pressure Wash & Seal
   | "PD" // Parking Deck
-  | "BR" // Biofilm Removal
   | "GC"; // General Cleaning
 
 // Service mapping for display names and metadata
@@ -612,12 +616,6 @@ export const SERVICE_METADATA: Record<
     basePrice: "$16-23/space",
     category: "specialty",
   },
-  BR: {
-    name: "Biofilm Removal",
-    fullName: "biofilm-removal",
-    basePrice: "$0.75/sq ft",
-    category: "specialty",
-  },
   GC: {
     name: "General Cleaning",
     fullName: "general-cleaning",
@@ -656,6 +654,7 @@ export interface ScopeDetailsData {
   accessRestrictions?: string[];
   specialRequirements?: string[];
   autoPopulated?: boolean;
+  requirements?: any; // Additional requirements data
 }
 
 export interface FilesPhotosData {
@@ -671,11 +670,14 @@ export interface AreaOfWorkData {
   measurements?: Measurement[];
   scale?: number | { pixelsPerFoot: number }; // Required by AreaOfWork component
   totalArea?: number;
+  totalSquareFootage?: number;
+  averageHeight?: number;
   backgroundImage?: string;
   imageName?: string;
   notes?: string;
   autoPopulated?: boolean;
   autoPopulationSource?: string;
+  buildingDetails?: any; // Building-specific details
 }
 
 export interface TakeoffStepData {
@@ -685,6 +687,7 @@ export interface TakeoffStepData {
 
 export interface DurationStepData {
   estimatedDuration: number | { days: number; hours: number };
+  totalDuration?: number; // Total duration for all services
   weatherAnalysis?: WeatherAnalysis;
   weatherFactors?: any; // Required by workflow templates
   schedulingConstraints?: any; // Required by workflow templates
@@ -692,8 +695,11 @@ export interface DurationStepData {
   timeline?: any;
   manualOverrides?: Record<string, number>;
   projectStartDate?: string;
+  startDate?: Date; // Project start date
   autoPopulated?: boolean;
   autoPopulationSource?: string;
+  serviceTimelines?: any; // Service-specific timelines
+  constraints?: any; // Scheduling constraints
 }
 
 export interface ExpensesStepData {
@@ -707,6 +713,7 @@ export interface ExpensesStepData {
     labor: number;
     other: number;
     grand: number;
+    total: number; // Alternative name for grand total
   };
   margins: {
     equipment: number;
@@ -739,6 +746,7 @@ export interface PricingStepData {
   adjustments?: any[];
   riskFactors?: any[];
   confidence?: number;
+  breakdown?: any; // Pricing breakdown details
 }
 
 export interface SummaryStepData {
@@ -755,6 +763,7 @@ export interface SummaryStepData {
 
 // Unified GuidedFlowData interface
 export interface GuidedFlowData {
+  userId?: string; // User ID for the current session
   initialContact?: InitialContactData;
   scopeDetails?: ScopeDetailsData;
   filesPhotos?: FilesPhotosData;

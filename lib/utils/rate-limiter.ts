@@ -80,8 +80,9 @@ function defaultKeyGenerator(req: NextRequest): string {
     return realIp;
   }
 
-  // Fallback to connection IP
-  return req.ip || "unknown";
+  // NextRequest.ip is not available in newer versions of Next.js
+  // Fall back to localhost IP as default
+  return "127.0.0.1";
 }
 
 /**

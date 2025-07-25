@@ -1,5 +1,28 @@
 import { z } from "zod";
 
+// Placeholder values that should be replaced
+const PLACEHOLDER_VALUES = [
+  "your-project-id.supabase.co",
+  "your-actual-anon-key-here",
+  "your-actual-service-role-key-here",
+  "your-openai-api-key-here",
+  "your-resend-api-key-here",
+  "your-supabase-url-goes-here",
+  "your-supabase-anon-key-goes-here",
+];
+
+/**
+ * Custom validation function to check for placeholder values
+ */
+const isNotPlaceholder = (value: string, fieldName: string) => {
+  if (PLACEHOLDER_VALUES.some((placeholder) => value.includes(placeholder))) {
+    throw new Error(
+      `${fieldName} contains placeholder value. Please update your .env.local file with actual credentials.`,
+    );
+  }
+  return true;
+};
+
 /**
  * Environment variable validation schema
  * Validates all required and optional environment variables
@@ -9,29 +32,38 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z
     .string()
     .url("Invalid Supabase URL")
-    .startsWith("https://", "Supabase URL must use HTTPS"),
+    .startsWith("https://", "Supabase URL must use HTTPS")
+    .refine((val) => isNotPlaceholder(val, "NEXT_PUBLIC_SUPABASE_URL"))
+    .refine(
+      (val) => val.includes("supabase.co"),
+      "Must be a valid Supabase URL (*.supabase.co)",
+    ),
 
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z
     .string()
     .min(100, "Supabase anon key appears to be invalid")
-    .startsWith("eyJ", "Supabase anon key must be a valid JWT"),
+    .startsWith("eyJ", "Supabase anon key must be a valid JWT")
+    .refine((val) => isNotPlaceholder(val, "NEXT_PUBLIC_SUPABASE_ANON_KEY")),
 
   SUPABASE_SERVICE_ROLE_KEY: z
     .string()
     .min(100, "Supabase service role key appears to be invalid")
-    .startsWith("eyJ", "Supabase service role key must be a valid JWT"),
+    .startsWith("eyJ", "Supabase service role key must be a valid JWT")
+    .refine((val) => isNotPlaceholder(val, "SUPABASE_SERVICE_ROLE_KEY")),
 
   // Required OpenAI Configuration
   OPENAI_API_KEY: z
     .string()
     .min(20, "OpenAI API key appears to be invalid")
-    .startsWith("sk-", "OpenAI API key must start with sk-"),
+    .startsWith("sk-", "OpenAI API key must start with sk-")
+    .refine((val) => isNotPlaceholder(val, "OPENAI_API_KEY")),
 
   // Required Email Configuration
   RESEND_API_KEY: z
     .string()
     .min(10, "Resend API key appears to be invalid")
-    .startsWith("re_", "Resend API key must start with re_"),
+    .startsWith("re_", "Resend API key must start with re_")
+    .refine((val) => isNotPlaceholder(val, "RESEND_API_KEY")),
 
   EMAIL_FROM: z.string().email("Invalid email address for EMAIL_FROM"),
 

@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import {
   SmartDefaultsEngine,
   SmartDefault,
@@ -135,11 +142,22 @@ export function SmartDefaultsProvider({
     }));
   };
 
+  // Use stable reference for flowData to prevent infinite loops
+  const flowDataRef = useRef(flowData);
+  const flowDataStable = useMemo(() => {
+    // Deep comparison for flowData changes
+    if (JSON.stringify(flowDataRef.current) !== JSON.stringify(flowData)) {
+      flowDataRef.current = flowData;
+      return flowData;
+    }
+    return flowDataRef.current;
+  }, [flowData]);
+
   // Refresh defaults and suggestions when step or data changes
   useEffect(() => {
     refreshDefaults();
     refreshSuggestions();
-  }, [currentStep, JSON.stringify(flowData)]);
+  }, [currentStep, flowDataStable]);
 
   const actions = {
     refreshDefaults,

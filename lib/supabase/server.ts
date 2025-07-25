@@ -1,13 +1,13 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+
 import type { Database } from "@/types/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-export const createClient = () => {
-  return createSupabaseClient<Database>(supabaseUrl, supabaseServiceRoleKey);
-};
-
+// This is the regular server client that uses the user's session
 export const createServerClient = () => {
-  return createClient();
+  const cookieStore = cookies();
+  return createServerComponentClient<Database>({ cookies: () => cookieStore });
 };
+
+// Export alias for backward compatibility
+export const createClient = createServerClient;

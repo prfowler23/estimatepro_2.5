@@ -1,5 +1,25 @@
 import "@testing-library/jest-dom";
 
+// Add custom matchers
+expect.extend({
+  toBeOneOf(received, items) {
+    const pass = items.includes(received);
+    if (pass) {
+      return {
+        message: () =>
+          `expected ${received} not to be one of [${items.join(", ")}]`,
+        pass: true,
+      };
+    } else {
+      return {
+        message: () =>
+          `expected ${received} to be one of [${items.join(", ")}]`,
+        pass: false,
+      };
+    }
+  },
+});
+
 // Mock environment variables for testing
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
@@ -7,7 +27,7 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
 process.env.SUPABASE_SERVICE_ROLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjQ3NDg3NDg4LCJleHAiOjE5NjMwNjM0ODh9.test-service-signature-placeholder-for-testing-purposes";
 process.env.OPENAI_API_KEY =
-  "sk-proj-test1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+  "sk-proj-test1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
 process.env.RESEND_API_KEY = "re_test_key_1234567890abcdef1234567890abcdef";
 process.env.EMAIL_FROM = "test@example.com";
 process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";

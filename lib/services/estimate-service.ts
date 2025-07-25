@@ -1,6 +1,7 @@
 // Business logic service layer for estimates
 
 import { supabase } from "@/lib/supabase/client";
+import { Database } from "@/types/supabase";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import {
   isNotNull,
@@ -18,6 +19,7 @@ import {
   EstimateStatus,
 } from "@/lib/types/estimate-types";
 import { publishEstimateEvent } from "@/lib/integrations/webhook-system";
+import { OptimizedQueryService } from "@/lib/optimization/database-query-optimization";
 
 export interface EstimateValidationResult {
   isValid: boolean;
@@ -360,7 +362,8 @@ export class EstimateBusinessService {
     params: Partial<EstimateCreationParams>,
   ): Promise<boolean> {
     const result = await withDatabaseRetry(async () => {
-      const updateData: any = {};
+      const updateData: Database["public"]["Tables"]["estimates"]["Update"] =
+        {};
 
       if (params.customerName !== undefined)
         updateData.customer_name = params.customerName;
@@ -408,51 +411,45 @@ export class EstimateBusinessService {
 
       if (error) throw error;
 
-      // Update services if provided
+      // Update services if provided - use optimized upsert instead of delete-recreate
       if (params.services) {
-        // Delete existing services
-        await supabase
-          .from("estimate_services")
-          .delete()
-          .eq("estimate_id", estimateId);
+        const servicesData = params.services.map((service) => {
+          const result = service.calculationResult;
+          if (!result) {
+            throw new Error(
+              `Service ${service.serviceType} is missing calculation result`,
+            );
+          }
+          return {
+            service_type: service.serviceType,
+            area_sqft: result.area,
+            glass_sqft: result.equipment?.type === "glass" ? result.area : null,
+            price: result.basePrice,
+            labor_hours: result.laborHours,
+            setup_hours: result.setupHours || 0,
+            rig_hours: result.rigHours || 0,
+            total_hours: result.totalHours,
+            crew_size: result.crewSize,
+            equipment_type: result.equipment?.type,
+            equipment_days: result.equipment?.days,
+            equipment_cost: result.equipment?.cost,
+            calculation_details: {
+              breakdown: result.breakdown,
+              warnings: result.warnings,
+              formData: service.formData,
+            },
+          };
+        });
 
-        // Insert new services
-        if (params.services.length > 0) {
-          const servicesData = params.services.map((service) => {
-            const result = service.calculationResult;
-            if (!result) {
-              throw new Error(
-                `Service ${service.serviceType} is missing calculation result`,
-              );
-            }
-            return {
-              estimate_id: estimateId,
-              service_type: service.serviceType,
-              area_sqft: result.area,
-              glass_sqft:
-                result.equipment?.type === "glass" ? result.area : null,
-              price: result.basePrice,
-              labor_hours: result.laborHours,
-              setup_hours: result.setupHours || 0,
-              rig_hours: result.rigHours || 0,
-              total_hours: result.totalHours,
-              crew_size: result.crewSize,
-              equipment_type: result.equipment?.type,
-              equipment_days: result.equipment?.days,
-              equipment_cost: result.equipment?.cost,
-              calculation_details: {
-                breakdown: result.breakdown,
-                warnings: result.warnings,
-                formData: service.formData,
-              },
-            };
-          });
+        // Use optimized upsert pattern - eliminates delete-recreate locks
+        const upsertSuccess =
+          await OptimizedQueryService.optimizedUpdateEstimateServices(
+            estimateId,
+            servicesData,
+          );
 
-          const { error: servicesError } = await supabase
-            .from("estimate_services")
-            .insert(servicesData);
-
-          if (servicesError) throw servicesError;
+        if (!upsertSuccess) {
+          throw new Error("Failed to update estimate services");
         }
       }
 

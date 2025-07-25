@@ -1,13 +1,17 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
+import { Database } from "@/types/supabase";
+
+// Valid table names from the database schema
+type ValidTableName = keyof Database["public"]["Tables"];
 
 // Export OperationContext interface for use by other modules
 export interface OperationContext {
   operation: "create" | "update" | "delete";
-  table: string;
+  table: ValidTableName;
   recordId?: string;
-  originalData?: any;
-  newData?: any;
+  originalData?: Record<string, unknown>;
+  newData?: Record<string, unknown>;
 }
 
 export interface TransactionResult<T> {
@@ -370,7 +374,7 @@ async function executeRollback(context: OperationContext): Promise<void> {
         // Compensate creation by deleting the created record
         if (recordId) {
           const { error } = await supabase
-            .from(table as any)
+            .from(table)
             .delete()
             .eq("id", recordId);
           if (error) throw error;
@@ -382,8 +386,8 @@ async function executeRollback(context: OperationContext): Promise<void> {
         // Compensate update by restoring original data
         if (recordId && originalData) {
           const { error } = await supabase
-            .from(table as any)
-            .update(originalData)
+            .from(table)
+            .update(originalData as Record<string, unknown>)
             .eq("id", recordId);
           if (error) throw error;
           console.log(`Rolled back update of ${table}:${recordId}`);
@@ -393,9 +397,9 @@ async function executeRollback(context: OperationContext): Promise<void> {
       case "delete":
         // Compensate deletion by recreating the record
         if (originalData) {
-          const { error } = await supabase
-            .from(table as any)
-            .insert(originalData);
+          const { error } = await (supabase.from(table) as any).insert(
+            originalData as Record<string, unknown>,
+          );
           if (error) throw error;
           console.log(`Rolled back deletion from ${table}`);
         }
@@ -413,9 +417,9 @@ async function executeRollback(context: OperationContext): Promise<void> {
 // Utility function to create compensating actions for common operations
 export function createCompensatingAction(
   operation: "create" | "update" | "delete",
-  table: string,
+  table: ValidTableName,
   recordId: string,
-  originalData?: any,
+  originalData?: Record<string, unknown>,
 ): () => Promise<void> {
   return async () => {
     await executeRollback({
@@ -430,10 +434,10 @@ export function createCompensatingAction(
 // Helper function to create operation contexts for batch operations
 export function createOperationContext(
   operation: "create" | "update" | "delete",
-  table: string,
+  table: ValidTableName,
   recordId?: string,
-  originalData?: any,
-  newData?: any,
+  originalData?: Record<string, unknown>,
+  newData?: Record<string, unknown>,
 ): OperationContext {
   return {
     operation,

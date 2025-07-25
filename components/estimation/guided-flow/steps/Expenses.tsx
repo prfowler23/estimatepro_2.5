@@ -98,6 +98,7 @@ interface TotalCosts {
   labor: number;
   other: number;
   grand: number;
+  total: number; // Alternative name for grand total (required by estimate types)
 }
 
 interface Margins {
@@ -126,6 +127,7 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
       labor: 0,
       other: 0,
       grand: 0,
+      total: 0,
     },
     margins: data?.expenses?.margins || {
       equipment: 15,
@@ -271,6 +273,7 @@ export function Expenses({ data, onUpdate, onNext, onBack }: ExpensesProps) {
       labor: laborTotal,
       other: otherTotal,
       grand: equipmentTotal + materialsTotal + laborTotal + otherTotal,
+      total: equipmentTotal + materialsTotal + laborTotal + otherTotal,
     };
   };
 

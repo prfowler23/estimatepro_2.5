@@ -20,6 +20,7 @@ export const SERVICE_CODE_TO_NAME: Record<ServiceType, string> = {
   GRC: "granite-reconditioning",
   PWS: "pressure-wash-seal",
   PD: "parking-deck",
+  GC: "general-cleaning",
 };
 
 // Reverse mapping from full names to short codes
@@ -35,6 +36,7 @@ export const SERVICE_NAME_TO_CODE: Record<string, ServiceType> = {
   "granite-reconditioning": "GRC",
   "pressure-wash-seal": "PWS",
   "parking-deck": "PD",
+  "general-cleaning": "GC",
 };
 
 /**

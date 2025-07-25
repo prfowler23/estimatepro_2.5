@@ -1,0 +1,28 @@
+{
+  "theme": "Google Code",
+  "selectedAuthType": "gemini-api-key",
+  "mcpServers": {
+    "zen": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "export PATH=\"/home/prfowler/.zen-mcp-server:$PATH\"; exec $(which uvx || echo uvx) --from git+https://github.com/BeehiveInnovations/zen-mcp-server.git zen-mcp-server"
+      ],
+      "env": {
+        "OPENROUTER_API_KEY": "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"
+      }
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=guitrdsoydjpenqmomlb",
+        "--database-url=https://guitrdsoydjpenqmomlb.supabase.co"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_6841e5ef1d8e6431f190ef111fe4aa272236d76"
+      }
+    }
+  }
+}

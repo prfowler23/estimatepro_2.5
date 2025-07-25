@@ -31,6 +31,7 @@ export interface UseSmartAutoSaveReturn {
     stepId: string,
     immediate?: boolean,
   ) => void;
+  markDirty: () => void;
   enableAutoSave: () => void;
   disableAutoSave: () => void;
   resolveConflict: (resolution: ConflictResolution) => Promise<boolean>;
@@ -418,6 +419,11 @@ export function useSmartAutoSave({
     updateSaveState({ saveError: null });
   }, [updateSaveState]);
 
+  // Mark data as dirty (for compatibility with UseAutoSaveReturn)
+  const markDirty = useCallback(() => {
+    updateSaveState({ isDirty: true });
+  }, [updateSaveState]);
+
   // Handle conflicts from service
   useEffect(() => {
     if (saveState?.conflictDetected && onConflictDetectedRef.current) {
@@ -429,6 +435,7 @@ export function useSmartAutoSave({
     saveState,
     saveNow,
     updateData,
+    markDirty,
     enableAutoSave,
     disableAutoSave,
     resolveConflict,
@@ -485,11 +492,13 @@ export function useSmartAutoSaveData<T extends GuidedFlowData>(
     }
   }, [smartAutoSaveHook.hasUnsavedChanges, smartAutoSaveHook.isSaving]);
 
-  // Reset local changes when data changes externally
+  // Reset local changes when data changes externally (with conditional check to prevent loops)
   useEffect(() => {
-    setData(initialData);
-    setHasLocalChanges(false);
-  }, [initialData]);
+    if (JSON.stringify(data) !== JSON.stringify(initialData)) {
+      setData(initialData);
+      setHasLocalChanges(false);
+    }
+  }, [initialData, data]);
 
   return {
     data,

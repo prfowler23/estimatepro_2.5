@@ -1,39 +1,26 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { SERVICE_TYPES } from "@/lib/calculations/constants";
+import { Database } from "@/types/supabase";
 
-interface EstimateData {
-  id: string;
-  estimate_number: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string | null;
-  company_name?: string | null;
-  building_name: string;
-  building_address: string;
-  building_height_stories: number;
-  building_height_feet?: number;
-  building_type?: string;
-  total_price: number;
-  status: string;
-  notes?: string;
-  created_at: string;
+type EstimateData = Database["public"]["Tables"]["estimates"]["Row"] & {
+  estimate_number?: string;
   services: EstimateService[];
-}
+};
 
 interface EstimateService {
   service_type: string;
-  area_sqft: number;
-  glass_sqft?: number;
+  area_sqft: number | null;
+  glass_sqft?: number | null;
   price: number;
-  labor_hours: number;
-  setup_hours: number;
-  rig_hours: number;
-  total_hours: number;
-  crew_size: number;
-  equipment_type?: string;
-  equipment_days?: number;
-  equipment_cost?: number;
+  labor_hours: number | null;
+  setup_hours?: number | null;
+  rig_hours?: number | null;
+  total_hours: number | null;
+  crew_size: number | null;
+  equipment_type?: string | null;
+  equipment_days?: number | null;
+  equipment_cost?: number | null;
   calculation_details?: any;
 }
 

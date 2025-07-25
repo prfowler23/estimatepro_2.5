@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, memo, useCallback } from "react";
 import { PredictiveInput } from "./PredictiveInput";
 import { useSmartDefaults } from "./SmartDefaultsProvider";
 import { Input } from "@/components/ui/input";
@@ -72,17 +72,17 @@ function SmartFieldComponent({
     }
   }, [relevantDefault, value, appliedDefault, enableSmartDefaults]);
 
-  const handleApplyDefault = () => {
+  const handleApplyDefault = useCallback(() => {
     if (relevantDefault) {
       onChange(relevantDefault.value);
       setAppliedDefault(relevantDefault);
       setShowSmartDefault(false);
     }
-  };
+  }, [relevantDefault, onChange]);
 
-  const handleDismissDefault = () => {
+  const handleDismissDefault = useCallback(() => {
     setShowSmartDefault(false);
-  };
+  }, []);
 
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return "border-green-200 bg-green-50";
@@ -301,15 +301,34 @@ function SmartFieldComponent({
   );
 }
 
-// PHASE 3 FIX: Memoize to prevent expensive AI predictions and validation re-runs
+// Deep comparison helper for flowData
+function areFlowDataEqual(prev: GuidedFlowData, next: GuidedFlowData): boolean {
+  try {
+    // Quick reference check first
+    if (prev === next) return true;
+
+    // Deep comparison as fallback
+    return JSON.stringify(prev) === JSON.stringify(next);
+  } catch {
+    // If comparison fails, assume they're different to be safe
+    return false;
+  }
+}
+
+// Optimized memo to prevent expensive AI predictions and validation re-runs
 export const SmartField = memo(SmartFieldComponent, (prevProps, nextProps) => {
   return (
     prevProps.value === nextProps.value &&
     prevProps.field === nextProps.field &&
-    prevProps.flowData === nextProps.flowData &&
+    areFlowDataEqual(prevProps.flowData, nextProps.flowData) &&
     prevProps.currentStep === nextProps.currentStep &&
     prevProps.disabled === nextProps.disabled &&
-    prevProps.onChange === nextProps.onChange
+    prevProps.type === nextProps.type &&
+    prevProps.placeholder === nextProps.placeholder &&
+    prevProps.required === nextProps.required &&
+    prevProps.enablePredictions === nextProps.enablePredictions &&
+    prevProps.enableSmartDefaults === nextProps.enableSmartDefaults
+    // Removed onChange comparison since it's unstable
   );
 });
 

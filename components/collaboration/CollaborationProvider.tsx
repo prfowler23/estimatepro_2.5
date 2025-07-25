@@ -268,7 +268,7 @@ export function CollaborationProvider({
         estimate_id: session.estimateId,
         user_id: existingUser.id,
         role,
-        permissions: getDefaultPermissions(role),
+        permissions: getDefaultPermissions(role) as any,
         invited_by: currentUser?.userId,
         created_at: new Date().toISOString(),
       });

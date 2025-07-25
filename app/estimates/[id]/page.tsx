@@ -49,27 +49,14 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { SERVICE_TYPES } from "@/lib/calculations/constants";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { Database } from "@/types/supabase";
 
-interface EstimateData {
-  id: string;
-  estimate_number: string;
+type EstimateData = Database["public"]["Tables"]["estimates"]["Row"] & {
+  estimate_number?: string;
   quote_number?: string; // For backward compatibility
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string | null;
-  company_name: string | null;
-  building_name: string;
-  building_address: string;
-  building_height_stories: number;
-  building_height_feet: number | null;
-  building_type: string | null;
-  total_price: number;
-  status: "draft" | "sent" | "approved" | "rejected";
-  notes: string | null;
-  created_at: string;
   updated_at: string;
   services: EstimateService[];
-}
+};
 
 interface EstimateService {
   id: string;
@@ -115,7 +102,9 @@ function EstimateDetailContent() {
       setLoading(true);
       setError(null);
 
-      const estimateId = Array.isArray(params.id) ? params.id[0] : params.id;
+      const estimateId = Array.isArray(params.id)
+        ? params.id[0]
+        : params.id || "";
 
       const { data: estimateData, error: estimateError } = await supabase
         .from("estimates")

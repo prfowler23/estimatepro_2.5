@@ -4,17 +4,13 @@ import "./globals.css";
 import { Navigation } from "@/components/layout/navigation";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import EnterpriseEstimationBackground from "@/components/enterprise-estimation-background";
-import { AuthProvider } from "@/contexts/auth-context";
-import { StartupValidationProvider } from "@/components/providers/startup-validation-provider";
+import { AppProviders } from "@/components/providers/app-providers";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { OfflineIndicator } from "@/components/pwa/offline-indicator";
 import { ErrorBoundary } from "@/components/error-handling/error-boundary";
 import { ClientOnly } from "@/components/ui/client-only";
 import { ClientErrorHandler } from "./error-handler";
-import { ThemeProvider } from "@/components/ui/theme-provider";
 import { PWAInitializer } from "@/components/pwa/pwa-initializer";
-import { FocusManager } from "@/components/ui/focus-management";
-import { NotificationProvider } from "@/components/ui/standardized-notifications";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -66,48 +62,29 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ClientErrorHandler />
-        <ThemeProvider defaultTheme="system" storageKey="estimatepro-theme">
-          <NotificationProvider
-            maxNotifications={5}
-            defaultPosition="top-right"
-            defaultDuration={5000}
-          >
-            <FocusManager
-              enableSkipLinks={true}
-              skipLinks={[
-                { href: "#main-content", label: "Skip to main content" },
-                { href: "#navigation", label: "Skip to navigation" },
-                { href: "#mobile-nav", label: "Skip to mobile navigation" },
-              ]}
-            >
-              <PWAInitializer />
-              <StartupValidationProvider>
-                <AuthProvider>
-                  <EnterpriseEstimationBackground>
-                    <ErrorBoundary level="component">
-                      <Navigation />
-                    </ErrorBoundary>
-                    <ErrorBoundary level="page">
-                      <main
-                        id="main-content"
-                        role="main"
-                        className="min-h-screen bg-background pb-16 md:pb-0"
-                        tabIndex={-1}
-                      >
-                        {children}
-                      </main>
-                    </ErrorBoundary>
-                    <ClientOnly>
-                      <MobileBottomNav />
-                      <InstallPrompt />
-                      <OfflineIndicator />
-                    </ClientOnly>
-                  </EnterpriseEstimationBackground>
-                </AuthProvider>
-              </StartupValidationProvider>
-            </FocusManager>
-          </NotificationProvider>
-        </ThemeProvider>
+        <PWAInitializer />
+        <AppProviders>
+          <EnterpriseEstimationBackground>
+            <ErrorBoundary>
+              <Navigation />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <main
+                id="main-content"
+                role="main"
+                className="min-h-screen bg-background pb-16 md:pb-0"
+                tabIndex={-1}
+              >
+                {children}
+              </main>
+            </ErrorBoundary>
+            <ClientOnly>
+              <MobileBottomNav />
+              <InstallPrompt />
+              <OfflineIndicator />
+            </ClientOnly>
+          </EnterpriseEstimationBackground>
+        </AppProviders>
       </body>
     </html>
   );

@@ -1,0 +1,229 @@
+{
+  "summary": {
+    "totalErrors": 405,
+    "analyzedAt": "2025-07-25T13:57:30.528Z",
+    "categories": [
+      {
+        "name": "Type assignment errors",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Property does not exist",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Property is missing in type",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Argument type mismatch",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Value is possibly undefined",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Module not found",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Module has no exported member",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Type conversion issues",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Object literal property issues",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Types not comparable",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "No overload matches call",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Implicit any type",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Import conflicts",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Cannot assign to read-only property",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Type of value is unknown",
+        "count": 0,
+        "percentage": "0.0"
+      },
+      {
+        "name": "Other errors",
+        "count": 405,
+        "percentage": "100.0"
+      }
+    ]
+  },
+  "errorsByFile": {
+    "components/estimation/guided-flow/steps/Pricing.tsx": 2,
+    "components/estimation/guided-flow/steps/Takeoff.tsx": 3,
+    "components/expenses/VendorSelector.tsx": 5,
+    "components/help/ContextualHelpPanel.tsx": 1,
+    "components/layout/app-layout.tsx": 2,
+    "components/layout/navigation.tsx": 1,
+    "components/lazy-components.tsx": 1,
+    "components/performance/performance-dashboard.tsx": 1,
+    "components/pwa/offline-indicator.tsx": 10,
+    "components/pwa/pwa-status.tsx": 1,
+    "components/settings/settings-content.tsx": 3,
+    "components/ui/SaveExitButton.tsx": 1,
+    "components/ui/button.tsx": 2,
+    "components/ui/empty-state.tsx": 4,
+    "components/ui/error-alert.tsx": 2,
+    "components/ui/mobile/MobilePhotoCapture.tsx": 2,
+    "components/ui/mobile/MobileStepNavigation.tsx": 2,
+    "components/ui/mobile/components/PhotoCaptureControls.tsx": 2,
+    "components/ui/notification-demo.tsx": 1,
+    "components/ui/skeleton.tsx": 1,
+    "components/ui/standardized-notifications.tsx": 2,
+    "components/validation/ProgressiveHintsSystem.tsx": 2,
+    "hooks/use-ai.ts": 1,
+    "hooks/use-audit.ts": 7,
+    "hooks/use-offline.ts": 14,
+    "hooks/use-performance.ts": 1,
+    "hooks/useErrorHandler.ts": 1,
+    "hooks/useSwipeGestures.ts": 3,
+    "lib/ai/ai-cache-optimized.ts": 3,
+    "lib/ai/ai-cache.ts": 6,
+    "lib/ai/auto-estimate-generator.ts": 9,
+    "lib/ai/openai.ts": 8,
+    "lib/ai/smart-defaults-engine.ts": 4,
+    "lib/ai/template-cache.ts": 1,
+    "lib/alerts/alert-manager.ts": 4,
+    "lib/analytics/data.ts": 3,
+    "lib/analytics/new-feature-analytics.ts": 9,
+    "lib/api/api-handler.ts": 7,
+    "lib/audit/audit-system.ts": 8,
+    "lib/cache/cache-manager.ts": 2,
+    "lib/calculations/constants/calculator-constants.ts": 4,
+    "lib/calculations/services/pressure-washing-calculator.ts": 1,
+    "lib/calculations/services/window-cleaning-calculator.ts": 1,
+    "lib/config/env-validation.ts": 1,
+    "lib/drone/drone-service.ts": 2,
+    "lib/error/error-recovery-engine.ts": 5,
+    "lib/estimation/service-rules.ts": 10,
+    "lib/expenses/materials-database.ts": 7,
+    "lib/features/feature-flags.ts": 27,
+    "lib/help/help-context-engine.ts": 3,
+    "lib/integrations/providers/quickbooks-integration.ts": 15,
+    "lib/integrations/providers/salesforce-integration.ts": 1,
+    "lib/integrations/providers/webhook-integration.ts": 3,
+    "lib/integrations/webhook-system.ts": 16,
+    "lib/middleware/sentry-middleware.ts": 7,
+    "lib/monitoring/sentry-logger.ts": 5,
+    "lib/monitoring/system-monitor.ts": 2,
+    "lib/optimization/bundle-optimization-strategy.ts": 4,
+    "lib/optimization/comprehensive-caching-strategy.ts": 3,
+    "lib/optimization/database-query-optimization.ts": 9,
+    "lib/optimization/state-management-optimization.ts": 12,
+    "lib/pdf/generator.ts": 8,
+    "lib/pdf/pdf-processor.ts": 3,
+    "lib/performance/query-optimization.ts": 4,
+    "lib/pricing/market-analysis.ts": 1,
+    "lib/pwa/service-worker.ts": 11,
+    "lib/services/auto-save-service-optimized.ts": 1,
+    "lib/services/auto-save-service.ts": 45,
+    "lib/services/calculator-service.ts": 2,
+    "lib/services/cross-step-population-service.ts": 3,
+    "lib/services/cross-step-validation-service.ts": 15,
+    "lib/services/equipment-materials-service.ts": 2,
+    "lib/services/estimate-crud-service.ts": 10,
+    "lib/services/estimate-service.ts": 12,
+    "lib/services/photo-service.ts": 6,
+    "lib/services/real-time-pricing-service-optimized.ts": 1,
+    "lib/services/real-time-pricing-service.ts": 1
+  },
+  "topFiles": [
+    ["lib/services/auto-save-service.ts", 45],
+    ["lib/features/feature-flags.ts", 27],
+    ["lib/integrations/webhook-system.ts", 16],
+    ["lib/integrations/providers/quickbooks-integration.ts", 15],
+    ["lib/services/cross-step-validation-service.ts", 15],
+    ["hooks/use-offline.ts", 14],
+    ["lib/optimization/state-management-optimization.ts", 12],
+    ["lib/services/estimate-service.ts", 12],
+    ["lib/pwa/service-worker.ts", 11],
+    ["components/pwa/offline-indicator.tsx", 10],
+    ["lib/estimation/service-rules.ts", 10],
+    ["lib/services/estimate-crud-service.ts", 10],
+    ["lib/ai/auto-estimate-generator.ts", 9],
+    ["lib/analytics/new-feature-analytics.ts", 9],
+    ["lib/optimization/database-query-optimization.ts", 9],
+    ["lib/ai/openai.ts", 8],
+    ["lib/audit/audit-system.ts", 8],
+    ["lib/pdf/generator.ts", 8],
+    ["hooks/use-audit.ts", 7],
+    ["lib/api/api-handler.ts", 7]
+  ],
+  "moduleBreakdown": {
+    "components": 2,
+    "hooks": 0,
+    "lib": 0,
+    "app": 0,
+    "types": 0,
+    "other": 403
+  },
+  "categories": {
+    "other": {
+      "description": "Other errors",
+      "count": 405,
+      "examples": [
+        {
+          "file": "components/estimation/guided-flow/steps/Pricing.tsx",
+          "line": 283,
+          "column": 11,
+          "code": "error TS2322",
+          "message": "Type '{ id: string; name: string; multiplier: number; description: string; winProbability?: number | undefined; adjustments?: any[] | undefined; } | null' is not assignable to type 'PricingStrategy'.",
+          "fullError": "283"
+        },
+        {
+          "file": "components/estimation/guided-flow/steps/Pricing.tsx",
+          "line": 379,
+          "column": 23,
+          "code": "error TS2353",
+          "message": "Object literal may only specify known properties, and 'netProfit' does not exist in type 'ProfitabilityAnalysis'.",
+          "fullError": "379"
+        },
+        {
+          "file": "components/estimation/guided-flow/steps/Takeoff.tsx",
+          "line": 147,
+          "column": 36,
+          "code": "error TS2339",
+          "message": "Property 'importSource' does not exist on type 'TakeoffStepData'.",
+          "fullError": "147"
+        }
+      ]
+    }
+  }
+}

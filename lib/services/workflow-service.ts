@@ -1029,6 +1029,7 @@ export class WorkflowService {
           GRC: 0.015, // granite-reconditioning
           PWS: 0.01, // pressure-wash-seal
           PD: 0.003, // parking-deck
+          GC: 0.008, // general-cleaning
         };
 
         const rate = durationRates[service];
@@ -1218,9 +1219,13 @@ export class WorkflowService {
         areaData.workAreas,
         scopeData?.selectedServices || [],
       );
-      const difference = Math.abs(
-        durationData.estimatedDuration - calculatedDuration,
-      );
+      // Convert estimatedDuration to number if it's an object
+      const estimatedDurationHours =
+        typeof durationData.estimatedDuration === "number"
+          ? durationData.estimatedDuration
+          : durationData.estimatedDuration.days * 8 +
+            durationData.estimatedDuration.hours;
+      const difference = Math.abs(estimatedDurationHours - calculatedDuration);
       if (difference > calculatedDuration * 0.5) {
         warnings["cross-step.duration"] = [
           "Estimated duration significantly differs from calculated duration",

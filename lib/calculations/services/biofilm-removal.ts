@@ -164,7 +164,7 @@ export class BiofilmRemovalCalculator extends BaseCalculator<BiofilmRemovalInput
     // Equipment
     let equipment = undefined;
     if (buildingHeightStories > 1) {
-      const equipmentType = getEquipmentForHeight(buildingHeightStories, "BR");
+      const equipmentType = getEquipmentForHeight(buildingHeightStories, "BF");
       const equipmentCost = calculateEquipmentCost(equipmentType, projectDays);
       equipment = {
         type: equipmentType,
@@ -189,7 +189,7 @@ export class BiofilmRemovalCalculator extends BaseCalculator<BiofilmRemovalInput
     }
 
     // Apply minimum charge
-    const finalPrice = this.calculateMinimumCharge("BR", roundedPrice);
+    const finalPrice = this.calculateMinimumCharge("BF", roundedPrice);
 
     // Validations
     this.validateSetupTime(setupHours, totalLaborHours);

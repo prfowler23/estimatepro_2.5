@@ -125,7 +125,14 @@ export function Summary({ data, onUpdate, onNext, onBack }: SummaryProps) {
 
     // Calculate totals from step data
     const totalPrice = data.pricing?.finalPrice || 0;
-    const estimatedDuration = data.duration?.estimatedDuration || 0;
+    const estimatedDuration =
+      typeof data.duration?.estimatedDuration === "number"
+        ? data.duration.estimatedDuration
+        : typeof data.duration?.estimatedDuration === "object" &&
+            data.duration.estimatedDuration
+          ? data.duration.estimatedDuration.days +
+            data.duration.estimatedDuration.hours / 24
+          : 0;
     const selectedServices = data.scopeDetails?.selectedServices || [];
 
     const consolidated: SummaryStepData = {
@@ -139,12 +146,15 @@ export function Summary({ data, onUpdate, onNext, onBack }: SummaryProps) {
           complexityScore: 3, // Default complexity
         },
         services: selectedServices.map((service) => ({
-          serviceType: service,
+          quote_id: `est-${Date.now()}`,
+          serviceType: service as string,
           description: `${service} service`,
           quantity: 0,
           unit: "sq ft",
           unitPrice: 0,
-          totalPrice: 0,
+          price: 0,
+          area_sqft: null,
+          glass_sqft: null,
           duration: 0,
           dependencies: [],
         })),

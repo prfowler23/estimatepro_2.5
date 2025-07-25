@@ -283,12 +283,12 @@ export function useGuidedFlowRealTimePricing(
     ...options,
   });
 
-  // Auto-update when data or step changes
+  // Auto-update when data or step changes (removed function dependency to prevent infinite loop)
   useEffect(() => {
     if (Object.keys(currentData).length > 0) {
       realTimePricing.updatePricing(currentData, currentStep);
     }
-  }, [currentData, currentStep, realTimePricing.updatePricing]);
+  }, [currentData, currentStep]);
 
   const updateFlowData = useCallback(
     (

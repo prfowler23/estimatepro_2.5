@@ -44,6 +44,11 @@ yarn-error.log*
 next-env.d.ts
 .env.local
 
+# development artifacts and backups
+*.backup*
+dev.log
+*.log
+
 # IDE and development tools
 .cursor/
 

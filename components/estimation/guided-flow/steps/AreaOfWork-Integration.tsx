@@ -5,10 +5,13 @@ import { ScaleSetter } from "@/components/canvas/ScaleSetter";
 import { AreaSummary } from "@/components/canvas/AreaSummary";
 import { MapImportService } from "@/lib/canvas/map-import";
 import { exportMapWithMeasurements } from "@/lib/canvas/import-export";
+import { GuidedFlowData } from "@/lib/types/estimate-types";
+import { Measurement as CanvasMeasurement } from "@/lib/canvas/drawing-service";
+import { Measurement as EstimateMeasurement } from "@/lib/types/estimate-types";
 
 interface AreaOfWorkCompleteProps {
-  data: any;
-  onUpdate: (data: any) => void;
+  data: GuidedFlowData;
+  onUpdate: (data: Partial<GuidedFlowData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -24,8 +27,16 @@ export function AreaOfWorkComplete({
     "select" | "rectangle" | "polygon" | "measure"
   >("select");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
-  const [shapes, setShapes] = useState<any[]>([]);
-  const [measurements, setMeasurements] = useState<any[]>([]);
+  const [shapes, setShapes] = useState<
+    Array<{
+      id: string;
+      type: "rectangle" | "polygon";
+      points: Array<{ x: number; y: number }>;
+      area: number;
+      label?: string;
+    }>
+  >([]);
+  const [measurements, setMeasurements] = useState<CanvasMeasurement[]>([]);
   const [scale, setScale] = useState<{ pixelsPerFoot: number } | null>(null);
 
   const handleFileUpload = async (file: File) => {

@@ -23,7 +23,7 @@ export default function GuidedEstimationPage() {
       setLoading(false);
     };
     getUser();
-  }, [supabase]);
+  }, []); // Only run once on mount - supabase is a constant import
 
   // Check if guided flow is enabled
   if (!config.features.guidedFlow) {

@@ -46,37 +46,25 @@ import {
 } from "lucide-react";
 import { SERVICE_TYPES } from "@/lib/calculations/constants";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { Database } from "@/types/supabase";
 
-interface EstimateData {
-  id: string;
-  estimate_number: string;
+type EstimateData = Database["public"]["Tables"]["estimates"]["Row"] & {
+  estimate_number?: string;
   quote_number?: string; // For backward compatibility
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string | null;
-  company_name: string | null;
-  building_name: string;
-  building_address: string;
-  building_height_stories: number;
-  building_height_feet: number | null;
-  building_type: string | null;
-  total_price: number;
-  status: string;
-  notes: string | null;
   services: EstimateService[];
-}
+};
 
 interface EstimateService {
   id: string;
   service_type: string;
-  area_sqft: number;
-  glass_sqft: number;
+  area_sqft: number | null;
+  glass_sqft: number | null;
   price: number;
-  labor_hours: number;
-  setup_hours: number;
-  rig_hours: number;
-  total_hours: number;
-  crew_size: number;
+  labor_hours: number | null;
+  setup_hours: number | null;
+  rig_hours: number | null;
+  total_hours: number | null;
+  crew_size: number | null;
   equipment_type: string;
   equipment_days: number;
   equipment_cost: number;
@@ -100,7 +88,7 @@ function EstimateEditContent() {
       const { data: estimateData, error: estimateError } = await supabase
         .from("estimates")
         .select("*")
-        .eq("id", Array.isArray(params.id) ? params.id[0] : params.id)
+        .eq("id", Array.isArray(params.id) ? params.id[0] : params.id || "")
         .single();
 
       if (estimateError) throw estimateError;
@@ -108,7 +96,10 @@ function EstimateEditContent() {
       const { data: servicesData, error: servicesError } = await supabase
         .from("estimate_services")
         .select("*")
-        .eq("quote_id", Array.isArray(params.id) ? params.id[0] : params.id);
+        .eq(
+          "quote_id",
+          Array.isArray(params.id) ? params.id[0] : params.id || "",
+        );
 
       if (servicesError) throw servicesError;
 
@@ -226,7 +217,7 @@ function EstimateEditContent() {
   const getTotalLaborHours = () => {
     if (!estimate) return 0;
     return estimate.services.reduce(
-      (sum, service) => sum + service.total_hours,
+      (sum, service) => sum + (service.total_hours || 0),
       0,
     );
   };
