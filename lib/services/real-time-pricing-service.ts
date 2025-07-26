@@ -355,7 +355,8 @@ export class RealTimePricingService {
 
       // Determine service area
       const area =
-        takeoffData?.calculations?.totalArea ||
+        (typeof takeoffData === "object" &&
+          takeoffData?.calculations?.totalArea) ||
         areaData?.reduce(
           (sum, m) => sum + (m.type === "area" ? m.value : 0),
           0,
@@ -386,7 +387,7 @@ export class RealTimePricingService {
         serviceType,
         formData,
         buildingContext: {
-          stories: flowData.areaOfWork?.buildingDetails?.stories || 1,
+          stories: flowData.areaOfWork?.buildingDetails?.floors || 1,
           heightFeet: flowData.areaOfWork?.buildingDetails?.height,
           buildingType:
             flowData.initialContact?.aiExtractedData?.requirements

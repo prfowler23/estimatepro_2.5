@@ -5,9 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building, Layers, Ruler, Home, ArrowLeft } from "lucide-react";
-import { EnhancedBuilding3D } from "@/components/visualizer/enhanced-building-3d";
-import { Building3D } from "@/components/visualizer/building-3d";
+import { LazyBuilding3D } from "@/components/visualizer/lazy-building-3d";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
+// Lazy load the basic Building3D component
+const Building3D = dynamic(
+  () =>
+    import("@/components/visualizer/building-3d").then((mod) => mod.Building3D),
+  { ssr: false },
+);
 import { config } from "@/lib/config";
 
 export default function Demo3DPage() {
@@ -163,7 +170,7 @@ export default function Demo3DPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <EnhancedBuilding3D
+            <LazyBuilding3D
               buildingData={buildingData}
               measurements={sampleMeasurements}
               serviceAreas={sampleServiceAreas}

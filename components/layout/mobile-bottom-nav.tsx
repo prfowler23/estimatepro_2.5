@@ -196,7 +196,7 @@ export function MobileBottomNav() {
                           : "var(--color-primary-600)"
                         : isActive
                           ? "var(--color-primary-50)"
-                          : "transparent",
+                          : "rgba(0, 0, 0, 0)",
                     }}
                     transition={{ type: "spring", ...springConfig }}
                   >

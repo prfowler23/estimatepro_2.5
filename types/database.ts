@@ -32,15 +32,16 @@ export type IntegrationEvent = Tables<"integration_events">;
 export type AuditEvent = Tables<"audit_events">;
 export type ComplianceReport = Tables<"compliance_reports">;
 
-// Enum types for type safety
-export type ServiceType = Enums<"service_type">;
-export type EstimateStatus = Enums<"estimate_status">;
-export type UserRole = Enums<"user_role">;
-export type CollaborationRole = Enums<"collaboration_role">;
-export type ChangeType = Enums<"change_type">;
-export type AnalysisType = Enums<"analysis_type">;
-export type Location = Enums<"location">;
-export type UnitType = Enums<"unit_type">;
+// Enum types for type safety - only export if they exist in the database
+// These types are kept for future use when the enums are added to the database
+// export type ServiceType = Enums<"service_type">;
+// export type EstimateStatus = Enums<"estimate_status">;
+// export type UserRole = Enums<"user_role">;
+// export type CollaborationRole = Enums<"collaboration_role">;
+// export type ChangeType = Enums<"change_type">;
+// export type AnalysisType = Enums<"analysis_type">;
+// export type Location = Enums<"location">;
+// export type UnitType = Enums<"unit_type">;
 
 // Insert types for creating new records
 export type ProfileInsert = TablesInsert<"profiles">;
@@ -67,5 +68,5 @@ export type GetUserRoleFunction =
   Database["public"]["Functions"]["get_user_role"];
 export type CalculateQuoteTotalFunction =
   Database["public"]["Functions"]["calculate_quote_total"];
-export type CreateDemoProfileFunction =
-  Database["public"]["Functions"]["create_demo_profile"];
+// export type CreateDemoProfileFunction =
+//   Database["public"]["Functions"]["create_demo_profile"];

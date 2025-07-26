@@ -207,11 +207,20 @@ export async function getEstimateStats(userId?: string) {
     (acc, estimate) => {
       acc.total += 1;
       acc.totalValue += estimate.total_price;
-      acc.byStatus[estimate.status] = (acc.byStatus[estimate.status] || 0) + 1;
+
+      // Handle potential null status
+      if (estimate.status) {
+        acc.byStatus[estimate.status] =
+          (acc.byStatus[estimate.status] || 0) + 1;
+      }
 
       // Monthly stats
-      const month = new Date(estimate.created_at).toISOString().substring(0, 7);
-      acc.byMonth[month] = (acc.byMonth[month] || 0) + 1;
+      if (estimate.created_at) {
+        const month = new Date(estimate.created_at)
+          .toISOString()
+          .substring(0, 7);
+        acc.byMonth[month] = (acc.byMonth[month] || 0) + 1;
+      }
 
       return acc;
     },

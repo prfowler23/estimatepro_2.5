@@ -4,13 +4,15 @@ import "./globals.css";
 import { Navigation } from "@/components/layout/navigation";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import EnterpriseEstimationBackground from "@/components/enterprise-estimation-background";
-import { AppProviders } from "@/components/providers/app-providers";
+import { OptimizedAppProviders } from "@/components/providers/optimized-app-providers";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { OfflineIndicator } from "@/components/pwa/offline-indicator";
 import { ErrorBoundary } from "@/components/error-handling/error-boundary";
 import { ClientOnly } from "@/components/ui/client-only";
 import { ClientErrorHandler } from "./error-handler";
 import { PWAInitializer } from "@/components/pwa/pwa-initializer";
+import { WebVitalsReporter } from "@/components/performance/web-vitals-reporter";
+import { RoutePreloader } from "@/components/optimization/RoutePreloader";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -63,7 +65,9 @@ export default function RootLayout({
       >
         <ClientErrorHandler />
         <PWAInitializer />
-        <AppProviders>
+        <WebVitalsReporter />
+        <RoutePreloader />
+        <OptimizedAppProviders>
           <EnterpriseEstimationBackground>
             <ErrorBoundary>
               <Navigation />
@@ -84,7 +88,7 @@ export default function RootLayout({
               <OfflineIndicator />
             </ClientOnly>
           </EnterpriseEstimationBackground>
-        </AppProviders>
+        </OptimizedAppProviders>
       </body>
     </html>
   );

@@ -109,6 +109,22 @@ const envSchema = z.object({
     .transform((val) => val === "true")
     .default("true"),
 
+  // New Flow Feature Flags
+  NEXT_PUBLIC_NEW_ESTIMATE_FLOW: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
+  NEXT_PUBLIC_QUICK_ESTIMATE_MODE: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
+  NEXT_PUBLIC_LEGACY_FLOW_SUPPORT: z
+    .string()
+    .transform((val) => val === "true")
+    .default("true"),
+
   NEXT_PUBLIC_DEBUG: z
     .string()
     .transform((val) => val === "true")
@@ -200,6 +216,40 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+
+  // Facade Analysis Configuration
+  FACADE_ANALYSIS_MODEL_VERSION: z
+    .string()
+    .regex(/^v\d+\.\d+$/, "Model version must be in format vX.Y")
+    .default("v8.0"),
+
+  AI_VISION_MODEL: z
+    .string()
+    .min(1, "AI vision model cannot be empty")
+    .default("gpt-4-vision-preview"),
+
+  MAX_IMAGE_SIZE_MB: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine(
+      (val) => val > 0 && val <= 50,
+      "Max image size must be between 1 and 50 MB",
+    )
+    .default("10"),
+
+  CONFIDENCE_THRESHOLD: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine(
+      (val) => val >= 0 && val <= 100,
+      "Confidence threshold must be between 0 and 100",
+    )
+    .default("85"),
+
+  NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS: z
+    .string()
+    .transform((val) => val === "true")
+    .default("true"),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
@@ -358,10 +408,31 @@ const clientEnvSchema = z.object({
     .transform((val) => val === "true")
     .default("true"),
 
+  // New Flow Feature Flags
+  NEXT_PUBLIC_NEW_ESTIMATE_FLOW: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
+  NEXT_PUBLIC_QUICK_ESTIMATE_MODE: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
+  NEXT_PUBLIC_LEGACY_FLOW_SUPPORT: z
+    .string()
+    .transform((val) => val === "true")
+    .default("true"),
+
   NEXT_PUBLIC_DEBUG: z
     .string()
     .transform((val) => val === "true")
     .default("false"),
+
+  NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS: z
+    .string()
+    .transform((val) => val === "true")
+    .default("true"),
 });
 
 export type ClientEnvConfig = z.infer<typeof clientEnvSchema>;
@@ -412,7 +483,15 @@ export function validateClientEnv(): ClientEnvConfig {
           process.env.NEXT_PUBLIC_ENABLE_DRONE === "true",
         NEXT_PUBLIC_ENABLE_GUIDED_FLOW:
           process.env.NEXT_PUBLIC_ENABLE_GUIDED_FLOW !== "false",
+        NEXT_PUBLIC_NEW_ESTIMATE_FLOW:
+          process.env.NEXT_PUBLIC_NEW_ESTIMATE_FLOW === "true",
+        NEXT_PUBLIC_QUICK_ESTIMATE_MODE:
+          process.env.NEXT_PUBLIC_QUICK_ESTIMATE_MODE === "true",
+        NEXT_PUBLIC_LEGACY_FLOW_SUPPORT:
+          process.env.NEXT_PUBLIC_LEGACY_FLOW_SUPPORT !== "false",
         NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG === "true",
+        NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS:
+          process.env.NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS !== "false",
       };
     }
   }

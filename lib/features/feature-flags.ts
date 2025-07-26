@@ -56,6 +56,7 @@ export class FeatureFlagManager {
     mobileNavigation: process.env.NEXT_PUBLIC_ENABLE_MOBILE_NAV === "true",
     analytics: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true",
     monitoring: process.env.NEXT_PUBLIC_ENABLE_MONITORING === "true",
+    facadeAnalysis: process.env.NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS === "true",
   };
 
   /**

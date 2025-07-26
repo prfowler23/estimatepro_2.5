@@ -1,67 +1,415 @@
 "use client";
 
-import { GuidedEstimationFlow } from "@/components/estimation/guided-flow/index";
-import { ErrorRecoveryProvider } from "@/components/error/ErrorRecoveryProvider";
-import { HelpProvider } from "@/components/help/HelpProvider";
-import { config } from "@/lib/config";
-import { redirect } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import { EstimationFlowSkeleton } from "@/components/ui/analysis-loading";
-import { supabase } from "@/lib/supabase/client";
-import { User } from "@supabase/supabase-js";
+import React, { Suspense, useEffect, useState } from "react";
+import { EstimateFlowProvider } from "@/components/estimation/EstimateFlowProvider";
+import { useEstimateFlow } from "@/components/estimation/EstimateFlowProvider";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Save,
+  CheckCircle2,
+  AlertCircle,
+  X,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { validateClientEnv } from "@/lib/config/env-validation";
+import {
+  MobileStepNavigation,
+  MobileStepIndicator,
+} from "@/components/ui/mobile-step-navigation";
+import { useSwipeGestures } from "@/hooks/useSwipeGestures";
 
-export default function GuidedEstimationPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+// Loading component for lazy-loaded steps
+function StepLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+        <p className="text-text-secondary">Loading step...</p>
+      </div>
+    </div>
+  );
+}
+
+// Step renderer component
+function StepRenderer() {
+  const {
+    currentStep,
+    totalSteps,
+    flowData,
+    nextStep,
+    previousStep,
+    canGoNext,
+    canGoPrevious,
+    validateCurrentStep,
+    getProgress,
+    isSaving,
+    hasUnsavedChanges,
+    isLegacyMode,
+  } = useEstimateFlow();
+
+  const router = useRouter();
+  const env = validateClientEnv();
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
     };
-    getUser();
-  }, []); // Only run once on mount - supabase is a constant import
 
-  // Check if guided flow is enabled
-  if (!config.features.guidedFlow) {
-    redirect("/estimates/new");
-  }
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
-  // Show loading while checking auth
-  if (loading) {
-    return <EstimationFlowSkeleton />;
-  }
+  // Swipe gestures for mobile
+  const { ref: swipeRef } = useSwipeGestures({
+    onSwipeLeft: () => canGoNext && handleNext(),
+    onSwipeRight: () => canGoPrevious && previousStep(),
+    enabled: isMobile,
+  });
 
-  // Redirect to login if not authenticated
-  if (!user) {
-    redirect("/auth/login");
-  }
+  // Get the current step configuration
+  const steps = isLegacyMode
+    ? [
+        {
+          id: "initial-contact",
+          title: "Initial Contact",
+          component: React.lazy(
+            () =>
+              import(
+                "@/components/estimation/guided-flow/steps/InitialContact"
+              ),
+          ),
+        },
+        {
+          id: "scope-details",
+          title: "Scope Details",
+          component: React.lazy(
+            () =>
+              import("@/components/estimation/guided-flow/steps/ScopeDetails"),
+          ),
+        },
+        {
+          id: "area-of-work",
+          title: "Area of Work",
+          component: React.lazy(
+            () =>
+              import("@/components/estimation/guided-flow/steps/AreaOfWork"),
+          ),
+        },
+        {
+          id: "takeoff",
+          title: "Takeoff",
+          component: React.lazy(
+            () => import("@/components/estimation/guided-flow/steps/Takeoff"),
+          ),
+        },
+        {
+          id: "duration",
+          title: "Duration",
+          component: React.lazy(
+            () => import("@/components/estimation/guided-flow/steps/Duration"),
+          ),
+        },
+        {
+          id: "expenses",
+          title: "Expenses",
+          component: React.lazy(
+            () => import("@/components/estimation/guided-flow/steps/Expenses"),
+          ),
+        },
+        {
+          id: "pricing",
+          title: "Pricing",
+          component: React.lazy(
+            () => import("@/components/estimation/guided-flow/steps/Pricing"),
+          ),
+        },
+        {
+          id: "files-photos",
+          title: "Files & Photos",
+          component: React.lazy(
+            () =>
+              import("@/components/estimation/guided-flow/steps/FilesPhotos"),
+          ),
+        },
+      ]
+    : [
+        {
+          id: "project-setup",
+          title: "Project Setup",
+          component: React.lazy(
+            () =>
+              import("@/components/estimation/guided-flow/steps/ProjectSetup"),
+          ),
+        },
+        {
+          id: "measurements",
+          title: "Measurements",
+          component: React.lazy(
+            () =>
+              import(
+                "@/components/estimation/guided-flow/steps/MeasurementsWithFacade"
+              ),
+          ),
+        },
+        {
+          id: "pricing",
+          title: "Pricing",
+          component: React.lazy(
+            () =>
+              import(
+                "@/components/estimation/guided-flow/steps/UnifiedPricing"
+              ),
+          ),
+        },
+        {
+          id: "review",
+          title: "Review & Send",
+          component: React.lazy(
+            () =>
+              import("@/components/estimation/guided-flow/steps/ReviewSend"),
+          ),
+        },
+      ];
+
+  const currentStepConfig = steps[currentStep];
+  const StepComponent = currentStepConfig.component;
+
+  // Handle save and exit
+  const handleSaveExit = async () => {
+    // Save logic here
+    router.push("/estimates");
+  };
+
+  // Validate before next
+  const handleNext = () => {
+    const validation = validateCurrentStep();
+    if (validation.isValid) {
+      nextStep();
+    }
+  };
 
   return (
-    <HelpProvider
-      userProfile={{
-        experienceLevel: "intermediate",
-        role: "estimator",
-        preferences: {},
-      }}
-      flowData={{}}
-      userId={user.id}
+    <div
+      className="min-h-screen bg-gradient-to-br from-bg-base via-bg-subtle to-bg-base"
+      ref={swipeRef}
     >
-      <ErrorRecoveryProvider
-        stepId="guided-estimation"
-        stepNumber={0}
-        userId={user.id}
-        flowData={{}}
-      >
-        <div className="min-h-screen bg-background">
-          <Suspense fallback={<EstimationFlowSkeleton />}>
-            <GuidedEstimationFlow customerId={user.id} />
-          </Suspense>
+      {/* Desktop Header */}
+      {!isMobile && (
+        <div className="sticky top-0 z-40 bg-bg-base/80 backdrop-blur-md border-b border-border-primary">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              {/* Step Progress */}
+              <div className="flex-1 max-w-2xl">
+                <div className="flex items-center justify-between mb-2">
+                  <h1 className="text-lg font-semibold text-text-primary">
+                    {currentStepConfig.title}
+                  </h1>
+                  <span className="text-sm text-text-secondary">
+                    Step {currentStep + 1} of {totalSteps}
+                  </span>
+                </div>
+                <Progress value={getProgress()} className="h-2" />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 ml-6">
+                {hasUnsavedChanges && (
+                  <div className="flex items-center gap-2 text-sm text-yellow-600">
+                    <AlertCircle className="h-4 w-4" />
+                    Unsaved changes
+                  </div>
+                )}
+                {isSaving && (
+                  <div className="flex items-center gap-2 text-sm text-blue-600">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600" />
+                    Saving...
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveExit}
+                  className="flex items-center gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  Save & Exit
+                </Button>
+              </div>
+            </div>
+
+            {/* Step Indicators (4-step flow) */}
+            {!isLegacyMode && (
+              <div className="flex items-center justify-center mt-4">
+                <div className="flex items-center gap-2">
+                  {steps.map((step, index) => {
+                    const isActive = index === currentStep;
+                    const isCompleted = index < currentStep;
+
+                    return (
+                      <React.Fragment key={step.id}>
+                        <button
+                          onClick={() =>
+                            index < currentStep && router.push(`?step=${index}`)
+                          }
+                          disabled={index >= currentStep}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all",
+                            isActive &&
+                              "bg-primary text-white font-medium shadow-sm",
+                            isCompleted &&
+                              "bg-green-100 text-green-700 cursor-pointer hover:bg-green-200",
+                            !isActive &&
+                              !isCompleted &&
+                              "bg-bg-subtle text-text-secondary",
+                          )}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle2 className="h-4 w-4" />
+                          ) : (
+                            <span
+                              className={cn(
+                                "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium",
+                                isActive
+                                  ? "bg-white/20"
+                                  : "bg-text-secondary/10",
+                              )}
+                            >
+                              {index + 1}
+                            </span>
+                          )}
+                          <span className="hidden sm:inline">{step.title}</span>
+                        </button>
+                        {index < steps.length - 1 && (
+                          <div
+                            className={cn(
+                              "w-8 h-0.5 transition-colors",
+                              isCompleted
+                                ? "bg-green-500"
+                                : "bg-border-primary",
+                            )}
+                          />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </ErrorRecoveryProvider>
-    </HelpProvider>
+      )}
+
+      {/* Mobile Header */}
+      {isMobile && (
+        <div className="sticky top-0 z-40 bg-bg-base border-b border-border-primary">
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-base font-semibold text-text-primary">
+                New Estimate
+              </h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSaveExit}
+                className="h-8 px-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            {!isLegacyMode && (
+              <MobileStepIndicator
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                steps={steps.map((s, i) => ({
+                  id: s.id,
+                  title: s.title,
+                  completed: i < currentStep,
+                }))}
+                onStepClick={(index) => {
+                  if (index < currentStep) {
+                    // Navigate to previous step
+                    for (let i = currentStep; i > index; i--) {
+                      previousStep();
+                    }
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <main
+        className={cn(
+          "container mx-auto px-4",
+          isMobile ? "py-4 pb-24" : "py-8",
+        )}
+      >
+        <div className="max-w-4xl mx-auto">
+          <Suspense fallback={<StepLoading />}>
+            <StepComponent />
+          </Suspense>
+
+          {/* Desktop Navigation Buttons */}
+          {!isMobile && (
+            <div className="flex items-center justify-between mt-8">
+              <Button
+                variant="outline"
+                onClick={previousStep}
+                disabled={!canGoPrevious}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Previous
+              </Button>
+
+              <Button
+                onClick={handleNext}
+                disabled={!canGoNext}
+                className="flex items-center gap-2"
+              >
+                {currentStep === totalSteps - 1 ? "Finish" : "Next"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Mobile Navigation */}
+      {isMobile && (
+        <MobileStepNavigation
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          stepTitle={currentStepConfig.title}
+          canGoNext={canGoNext}
+          canGoPrevious={canGoPrevious}
+          onNext={handleNext}
+          onPrevious={previousStep}
+          onSave={handleSaveExit}
+          onExit={() => router.push("/estimates")}
+          progress={getProgress()}
+          hasUnsavedChanges={hasUnsavedChanges}
+          isSaving={isSaving}
+        />
+      )}
+    </div>
+  );
+}
+
+export default function GuidedFlowPage() {
+  return (
+    <EstimateFlowProvider>
+      <StepRenderer />
+    </EstimateFlowProvider>
   );
 }

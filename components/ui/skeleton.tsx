@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { motion } from "framer-motion";
@@ -113,31 +115,16 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
 
     if (variant === "shimmer") {
       return (
-        <div
+        <motion.div
           ref={ref}
           className={cn(
             skeletonVariants({ variant: "default", size, rounded }),
             "bg-gradient-to-r from-border-primary/10 via-border-primary/20 to-border-primary/10 bg-[length:200%_100%]",
             className,
           )}
-          style={{
-            animation: animate
-              ? `shimmer 2s linear infinite ${delay}s`
-              : "none",
-          }}
+          {...(animate ? shimmerAnimation : {})}
           {...props}
-        >
-          <style jsx>{`
-            @keyframes shimmer {
-              0% {
-                background-position: -200% 0;
-              }
-              100% {
-                background-position: 200% 0;
-              }
-            }
-          `}</style>
-        </div>
+        />
       );
     }
 
@@ -153,7 +140,7 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
           {...props}
         >
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-bg-elevated/50 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-bg-elevated/0 via-bg-elevated/50 to-bg-elevated/0"
             {...(animate ? waveAnimation : {})}
           />
         </div>

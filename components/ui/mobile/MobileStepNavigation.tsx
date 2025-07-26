@@ -370,7 +370,7 @@ export function MobileStepNavigation({
                       scale: isPressed ? 0.96 : 1,
                       backgroundColor: isPressed
                         ? "var(--color-primary-50)"
-                        : undefined,
+                        : "rgba(0, 0, 0, 0)",
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     aria-label={`Navigate to ${step.name}`}
@@ -497,7 +497,7 @@ export function MobileStepNavigation({
               backgroundColor:
                 pressedButton === "next-button"
                   ? "var(--color-primary-700)"
-                  : undefined,
+                  : "rgba(0, 0, 0, 0)",
             }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             aria-label={isLastStep ? "Complete estimation" : "Go to next step"}

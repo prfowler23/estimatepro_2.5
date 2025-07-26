@@ -99,7 +99,9 @@ export class VendorService {
       }
 
       // Map database results to interface format
-      return data.map((vendor) => ({
+      // Note: Since vendors table doesn't exist in schema, this mapping would be used
+      // when the table is added in the future
+      return (data as any[]).map((vendor: any) => ({
         id: vendor.id,
         name: vendor.name,
         type: vendor.type,

@@ -32,6 +32,7 @@ import {
   LazyParkingDeckForm,
   LazyGraniteReconditioningForm,
   LazyBiofilmRemovalForm,
+  LazyFacadeAnalysisForm,
   FormWrapper,
 } from "./lazy-forms";
 import { useEstimateStore } from "@/lib/stores/estimate-store";
@@ -53,6 +54,7 @@ import {
   Calculator,
   CheckCircle,
   AlertTriangle,
+  Scan,
 } from "lucide-react";
 
 // Service data with icons and descriptions
@@ -146,6 +148,16 @@ const SERVICES = [
     pricing: "$0.75-1.00/sq ft",
     icon: Bug,
     color: "bg-orange-50 text-orange-700",
+  },
+  {
+    id: "FACADE_ANALYSIS",
+    name: "AI Facade Analysis",
+    description:
+      "Automated building measurement and material analysis using AI",
+    pricing: "Free Analysis",
+    icon: Scan,
+    color: "bg-gradient-to-r from-purple-50 to-indigo-50 text-indigo-700",
+    popular: true,
   },
 ];
 
@@ -544,6 +556,14 @@ export function ServiceCalculator() {
                 />
               </FormWrapper>
             )}
+            {currentService === "FACADE_ANALYSIS" && (
+              <FormWrapper>
+                <LazyFacadeAnalysisForm
+                  onComplete={handleServiceCalculated}
+                  estimateId={currentEstimate?.id || ""}
+                />
+              </FormWrapper>
+            )}
             {currentService &&
               ![
                 "GR",
@@ -557,6 +577,7 @@ export function ServiceCalculator() {
                 "PD",
                 "GRC",
                 "BF",
+                "FACADE_ANALYSIS",
               ].includes(currentService) && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">

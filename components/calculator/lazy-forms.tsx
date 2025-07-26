@@ -104,6 +104,12 @@ export const LazyBiofilmRemovalForm = createLazyFormComponent(() =>
   })),
 );
 
+export const LazyFacadeAnalysisForm = createLazyFormComponent(() =>
+  import("./forms/facade-analysis-form").then((module) => ({
+    default: module.FacadeAnalysisForm,
+  })),
+);
+
 // Form component wrapper with suspense (legacy compatibility)
 export const FormWrapper = ({
   children,

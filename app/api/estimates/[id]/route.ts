@@ -4,7 +4,7 @@ import { getUser } from "@/lib/auth/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getUser();
@@ -13,7 +13,8 @@ export async function GET(
     }
 
     // Fetch estimate using the business service
-    const estimate = await EstimateBusinessService.getEstimateById(params.id);
+    const { id } = await params;
+    const estimate = await EstimateBusinessService.getEstimateById(id);
 
     if (!estimate) {
       return NextResponse.json(
@@ -37,7 +38,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getUser();
@@ -46,12 +47,10 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const { id } = await params;
 
     // Update estimate using the business service
-    const success = await EstimateBusinessService.updateEstimate(
-      params.id,
-      body,
-    );
+    const success = await EstimateBusinessService.updateEstimate(id, body);
 
     if (!success) {
       return NextResponse.json(
@@ -78,7 +77,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getUser();
@@ -87,7 +86,8 @@ export async function DELETE(
     }
 
     // Delete estimate using the business service
-    const success = await EstimateBusinessService.deleteEstimate(params.id);
+    const { id } = await params;
+    const success = await EstimateBusinessService.deleteEstimate(id);
 
     if (!success) {
       return NextResponse.json(

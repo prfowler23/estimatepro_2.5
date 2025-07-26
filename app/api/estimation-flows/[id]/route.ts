@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/auth/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate request
@@ -17,7 +17,7 @@ export async function GET(
     }
 
     const supabase = createServerSupabaseClient();
-    const flowId = params.id;
+    const { id: flowId } = await params;
 
     // Get estimation flow with access control via RLS
     const { data: flow, error } = await supabase
@@ -62,7 +62,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate request
@@ -75,7 +75,7 @@ export async function PUT(
     }
 
     const supabase = createServerSupabaseClient();
-    const flowId = params.id;
+    const { id: flowId } = await params;
     const body = await request.json();
 
     // Update estimation flow (RLS will ensure user can only update their own)
@@ -109,7 +109,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate request
@@ -122,7 +122,7 @@ export async function DELETE(
     }
 
     const supabase = createServerSupabaseClient();
-    const flowId = params.id;
+    const { id: flowId } = await params;
 
     // Delete estimation flow (RLS will ensure user can only delete their own)
     const { error } = await supabase

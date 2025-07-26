@@ -677,7 +677,13 @@ export interface AreaOfWorkData {
   notes?: string;
   autoPopulated?: boolean;
   autoPopulationSource?: string;
-  buildingDetails?: any; // Building-specific details
+  buildingDetails?: {
+    type?: string;
+    floors?: number;
+    height?: number;
+    accessNotes?: string;
+    facadeAnalysisId?: string;
+  }; // Building-specific details
 }
 
 export interface TakeoffStepData {

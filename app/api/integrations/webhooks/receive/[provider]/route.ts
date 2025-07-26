@@ -7,10 +7,11 @@ import { IntegrationProvider } from "@/lib/integrations/integration-framework";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { provider: string } },
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   try {
-    const provider = params.provider as IntegrationProvider;
+    const { provider: providerParam } = await params;
+    const provider = providerParam as IntegrationProvider;
     const body = await request.json();
 
     // Get signature from headers (different providers use different header names)
@@ -52,10 +53,11 @@ export async function POST(
 // Health check endpoint for webhook URLs
 export async function GET(
   request: NextRequest,
-  { params }: { params: { provider: string } },
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   try {
-    const provider = params.provider as IntegrationProvider;
+    const { provider: providerParam } = await params;
+    const provider = providerParam as IntegrationProvider;
 
     return NextResponse.json({
       provider,
@@ -75,7 +77,7 @@ export async function GET(
 // Handle webhook verification challenges (for providers that require it)
 export async function HEAD(
   request: NextRequest,
-  { params }: { params: { provider: string } },
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   return new NextResponse(null, { status: 200 });
 }

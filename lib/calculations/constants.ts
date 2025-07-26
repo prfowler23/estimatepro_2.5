@@ -14,6 +14,7 @@ export const SERVICE_TYPES = {
   PD: "Parking Deck",
   GRC: "Granite Reconditioning",
   BR: "Biofilm Removal",
+  FACADE_ANALYSIS: "AI Facade Analysis",
 } as const;
 
 // Location-based hourly rates

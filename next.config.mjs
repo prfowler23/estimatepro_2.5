@@ -1,6 +1,13 @@
 import { withSentryConfig } from "@sentry/nextjs";
+import bundleAnalyzer from "@next/bundle-analyzer";
+import { performanceConfig } from "./next.config.performance.mjs";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const nextConfig = {
+  ...performanceConfig,
   eslint: {
     ignoreDuringBuilds: false, // Enable ESLint during builds
   },
@@ -95,6 +102,9 @@ const useSentry =
 
 let finalConfig = nextConfig;
 
+// Apply bundle analyzer
+finalConfig = withBundleAnalyzer(finalConfig);
+
 if (useSentry) {
   const sentryWebpackPluginOptions = {
     org: "estimatepro",
@@ -105,7 +115,7 @@ if (useSentry) {
     disableLogger: true,
   };
 
-  finalConfig = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+  finalConfig = withSentryConfig(finalConfig, sentryWebpackPluginOptions);
 }
 
 export default finalConfig;

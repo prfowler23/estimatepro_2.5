@@ -179,10 +179,33 @@ export const SERVICE_DEFINITIONS = {
     bestFor: ["Project completion", "Quality assurance", "Client preparation"],
     restrictions: ["Scheduling dependent", "Weather considerations"],
   },
+  FACADE_ANALYSIS: {
+    id: "FACADE_ANALYSIS",
+    name: "AI Facade Analysis",
+    description:
+      "Automated building measurement and material analysis using AI",
+    basePrice: "Free (value in data)",
+    typicalDuration: "5-10 minutes",
+    requirements: ["Clear building photos", "Multiple angles preferred"],
+    equipment: ["Camera or smartphone", "Internet connection"],
+    safetyConsiderations: ["Safe photo capture positions"],
+    bestFor: [
+      "Quick estimates",
+      "Remote assessments",
+      "Material identification",
+      "Measurement verification",
+    ],
+    restrictions: ["Weather dependent for photos", "Requires clear visibility"],
+  },
 };
 
 // Service categories for organization
 export const SERVICE_CATEGORIES = {
+  ANALYSIS: {
+    name: "Analysis & Measurement",
+    services: ["FACADE_ANALYSIS"],
+    description: "AI-powered analysis and measurement tools",
+  },
   PRESSURE_CLEANING: {
     name: "Pressure Cleaning",
     services: ["PW", "PWS", "SW"],
@@ -207,7 +230,7 @@ export const SERVICE_CATEGORIES = {
 
 // Service complexity levels
 export const SERVICE_COMPLEXITY = {
-  BASIC: ["WC", "HD", "FC"],
+  BASIC: ["WC", "HD", "FC", "FACADE_ANALYSIS"],
   INTERMEDIATE: ["PW", "SW", "PD"],
   ADVANCED: ["PWS", "GR", "FR", "GRC"],
 };
@@ -218,6 +241,7 @@ export const EQUIPMENT_REQUIREMENTS = {
   CHEMICAL_HANDLING: ["PWS", "SW", "GR", "FR", "GRC"],
   HEIGHT_ACCESS: ["WC", "GR", "FR", "HD"],
   SPECIALIZED_TOOLS: ["GR", "FR", "GRC"],
+  DIGITAL_TOOLS: ["FACADE_ANALYSIS"],
 };
 
 // Typical service combinations

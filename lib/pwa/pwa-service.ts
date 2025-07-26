@@ -196,6 +196,17 @@ export class PWAService {
       return;
     }
 
+    // Check if we're in development mode
+    const isDevelopment =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.includes("localhost");
+
+    if (isDevelopment) {
+      console.log("Service Worker registration skipped in development mode");
+      return;
+    }
+
     try {
       this.serviceWorkerRegistration = await navigator.serviceWorker.register(
         "/sw.js",
