@@ -132,7 +132,7 @@ export default function Dashboard() {
           ) : !data ||
             (data.totalRevenue === 0 && data.activeCustomers === 0) ? (
             <Suspense fallback={<DashboardSkeletonLoader />}>
-              <DashboardEmptyState onNavigate={handleNavigateTo} />
+              <DashboardEmptyState navigateTo={handleNavigateTo} />
             </Suspense>
           ) : (
             <div className="space-y-6">
@@ -143,7 +143,7 @@ export default function Dashboard() {
                     <div className="h-32 animate-pulse bg-border-primary/20 rounded-lg" />
                   }
                 >
-                  <AICreateEstimateCard onNavigate={handleNavigateTo} />
+                  <AICreateEstimateCard navigateTo={handleNavigateTo} />
                 </Suspense>
 
                 <Suspense
@@ -161,11 +161,7 @@ export default function Dashboard() {
                   <div className="h-96 animate-pulse bg-border-primary/20 rounded-lg" />
                 }
               >
-                <AnalyticsOverview
-                  data={data}
-                  onNavigate={handleNavigateTo}
-                  isNavigating={isNavigating}
-                />
+                <AnalyticsOverview data={data} />
               </Suspense>
 
               {/* AI Business Insights */}

@@ -10,9 +10,9 @@ import { validateAIRequest } from "@/lib/ai/ai-security";
 import { FacadeAnalysisAIResponse } from "@/lib/types/facade-analysis-types";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const openai = new OpenAI({
@@ -22,6 +22,7 @@ const openai = new OpenAI({
 // POST /api/facade-analysis/[id]/analyze - Run AI analysis on facade images
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const supabase = createClient();
     const {
       data: { user },
@@ -31,11 +32,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const service = new FacadeAnalysisService(supabase, user.id);
+    const service = new FacadeAnalysisService();
 
     // Check if analysis exists and user has access
-    const analysis = await service.getFacadeAnalysis(params.id);
-    if (!analysis) {
+    const { data: analysis, error: analysisError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", user.id)
+      .single();
+
+    if (analysisError || !analysis) {
       return NextResponse.json(
         { error: "Facade analysis not found" },
         { status: 404 },
@@ -43,8 +50,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get all images for the analysis
-    const images = await service.getImages(params.id);
-    if (images.length === 0) {
+    const { data: images, error: imagesError } = await supabase
+      .from("facade_analysis_images")
+      .select("*")
+      .eq("facade_analysis_id", id);
+
+    if (imagesError || !images || images.length === 0) {
       return NextResponse.json(
         { error: "No images found for analysis" },
         { status: 400 },
@@ -79,7 +90,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check cache
-    const cacheKey = `facade-analysis-${params.id}-${JSON.stringify(validatedRequest)}`;
+    const cacheKey = `facade-analysis-${id}-${JSON.stringify(validatedRequest)}`;
     const cachedResponse = await aiResponseCache.get(cacheKey);
     if (cachedResponse) {
       logger.info("Using cached AI response for facade analysis");
@@ -158,41 +169,57 @@ Provide detailed analysis including:
     };
 
     // Update facade analysis with AI results
-    await service.updateFacadeAnalysis(params.id, {
-      total_facade_sqft:
-        analysisResponse.analysis.measurements.total_facade_sqft,
-      total_glass_sqft: analysisResponse.analysis.measurements.total_glass_sqft,
-      glass_to_facade_ratio:
-        analysisResponse.analysis.measurements.glass_to_facade_ratio,
-      materials: analysisResponse.analysis.materials,
-      facade_complexity: analysisResponse.analysis.complexity,
-      sidewalk_sqft:
-        analysisResponse.analysis.ground_surfaces?.sidewalk_sqft || 0,
-      parking_sqft:
-        analysisResponse.analysis.ground_surfaces?.parking_sqft || 0,
-      loading_dock_sqft:
-        analysisResponse.analysis.ground_surfaces?.loading_dock_sqft || 0,
-      confidence_level: analysisResponse.analysis.confidence_level,
-      ai_model_version: "gpt-4-vision-v8.0",
-      requires_field_verification:
-        analysisResponse.analysis.confidence_level < 80,
-    });
+    const { error: updateError } = await supabase
+      .from("facade_analyses")
+      .update({
+        total_facade_sqft:
+          analysisResponse.analysis.measurements.total_facade_sqft,
+        total_glass_sqft:
+          analysisResponse.analysis.measurements.total_glass_sqft,
+        glass_to_facade_ratio:
+          analysisResponse.analysis.measurements.glass_to_facade_ratio,
+        materials: analysisResponse.analysis.materials,
+        facade_complexity: analysisResponse.analysis.complexity,
+        sidewalk_sqft:
+          analysisResponse.analysis.ground_surfaces?.sidewalk_sqft || 0,
+        parking_sqft:
+          analysisResponse.analysis.ground_surfaces?.parking_sqft || 0,
+        loading_dock_sqft:
+          analysisResponse.analysis.ground_surfaces?.loading_dock_sqft || 0,
+        confidence_level: analysisResponse.analysis.confidence_level,
+        ai_model_version: "gpt-4-vision-v8.0",
+        requires_field_verification:
+          analysisResponse.analysis.confidence_level < 80,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (updateError) {
+      logger.error("Failed to update facade analysis:", updateError);
+    }
 
     // Update each image with AI results
     for (const image of images) {
-      await service.updateImageAnalysis(
-        image.id,
-        {
-          detected_features: aiAnalysis.detected_features || [],
-          material_analysis: aiAnalysis.material_details || {},
-        },
-        aiAnalysis.detected_elements || [],
-        {
-          overall: analysisResponse.analysis.confidence_level,
-          materials: aiAnalysis.material_confidence || 85,
-          measurements: aiAnalysis.measurement_confidence || 85,
-        },
-      );
+      const { error: imageUpdateError } = await supabase
+        .from("facade_analysis_images")
+        .update({
+          ai_analysis_results: {
+            detected_features: aiAnalysis.detected_features || [],
+            material_analysis: aiAnalysis.material_details || {},
+            detected_elements: aiAnalysis.detected_elements || [],
+            confidence: {
+              overall: analysisResponse.analysis.confidence_level,
+              materials: aiAnalysis.material_confidence || 85,
+              measurements: aiAnalysis.measurement_confidence || 85,
+            },
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", image.id);
+
+      if (imageUpdateError) {
+        logger.error("Failed to update image analysis:", imageUpdateError);
+      }
     }
 
     // Cache the response

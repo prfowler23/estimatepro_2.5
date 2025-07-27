@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const estimateId = searchParams.get("estimate_id");
 
-    const service = new FacadeAnalysisService(supabase, user.id);
+    const service = new FacadeAnalysisService();
 
     if (estimateId) {
       // Get facade analysis for specific estimate
-      const analysis = await service.getFacadeAnalysisByEstimate(estimateId);
+      const analysis = await service.getByEstimateId(estimateId);
 
       if (!analysis) {
         return NextResponse.json(
@@ -35,11 +35,14 @@ export async function GET(request: NextRequest) {
       }
 
       // Get associated images
-      const images = await service.getImages(analysis.id);
+      const { data: images } = await supabase
+        .from("facade_analysis_images")
+        .select("*")
+        .eq("facade_analysis_id", analysis.id);
 
       return NextResponse.json({
         analysis,
-        images,
+        images: images || [],
       });
     }
 
@@ -85,8 +88,11 @@ export async function POST(request: NextRequest) {
     // Validate request body
     const validatedData = createFacadeAnalysisSchema.parse(body);
 
-    const service = new FacadeAnalysisService(supabase, user.id);
-    const analysis = await service.createFacadeAnalysis(validatedData);
+    const service = new FacadeAnalysisService();
+    const analysis = await service.createAnalysis(
+      validatedData.estimate_id,
+      user.id,
+    );
 
     return NextResponse.json({ analysis }, { status: 201 });
   } catch (error) {

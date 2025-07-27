@@ -167,10 +167,10 @@ describe("FacadeAnalysisService", () => {
           glass_area: 2000,
           materials_identified: [
             {
-              type: "brick",
-              coverage_percentage: 60,
-              condition: "good" as const,
-              id: "1",
+              type: "brick" as const,
+              sqft: 3600,
+              percentage: 60,
+              confidence: 90,
             },
           ],
           height_estimation: { stories: 10, feet: 120, confidence: 0.9 },
@@ -183,16 +183,16 @@ describe("FacadeAnalysisService", () => {
           glass_area: 2000,
           materials_identified: [
             {
-              type: "brick",
-              coverage_percentage: 50,
-              condition: "good" as const,
-              id: "2",
+              type: "brick" as const,
+              sqft: 2500,
+              percentage: 50,
+              confidence: 90,
             },
             {
-              type: "metal",
-              coverage_percentage: 30,
-              condition: "excellent" as const,
-              id: "3",
+              type: "metal" as const,
+              sqft: 1500,
+              percentage: 30,
+              confidence: 85,
             },
           ],
           height_estimation: { stories: 10, feet: 120, confidence: 0.95 },
@@ -202,7 +202,7 @@ describe("FacadeAnalysisService", () => {
       ];
 
       const buildingInfo = {
-        building_type: "commercial",
+        building_type: "office",
         building_address: "123 Main St",
       };
 
@@ -226,16 +226,16 @@ describe("FacadeAnalysisService", () => {
           glass_area: 8000,
           materials_identified: [
             {
-              type: "glass",
-              coverage_percentage: 80,
-              condition: "excellent" as const,
-              id: "1",
+              type: "glass" as const,
+              sqft: 8000,
+              percentage: 80,
+              confidence: 95,
             },
             {
-              type: "metal",
-              coverage_percentage: 20,
-              condition: "good" as const,
-              id: "2",
+              type: "metal" as const,
+              sqft: 2000,
+              percentage: 20,
+              confidence: 90,
             },
           ],
           height_estimation: { stories: 20, feet: 240, confidence: 0.95 },
@@ -245,7 +245,7 @@ describe("FacadeAnalysisService", () => {
       ];
 
       const buildingInfo = {
-        building_type: "commercial",
+        building_type: "office",
         building_address: "456 Tower St",
       };
 

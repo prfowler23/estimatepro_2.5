@@ -6,14 +6,15 @@ import { logger } from "@/lib/utils/logger";
 import { z } from "zod";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/facade-analysis/[id] - Get a specific facade analysis
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const supabase = createClient();
     const {
       data: { user },
@@ -23,10 +24,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const service = new FacadeAnalysisService(supabase, user.id);
-    const analysis = await service.getFacadeAnalysis(params.id);
+    const service = new FacadeAnalysisService();
 
-    if (!analysis) {
+    // Get facade analysis by ID
+    const { data: analysis, error: analysisError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", user.id)
+      .single();
+
+    if (analysisError || !analysis) {
       return NextResponse.json(
         { error: "Facade analysis not found" },
         { status: 404 },
@@ -34,16 +42,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get associated images
-    const images = await service.getImages(analysis.id);
+    const { data: images, error: imagesError } = await supabase
+      .from("facade_analysis_images")
+      .select("*")
+      .eq("facade_analysis_id", id);
 
-    // Get aggregated measurements
-    const measurements = await service.calculateAggregatedMeasurements(
-      analysis.id,
-    );
+    // Calculate measurements
+    const measurements = await service.calculateMeasurements(analysis);
 
     return NextResponse.json({
       analysis,
-      images,
+      images: images || [],
       measurements,
     });
   } catch (error) {
@@ -58,6 +67,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PATCH /api/facade-analysis/[id] - Update a facade analysis
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const supabase = createClient();
     const {
       data: { user },
@@ -72,21 +82,32 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // Validate request body
     const validatedData = updateFacadeAnalysisSchema.parse(body);
 
-    const service = new FacadeAnalysisService(supabase, user.id);
-
     // Check if analysis exists and user has access
-    const existing = await service.getFacadeAnalysis(params.id);
-    if (!existing) {
+    const { data: existing, error: existingError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", user.id)
+      .single();
+
+    if (existingError || !existing) {
       return NextResponse.json(
         { error: "Facade analysis not found" },
         { status: 404 },
       );
     }
 
-    const updatedAnalysis = await service.updateFacadeAnalysis(
-      params.id,
-      validatedData,
-    );
+    // Update the analysis
+    const { data: updatedAnalysis, error: updateError } = await supabase
+      .from("facade_analyses")
+      .update(validatedData)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
 
     return NextResponse.json({ analysis: updatedAnalysis });
   } catch (error) {
@@ -108,6 +129,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/facade-analysis/[id] - Delete a facade analysis
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const supabase = createClient();
     const {
       data: { user },
@@ -117,18 +139,30 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const service = new FacadeAnalysisService(supabase, user.id);
-
     // Check if analysis exists and user has access
-    const existing = await service.getFacadeAnalysis(params.id);
-    if (!existing) {
+    const { data: existing, error: existingError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", user.id)
+      .single();
+
+    if (existingError || !existing) {
       return NextResponse.json(
         { error: "Facade analysis not found" },
         { status: 404 },
       );
     }
 
-    await service.deleteFacadeAnalysis(params.id);
+    // Delete the analysis (cascade will handle images)
+    const { error: deleteError } = await supabase
+      .from("facade_analyses")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json({
       message: "Facade analysis deleted successfully",

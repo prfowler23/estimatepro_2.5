@@ -96,6 +96,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/three": "^0.178.1",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",

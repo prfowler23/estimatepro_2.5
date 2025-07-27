@@ -6,9 +6,9 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const uploadImageSchema = z
@@ -25,6 +25,7 @@ const uploadImageSchema = z
 // GET /api/facade-analysis/[id]/images - Get all images for a facade analysis
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const supabase = createClient();
     const {
       data: { user },
@@ -34,20 +35,29 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const service = new FacadeAnalysisService(supabase, user.id);
-
     // Check if analysis exists and user has access
-    const analysis = await service.getFacadeAnalysis(params.id);
-    if (!analysis) {
+    const { data: analysis, error: analysisError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", user.id)
+      .single();
+
+    if (analysisError || !analysis) {
       return NextResponse.json(
         { error: "Facade analysis not found" },
         { status: 404 },
       );
     }
 
-    const images = await service.getImages(params.id);
+    // Get images
+    const { data: images, error: imagesError } = await supabase
+      .from("facade_analysis_images")
+      .select("*")
+      .eq("facade_analysis_id", id)
+      .order("created_at", { ascending: true });
 
-    return NextResponse.json({ images });
+    return NextResponse.json({ images: images || [] });
   } catch (error) {
     logger.error("Error in GET /api/facade-analysis/[id]/images:", error);
     return NextResponse.json(
@@ -60,6 +70,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // POST /api/facade-analysis/[id]/images - Add image to facade analysis
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const supabase = createClient();
     const {
       data: { user },
@@ -69,11 +80,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const service = new FacadeAnalysisService(supabase, user.id);
-
     // Check if analysis exists and user has access
-    const analysis = await service.getFacadeAnalysis(params.id);
-    if (!analysis) {
+    const { data: analysis, error: analysisError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", user.id)
+      .single();
+
+    if (analysisError || !analysis) {
       return NextResponse.json(
         { error: "Facade analysis not found" },
         { status: 404 },
@@ -99,7 +114,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // If an image file was uploaded, upload it to Supabase Storage
     if (validatedData.image) {
       const fileExt = validatedData.image.name.split(".").pop();
-      const fileName = `facade-analysis/${params.id}/${uuidv4()}.${fileExt}`;
+      const fileName = `facade-analysis/${id}/${uuidv4()}.${fileExt}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("estimate-photos")
@@ -129,12 +144,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Add image to facade analysis
-    const facadeImage = await service.addImage(
-      params.id,
-      finalImageUrl,
-      validatedData.imageType,
-      validatedData.viewAngle,
-    );
+    const { data: facadeImage, error: insertError } = await supabase
+      .from("facade_analysis_images")
+      .insert({
+        facade_analysis_id: id,
+        image_url: finalImageUrl,
+        image_type: validatedData.imageType,
+        view_angle: validatedData.viewAngle,
+        uploaded_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      logger.error("Error inserting image record:", insertError);
+      return NextResponse.json(
+        { error: "Failed to save image record" },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({ image: facadeImage }, { status: 201 });
   } catch (error) {
