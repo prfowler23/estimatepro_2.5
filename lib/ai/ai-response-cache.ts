@@ -560,6 +560,16 @@ export class AIResponseCache {
 
     console.log("⚙️ AI response cache configuration updated", this.config);
   }
+
+  // Generic get method for facade analysis
+  get<T>(prefix: string, key: any): T | null {
+    return aiCache.get<T>(prefix, key);
+  }
+
+  // Generic set method for facade analysis
+  set<T>(prefix: string, key: any, value: T, ttl?: number): void {
+    aiCache.set(prefix, key, value, ttl || 7200);
+  }
 }
 
 // Global AI response cache manager

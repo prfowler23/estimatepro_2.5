@@ -70,59 +70,9 @@ export class VendorService {
     type?: "equipment" | "materials" | "both";
     preferredOnly?: boolean;
   }): Promise<Vendor[]> {
-    try {
-      let query = this.supabase
-        .from("vendors")
-        .select("*")
-        .eq("is_active", true);
-
-      // Apply filters
-      if (filters?.type) {
-        if (filters.type === "equipment" || filters.type === "materials") {
-          query = query.or(`type.eq.${filters.type},type.eq.both`);
-        } else {
-          query = query.eq("type", filters.type);
-        }
-      }
-
-      if (filters?.preferredOnly) {
-        query = query.eq("preferred_vendor", true);
-      }
-
-      const { data, error } = await query
-        .order("preferred_vendor", { ascending: false })
-        .order("rating", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching vendors:", error);
-        return this.getFallbackVendors(filters);
-      }
-
-      // Map database results to interface format
-      // Note: Since vendors table doesn't exist in schema, this mapping would be used
-      // when the table is added in the future
-      return (data as any[]).map((vendor: any) => ({
-        id: vendor.id,
-        name: vendor.name,
-        type: vendor.type,
-        rating: vendor.rating || 0,
-        reliability: vendor.reliability || 0,
-        preferredVendor: vendor.preferredVendor || false,
-        contact: {
-          name: vendor.contact_name,
-          phone: vendor.contact_phone,
-          email: vendor.contact_email,
-          address: vendor.contact_address,
-        },
-        paymentTerms: vendor.paymentTerms || undefined,
-        deliveryRadius: vendor.deliveryRadius || undefined,
-        specialties: (vendor.specialties as string[]) || [],
-        notes: vendor.notes || undefined,
-      }));
-    } catch (error) {
-      console.error("Error fetching vendors:", error);
-      return this.getFallbackVendors(filters);
-    }
+    // TODO: Implement database query when vendors table is added
+    // For now, always use fallback vendors
+    return this.getFallbackVendors(filters);
   }
 
   /**

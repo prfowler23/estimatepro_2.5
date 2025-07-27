@@ -1,6 +1,7 @@
 import { facadeAnalysisService } from "@/lib/services/facade-analysis-service";
 import { AIService } from "@/lib/services/ai-service";
 import { aiCache } from "@/lib/ai/ai-cache";
+import type { FacadeAnalysis } from "@/lib/types/facade-analysis-types";
 
 jest.mock("@/lib/services/ai-service");
 jest.mock("@/lib/ai/ai-cache");
@@ -261,20 +262,35 @@ describe("FacadeAnalysisService", () => {
 
   describe("generateServiceRecommendations", () => {
     it("should recommend window cleaning for glass areas", async () => {
-      const analysis = {
+      const analysis: FacadeAnalysis = {
         id: "test-id",
         estimate_id: "test-estimate",
         created_by: "test-user",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        building_address: "123 Test St",
         building_type: "office" as const,
+        building_height_stories: 10,
+        building_height_feet: 120,
         total_facade_sqft: 10000,
         total_glass_sqft: 4000,
         net_facade_sqft: 6000,
         glass_to_facade_ratio: 40,
-        confidence_level: 90,
-        building_height_stories: 10,
+        materials: [],
         facade_complexity: "moderate" as const,
+        sidewalk_sqft: 1000,
+        covered_walkway_sqft: 0,
+        parking_spaces: 0,
+        parking_sqft: 0,
+        loading_dock_sqft: 0,
+        confidence_level: 90,
+        ai_model_version: "v8.0",
+        image_sources: [],
+        validation_notes: "",
+        manual_adjustments: {},
+        requires_field_verification: false,
+        has_covered_areas: false,
+        is_historic_building: false,
       };
 
       const result =
@@ -288,20 +304,35 @@ describe("FacadeAnalysisService", () => {
     });
 
     it("should recommend appropriate equipment based on height", async () => {
-      const shortBuilding = {
+      const shortBuilding: FacadeAnalysis = {
         id: "test-id",
         estimate_id: "test-estimate",
         created_by: "test-user",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        building_address: "456 Test Ave",
         building_type: "office" as const,
+        building_height_stories: 3,
+        building_height_feet: 36,
         total_facade_sqft: 5000,
         total_glass_sqft: 2000,
         net_facade_sqft: 3000,
         glass_to_facade_ratio: 40,
-        confidence_level: 90,
-        building_height_stories: 3,
+        materials: [],
         facade_complexity: "simple" as const,
+        sidewalk_sqft: 500,
+        covered_walkway_sqft: 0,
+        parking_spaces: 0,
+        parking_sqft: 0,
+        loading_dock_sqft: 0,
+        confidence_level: 90,
+        ai_model_version: "v8.0",
+        image_sources: [],
+        validation_notes: "",
+        manual_adjustments: {},
+        requires_field_verification: false,
+        has_covered_areas: false,
+        is_historic_building: false,
       };
 
       const result =

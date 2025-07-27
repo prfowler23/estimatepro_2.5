@@ -464,3 +464,22 @@ export const sanitizeAIResponse = (response: any): any => {
   }
   return response;
 };
+
+export const validateAIRequest = async (request: any): Promise<void> => {
+  // Basic request validation
+  if (!request || typeof request !== "object") {
+    throw new ValidationError("Invalid request format", []);
+  }
+
+  // Scan any string properties
+  for (const [key, value] of Object.entries(request)) {
+    if (typeof value === "string") {
+      const scanResult = securityScanner.scanContent(value);
+      if (!scanResult.safe) {
+        throw new ContentFilterError(
+          `Request field ${key} failed security scan: ${scanResult.violations.join(", ")}`,
+        );
+      }
+    }
+  }
+};

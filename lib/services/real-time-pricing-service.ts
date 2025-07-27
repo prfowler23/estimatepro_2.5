@@ -356,7 +356,10 @@ export class RealTimePricingService {
       // Determine service area
       const area =
         (typeof takeoffData === "object" &&
-          takeoffData?.calculations?.totalArea) ||
+          takeoffData !== null &&
+          "totalArea" in takeoffData &&
+          typeof takeoffData.totalArea === "number" &&
+          takeoffData.totalArea) ||
         areaData?.reduce(
           (sum, m) => sum + (m.type === "area" ? m.value : 0),
           0,

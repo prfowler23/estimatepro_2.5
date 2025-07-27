@@ -182,7 +182,11 @@ export class OptimizedRealTimePricingService {
     let cached = this.calculationCache.get(cacheKey);
 
     // Check cache age
-    if (cached && Date.now() - cached.timestamp > this.config.maxCacheAge) {
+    if (
+      cached &&
+      cached.timestamp &&
+      Date.now() - cached.timestamp > this.config.maxCacheAge
+    ) {
       this.calculationCache.delete(cacheKey);
       cached = undefined;
     }

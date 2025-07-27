@@ -431,9 +431,18 @@ export class SessionRecoveryService {
         expires_at: draft.expiresAt.toISOString(),
       };
 
-      const { error } = await supabase
-        .from("session_drafts")
-        .upsert([upsertData]);
+      const { error } = await supabase.from("estimation_flows").upsert({
+        id: draft.id,
+        estimate_id: draft.estimateId || "",
+        user_id: draft.userId,
+        current_step: draft.currentStep,
+        data: draft.data as any,
+        progress: draft.progress as any,
+        metadata: draft.metadata as any,
+        status: "active",
+        expires_at: draft.expiresAt.toISOString(),
+        auto_cleanup: false,
+      });
 
       if (error) throw error;
     });
@@ -444,7 +453,7 @@ export class SessionRecoveryService {
   ): Promise<SessionDraft[]> {
     const result = await withDatabaseRetry(async () => {
       const { data, error } = await supabase
-        .from("session_drafts")
+        .from("estimation_flows")
         .select("*")
         .eq("user_id", userId)
         .gt("expires_at", new Date().toISOString())
@@ -456,14 +465,31 @@ export class SessionRecoveryService {
         id: row.id,
         estimateId: row.estimate_id,
         userId: row.user_id,
-        sessionId: row.session_id,
-        currentStep: row.current_step,
-        data: row.data as GuidedFlowData,
-        progress: row.progress as SessionDraft["progress"],
-        metadata: row.metadata as unknown as SessionDraft["metadata"],
-        recovery: row.recovery as unknown as SessionDraft["recovery"],
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        sessionId: row.id, // Use id as sessionId since estimation_flows doesn't have session_id
+        currentStep: row.current_step?.toString() || "1",
+        data: (row.flow_data || {}) as GuidedFlowData,
+        progress: {
+          completedSteps: [],
+          currentStepIndex: row.current_step || 1,
+          totalSteps: 5,
+          progressPercentage: ((row.current_step || 1) / 5) * 100,
+        },
+        metadata: {
+          browser: "",
+          device: (row.device_info as any) || {},
+          location: "",
+          lastSavedDuration: 0,
+        },
+        recovery: {
+          autoSaveEnabled: row.auto_save_enabled || true,
+          lastAutoSave: row.last_auto_save
+            ? new Date(row.last_auto_save)
+            : new Date(),
+          conflictDetected: row.conflict_detected || false,
+          version: 1,
+        },
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date()),
         expiresAt: new Date(row.expires_at),
       }));
     });
@@ -474,7 +500,7 @@ export class SessionRecoveryService {
   private static async deleteFromDatabase(draftId: string): Promise<void> {
     await withDatabaseRetry(async () => {
       const { error } = await supabase
-        .from("session_drafts")
+        .from("estimation_flows")
         .delete()
         .eq("id", draftId);
 

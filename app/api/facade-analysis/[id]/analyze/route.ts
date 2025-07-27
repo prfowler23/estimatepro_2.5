@@ -84,14 +84,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const validatedRequest = facadeAnalysisAIRequestSchema.parse(aiRequest);
 
     // Security validation
-    const securityCheck = await validateAIRequest(validatedRequest);
-    if (!securityCheck.isValid) {
-      return NextResponse.json({ error: securityCheck.error }, { status: 400 });
+    try {
+      await validateAIRequest(validatedRequest);
+    } catch (error) {
+      return NextResponse.json(
+        { error: "Security validation failed" },
+        { status: 400 },
+      );
     }
 
     // Check cache
     const cacheKey = `facade-analysis-${id}-${JSON.stringify(validatedRequest)}`;
-    const cachedResponse = await aiResponseCache.get(cacheKey);
+    const cachedResponse = await aiResponseCache.get<FacadeAnalysisAIResponse>(
+      "facade_analysis",
+      cacheKey,
+    );
     if (cachedResponse) {
       logger.info("Using cached AI response for facade analysis");
       return NextResponse.json(cachedResponse);
@@ -223,7 +230,12 @@ Provide detailed analysis including:
     }
 
     // Cache the response
-    await aiResponseCache.set(cacheKey, analysisResponse, 3600); // 1 hour cache
+    await aiResponseCache.set(
+      "facade_analysis",
+      cacheKey,
+      analysisResponse,
+      3600,
+    ); // 1 hour cache
 
     return NextResponse.json(analysisResponse);
   } catch (error) {
@@ -234,7 +246,9 @@ Provide detailed analysis including:
       );
     }
 
-    logger.error("Error in POST /api/facade-analysis/[id]/analyze:", error);
+    logger.error("Error in POST /api/facade-analysis/[id]/analyze:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       {
         error: "Failed to analyze facade",

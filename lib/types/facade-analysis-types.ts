@@ -109,3 +109,24 @@ export interface DetectedElement {
   confidence: number;
   properties?: Record<string, any>;
 }
+
+export interface FacadeAnalysisAIResponse {
+  success: boolean;
+  analysis: {
+    measurements: {
+      total_facade_sqft: number;
+      total_glass_sqft: number;
+      glass_to_facade_ratio: number;
+      confidence: number;
+    };
+    materials: FacadeMaterial[];
+    complexity: "simple" | "moderate" | "complex";
+    ground_surfaces?: {
+      sidewalk_sqft?: number;
+      parking_sqft?: number;
+      loading_dock_sqft?: number;
+    };
+    recommendations: string[];
+    confidence_level: number;
+  };
+}

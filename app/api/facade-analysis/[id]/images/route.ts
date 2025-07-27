@@ -59,7 +59,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ images: images || [] });
   } catch (error) {
-    logger.error("Error in GET /api/facade-analysis/[id]/images:", error);
+    logger.error("Error in GET /api/facade-analysis/[id]/images:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -173,7 +175,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    logger.error("Error in POST /api/facade-analysis/[id]/images:", error);
+    logger.error("Error in POST /api/facade-analysis/[id]/images:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
