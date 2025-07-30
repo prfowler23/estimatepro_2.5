@@ -184,11 +184,11 @@ function DefaultItem({
     return "text-red-600 bg-red-50";
   };
 
-  const formatValue = (value: any) => {
+  const formatValue = (value: unknown): string => {
     if (Array.isArray(value)) {
       return value.join(", ");
     }
-    if (typeof value === "object") {
+    if (typeof value === "object" && value !== null) {
       return JSON.stringify(value);
     }
     return String(value);

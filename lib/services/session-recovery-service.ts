@@ -1,7 +1,7 @@
 // Session Recovery Service
 // Handles browser tab recovery, draft management, and session restoration
 
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/universal-client";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 
@@ -152,6 +152,7 @@ export class SessionRecoveryService {
 
   // Get all recoverable sessions for current user
   static async getRecoverableSessions(): Promise<SessionDraft[]> {
+    const supabase = createClient();
     try {
       const user = await this.getCurrentUser();
       if (!user) return [];
@@ -181,6 +182,7 @@ export class SessionRecoveryService {
 
   // Recover a specific session
   static async recoverSession(draftId: string): Promise<SessionDraft | null> {
+    const supabase = createClient();
     try {
       this.recoveryState.recoveryInProgress = true;
 
@@ -218,6 +220,7 @@ export class SessionRecoveryService {
 
   // Delete a session draft
   static async deleteDraft(draftId: string): Promise<boolean> {
+    const supabase = createClient();
     try {
       await Promise.all([
         this.deleteFromLocalStorage(draftId),
@@ -240,6 +243,7 @@ export class SessionRecoveryService {
 
   // Clean up expired drafts
   static async cleanupExpiredDrafts(): Promise<number> {
+    const supabase = createClient();
     try {
       const drafts = await this.getRecoverableSessions();
       const expiredDrafts = drafts.filter(
@@ -284,6 +288,7 @@ export class SessionRecoveryService {
 
   private static setupTabCloseDetection(): void {
     window.addEventListener("beforeunload", async (event) => {
+      const supabase = createClient();
       if (this.hasUnsavedChanges()) {
         // Save emergency draft before tab closes
         if (this.recoveryState.currentSession) {
@@ -327,6 +332,7 @@ export class SessionRecoveryService {
   }
 
   private static async checkForRecoverableSessions(): Promise<void> {
+    const supabase = createClient();
     const drafts = await this.getRecoverableSessions();
     this.recoveryState.availableDrafts = drafts;
     this.recoveryState.hasRecoverableSessions = drafts.length > 0;
@@ -366,6 +372,7 @@ export class SessionRecoveryService {
   }
 
   private static async getCurrentUser() {
+    const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -388,6 +395,7 @@ export class SessionRecoveryService {
   }
 
   private static async saveToLocalStorage(draft: SessionDraft): Promise<void> {
+    const supabase = createClient();
     const drafts = await this.getFromLocalStorage();
     const existingIndex = drafts.findIndex((d) => d.id === draft.id);
 
@@ -401,6 +409,7 @@ export class SessionRecoveryService {
   }
 
   private static async getFromLocalStorage(): Promise<SessionDraft[]> {
+    const supabase = createClient();
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
@@ -411,12 +420,14 @@ export class SessionRecoveryService {
   }
 
   private static async deleteFromLocalStorage(draftId: string): Promise<void> {
+    const supabase = createClient();
     const drafts = await this.getFromLocalStorage();
     const filtered = drafts.filter((d) => d.id !== draftId);
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
   }
 
   private static async saveToDatabase(draft: SessionDraft): Promise<void> {
+    const supabase = createClient();
     await withDatabaseRetry(async () => {
       const upsertData = {
         id: draft.id,
@@ -428,20 +439,21 @@ export class SessionRecoveryService {
         progress: draft.progress as any,
         metadata: draft.metadata as any,
         recovery: draft.recovery as any,
-        expires_at: draft.expiresAt.toISOString(),
       };
 
       const { error } = await supabase.from("estimation_flows").upsert({
         id: draft.id,
         estimate_id: draft.estimateId || "",
         user_id: draft.userId,
-        current_step: draft.currentStep,
-        data: draft.data as any,
-        progress: draft.progress as any,
-        metadata: draft.metadata as any,
+        step: draft.currentStep,
+        flow_data: {
+          ...draft.data,
+          progress: draft.progress,
+          metadata: draft.metadata,
+          expiresAt: draft.expiresAt.toISOString(),
+        } as any,
         status: "active",
-        expires_at: draft.expiresAt.toISOString(),
-        auto_cleanup: false,
+        auto_save_enabled: true,
       });
 
       if (error) throw error;
@@ -452,11 +464,11 @@ export class SessionRecoveryService {
     userId: string,
   ): Promise<SessionDraft[]> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("estimation_flows")
         .select("*")
         .eq("user_id", userId)
-        .gt("expires_at", new Date().toISOString())
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
@@ -475,22 +487,31 @@ export class SessionRecoveryService {
           progressPercentage: ((row.current_step || 1) / 5) * 100,
         },
         metadata: {
-          browser: "",
-          device: (row.device_info as any) || {},
-          location: "",
-          lastSavedDuration: 0,
+          lastActivity: new Date(
+            row.last_modified || row.updated_at || new Date(),
+          ),
+          browserInfo: {
+            userAgent: (row.device_info as any)?.userAgent || "unknown",
+            platform: (row.device_info as any)?.platform || "unknown",
+            url: (row.device_info as any)?.url || "/",
+            tabId: (row.device_info as any)?.tabId,
+          },
+          autoSaveEnabled: row.auto_save_enabled || true,
+          isActive: row.status === "active",
         },
         recovery: {
-          autoSaveEnabled: row.auto_save_enabled || true,
-          lastAutoSave: row.last_auto_save
+          source: "auto-save" as const,
+          recoveryAttempts: 0,
+          lastRecoveryTime: row.last_auto_save
             ? new Date(row.last_auto_save)
-            : new Date(),
-          conflictDetected: row.conflict_detected || false,
-          version: 1,
+            : undefined,
         },
         createdAt: new Date(row.created_at || new Date()),
         updatedAt: new Date(row.updated_at || new Date()),
-        expiresAt: new Date(row.expires_at),
+        expiresAt: new Date(
+          (row.flow_data as any)?.expiresAt ||
+            new Date(Date.now() + 24 * 60 * 60 * 1000),
+        ),
       }));
     });
 
@@ -498,6 +519,7 @@ export class SessionRecoveryService {
   }
 
   private static async deleteFromDatabase(draftId: string): Promise<void> {
+    const supabase = createClient();
     await withDatabaseRetry(async () => {
       const { error } = await supabase
         .from("estimation_flows")

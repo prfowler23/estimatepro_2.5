@@ -18,7 +18,7 @@ import { FacadeAnalysis } from "@/lib/types/facade-analysis-types";
 import { useFacadeAnalysis } from "@/hooks/use-facade-analysis-form";
 import { FacadeVisualization } from "@/components/visualizer/facade-visualization";
 import { MaterialBreakdown } from "@/components/calculator/material-breakdown";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 interface FacadeAnalysisCardProps {
   estimateId: string;

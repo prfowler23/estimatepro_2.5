@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { formatNumber } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { sanitizeUserInput } from "@/lib/utils/input-sanitization";
 import { FacadeImageGallery } from "./facade-image-gallery";
 import { FacadeMaterialsList } from "./facade-materials-list";
 import { FacadeAnalysisActions } from "./facade-analysis-actions";
@@ -67,7 +68,7 @@ export function FacadeAnalysisDetail({
         <div className="space-y-1">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" />
-            {analysis.building_name || "Facade Analysis"}
+            {sanitizeUserInput(analysis.building_name) || "Facade Analysis"}
           </h2>
           {(analysis.building_type || analysis.location) && (
             <div className="text-muted-foreground flex items-center gap-2">
@@ -78,7 +79,7 @@ export function FacadeAnalysisDetail({
               {analysis.location && (
                 <>
                   <MapPin className="h-4 w-4" />
-                  {analysis.location}
+                  {sanitizeUserInput(analysis.location)}
                 </>
               )}
             </div>
@@ -261,7 +262,7 @@ export function FacadeAnalysisDetail({
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {analysis.notes}
+                  {sanitizeUserInput(analysis.notes)}
                 </p>
               </CardContent>
             </Card>

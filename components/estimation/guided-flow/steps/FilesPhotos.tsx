@@ -840,10 +840,10 @@ export const FilesPhotos = memo(
   FilesPhotosComponent,
   (prevProps, nextProps) => {
     return (
-      prevProps.data?.filesPhotos === nextProps.data?.filesPhotos &&
-      prevProps.onUpdate === nextProps.onUpdate &&
-      prevProps.onNext === nextProps.onNext &&
-      prevProps.onBack === nextProps.onBack
+      JSON.stringify(prevProps.data?.filesPhotos) ===
+      JSON.stringify(nextProps.data?.filesPhotos)
+      // Note: onUpdate, onNext, onBack are functions and will have new references
+      // Parent should wrap these in useCallback to prevent re-renders
     );
   },
 );

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/universal-client";
 import {
   FacadeAnalysis,
   FacadeAnalysisImage,
@@ -8,20 +8,49 @@ import { AIService } from "./ai-service";
 import { aiCache } from "@/lib/ai/ai-cache";
 
 export class FacadeAnalysisService {
-  private supabase;
-
-  constructor() {
-    this.supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+  // Simplified analyze method for AI tool integration
+  async analyzeImageSimple(
+    imageUrl: string,
+    analysisType: "facade" | "general" | "measurement" = "facade",
+    userId?: string,
+  ): Promise<any> {
+    try {
+      // Map analysis types to appropriate methods
+      if (analysisType === "facade") {
+        const result = await AIService.analyzeFacadeComprehensive(
+          imageUrl,
+          "commercial",
+        );
+        return {
+          success: true,
+          type: "facade",
+          ...result,
+        };
+      } else if (analysisType === "general" || analysisType === "measurement") {
+        const result = await AIService.analyzeBuilding({
+          imageUrl,
+          analysisType:
+            analysisType === "measurement" ? "measurement" : "building",
+        });
+        return {
+          success: true,
+          type: analysisType,
+          ...result,
+        };
+      }
+    } catch (error) {
+      throw new Error(
+        `Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
   }
 
   async createAnalysis(
     estimateId: string,
     userId: string,
   ): Promise<FacadeAnalysis> {
-    const { data, error } = await this.supabase
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from("facade_analyses")
       .insert({
         estimate_id: estimateId,
@@ -197,7 +226,8 @@ export class FacadeAnalysisService {
   }
 
   async getByEstimateId(estimateId: string): Promise<FacadeAnalysis | null> {
-    const { data, error } = await this.supabase
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from("facade_analyses")
       .select("*")
       .eq("estimate_id", estimateId)

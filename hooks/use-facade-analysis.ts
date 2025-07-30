@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FacadeAnalysis,
@@ -27,6 +27,17 @@ interface UseFacadeAnalysisOptions {
 
 export function useFacadeAnalysis(analysisId?: string) {
   const queryClient = useQueryClient();
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch facade analysis with images
   const { data, isLoading, error } = useQuery<FacadeAnalysisWithImages>({
@@ -123,6 +134,14 @@ export function useFacadeAnalysis(analysisId?: string) {
       additionalContext?: string;
       analysisFocus?: string[];
     }) => {
+      // Cancel any existing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+
       const response = await fetch(`/api/facade-analysis/${id}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,6 +149,7 @@ export function useFacadeAnalysis(analysisId?: string) {
           additional_context: additionalContext,
           analysis_focus: analysisFocus,
         }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {

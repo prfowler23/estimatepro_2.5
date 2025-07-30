@@ -21,7 +21,7 @@ export function SmartDefaultsDemo() {
     },
   });
 
-  const handleUpdateData = (field: string, value: any) => {
+  const handleUpdateData = (field: string, value: unknown) => {
     const fieldParts = field.split(".");
     const updatedData = { ...demoData };
 
@@ -37,11 +37,14 @@ export function SmartDefaultsDemo() {
     setDemoData(updatedData);
   };
 
-  const handleApplyDefault = (field: string, value: any) => {
+  const handleApplyDefault = (field: string, value: unknown) => {
     handleUpdateData(field, value);
   };
 
-  const handleApplySuggestion = (suggestion: any) => {
+  const handleApplySuggestion = (suggestion: {
+    targetField?: string;
+    suggestedValue?: unknown;
+  }) => {
     if (suggestion.targetField && suggestion.suggestedValue !== undefined) {
       handleApplyDefault(suggestion.targetField, suggestion.suggestedValue);
     }

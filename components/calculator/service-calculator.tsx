@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { userAction } from "@/lib/utils/logger";
 import {
   Card,
@@ -40,6 +40,11 @@ import { ServiceType } from "@/lib/types/estimate-types";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { supabase } from "@/lib/supabase/client";
 import {
+  generateSecureId,
+  sanitizeInput,
+} from "@/lib/utils/calculator-security";
+import { SecureText } from "./security/CalculatorSecurityWrapper";
+import {
   Building2,
   Droplets,
   Sparkles,
@@ -56,6 +61,7 @@ import {
   AlertTriangle,
   Scan,
 } from "lucide-react";
+import { ComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
 
 // Service data with icons and descriptions
 const SERVICES = [
@@ -161,7 +167,7 @@ const SERVICES = [
   },
 ];
 
-export function ServiceCalculator() {
+function ServiceCalculatorComponent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -207,7 +213,7 @@ export function ServiceCalculator() {
     setTimeout(() => {
       if (currentService) {
         const newService = {
-          id: crypto.randomUUID(),
+          id: generateSecureId("service"),
           serviceType: currentService as ServiceType,
           calculationResult: result,
           formData: result.formData || {},
@@ -223,10 +229,15 @@ export function ServiceCalculator() {
     removeService(serviceId);
   };
 
-  const totalPrice = calculateTotal();
-  const totalEquipmentCost = services.reduce((sum, service) => {
-    return sum + (service.calculationResult.equipment?.cost || 0);
-  }, 0);
+  // Memoize expensive calculations
+  const totalPrice = useMemo(() => calculateTotal(), [calculateTotal]);
+  const totalEquipmentCost = useMemo(
+    () =>
+      services.reduce((sum, service) => {
+        return sum + (service.calculationResult.equipment?.cost || 0);
+      }, 0),
+    [services],
+  );
 
   const handleSaveEstimate = async () => {
     if (!user) {
@@ -237,11 +248,11 @@ export function ServiceCalculator() {
     if (!currentEstimate) {
       // Create basic estimate info first
       setCustomerInfo({
-        customer_name: "Draft Estimate",
-        customer_email: user.email || "",
+        customer_name: sanitizeInput("Draft Estimate"),
+        customer_email: sanitizeInput(user.email || ""),
         customer_phone: "",
-        building_name: "Building",
-        building_address: "Address",
+        building_name: sanitizeInput("Building"),
+        building_address: sanitizeInput("Address"),
         building_height_stories: 1,
         total_price: totalPrice,
         status: "draft",
@@ -361,10 +372,14 @@ export function ServiceCalculator() {
                       </div>
                     )}
                     <div>
-                      <p className="font-medium">{serviceInfo?.name}</p>
+                      <p className="font-medium">
+                        <SecureText>{serviceInfo?.name}</SecureText>
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {service.calculationResult.breakdown?.[0]
-                          ?.description || "Calculated"}
+                        <SecureText>
+                          {service.calculationResult.breakdown?.[0]
+                            ?.description || "Calculated"}
+                        </SecureText>
                       </p>
                     </div>
                   </div>
@@ -605,5 +620,17 @@ export function ServiceCalculator() {
         onSuccess={handleAuthSuccess}
       />
     </div>
+  );
+}
+
+// Export wrapped with error boundary
+export function ServiceCalculator() {
+  return (
+    <ComponentErrorBoundary
+      componentName="ServiceCalculator"
+      showDetails={process.env.NODE_ENV === "development"}
+    >
+      <ServiceCalculatorComponent />
+    </ComponentErrorBoundary>
   );
 }

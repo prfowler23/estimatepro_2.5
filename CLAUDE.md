@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-EstimatePro is a comprehensive Next.js 14 application for building services contractors featuring AI-enhanced workflows, real-time pricing, session recovery, photo analysis, document extraction, 11 specialized service calculators, 3D visualization, drone integration, progressive web app capabilities, and professional estimate generation.
+EstimatePro is a comprehensive Next.js 15 application for building services contractors featuring AI-enhanced workflows, real-time pricing, session recovery, photo analysis, document extraction, 11 specialized service calculators, 3D visualization, drone integration, progressive web app capabilities, and professional estimate generation.
 
 ### Key Features
 
-- **10 AI Endpoints**: Photo analysis, facade analysis, document extraction, competitive intelligence, risk assessment, auto-quote generation
+- **15 AI Endpoints**: Photo analysis, facade analysis, document extraction, competitive intelligence, risk assessment, auto-quote generation, AI assistant, conversations, analytics, metrics, usage tracking, contact extraction, follow-up automation, analyze-facade, auto-estimate
 - **11 Service Calculators**: Real-time calculations for window cleaning, pressure washing, 3D modeling, etc.
 - **Real-Time Systems**: Live pricing updates, cross-step validation, dependency tracking, smart auto-save
 - **Session Management**: Browser crash recovery, tab sync, progressive data restoration
@@ -16,55 +16,120 @@ EstimatePro is a comprehensive Next.js 14 application for building services cont
 - **Guided Workflows**: Step-by-step estimation with validation and state persistence
 - **Enterprise Architecture**: Service layer, transaction support, caching, lazy loading, security
 - **Advanced UI Polish**: Skeleton loaders, contextual error handling, empty states, micro-interactions
+- **Visual Design System**: Industrial color palette, glass morphism effects, gradient overlays, professional animations
 
 ## Technology Stack
 
-**Frontend**: Next.js 14, TypeScript, Tailwind CSS, React Hook Form + Zod, Zustand, React Query, Radix UI, Framer Motion
+**Frontend**: Next.js 15, TypeScript, Tailwind CSS, React Hook Form + Zod, Zustand, React Query, Radix UI, Framer Motion
 
 **Backend**: Supabase (PostgreSQL, Auth, RLS), OpenAI GPT-4, Weather API, Resend Email
 
 **Processing**: jsPDF, React PDF, XLSX, html2canvas
+
+## Available MCP Servers and Subagents
+
+### MCP Servers
+
+**awkoy-notion-mcp-server**: MCP server for Notion integration
+
+- Create, update, and delete Notion entities
+- Operations for pages, blocks, databases, comments, and users
+- Comprehensive schema validation for all Notion operations
+
+**matthew-dailey-figma-mcp**: Figma integration server
+
+- Add Figma files to context
+- View specific nodes with thumbnails
+- Read and post comments on designs
+- Reply to existing comments
+
+**supabase**: Supabase database operations
+
+- Branch management (create, list, delete, merge, reset, rebase)
+- Database operations (list tables/extensions, apply migrations, execute SQL)
+- Edge Functions deployment
+- Logs and monitoring
+- TypeScript type generation
+- Security advisors for performance and vulnerability checks
+
+**zen**: Advanced AI workflow tools
+
+- Chat, debug, analyze, refactor, and plan workflows
+- Specialized tools for code review, security audits, documentation generation
+- Test generation and code tracing
+- Pre-commit validation and consensus building
+- Challenge tool for critical analysis
+
+### Available Subagents (via Task tool)
+
+**general-purpose**: General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks
+
+**sql-pro**: Write complex SQL queries, optimize execution plans, and design normalized schemas. Masters CTEs, window functions, and stored procedures
+
+**senior-code-reviewer**: Comprehensive code review from a senior fullstack developer perspective, including analysis of code quality, architecture decisions, security vulnerabilities, performance implications, and adherence to best practices
+
+**ui-engineer**: Create, modify, or review frontend code, UI components, or user interfaces. Includes building responsive layouts, implementing modern UI patterns, optimizing frontend performance, ensuring accessibility compliance
+
+**mcp-development-expert**: Assistance with Model Context Protocol (MCP) development, including building clients and servers, debugging MCP applications, understanding protocol specifications, or implementing MCP solutions
 
 ## Project Structure
 
 ```
 ├── app/                          # Next.js App Router pages
 │   ├── api/                      # API routes
-│   │   ├── ai/                   # 10 specialized AI endpoints
+│   │   ├── ai/                   # 15 specialized AI endpoints
+│   │   │   ├── analytics/        # AI analytics and insights
+│   │   │   ├── analyze-facade/   # Facade analysis endpoint
+│   │   │   ├── assistant/        # AI assistant chat interface
+│   │   │   ├── auto-estimate/    # Automated estimate generation
 │   │   │   ├── auto-quote/       # Automated quote generation
 │   │   │   ├── competitive-intelligence/ # Market analysis
+│   │   │   ├── conversations/    # AI conversation management
 │   │   │   ├── enhanced-photo-analysis/ # Advanced photo processing
 │   │   │   ├── extract-contact-info/ # Contact extraction
 │   │   │   ├── extract-documents/ # Document processing
 │   │   │   ├── facade-analysis/  # AI facade analysis
 │   │   │   ├── follow-up-automation/ # Automated follow-ups
-│   │   │   └── risk-assessment/  # Automated risk analysis
+│   │   │   ├── metrics/          # AI usage metrics
+│   │   │   ├── risk-assessment/  # Automated risk analysis
+│   │   │   └── usage/            # AI usage tracking
 │   │   ├── analytics/            # Analytics API
+│   │   │   └── vitals/           # Web vitals and performance metrics
 │   │   ├── analyze-photos/       # Photo analysis
 │   │   ├── customers/            # Customer management
-│   │   ├── drone/                # Drone operations API (NEW)
+│   │   ├── drone/                # Drone operations API
+│   │   ├── enhanced/             # Enhanced API endpoints
 │   │   ├── estimation-flows/     # Guided flow API
-│   │   └── quotes/               # Legacy quote operations
+│   │   ├── process/              # Processing API
+│   │   ├── stream/               # Streaming API
+│   │   └── quotes/               # Quote operations
 │   ├── auth/                     # Authentication pages
 │   ├── calculator/               # Service calculator page
 │   ├── dashboard/                # Main dashboard
-│   ├── estimates/                # Estimate management (NEW)
+│   ├── estimates/                # Estimate management
 │   │   ├── [id]/                 # Individual estimate pages
 │   │   └── new/guided/           # Guided estimation flow
-│   ├── 3d-demo/                  # 3D visualization demo (NEW)
-│   ├── drone-demo/               # Drone integration demo (NEW)
+│   ├── ai-analytics/             # AI Analytics Dashboard
+│   ├── ai-assistant/             # AI Assistant pages
+│   │   ├── enhanced/             # Enhanced AI Assistant interface
+│   │   ├── integrated/           # Integrated AI Assistant
+│   │   └── tools/                # AI Assistant with tools
+│   ├── 3d-demo/                  # 3D visualization demo
+│   ├── drone-demo/               # Drone integration demo
+│   ├── test-sentry/              # Sentry error tracking test
 │   └── settings/                 # Application settings
 ├── components/                   # React components
 │   ├── ai/                       # AI-related components
 │   │   ├── FacadeAnalysisForm.tsx # AI facade analysis interface
 │   │   ├── FacadeAnalysisResults.tsx # Facade analysis display
-│   │   ├── SmartField.tsx        # AI-powered form fields
-│   │   └── IntelligentServiceSuggestions.tsx # AI service recommendations
+│   │   └── SmartField.tsx        # AI-powered form fields
 │   ├── calculator/               # Service calculators with lazy loading
 │   ├── canvas/                   # Drawing and measurement tools
 │   ├── dashboard/                # Enhanced dashboard components
 │   │   ├── AIBusinessInsights.tsx # AI-powered analytics dashboard
-│   │   └── AICreateEstimateCard.tsx # Quick estimate creation
+│   │   ├── AICreateEstimateCard.tsx # Quick estimate creation (industrial theme)
+│   │   ├── EnhancedDashboardLayout.tsx # Animated background & depth
+│   │   └── EnhancedDashboardHeader.tsx # Dynamic greetings & status
 │   ├── drone/                    # Drone operations components
 │   ├── duration/                 # Timeline and scheduling
 │   ├── error-handling/           # Error boundaries and handling
@@ -78,18 +143,22 @@ EstimatePro is a comprehensive Next.js 14 application for building services cont
 │   │           └── ProgressiveValidation.tsx # Real-time validation
 │   ├── expenses/                 # Cost breakdown components
 │   ├── pricing/                  # Pricing strategy tools
-│   ├── pwa/                      # Progressive Web App components (NEW)
+│   ├── pwa/                      # Progressive Web App components
 │   │   ├── pwa-status.tsx        # PWA status indicators
 │   │   └── pwa-initializer.tsx   # PWA initialization
 │   ├── takeoff/                  # Measurement and takeoff
-│   ├── validation/               # Enhanced validation components (NEW)
+│   ├── validation/               # Enhanced validation components
 │   │   └── ProgressiveHintsSystem.tsx # Progressive validation hints
 │   ├── visualizer/               # 3D visualization components
-│   └── ui/                       # Reusable UI components with lazy loading (ENHANCED)
+│   └── ui/                       # Reusable UI components with lazy loading
 │       ├── skeleton.tsx          # Advanced skeleton loaders with animations
 │       ├── error-alert.tsx       # Contextual error handling with recovery
 │       ├── empty-state.tsx       # Intelligent empty states with guidance
 │       ├── button.tsx            # Enhanced buttons with ripple & haptic feedback
+│       ├── stat-card.tsx         # Gradient statistics cards
+│       ├── feature-card.tsx      # Feature cards with hover effects
+│       ├── section-header.tsx    # Animated section headers
+│       ├── enhanced-card.tsx     # Versatile card variants
 │       ├── SaveExitButton.tsx    # Smart workflow exit handling
 │       ├── SessionRecoveryModal.tsx # Session recovery interface
 │       ├── mobile-bottom-nav.tsx # Advanced mobile navigation
@@ -98,7 +167,7 @@ EstimatePro is a comprehensive Next.js 14 application for building services cont
 │           ├── SwipeIndicator.tsx # Touch gesture feedback
 │           └── components/       # Shared mobile components
 ├── lib/                          # Core utilities and services
-│   ├── ai/                       # AI service integrations (ENHANCED)
+│   ├── ai/                       # AI service integrations
 │   │   ├── ai-response-cache.ts  # AI response caching system
 │   │   ├── ai-config.ts          # AI configuration management
 │   │   ├── ai-security.ts        # AI security and validation
@@ -108,44 +177,57 @@ EstimatePro is a comprehensive Next.js 14 application for building services cont
 │   │   └── prompts/              # AI prompt templates
 │   ├── calculations/             # Service calculation engines
 │   ├── config/                   # Application configuration
-│   ├── drone/                    # Drone service framework (NEW)
-│   ├── schemas/                  # API validation schemas (NEW)
+│   ├── drone/                    # Drone service framework
+│   ├── schemas/                  # API validation schemas
 │   ├── services/                 # Business logic layer
+│   │   ├── ai-conversation-service.ts # AI conversation management
 │   │   ├── ai-service.ts         # AI business logic
+│   │   ├── analytics-metrics-service.ts # Analytics metrics tracking
+│   │   ├── analytics-service.ts  # Analytics business logic
 │   │   ├── auto-save-service.ts  # Smart auto-save with conflict resolution
 │   │   ├── calculator-service.ts # Calculator business logic
 │   │   ├── cross-step-population-service.ts # AI-driven step population
 │   │   ├── cross-step-validation-service.ts # Inter-step validation
 │   │   ├── dependency-tracking-service.ts # Data dependency tracking
+│   │   ├── equipment-materials-service.ts # Equipment and materials management
+│   │   ├── estimate-crud-service.ts # Estimate CRUD operations
 │   │   ├── estimate-service.ts   # Estimate business logic
+│   │   ├── estimate-validation-service.ts # Estimate validation
 │   │   ├── facade-analysis-service.ts # Facade analysis business logic
+│   │   ├── performance-optimization-service.ts # Performance optimization
+│   │   ├── photo-service.ts      # Photo management and processing
+│   │   ├── pilot-service.ts      # Pilot/drone service management
+│   │   ├── pilot-service-client.ts # Pilot service client
 │   │   ├── real-time-pricing-service.ts # Live pricing calculations
+│   │   ├── risk-assessment-service.ts # Risk assessment logic
 │   │   ├── session-recovery-service.ts # Browser crash recovery
+│   │   ├── session-recovery-service-client.ts # Session recovery client
 │   │   ├── vendor-service.ts     # Vendor management
+│   │   ├── weather-service.ts    # Weather integration service
 │   │   ├── workflow-service.ts   # Workflow management
 │   │   └── workflow-templates.ts # Workflow template management
 │   ├── stores/                   # Zustand state management
 │   ├── supabase/                 # Database client/server
 │   ├── types/                    # TypeScript type definitions
-│   ├── utils/                    # Utility functions (ENHANCED)
+│   ├── utils/                    # Utility functions
 │   │   ├── cache.ts              # Caching utilities
 │   │   ├── database-optimization.ts # DB performance
 │   │   ├── null-safety.ts        # Type-safe null handling
 │   │   └── retry-logic.ts        # Retry mechanisms
-│   ├── pwa/                      # Progressive Web App services (NEW)
+│   ├── pwa/                      # Progressive Web App services
 │   │   ├── offline-manager.ts    # Advanced offline functionality
 │   │   └── pwa-service.ts        # Complete PWA management
 │   ├── validation/               # Validation utilities
 │   │   └── data-sanitization.ts  # XSS/injection protection
-│   └── visualization/            # 3D visualization engine (NEW)
+│   └── visualization/            # 3D visualization engine
 ├── contexts/                     # React contexts
 ├── hooks/                        # Custom React hooks
 │   ├── useAutoSave.ts            # Auto-save hook
-│   ├── useFacadeAnalysis.ts      # Facade analysis hook (NEW)
-│   ├── useRealTimePricing.ts     # Real-time pricing hook (NEW)
-│   ├── useSessionRecovery.ts     # Session recovery hook (NEW)
-│   ├── useSmartAutoSave.ts       # Smart auto-save hook (NEW)
-│   └── useSwipeGestures.ts       # Touch gesture hook (NEW)
+│   ├── useFacadeAnalysis.ts      # Facade analysis hook
+│   ├── useRealTimePricing.ts     # Real-time pricing hook
+│   ├── useSessionRecovery.ts     # Session recovery hook
+│   ├── useSmartAutoSave.ts       # Smart auto-save hook
+│   └── useSwipeGestures.ts       # Touch gesture hook
 └── types/                        # Global type definitions
 ```
 
@@ -170,6 +252,15 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 OPENAI_API_KEY=your_openai_api_key
 RESEND_API_KEY=your_resend_api_key
 
+# Weather API
+ACCUWEATHER_API_KEY=your_accuweather_api_key
+
+# Error Tracking
+SENTRY_DSN=your_sentry_dsn
+SENTRY_ORG=your_sentry_org
+SENTRY_PROJECT=your_sentry_project
+SENTRY_AUTH_TOKEN=your_sentry_auth_token
+
 # Feature Flags (all default true)
 NEXT_PUBLIC_ENABLE_AI=true
 NEXT_PUBLIC_ENABLE_3D=true
@@ -184,9 +275,37 @@ CACHE_TTL=1800
 
 # AI Model Configuration
 FACADE_ANALYSIS_MODEL_VERSION=v8.0
-AI_VISION_MODEL=gpt-4-vision-preview
+AI_VISION_MODEL=gpt-4o
+AI_DEFAULT_MODEL=gpt-4-turbo
 MAX_IMAGE_SIZE_MB=10
 CONFIDENCE_THRESHOLD=85
+AI_MAX_TOKENS=4000
+AI_TEMPERATURE=0.7
+AI_RETRY_ATTEMPTS=3
+AI_MAX_INPUT_LENGTH=50000
+AI_MAX_OUTPUT_LENGTH=10000
+
+# AI Security & Features
+AI_ENABLE_CACHING=true
+AI_ENABLE_CONTENT_FILTERING=true
+AI_ENABLE_INPUT_SANITIZATION=true
+AI_ENABLE_OUTPUT_VALIDATION=true
+AI_ENABLE_LOGGING=false
+
+# Admin Configuration
+ADMIN_EMAIL=admin@example.com
+ADMIN_PHONE=+1234567890
+
+# CORS & Security
+ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+
+# Audit & Monitoring
+AUDIT_RETENTION_DAYS=90
+AUDIT_AUTO_PURGE=true
+AUDIT_ANONYMIZATION_RULES={"email":"mask","phone":"mask"}
+
+# Bundle Analysis
+ANALYZE_BUNDLE=false
 ```
 
 ### Installation & Setup
@@ -219,6 +338,8 @@ npm run build && npm run start
 node scripts/setup-basic-schema.js
 node scripts/run-migration.js
 node scripts/production-check.js
+node scripts/create-sample-data.js
+node scripts/migrate-database.js
 ```
 
 ## Documentation Hierarchy
@@ -239,7 +360,7 @@ node scripts/setup-basic-schema.js
 # Run standard migrations
 node scripts/run-migration.js
 
-# Add transaction support (run once)
+# Add transaction support
 node scripts/run-transaction-migration.js
 
 # Create sample data for development
@@ -247,6 +368,9 @@ node scripts/create-sample-data.js
 
 # Verify database setup and connectivity
 node scripts/production-check.js
+
+# Run database migrations
+node scripts/migrate-database.js
 ```
 
 ### Development Workflow (ENFORCED)
@@ -286,14 +410,17 @@ node scripts/production-check.js
 ### Testing & Validation
 
 ```bash
-# Test analytics functionality
-node scripts/test-analytics.js
-
 # Run TypeScript compilation check
 npm run typecheck
 
-# Validate database migrations
-node scripts/migrate-database.js
+# Test real-time pricing
+node scripts/test-real-time-pricing.js
+
+# Test session recovery
+node scripts/test-session-recovery.js
+
+# Test Sentry integration
+node scripts/test-sentry-integration.js
 
 # Production verification
 bash scripts/production-verify.sh
@@ -319,13 +446,13 @@ bash scripts/production-verify.sh
 
 ## Service Calculators
 
-**12 Specialized Calculators**: Window Cleaning, Pressure Washing, Soft Washing, Biofilm Removal, Glass/Frame Restoration, High Dusting, Final Clean, Granite Reconditioning, Pressure Wash & Seal, Parking Deck, AI Facade Analysis
+**11 Specialized Calculators**: Window Cleaning, Pressure Washing, Soft Washing, Biofilm Removal, Glass/Frame Restoration, High Dusting, Final Clean, Granite Reconditioning, Pressure Wash & Seal, Parking Deck, AI Facade Analysis
 
 **Features**: Material costs, labor estimation, equipment requirements, markup/margin settings, risk adjustments, AI-powered measurements
 
 ## AI Integration
 
-**10 AI Endpoints**: Enhanced photo analysis, facade analyzer, document extraction, contact extraction, auto-quote generation, competitive intelligence, risk assessment, follow-up automation
+**15 AI Endpoints**: Enhanced photo analysis, facade analyzer, document extraction, contact extraction, auto-quote generation, competitive intelligence, risk assessment, follow-up automation, AI assistant chat, conversation management, AI analytics, metrics tracking, usage monitoring, analyze-facade, auto-estimate generation
 
 **AI Intelligence Features**:
 
@@ -401,7 +528,7 @@ bash scripts/production-verify.sh
 
 **Demo**: `/drone-demo` page with simulation mode (`NEXT_PUBLIC_ENABLE_DRONE`)
 
-## Advanced UI Polish System (NEW)
+## Advanced UI Polish System
 
 **Skeleton Loading Components**: Intelligent loading states with multiple animation variants (shimmer, pulse, wave), contextual skeleton patterns for cards, lists, tables, and text blocks with staggered animations
 
@@ -415,16 +542,59 @@ bash scripts/production-verify.sh
 
 **Performance-Optimized Animations**: 60fps animations, intelligent staggered loading, memory-efficient transitions, and device-specific optimizations for smooth interactions across all devices
 
+## Visual Design System
+
+**Industrial Color Palette**: Sophisticated color scheme designed for building contractors
+
+- **Dusty Blue** (#6B7A89): Primary brand color - professional and trustworthy
+- **Light Sandy Beige** (#CDBCA8): Warm accent for highlights and CTAs
+- **Warm Taupe** (#675C5A): Secondary accent for depth and contrast
+- **Off-Black/Dark Charcoal** (#201E1F): Text and strong UI elements
+
+**Visual Components**:
+
+- `StatCard`: Gradient overlay statistics with animated trends and icons
+- `FeatureCard`: Eye-catching cards with featured badges and hover effects
+- `SectionHeader`: Elegant headers with rotating icons and gradient text
+- `EnhancedCard`: Versatile cards with variants (gradient, glass, glow, elevated)
+
+**Dashboard Enhancements**:
+
+- `EnhancedDashboardLayout`: Animated background orbs and subtle grid patterns
+- `EnhancedDashboardHeader`: Dynamic greetings with live status indicators
+- `AICreateEstimateCard`: Redesigned with industrial palette and smooth animations
+
+**Design Features**:
+
+- Glass morphism effects with backdrop blur
+- Gradient overlays and mesh backgrounds
+- Smooth spring animations via Framer Motion
+- Haptic feedback support for mobile devices
+- Professional ripple effects on interactive elements
+
+**Implementation Details**: See `docs/UI_VISUAL_ENHANCEMENTS.md` for complete visual enhancement guide
+
 ## Service Layer Architecture
 
 **Core Business Services**:
 
 - `estimate-service.ts`: CRUD operations, validation, status management, data transformation
+- `estimate-crud-service.ts`: Dedicated estimate CRUD operations
+- `estimate-validation-service.ts`: Estimate validation logic
 - `ai-service.ts`: Centralized AI communication, caching, error recovery, rate limiting
+- `ai-conversation-service.ts`: AI conversation state management and history
 - `calculator-service.ts`: Real-time calculations, validation, historical data integration
 - `workflow-service.ts`: Guided flow orchestration, step validation, state persistence
+- `analytics-service.ts`: Analytics data collection and processing
+- `analytics-metrics-service.ts`: Metrics tracking and aggregation
+- `equipment-materials-service.ts`: Equipment and materials inventory management
+- `photo-service.ts`: Photo processing, storage, and management
+- `pilot-service.ts` & `pilot-service-client.ts`: Drone pilot management and operations
+- `risk-assessment-service.ts`: Automated risk evaluation and scoring
+- `weather-service.ts`: Weather data integration and impact analysis
+- `performance-optimization-service.ts`: Performance monitoring and optimization
 
-**Real-Time & Session Services** (NEW):
+**Real-Time & Session Services**:
 
 - `real-time-pricing-service.ts`: Live cost calculations with confidence scoring
 - `session-recovery-service.ts`: Browser crash recovery with multi-device support
@@ -455,7 +625,7 @@ bash scripts/production-verify.sh
 
 **Integration Tests**: API endpoints, database operations, AI services
 
-**New Test Coverage** (NEW):
+**Test Coverage**:
 
 - `cross-step-population.test.ts`: AI-driven step population testing
 - `session-recovery.test.ts`: Browser crash recovery validation
@@ -464,8 +634,9 @@ bash scripts/production-verify.sh
 - `facade-analysis.test.tsx`: Component tests for facade analysis
 - `facade-analysis-service.test.ts`: Service layer tests
 - `use-facade-analysis.test.tsx`: Hook integration tests
-
-**Legacy Test Files**: `calculator.test.tsx`, `photo-analysis.test.ts`, `service-validation.test.ts`
+- `calculator.test.tsx`: Calculator component tests
+- `photo-analysis.test.ts`: Photo analysis tests
+- `service-validation.test.ts`: Service validation tests
 
 ## Performance Optimization
 
@@ -479,7 +650,7 @@ bash scripts/production-verify.sh
 
 **Runtime**: Memory management, error boundaries, performance monitoring, bundle analysis
 
-**UI Performance** (NEW): Framer Motion animations optimized for 60fps, skeleton loading states for perceived performance, intelligent staggered animations, mobile-first touch interactions
+**UI Performance**: Framer Motion animations optimized for 60fps, skeleton loading states for perceived performance, intelligent staggered animations, mobile-first touch interactions
 
 **AI Facade Analysis Optimizations**:
 
@@ -488,7 +659,7 @@ bash scripts/production-verify.sh
 - Result caching for repeated analyses
 - Lazy loading of analysis components
 
-## Progressive Web App (PWA) Features (NEW)
+## Progressive Web App (PWA) Features
 
 **Core PWA Services**:
 
@@ -511,7 +682,7 @@ bash scripts/production-verify.sh
 - **Swipe Gestures** (`useSwipeGestures.ts`): Natural touch navigation
 - **Mobile Navigation**: Advanced bottom navigation with badges and animations
 
-## Real-Time Systems (NEW)
+## Real-Time Systems
 
 **Real-Time Pricing** (`real-time-pricing-service.ts`):
 
@@ -534,7 +705,7 @@ bash scripts/production-verify.sh
 - Visual feedback through `AutoSaveStatusDisplay.tsx`
 - Integration with session recovery system
 
-## Advanced Validation & Security (NEW)
+## Advanced Validation & Security
 
 **Cross-Step Validation** (`cross-step-validation-service.ts`):
 
@@ -605,6 +776,8 @@ bash scripts/production-verify.sh
 - Avoid `bg-white`, `text-gray-500`, `bg-blue-500` (hardcoded colors)
 - Component variants over custom styling
 - Test in light/dark/system themes
+- Industrial color palette: Dusty Blue, Sandy Beige, Warm Taupe, Dark Charcoal
+- Visual enhancement guide: `docs/UI_VISUAL_ENHANCEMENTS.md`
 
 ## Troubleshooting
 
@@ -616,19 +789,21 @@ bash scripts/production-verify.sh
 
 **Performance**: Check lazy loading, verify caching, monitor connection pooling, review bundle sizes
 
+**Visual/UI Issues**: Check for duplicate properties in tailwind.config.ts, restart dev server after theme changes, verify CSS variables in globals.css, ensure Framer Motion imports
+
 **Debug Mode**: Set `NEXT_PUBLIC_DEBUG=true` for detailed logging, AI prompt/response logs, performance timing
 
 ## Production Status
 
-**🎉 100% Implementation Complete**
+**Platform Status**: Active Development
 
-**Completed Features**: 11 service calculators, 9 AI endpoints, 3D visualization, drone integration, guided workflows, service layer architecture, performance optimization, security implementation, error handling, TypeScript compilation, advanced UI polish system, real-time systems, PWA capabilities, session management, AI intelligence features
+**Completed Features**: 11 service calculators, 15 AI endpoints, 3D visualization, drone integration, guided workflows, service layer architecture, performance optimization, security implementation, error handling, advanced UI polish system, real-time systems, PWA capabilities, session management, AI intelligence features, visual design system, AI assistant interfaces, analytics dashboards
 
-**Technical Achievements**: Production-grade architecture, enterprise security (RLS, rate limiting, validation), multi-level caching, monitoring/analytics, strict type safety, Framer Motion animations, contextual UX patterns, real-time pricing, browser crash recovery, smart auto-save, cross-step validation, progressive web app features
+**Technical Stack**: Next.js 15 application with TypeScript, Supabase backend, OpenAI integration, Framer Motion animations, contextual UX patterns, real-time pricing, browser crash recovery, smart auto-save, cross-step validation, progressive web app features, industrial color palette, glass morphism effects, gradient overlays
 
-**Deployment Ready**: Environment configuration, production scripts, database migrations, feature flags, monitoring integration, security hardening
+**Architecture**: Service layer architecture, enterprise security (RLS, rate limiting, validation), multi-level caching, monitoring/analytics, strict type safety
 
-**Enterprise Ready**: Scalable architecture, multi-user support, high-volume optimization, RESTful APIs, compliance & security
+**Active Development**: TypeScript migration fixes, Next.js 15 compatibility updates, database schema refinements, continuous improvements
 
 ## Contributing
 
@@ -642,7 +817,16 @@ bash scripts/production-verify.sh
 
 **External**: [Next.js](https://nextjs.org/docs), [Supabase](https://supabase.com/docs), [Tailwind](https://tailwindcss.com/docs), [OpenAI](https://platform.openai.com/docs)
 
-**Internal**: `docs/design-system.md`, `docs/test-calculators.md`, `docs/facade-analysis-guide.md`, `DEPLOYMENT_GUIDE.md`, `INTEGRATION_GUIDE.md`
+**Internal Documentation**:
+
+- `docs/design-system.md` - Design system guidelines
+- `docs/test-calculators.md` - Calculator testing guide
+- `docs/facade-analysis-guide.md` - Facade analysis implementation
+- `docs/AI_DEPLOYMENT_GUIDE.md` - AI deployment instructions
+- `docs/THEME_GUIDE.md` - Professional theme system guide
+- `docs/UI_VISUAL_ENHANCEMENTS.md` - Visual enhancement guide
+- `docs/database-setup-guide.md` - Database configuration
+- `docs/mobile-optimization-guide.md` - Mobile optimization strategies
 
 # Project Guide for Claude
 

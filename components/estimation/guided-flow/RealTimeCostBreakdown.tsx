@@ -115,14 +115,19 @@ export function RealTimeCostBreakdown({
         onPricingUpdate?.(result);
       });
 
-      return unsubscribe;
+      return () => {
+        // Ensure proper cleanup
+        if (typeof unsubscribe === "function") {
+          unsubscribe();
+        }
+      };
     }
   }, [
     estimateId,
-    memoizedFlowData, // Use the memoized stringified data
+    memoizedFlowData,
     enableLiveUpdates,
     pricingService,
-    onPricingUpdate,
+    // Removed onPricingUpdate to prevent re-subscription loops
   ]);
 
   // Format currency

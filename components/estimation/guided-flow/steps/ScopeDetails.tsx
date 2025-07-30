@@ -11,7 +11,7 @@ import {
   SERVICE_METADATA,
   GuidedFlowData,
 } from "@/lib/types/estimate-types";
-import { IntelligentServiceSuggestions } from "@/components/ai/IntelligentServiceSuggestions";
+import { IntelligentServiceSuggestions } from "@/components/ai/service-suggestions/IntelligentServiceSuggestions";
 import { StepComponentProps } from "../index";
 
 // Convert SERVICE_METADATA to array format for easier iteration
@@ -73,7 +73,7 @@ function ScopeDetailsComponent({
   // Validate services whenever selection changes
   useEffect(() => {
     validateServices();
-  }, [scopeData.selectedServices]);
+  }, [scopeData.selectedServices, scopeData]);
 
   const validateServices = () => {
     const result = SERVICE_RULES.validateServiceSelection(
@@ -170,7 +170,6 @@ function ScopeDetailsComponent({
 
   const handleRejectSuggestion = (serviceType: ServiceType) => {
     // Just ignore the suggestion - no action needed
-    console.log("Rejected suggestion:", serviceType);
   };
 
   const selectBundle = (bundle: (typeof COMMON_BUNDLES)[0]) => {
@@ -442,10 +441,10 @@ export const ScopeDetails = memo(
   ScopeDetailsComponent,
   (prevProps, nextProps) => {
     return (
-      prevProps.data?.scopeDetails === nextProps.data?.scopeDetails &&
-      prevProps.onUpdate === nextProps.onUpdate &&
-      prevProps.onNext === nextProps.onNext &&
-      prevProps.onBack === nextProps.onBack
+      JSON.stringify(prevProps.data?.scopeDetails) ===
+      JSON.stringify(nextProps.data?.scopeDetails)
+      // Note: onUpdate, onNext, onBack are functions and will have new references
+      // Parent should wrap these in useCallback to prevent re-renders
     );
   },
 );

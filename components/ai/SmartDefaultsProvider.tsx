@@ -15,6 +15,7 @@ import {
   type SmartDefaultsContext as SmartDefaultsContextType,
 } from "@/lib/ai/smart-defaults-engine";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
+import { deepEqual, useDeepCompareMemo } from "@/lib/utils/deep-compare";
 
 interface SmartDefaultsState {
   defaults: SmartDefault[];
@@ -23,12 +24,18 @@ interface SmartDefaultsState {
   error: string | null;
 }
 
+interface UserProfile {
+  experienceLevel: "beginner" | "intermediate" | "advanced";
+  role: string;
+  preferences: Record<string, unknown>;
+}
+
 interface SmartDefaultsProviderProps {
   children: React.ReactNode;
   flowData: GuidedFlowData;
   currentStep: number;
-  userProfile?: any;
-  onApplyDefault: (field: string, value: any) => void;
+  userProfile?: UserProfile;
+  onApplyDefault: (field: string, value: unknown) => void;
   onApplySuggestion: (suggestion: SmartSuggestion) => void;
 }
 
@@ -144,9 +151,9 @@ export function SmartDefaultsProvider({
 
   // Use stable reference for flowData to prevent infinite loops
   const flowDataRef = useRef(flowData);
-  const flowDataStable = useMemo(() => {
+  const flowDataStable = useDeepCompareMemo(() => {
     // Deep comparison for flowData changes
-    if (JSON.stringify(flowDataRef.current) !== JSON.stringify(flowData)) {
+    if (!deepEqual(flowDataRef.current, flowData)) {
       flowDataRef.current = flowData;
       return flowData;
     }

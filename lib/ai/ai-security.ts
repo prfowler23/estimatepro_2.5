@@ -451,8 +451,37 @@ export const securityScanner = new AISecurityScanner();
 export const outputValidator = new AIOutputValidator();
 
 // Additional exports for compatibility
-export const validateAIInput = (input: any): any => {
-  return securityScanner.sanitizeInput(input);
+export const validateAIInput = (
+  input: any,
+): { isValid: boolean; error?: string; data?: any } => {
+  try {
+    // First sanitize the input
+    const sanitized = securityScanner.sanitizeInput(input);
+
+    // Then perform comprehensive security scan on string content
+    if (typeof input.message === "string") {
+      const scanResult = securityScanner.scanContent(
+        input.message,
+        SafetyLevel.MODERATE,
+      );
+      if (!scanResult.safe) {
+        return {
+          isValid: false,
+          error: `Security violations detected: ${scanResult.violations.join(", ")}`,
+        };
+      }
+    }
+
+    return {
+      isValid: true,
+      data: sanitized,
+    };
+  } catch (error) {
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : "Input validation failed",
+    };
+  }
 };
 
 export const sanitizeAIResponse = (response: any): any => {

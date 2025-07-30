@@ -3,6 +3,7 @@ import { authenticateRequest } from "@/lib/auth/server";
 import { generalRateLimiter } from "@/lib/utils/rate-limit";
 import { photoService } from "@/lib/services/photo-service";
 import { z } from "zod";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
 
 // Validation schema for analysis request
 const analyzeSchema = z.object({
@@ -35,29 +36,20 @@ export async function POST(request: NextRequest) {
     // Authenticate request
     const { user, error: authError } = await authenticateRequest(request);
     if (authError || !user) {
-      return NextResponse.json(
-        { error: authError || "Unauthorized" },
-        { status: 401 },
-      );
+      return ErrorResponses.unauthorized(authError || undefined);
     }
 
     // Apply rate limiting
     const rateLimitResult = await generalRateLimiter(request);
     if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { error: "Rate limit exceeded" },
-        { status: 429 },
-      );
+      return ErrorResponses.rateLimitExceeded();
     }
 
     const body = await request.json();
     const { action } = body;
 
     if (!action) {
-      return NextResponse.json(
-        { error: "Action is required" },
-        { status: 400 },
-      );
+      return ErrorResponses.badRequest("Action is required");
     }
 
     let result;

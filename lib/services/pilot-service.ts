@@ -3,7 +3,7 @@
  * Manages drone pilot certifications, licenses, and qualification validation
  */
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/universal-client";
 import type { Database } from "@/types/supabase";
 
 export interface PilotCertification {
@@ -27,8 +27,6 @@ export interface PilotQualificationCheck {
 }
 
 export class PilotService {
-  private supabase = createClientComponentClient<Database>();
-
   /**
    * Get pilot certification by user ID
    */
@@ -36,8 +34,9 @@ export class PilotService {
     userId: string,
   ): Promise<PilotCertification | null> {
     try {
+      const supabase = createClient();
       // Query profiles table directly since pilot fields were added there
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
@@ -83,7 +82,8 @@ export class PilotService {
     userId: string,
   ): Promise<PilotCertification | null> {
     try {
-      const { data: profile, error } = await this.supabase
+      const supabase = createClient();
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
@@ -116,7 +116,8 @@ export class PilotService {
    */
   async getCertifiedPilots(): Promise<PilotCertification[]> {
     try {
-      const { data: profiles, error } = await this.supabase
+      const supabase = createClient();
+      const { data: profiles, error } = await supabase
         .from("profiles")
         .select("*")
         .in("role", ["admin", "sales"]); // Only admin and sales can be pilots

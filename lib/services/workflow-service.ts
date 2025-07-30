@@ -1,6 +1,6 @@
 // Workflow service layer for guided estimation flows
 
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/universal-client";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import {
   isNotNull,

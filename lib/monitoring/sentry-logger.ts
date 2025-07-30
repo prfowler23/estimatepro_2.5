@@ -419,29 +419,28 @@ export class SentryLogger {
     name: string,
     operation?: string,
     context?: Record<string, any>,
-  ): Sentry.Transaction | null {
+  ): any {
     if (!this.isEnabled) return null;
 
-    const transaction = Sentry.startTransaction({
-      name,
-      op: operation || "custom",
-      tags: context,
-    });
+    // Using startSpan for newer Sentry SDK
+    const transaction = Sentry.startSpan(
+      { name, op: operation || "custom" },
+      () => {
+        return { name, op: operation || "custom", tags: context };
+      },
+    );
 
     return transaction;
   }
 
-  public finishTransaction(
-    transaction: Sentry.Transaction | null,
-    status?: string,
-  ): void {
+  public finishTransaction(transaction: any, status?: string): void {
     if (!transaction) return;
 
+    // For newer SDK, transactions finish automatically
+    // We can set tags/status on the active span
     if (status) {
-      transaction.setStatus(status);
+      Sentry.setTag("transaction.status", status);
     }
-
-    transaction.finish();
   }
 
   // Breadcrumb management
@@ -464,7 +463,7 @@ export class SentryLogger {
 
   // Health check
   public isHealthy(): boolean {
-    return this.isEnabled && Boolean(Sentry.getCurrentHub().getClient());
+    return this.isEnabled && Boolean(Sentry.getClient());
   }
 
   // Manual flush for critical errors

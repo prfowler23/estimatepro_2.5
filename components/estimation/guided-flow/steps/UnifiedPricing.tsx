@@ -51,7 +51,7 @@ const EXPENSE_TEMPLATES = [
   { name: "Supplies", icon: Briefcase, category: "supplies" },
 ];
 
-export default function UnifiedPricing() {
+function UnifiedPricing() {
   const { flowData, updateFlowData, validateCurrentStep } = useEstimateFlow();
   const env = validateClientEnv();
 
@@ -641,3 +641,6 @@ export default function UnifiedPricing() {
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+export default React.memo(UnifiedPricing);

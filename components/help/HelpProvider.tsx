@@ -54,7 +54,10 @@ interface HelpContextType {
   exitTutorial: () => void;
 
   // User behavior tracking
-  trackBehavior: (action: string, data?: any) => void;
+  trackBehavior: (
+    action: string,
+    data?: Record<string, string | number | boolean>,
+  ) => void;
   markHelpful: (helpId: string) => void;
   markNotHelpful: (helpId: string) => void;
   dismissHelp: (helpId: string) => void;
@@ -269,7 +272,10 @@ export function HelpProvider({
     }
   };
 
-  const trackBehavior = (action: string, data?: any) => {
+  const trackBehavior = (
+    action: string,
+    data?: Record<string, string | number | boolean>,
+  ) => {
     const behavior = {
       action,
       timestamp: Date.now(),

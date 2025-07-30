@@ -1,7 +1,7 @@
 // Enhanced Auto-Save Service with Conflict Resolution
 // Handles automatic saving, version control, and conflict resolution for guided estimation flows
 
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/universal-client";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import { GuidedFlowData, ServiceType } from "@/lib/types/estimate-types";
 import { getUser } from "@/lib/auth/server";
@@ -143,6 +143,7 @@ export class AutoSaveService {
 
   // Automatic save (called by interval)
   private static async performAutoSave(estimateId: string): Promise<void> {
+    const supabase = createClient();
     const state = this.saveStates.get(estimateId);
     if (!state || !state.isDirty || state.isSaving) {
       return;
@@ -327,6 +328,7 @@ export class AutoSaveService {
     }
 
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       // Prepare save data
       const saveData = {
         flow_data: this.config.compressionEnabled
@@ -580,6 +582,7 @@ export class AutoSaveService {
       // Try to fetch versioning information; fall back gracefully if these columns
       // are absent in the current schema.
       const result = await withDatabaseRetry(async () => {
+        const supabase = createClient();
         const { data, error } = await supabase
           .from("estimation_flows")
           .select("version, updated_at")
@@ -767,6 +770,7 @@ export class AutoSaveService {
     userId?: string,
   ): Promise<void> {
     await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { error } = await supabase.from("estimation_flow_versions").insert({
         estimate_id: estimateId,
         version,
@@ -823,6 +827,7 @@ export class AutoSaveService {
     estimateId: string,
   ): Promise<GuidedFlowData | null> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("estimation_flows")
         .select("*")
@@ -954,6 +959,7 @@ export class AutoSaveService {
   ): Promise<void> {
     // Store conflict data for manual resolution
     await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { error } = await supabase
         .from("estimation_flow_conflicts")
         .insert({
@@ -972,9 +978,11 @@ export class AutoSaveService {
   }
 
   private static async cleanupOldVersions(estimateId: string): Promise<void> {
+    const supabase = createClient();
     if (this.config.maxVersions <= 0) return;
 
     await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { data, error: selectError } = await supabase
         .from("estimation_flow_versions")
         .select("id")
@@ -1076,6 +1084,7 @@ export class AutoSaveService {
 
         // Remove conflict record
         await withDatabaseRetry(async () => {
+          const supabase = createClient();
           const { error } = await supabase
             .from("estimation_flow_conflicts")
             .delete()
@@ -1098,6 +1107,7 @@ export class AutoSaveService {
     limit: number = 10,
   ): Promise<SaveVersion[]> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("estimation_flow_versions")
         .select("*")

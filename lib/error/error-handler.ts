@@ -38,26 +38,53 @@ class ConsoleErrorReporter implements ErrorReporter {
 // Sentry reporter for production
 class SentryErrorReporter implements ErrorReporter {
   async report(error: EstimateProError): Promise<void> {
-    // This would integrate with Sentry in a real implementation
     try {
-      // In production, you would use:
-      // import * as Sentry from "@sentry/react";
-      // Sentry.captureException(error.originalError || new Error(error.message), {
-      //   tags: {
-      //     errorType: error.type,
-      //     severity: error.severity,
-      //     errorId: error.id,
-      //   },
-      //   extra: {
-      //     context: error.context,
-      //     details: error.details,
-      //   },
-      //   fingerprint: [error.type, error.message],
-      // });
+      // Dynamic import to avoid issues in environments without Sentry
+      const Sentry = await import("@sentry/nextjs");
 
-      console.log("Would report to Sentry:", error);
+      Sentry.captureException(error.originalError || new Error(error.message), {
+        tags: {
+          errorType: error.type,
+          severity: error.severity,
+          errorId: error.id,
+        },
+        extra: {
+          context: error.context,
+          details: error.details,
+          isRetryable: error.isRetryable,
+        },
+        fingerprint: [error.type, error.message],
+        level: this.mapSeverityToSentryLevel(error.severity),
+      });
+
+      // Also log using our enhanced logger
+      const { logger } = await import("@/lib/monitoring/sentry-logger");
+      logger.error(`EstimatePro Error: ${error.message}`, error.originalError, {
+        errorId: error.id,
+        type: error.type,
+        severity: error.severity,
+        details: error.details,
+        context: error.context,
+      });
     } catch (reportingError) {
       console.error("Failed to report error to Sentry:", reportingError);
+    }
+  }
+
+  private mapSeverityToSentryLevel(
+    severity: ErrorSeverity,
+  ): "fatal" | "error" | "warning" | "info" {
+    switch (severity) {
+      case "critical":
+        return "fatal";
+      case "high":
+        return "error";
+      case "medium":
+        return "warning";
+      case "low":
+        return "info";
+      default:
+        return "error";
     }
   }
 }

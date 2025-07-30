@@ -280,6 +280,11 @@ export class OfflineManager {
   // Save pending actions to localStorage
   private savePendingActions(): void {
     try {
+      // Check if we're in a browser environment
+      if (typeof window === "undefined" || !window.localStorage) {
+        return;
+      }
+
       localStorage.setItem(
         this.storageKey,
         JSON.stringify(this.pendingActions),
@@ -292,6 +297,12 @@ export class OfflineManager {
   // Load pending actions from localStorage
   private loadPendingActions(): void {
     try {
+      // Check if we're in a browser environment
+      if (typeof window === "undefined" || !window.localStorage) {
+        this.pendingActions = [];
+        return;
+      }
+
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
         this.pendingActions = JSON.parse(stored);
@@ -308,6 +319,11 @@ export class OfflineManager {
   // Get storage size estimate
   private getStorageSize(): number {
     try {
+      // Check if we're in a browser environment
+      if (typeof window === "undefined" || !window.localStorage) {
+        return 0;
+      }
+
       const data = localStorage.getItem(this.storageKey);
       return data ? new Blob([data]).size : 0;
     } catch {

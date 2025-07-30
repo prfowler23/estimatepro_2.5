@@ -26,8 +26,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createFacadeAnalysisSchema } from "@/lib/schemas/facade-analysis-schema";
 import { CreateFacadeAnalysisInput } from "@/lib/types/facade-analysis-types";
 import { Building2, MapPin, FileText, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { z } from "zod";
+import { ComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
 
 interface FacadeAnalysisFormProps {
   estimateId: string;
@@ -35,7 +36,7 @@ interface FacadeAnalysisFormProps {
   onCancel?: () => void;
 }
 
-export function FacadeAnalysisForm({
+function FacadeAnalysisFormComponent({
   estimateId,
   onSuccess,
   onCancel,
@@ -227,5 +228,17 @@ export function FacadeAnalysisForm({
         </Form>
       </CardContent>
     </Card>
+  );
+}
+
+// Export wrapped with error boundary
+export function FacadeAnalysisForm(props: FacadeAnalysisFormProps) {
+  return (
+    <ComponentErrorBoundary
+      componentName="FacadeAnalysisForm"
+      showDetails={process.env.NODE_ENV === "development"}
+    >
+      <FacadeAnalysisFormComponent {...props} />
+    </ComponentErrorBoundary>
   );
 }

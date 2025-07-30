@@ -139,6 +139,16 @@ const config: Config = {
         accent: {
           DEFAULT: "var(--color-primary-action)",
           foreground: "var(--color-text-inverted)",
+          // Industrial Palette additions
+          sand: "var(--color-accent-sand)",
+          "sand-light": "var(--color-accent-sand-light)",
+          "sand-dark": "var(--color-accent-sand-dark)",
+          taupe: "var(--color-accent-taupe)",
+          "taupe-light": "var(--color-accent-taupe-light)",
+          "taupe-dark": "var(--color-accent-taupe-dark)",
+          charcoal: "var(--color-accent-charcoal)",
+          "charcoal-light": "var(--color-accent-charcoal-light)",
+          "charcoal-dark": "var(--color-accent-charcoal-dark)",
         },
         destructive: {
           DEFAULT: "var(--color-feedback-error)",
@@ -146,6 +156,15 @@ const config: Config = {
         },
         input: "var(--color-bg-elevated)",
         ring: "var(--color-border-focus)",
+      },
+      backgroundImage: {
+        "gradient-primary": "var(--gradient-primary)",
+        "gradient-secondary": "var(--gradient-secondary)",
+        "gradient-warm": "var(--gradient-warm)",
+        "gradient-cool": "var(--gradient-cool)",
+        "gradient-subtle": "var(--gradient-subtle)",
+        "gradient-glass": "var(--gradient-glass)",
+        "gradient-mesh": "var(--gradient-mesh)",
       },
       fontSize: {
         xs: [
@@ -226,6 +245,11 @@ const config: Config = {
         "2xl": "var(--shadow-2xl)",
         focus: "var(--shadow-focus)",
         "focus-ring": "var(--shadow-focus-ring)",
+        "focus-accent": "var(--shadow-focus-accent)",
+        primary: "var(--shadow-primary)",
+        accent: "var(--shadow-accent)",
+        success: "var(--shadow-success)",
+        glow: "var(--shadow-glow)",
         none: "none",
       },
       borderRadius: {
@@ -238,15 +262,27 @@ const config: Config = {
         DEFAULT: "var(--radius)",
       },
       transitionDuration: {
+        instant: "var(--duration-instant)",
         fast: "var(--duration-fast)",
         normal: "var(--duration-normal)",
         slow: "var(--duration-slow)",
+        slower: "var(--duration-slower)",
         DEFAULT: "var(--duration-normal)",
       },
       transitionTimingFunction: {
         "ease-out": "var(--ease-out)",
         "ease-in-out": "var(--ease-in-out)",
+        "ease-bounce": "var(--ease-bounce)",
+        "ease-smooth": "var(--ease-smooth)",
         DEFAULT: "var(--ease-out)",
+      },
+      backdropBlur: {
+        xs: "var(--blur-sm)",
+        sm: "var(--blur-md)",
+        DEFAULT: "var(--blur-md)",
+        md: "var(--blur-md)",
+        lg: "var(--blur-lg)",
+        xl: "var(--blur-xl)",
       },
       animation: {
         "fade-in": "fadeIn var(--duration-normal) var(--ease-out)",
@@ -255,6 +291,11 @@ const config: Config = {
         shimmer: "shimmer 2s ease-in-out infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        float: "float 6s ease-in-out infinite",
+        "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "gradient-shift": "gradient-shift 15s ease infinite",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -307,6 +348,39 @@ const config: Config = {
           },
           to: {
             height: "0",
+          },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.8" },
+        },
+        "gradient-shift": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        "glow-pulse": {
+          "0%, 100%": {
+            boxShadow:
+              "0 0 20px rgba(205, 188, 168, 0.4), 0 4px 14px 0 rgba(205, 188, 168, 0.2)",
+          },
+          "50%": {
+            boxShadow:
+              "0 0 30px rgba(205, 188, 168, 0.6), 0 4px 14px 0 rgba(205, 188, 168, 0.4)",
+          },
+        },
+        "bounce-subtle": {
+          "0%, 100%": {
+            transform: "translateY(0px)",
+            animationTimingFunction: "cubic-bezier(0.8, 0, 1, 1)",
+          },
+          "50%": {
+            transform: "translateY(-5px)",
+            animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
           },
         },
       },

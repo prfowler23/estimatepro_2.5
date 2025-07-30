@@ -30,6 +30,7 @@ import {
   Image as ImageIcon,
   Ruler as MeasurementIcon,
 } from "lucide-react";
+import { ComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
 
 interface PDFProcessingOptions {
   extractImages: boolean;
@@ -101,7 +102,7 @@ interface PDFProcessingResult {
   };
 }
 
-export function PDFProcessor() {
+function PDFProcessorComponent() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<PDFProcessingResult | null>(null);
@@ -857,5 +858,17 @@ export function PDFProcessor() {
         </Card>
       )}
     </div>
+  );
+}
+
+// Export wrapped with error boundary
+export function PDFProcessor() {
+  return (
+    <ComponentErrorBoundary
+      componentName="PDFProcessor"
+      showDetails={process.env.NODE_ENV === "development"}
+    >
+      <PDFProcessorComponent />
+    </ComponentErrorBoundary>
   );
 }

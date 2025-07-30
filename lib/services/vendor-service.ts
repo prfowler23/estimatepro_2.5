@@ -3,7 +3,7 @@
  * Manages equipment vendors, materials suppliers, and pricing data from database
  */
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/universal-client";
 import type { Database } from "@/types/supabase";
 
 export interface Vendor {
@@ -61,8 +61,6 @@ export interface MaterialWithVendors {
 }
 
 export class VendorService {
-  private supabase = createClientComponentClient<Database>();
-
   /**
    * Get all vendors with optional filtering
    */
@@ -70,6 +68,7 @@ export class VendorService {
     type?: "equipment" | "materials" | "both";
     preferredOnly?: boolean;
   }): Promise<Vendor[]> {
+    const supabase = createClient();
     // TODO: Implement database query when vendors table is added
     // For now, always use fallback vendors
     return this.getFallbackVendors(filters);

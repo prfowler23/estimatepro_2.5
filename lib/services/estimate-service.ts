@@ -1,6 +1,6 @@
 // Business logic service layer for estimates
 
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/universal-client";
 import { Database } from "@/types/supabase";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import {
@@ -240,6 +240,7 @@ export class EstimateBusinessService {
     }
 
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -504,6 +505,7 @@ export class EstimateBusinessService {
 
   static async deleteEstimate(estimateId: string): Promise<boolean> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       // Delete services first (foreign key constraint)
       await supabase
         .from("estimate_services")
@@ -533,6 +535,7 @@ export class EstimateBusinessService {
     status: EstimateStatus,
   ): Promise<boolean> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { error } = await supabase
         .from("estimates")
         .update({
@@ -601,6 +604,7 @@ export class EstimateBusinessService {
   static async getEstimateById(estimateId: string): Promise<Estimate | null> {
     try {
       const result = await withDatabaseRetry(async () => {
+        const supabase = createClient();
         const { data: estimate, error } = await supabase
           .from("estimates")
           .select(
@@ -744,6 +748,7 @@ export class EstimateBusinessService {
       const { limit = 50, offset = 0, status, search, userId } = options;
 
       const result = await withDatabaseRetry(async () => {
+        const supabase = createClient();
         let query = supabase.from("estimates").select(
           `
             *,
@@ -779,8 +784,10 @@ export class EstimateBusinessService {
         }
 
         if (search) {
+          // Use Supabase's built-in filter methods to prevent SQL injection
+          const searchPattern = `%${search}%`;
           query = query.or(
-            `customer_name.ilike.%${search}%,building_name.ilike.%${search}%,customer_email.ilike.%${search}%`,
+            `customer_name.ilike.${searchPattern},building_name.ilike.${searchPattern},customer_email.ilike.${searchPattern}`,
           );
         }
 

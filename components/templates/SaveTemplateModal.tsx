@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -21,12 +24,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Save, X, Plus, AlertCircle } from "lucide-react";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { WorkflowTemplate } from "@/lib/services/workflow-templates";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
+
+// Validation schema for template form
+const templateFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Template name is required")
+    .min(3, "Template name must be at least 3 characters")
+    .max(100, "Template name must be less than 100 characters")
+    .regex(
+      /^[a-zA-Z0-9\s\-_()]+$/,
+      "Template name can only contain letters, numbers, spaces, hyphens, underscores, and parentheses",
+    ),
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .optional(),
+  category: z.enum(["commercial", "residential", "industrial", "specialty"], {
+    required_error: "Please select a category",
+  }),
+  complexity: z.enum(["simple", "moderate", "complex"], {
+    required_error: "Please select a complexity level",
+  }),
+  tags: z.array(z.string()).max(10, "Maximum 10 tags allowed").optional(),
+  recommendations: z
+    .array(z.string())
+    .max(20, "Maximum 20 recommendations allowed")
+    .optional(),
+});
+
+type TemplateFormData = z.infer<typeof templateFormSchema>;
 
 interface SaveTemplateModalProps {
   isOpen: boolean;
@@ -42,67 +84,81 @@ export default function SaveTemplateModal({
   onSave,
 }: SaveTemplateModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [templateName, setTemplateName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<string>("commercial");
-  const [complexity, setComplexity] = useState<string>("moderate");
-  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [recommendations, setRecommendations] = useState<string[]>([]);
   const [recommendationInput, setRecommendationInput] = useState("");
+
+  // Form setup for validation
+  const form = useForm<TemplateFormData>({
+    resolver: zodResolver(templateFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      category: "commercial",
+      complexity: "moderate",
+      tags: [],
+      recommendations: [],
+    },
+  });
 
   // Extract services from flow data
   const requiredServices = flowData.scopeDetails?.selectedServices || [];
   const estimatedDuration = flowData.duration?.estimatedDuration || 0;
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim().toLowerCase()]);
+    const currentTags = form.getValues("tags") || [];
+    if (tagInput.trim() && !currentTags.includes(tagInput.trim())) {
+      const newTags = [...currentTags, tagInput.trim().toLowerCase()];
+      form.setValue("tags", newTags);
       setTagInput("");
     }
   };
 
   const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
+    const currentTags = form.getValues("tags") || [];
+    form.setValue(
+      "tags",
+      currentTags.filter((t) => t !== tag),
+    );
   };
 
   const handleAddRecommendation = () => {
+    const currentRecommendations = form.getValues("recommendations") || [];
     if (recommendationInput.trim()) {
-      setRecommendations([...recommendations, recommendationInput.trim()]);
+      const newRecommendations = [
+        ...currentRecommendations,
+        recommendationInput.trim(),
+      ];
+      form.setValue("recommendations", newRecommendations);
       setRecommendationInput("");
     }
   };
 
   const handleRemoveRecommendation = (index: number) => {
-    setRecommendations(recommendations.filter((_, i) => i !== index));
+    const currentRecommendations = form.getValues("recommendations") || [];
+    form.setValue(
+      "recommendations",
+      currentRecommendations.filter((_, i) => i !== index),
+    );
   };
 
-  const handleSave = async () => {
-    if (!templateName.trim()) {
-      toast({
-        title: "Template name required",
-        description: "Please enter a name for your template",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const onSubmit = async (data: TemplateFormData) => {
     setIsLoading(true);
     try {
       const template: Partial<WorkflowTemplate> = {
-        name: templateName,
-        description: description || `Custom template based on ${templateName}`,
-        category: category as any,
-        tags,
+        name: data.name,
+        description:
+          data.description || `Custom template based on ${data.name}`,
+        category: data.category as any,
+        tags: data.tags || [],
         estimatedDuration: estimatedDuration * 60, // Convert hours to minutes
-        complexity: complexity as any,
+        complexity: data.complexity as any,
         requiredServices,
         optionalServices: [],
         defaultData: flowData,
         conditionalRules: [],
-        recommendations,
+        recommendations: data.recommendations || [],
         riskFactors: [],
-        icon: getIconForCategory(category),
+        icon: getIconForCategory(data.category),
       };
 
       await onSave(template);
@@ -112,6 +168,7 @@ export default function SaveTemplateModal({
         description: "Your template has been saved successfully",
       });
 
+      form.reset();
       onClose();
     } catch (error) {
       toast({
@@ -152,154 +209,208 @@ export default function SaveTemplateModal({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              {/* Template Name */}
-              <div className="space-y-2">
-                <Label htmlFor="template-name">Template Name *</Label>
-                <Input
-                  id="template-name"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="e.g., Office Building Standard Clean"
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4 py-4"
+              >
+                {/* Template Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Template Name *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Office Building Standard Clean"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe when to use this template..."
-                  rows={3}
+                {/* Description */}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe when to use this template..."
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              {/* Category and Complexity */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                      <SelectItem value="residential">Residential</SelectItem>
-                      <SelectItem value="industrial">Industrial</SelectItem>
-                      <SelectItem value="specialty">Specialty</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Complexity</Label>
-                  <Select value={complexity} onValueChange={setComplexity}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="simple">Simple</SelectItem>
-                      <SelectItem value="moderate">Moderate</SelectItem>
-                      <SelectItem value="complex">Complex</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="space-y-2">
-                <Label>Tags</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), handleAddTag())
-                    }
-                    placeholder="Add tag..."
+                {/* Category and Complexity */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="commercial">
+                              Commercial
+                            </SelectItem>
+                            <SelectItem value="residential">
+                              Residential
+                            </SelectItem>
+                            <SelectItem value="industrial">
+                              Industrial
+                            </SelectItem>
+                            <SelectItem value="specialty">Specialty</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleAddTag}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="cursor-pointer"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      {tag}
-                      <X className="h-3 w-3 ml-1" />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
 
-              {/* Recommendations */}
-              <div className="space-y-2">
-                <Label>Best Practices & Recommendations</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={recommendationInput}
-                    onChange={(e) => setRecommendationInput(e.target.value)}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" &&
-                      (e.preventDefault(), handleAddRecommendation())
-                    }
-                    placeholder="Add recommendation..."
+                  <FormField
+                    control={form.control}
+                    name="complexity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Complexity</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="simple">Simple</SelectItem>
+                            <SelectItem value="moderate">Moderate</SelectItem>
+                            <SelectItem value="complex">Complex</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleAddRecommendation}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
-                <ul className="space-y-1 mt-2">
-                  {recommendations.map((rec, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-sm text-text-secondary"
+
+                {/* Tags */}
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), handleAddTag())
+                      }
+                      placeholder="Add tag..."
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleAddTag}
                     >
-                      <span className="text-accent-primary">•</span>
-                      <span className="flex-1">{rec}</span>
-                      <button
-                        onClick={() => handleRemoveRecommendation(idx)}
-                        className="text-text-tertiary hover:text-error-primary"
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {(form.watch("tags") || []).map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="cursor-pointer"
+                        onClick={() => handleRemoveTag(tag)}
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                        {tag}
+                        <X className="h-3 w-3 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
 
-              {/* Info Alert */}
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  This template will include the current customer info,
-                  services, pricing, and other configuration from this estimate.
-                </AlertDescription>
-              </Alert>
-            </div>
+                {/* Recommendations */}
+                <div className="space-y-2">
+                  <Label>Best Practices & Recommendations</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={recommendationInput}
+                      onChange={(e) => setRecommendationInput(e.target.value)}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), handleAddRecommendation())
+                      }
+                      placeholder="Add recommendation..."
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleAddRecommendation}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <ul className="space-y-1 mt-2">
+                    {(form.watch("recommendations") || []).map((rec, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                      >
+                        <span className="text-primary">•</span>
+                        <span className="flex-1">{rec}</span>
+                        <button
+                          onClick={() => handleRemoveRecommendation(idx)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Info Alert */}
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    This template will include the current customer info,
+                    services, pricing, and other configuration from this
+                    estimate.
+                  </AlertDescription>
+                </Alert>
+              </form>
+            </Form>
 
             <DialogFooter>
               <Button variant="outline" onClick={onClose} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={isLoading}>
+              <Button
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isLoading || !form.formState.isValid}
+              >
                 {isLoading ? (
                   <>
                     <motion.div

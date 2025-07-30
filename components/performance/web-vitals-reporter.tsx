@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { onCLS, onFCP, onLCP, onTTFB, onINP } from "web-vitals";
+import { onCLS, onFCP, onLCP, onTTFB, onINP, type Metric } from "web-vitals";
 
 export function WebVitalsReporter() {
   useEffect(() => {
-    function sendToAnalytics(metric: any) {
+    function sendToAnalytics(metric: Metric) {
       // Log to console in development
       if (process.env.NODE_ENV === "development") {
         console.log(`[Web Vitals] ${metric.name}: ${metric.value}`, metric);

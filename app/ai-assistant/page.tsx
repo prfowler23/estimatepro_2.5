@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AIAssistant } from "@/components/ai/ai-assistant";
+import { AIAssistantChatEnhanced } from "@/components/ai/AIAssistantChatEnhanced";
 import {
   Card,
   CardHeader,
@@ -70,7 +70,11 @@ export default function AIAssistantPage() {
 
       {/* AI Assistant Component */}
       <div className="max-w-4xl mx-auto">
-        <AIAssistant />
+        <AIAssistantChatEnhanced
+          mode="general"
+          showFeatures={true}
+          className="h-[700px]"
+        />
       </div>
     </div>
   );

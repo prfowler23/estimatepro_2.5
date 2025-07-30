@@ -1,7 +1,7 @@
 // CRUD operations service for estimates
 // Extracted from monolithic estimate-service.ts for better separation of concerns
 
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/universal-client";
 import { Database } from "@/types/supabase";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import {
@@ -53,6 +53,7 @@ export class EstimateCrudService {
     },
   ): Promise<string | null> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -189,6 +190,7 @@ export class EstimateCrudService {
     },
   ): Promise<boolean> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const updateData: Database["public"]["Tables"]["estimates"]["Update"] =
         {};
 
@@ -341,6 +343,7 @@ export class EstimateCrudService {
    * Delete an estimate and its services
    */
   static async deleteEstimate(estimateId: string): Promise<boolean> {
+    const supabase = createClient();
     const result = await withDatabaseRetry(async () => {
       // Delete services first (foreign key constraint)
       await supabase
@@ -374,6 +377,7 @@ export class EstimateCrudService {
     status: EstimateStatus,
   ): Promise<boolean> {
     const result = await withDatabaseRetry(async () => {
+      const supabase = createClient();
       const { error } = await supabase
         .from("estimates")
         .update({
@@ -398,8 +402,10 @@ export class EstimateCrudService {
    * Get estimate by ID with full details
    */
   static async getEstimateById(estimateId: string): Promise<Estimate | null> {
+    const supabase = createClient();
     try {
       const result = await withDatabaseRetry(async () => {
+        const supabase = createClient();
         const { data: estimate, error } = await supabase
           .from("estimates")
           .select(
@@ -470,6 +476,7 @@ export class EstimateCrudService {
       const { limit = 50, offset = 0, status, search, userId } = options;
 
       const result = await withDatabaseRetry(async () => {
+        const supabase = createClient();
         let query = supabase.from("estimates").select(
           `
             *,

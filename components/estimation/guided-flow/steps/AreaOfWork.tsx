@@ -537,9 +537,9 @@ function AreaOfWorkComponent({
 // PHASE 3 FIX: Memoize to prevent expensive 3D visualization and canvas re-initialization
 export const AreaOfWork = memo(AreaOfWorkComponent, (prevProps, nextProps) => {
   return (
-    prevProps.data?.areaOfWork === nextProps.data?.areaOfWork &&
-    prevProps.onUpdate === nextProps.onUpdate &&
-    prevProps.onNext === nextProps.onNext &&
-    prevProps.onBack === nextProps.onBack
+    JSON.stringify(prevProps.data?.areaOfWork) ===
+    JSON.stringify(nextProps.data?.areaOfWork)
+    // Note: onUpdate, onNext, onBack are functions and will have new references
+    // Parent should wrap these in useCallback to prevent re-renders
   );
 });

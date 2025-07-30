@@ -82,6 +82,16 @@ export interface GlassRestorationFormData extends BaseServiceFormData {
   treatmentMethod: "chemical" | "mechanical" | "combination";
 }
 
+// Building data types
+export interface BuildingData {
+  type: string;
+  size?: string;
+  floors?: number;
+  height?: number;
+  material?: string;
+  features?: string[];
+}
+
 // AI extraction types
 export interface AIExtractedData {
   customer: {

@@ -512,7 +512,7 @@ export function useErrorNotification() {
           variant: "outline",
           handler: () => {
             // Open support or issue reporting
-            console.log("Report issue clicked");
+            // TODO: Implement issue reporting functionality
           },
         },
       ];

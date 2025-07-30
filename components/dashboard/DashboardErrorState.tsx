@@ -1,17 +1,26 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, RefreshCw } from "lucide-react";
 
 interface DashboardErrorStateProps {
-  fetchDashboardData: () => void;
+  error: string | null;
+  onRetry: () => void;
 }
 
 export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
-  fetchDashboardData,
+  error,
+  onRetry,
 }) => {
+  const retryButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    // Focus retry button on error
+    retryButtonRef.current?.focus();
+  }, []);
+
   return (
-    <Card>
+    <Card role="alert" aria-live="assertive">
       <CardContent className="flex items-center justify-center py-12">
         <div className="text-center">
           <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -19,10 +28,14 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
             Dashboard Unavailable
           </h3>
           <p className="text-muted-foreground mb-4">
-            Unable to load dashboard data
+            {error || "Unable to load dashboard data"}
           </p>
-          <Button onClick={fetchDashboardData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button
+            ref={retryButtonRef}
+            onClick={onRetry}
+            aria-label="Retry loading dashboard data"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
             Try Again
           </Button>
         </div>

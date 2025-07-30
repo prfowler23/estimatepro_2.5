@@ -12,6 +12,7 @@ import { withRetry } from "@/lib/utils/retry-logic";
 import { isNotNull, safeString, safeNumber } from "@/lib/utils/null-safety";
 import { createClient } from "@/lib/supabase/client";
 import * as CryptoJS from "crypto-js";
+import { decryptOAuthCredentials } from "@/lib/utils/oauth-encryption";
 
 // QuickBooks API Types
 interface QuickBooksCustomer {
@@ -144,11 +145,21 @@ export class QuickBooksIntegration implements BaseIntegration {
     }
   }
 
+  // Helper method to get decrypted credentials
+  private getDecryptedCredentials(): Record<string, any> {
+    if (!this.config?.authentication?.credentials) {
+      return {};
+    }
+    return decryptOAuthCredentials(this.config.authentication.credentials);
+  }
+
   async authenticate(
     credentials: Record<string, string>,
   ): Promise<IntegrationResponse> {
     try {
-      const { access_token, refresh_token, company_id } = credentials;
+      // Decrypt credentials if they're encrypted
+      const decryptedCredentials = decryptOAuthCredentials(credentials);
+      const { access_token, refresh_token, company_id } = decryptedCredentials;
 
       if (!access_token || !company_id) {
         return {
@@ -391,8 +402,7 @@ export class QuickBooksIntegration implements BaseIntegration {
     }
 
     try {
-      const { access_token, company_id } =
-        this.config.authentication.credentials;
+      const { access_token, company_id } = this.getDecryptedCredentials();
 
       const response = await fetch(
         `${this.baseUrl}/v3/company/${company_id}/${recordType}`,
@@ -445,8 +455,7 @@ export class QuickBooksIntegration implements BaseIntegration {
     }
 
     try {
-      const { access_token, company_id } =
-        this.config.authentication.credentials;
+      const { access_token, company_id } = this.getDecryptedCredentials();
 
       const response = await fetch(
         `${this.baseUrl}/v3/company/${company_id}/${recordType}`,
@@ -508,8 +517,7 @@ export class QuickBooksIntegration implements BaseIntegration {
     }
 
     try {
-      const { access_token, company_id } =
-        this.config.authentication.credentials;
+      const { access_token, company_id } = this.getDecryptedCredentials();
 
       const queryString = this.buildQueryString(query);
       const response = await fetch(

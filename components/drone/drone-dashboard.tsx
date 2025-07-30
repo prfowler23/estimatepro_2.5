@@ -42,7 +42,7 @@ interface DroneDashboardProps {
   projectId?: string;
   location?: { latitude: number; longitude: number };
   onFlightPlanCreated?: (flightPlan: FlightPlan) => void;
-  onAnalysisComplete?: (analysis: any) => void;
+  onAnalysisComplete?: (analysis: DroneFlightResult) => void;
 }
 
 export function DroneDashboard({

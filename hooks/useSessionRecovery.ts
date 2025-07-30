@@ -3,11 +3,12 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  SessionRecoveryService,
+  SessionRecoveryServiceClient as SessionRecoveryService,
+  sessionRecoveryServiceClient,
   SessionDraft,
   RecoveryState,
   RecoveryOptions,
-} from "@/lib/services/session-recovery-service";
+} from "@/lib/services/session-recovery-service-client";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 
 export interface UseSessionRecoveryOptions {
@@ -89,12 +90,17 @@ export function useSessionRecovery({
 
     const initializeRecovery = async () => {
       try {
-        await SessionRecoveryService.initialize(recoveryOptions);
+        // Client service is already initialized
 
         if (!mounted) return;
 
         // Check for existing recoverable sessions
-        const state = SessionRecoveryService.getRecoveryState();
+        const drafts =
+          await sessionRecoveryServiceClient.getRecoverableDrafts(estimateId);
+        const state: RecoveryState = {
+          status: drafts.length > 0 ? "available" : "idle",
+          timestamp: Date.now(),
+        };
         setRecoveryState(state);
 
         // Show recovery prompt if there are recoverable sessions
@@ -177,19 +183,22 @@ export function useSessionRecovery({
 
       const savePromise = (async () => {
         try {
-          const success = await SessionRecoveryService.saveDraft(
-            estimateId,
-            data,
-            currentStep,
-            immediate ? "manual-save" : "auto-save",
-          );
+          await sessionRecoveryServiceClient.saveDraft(estimateId, data);
+          const success = true;
 
           if (success) {
             setHasUnsavedChanges(false);
             setLastDraftTime(new Date());
 
             // Update recovery state
-            const newState = SessionRecoveryService.getRecoveryState();
+            const newDrafts =
+              await sessionRecoveryServiceClient.getRecoverableDrafts(
+                estimateId,
+              );
+            const newState: RecoveryState = {
+              status: newDrafts.length > 0 ? "available" : "idle",
+              timestamp: Date.now(),
+            };
             setRecoveryState(newState);
           }
 
@@ -216,7 +225,7 @@ export function useSessionRecovery({
     async (draftId: string): Promise<SessionDraft | null> => {
       setIsRecovering(true);
       try {
-        const draft = await SessionRecoveryService.recoverSession(draftId);
+        const draft = await sessionRecoveryServiceClient.recoverDraft(draftId);
 
         if (draft) {
           // Update current session data
@@ -226,7 +235,12 @@ export function useSessionRecovery({
           setLastDraftTime(new Date(draft.updatedAt));
 
           // Update recovery state
-          const newState = SessionRecoveryService.getRecoveryState();
+          const newDrafts =
+            await sessionRecoveryServiceClient.getRecoverableDrafts(estimateId);
+          const newState: RecoveryState = {
+            status: "recovered",
+            timestamp: Date.now(),
+          };
           setRecoveryState(newState);
 
           onRecoveryComplete?.(draft);
@@ -250,15 +264,21 @@ export function useSessionRecovery({
   const deleteDraft = useCallback(
     async (draftId: string): Promise<boolean> => {
       try {
-        const success = await SessionRecoveryService.deleteDraft(draftId);
+        await sessionRecoveryServiceClient.deleteDraft(draftId);
+        const success = true;
 
         if (success) {
           // Update recovery state
-          const newState = SessionRecoveryService.getRecoveryState();
+          const newDrafts =
+            await sessionRecoveryServiceClient.getRecoverableDrafts(estimateId);
+          const newState: RecoveryState = {
+            status: newDrafts.length > 0 ? "available" : "idle",
+            timestamp: Date.now(),
+          };
           setRecoveryState(newState);
 
           // Hide recovery prompt if no more drafts
-          if (!newState.hasRecoverableSessions) {
+          if (newDrafts.length === 0) {
             setShowRecoveryPrompt(false);
           }
         }
@@ -396,10 +416,10 @@ export function useGuidedFlowRecovery(
     },
   });
 
-  // Auto-update session when data changes (removed function dependency to prevent infinite loop)
+  // Auto-update session when data changes
   useEffect(() => {
     recovery.setCurrentSession(currentData, currentStep);
-  }, [currentData, currentStep]);
+  }, [currentData, currentStep, recovery.setCurrentSession]);
 
   const updateData = useCallback(
     (

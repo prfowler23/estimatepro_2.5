@@ -288,9 +288,6 @@ function InitialContactComponent({
 
         // Show success message
         // Report success as info rather than error
-        console.log(
-          `✅ Auto-populated ${result.populatedSteps.join(", ")} based on extracted information (${Math.round(result.confidence)}% confidence)`,
-        );
       }
     } catch (error) {
       console.error("Auto-population failed:", error);
@@ -959,10 +956,10 @@ export const InitialContact = memo(
   (prevProps, nextProps) => {
     // Custom comparison - only re-render if relevant data changes
     return (
-      prevProps.data?.initialContact === nextProps.data?.initialContact &&
-      prevProps.onUpdate === nextProps.onUpdate &&
-      prevProps.onNext === nextProps.onNext &&
-      prevProps.onBack === nextProps.onBack
+      JSON.stringify(prevProps.data?.initialContact) ===
+      JSON.stringify(nextProps.data?.initialContact)
+      // Note: onUpdate, onNext, onBack are functions and will have new references
+      // Parent should wrap these in useCallback to prevent re-renders
     );
   },
 );

@@ -1,28 +1,34 @@
 "use client";
 
-import { useState, useEffect, lazy, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+  useCallback,
+  useMemo,
+} from "react";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { DashboardSkeletonLoader } from "@/components/dashboard/DashboardSkeletonLoader";
+import { DashboardUnifiedSkeleton } from "@/components/dashboard/DashboardUnifiedSkeleton";
+import { DashboardErrorBoundary } from "@/components/dashboard/DashboardErrorBoundary";
+import { ChartErrorBoundary } from "@/components/dashboard/ChartErrorBoundary";
 import { ConnectivityStatus } from "@/components/ui/connectivity-status";
 import { useAppNavigation } from "@/hooks/useNavigationState";
-import type { AnalyticsData } from "@/lib/analytics/data";
+import { useAuth } from "@/contexts/auth-context";
+import { useAnalyticsData } from "@/hooks/useAnalyticsData";
+import { useRouter } from "next/navigation";
 
-// Lazy load heavy components
+// Import lightweight components directly
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { AICreateEstimateCard } from "@/components/dashboard/AICreateEstimateCard";
+import { FacadeAnalysisCard } from "@/components/dashboard/FacadeAnalysisCard";
+import { DashboardEmptyState } from "@/components/dashboard/DashboardEmptyState";
+import { DashboardErrorState } from "@/components/dashboard/DashboardErrorState";
+
+// Lazy load only heavy components
 const AnalyticsOverview = lazy(() =>
-  import("@/components/analytics/analytics-overview").then((mod) => ({
+  import("@/components/analytics/enhanced-analytics-overview").then((mod) => ({
     default: mod.AnalyticsOverview,
-  })),
-);
-
-const DashboardHeader = lazy(() =>
-  import("@/components/dashboard/DashboardHeader").then((mod) => ({
-    default: mod.DashboardHeader,
-  })),
-);
-
-const AICreateEstimateCard = lazy(() =>
-  import("@/components/dashboard/AICreateEstimateCard").then((mod) => ({
-    default: mod.AICreateEstimateCard,
   })),
 );
 
@@ -32,77 +38,46 @@ const AIBusinessInsights = lazy(() =>
   })),
 );
 
-const FacadeAnalysisCard = lazy(() =>
-  import("@/components/dashboard/FacadeAnalysisCard").then((mod) => ({
-    default: mod.FacadeAnalysisCard,
-  })),
-);
-
-const DashboardEmptyState = lazy(() =>
-  import("@/components/dashboard/DashboardEmptyState").then((mod) => ({
-    default: mod.DashboardEmptyState,
-  })),
-);
-
-const DashboardErrorState = lazy(() =>
-  import("@/components/dashboard/DashboardErrorState").then((mod) => ({
-    default: mod.DashboardErrorState,
-  })),
-);
-
-// Lazy load analytics service
-const getAnalyticsService = () =>
-  import("@/lib/analytics/data").then((mod) => mod.AnalyticsService);
-
 export default function Dashboard() {
+  const { user } = useAuth();
   const { navigateTo, isNavigating } = useAppNavigation();
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
+
+  // Use React Query hook for analytics data
+  const { data, loading, error, refetch, isFetching } = useAnalyticsData();
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
 
-  const handleNavigateTo = async (path: string) => {
-    console.log(`Navigating to: ${path}`);
-    try {
-      if (isClient) {
-        console.log("Client is ready, attempting navigation...");
-        await navigateTo(path);
-      } else {
-        console.warn("Client not ready for navigation");
+    // Prefetch common navigation routes
+    if (router.prefetch) {
+      router.prefetch("/estimates/new/guided");
+      router.prefetch("/calculator");
+      router.prefetch("/ai-assistant");
+    }
+  }, [router]);
+
+  const handleNavigateTo = useCallback(
+    async (path: string) => {
+      try {
+        if (isClient) {
+          await navigateTo(path);
+        }
+      } catch (error) {
+        console.error("Navigation error:", error);
+        // navigateTo already has proper error handling
       }
-    } catch (error) {
-      console.error("Navigation error:", error);
-      if (typeof window !== "undefined") {
-        console.log("Falling back to window.location");
-        window.location.href = path;
-      }
-    }
-  };
+    },
+    [isClient, navigateTo],
+  );
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const AnalyticsService = await getAnalyticsService();
-      const analytics = new AnalyticsService();
-      const fetchedData = await analytics.getAnalyticsData("1d");
-      setData(fetchedData);
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError("Failed to load analytics data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isClient) {
-      fetchDashboardData();
-    }
-  }, [isClient]);
+  const isEmpty = useMemo(
+    () =>
+      !data ||
+      (data.overview.totalRevenue === 0 && data.customers.totalCustomers === 0),
+    [data],
+  );
 
   return (
     <ProtectedRoute requireOnboarding>
@@ -111,67 +86,58 @@ export default function Dashboard() {
 
         <div className="container mx-auto px-4 py-6 lg:px-8">
           {/* Header Section */}
-          <Suspense
-            fallback={
-              <div className="h-20 animate-pulse bg-border-primary/20 rounded-lg mb-6" />
-            }
-          >
+          <DashboardErrorBoundary>
             <DashboardHeader
-              userName="User"
-              lastActivity={data?.lastActivity}
+              userName={user?.user_metadata?.full_name || user?.email || "User"}
+              lastActivity={
+                user?.last_sign_in_at ? new Date(user.last_sign_in_at) : null
+              }
+              onRefresh={refetch}
+              loading={loading || isFetching}
             />
-          </Suspense>
+          </DashboardErrorBoundary>
 
           {/* Main Content */}
           {loading ? (
-            <DashboardSkeletonLoader />
+            <DashboardUnifiedSkeleton />
           ) : error ? (
-            <Suspense fallback={<DashboardSkeletonLoader />}>
-              <DashboardErrorState error={error} onRetry={fetchDashboardData} />
-            </Suspense>
-          ) : !data ||
-            (data.totalRevenue === 0 && data.activeCustomers === 0) ? (
-            <Suspense fallback={<DashboardSkeletonLoader />}>
-              <DashboardEmptyState navigateTo={handleNavigateTo} />
-            </Suspense>
+            <DashboardErrorState
+              error={error?.message || "Failed to load analytics data"}
+              onRetry={refetch}
+            />
+          ) : isEmpty ? (
+            <DashboardEmptyState
+              fetchDashboardData={refetch}
+              navigateTo={handleNavigateTo}
+            />
           ) : (
             <div className="space-y-6">
               {/* Quick Actions */}
               <div className="grid gap-4 md:grid-cols-2">
-                <Suspense
-                  fallback={
-                    <div className="h-32 animate-pulse bg-border-primary/20 rounded-lg" />
-                  }
-                >
+                <DashboardErrorBoundary>
                   <AICreateEstimateCard navigateTo={handleNavigateTo} />
-                </Suspense>
+                </DashboardErrorBoundary>
 
-                <Suspense
-                  fallback={
-                    <div className="h-32 animate-pulse bg-border-primary/20 rounded-lg" />
-                  }
-                >
+                <DashboardErrorBoundary>
                   <FacadeAnalysisCard />
-                </Suspense>
+                </DashboardErrorBoundary>
               </div>
 
               {/* Analytics Overview */}
-              <Suspense
-                fallback={
-                  <div className="h-96 animate-pulse bg-border-primary/20 rounded-lg" />
-                }
-              >
-                <AnalyticsOverview data={data} />
-              </Suspense>
+              <ChartErrorBoundary fallbackTitle="Analytics Overview Error">
+                <Suspense
+                  fallback={
+                    <div className="h-96 animate-pulse bg-border-primary/20 rounded-lg" />
+                  }
+                >
+                  <AnalyticsOverview data={data} />
+                </Suspense>
+              </ChartErrorBoundary>
 
               {/* AI Business Insights */}
-              <Suspense
-                fallback={
-                  <div className="h-64 animate-pulse bg-border-primary/20 rounded-lg" />
-                }
-              >
+              <DashboardErrorBoundary>
                 <AIBusinessInsights data={data} />
-              </Suspense>
+              </DashboardErrorBoundary>
             </div>
           )}
         </div>

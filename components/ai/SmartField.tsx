@@ -17,12 +17,30 @@ import {
 import { SmartDefault } from "@/lib/ai/smart-defaults-engine";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { Sparkles, CheckCircle, X } from "lucide-react";
+import { deepEqual } from "@/lib/utils/deep-compare";
 
-interface SmartFieldProps {
+type FieldType =
+  | "text"
+  | "textarea"
+  | "select"
+  | "number"
+  | "email"
+  | "phone"
+  | "date";
+
+type FieldValue<T extends FieldType> = T extends "number"
+  ? number
+  : T extends "select"
+    ? string
+    : T extends "date"
+      ? string
+      : string;
+
+interface SmartFieldProps<T extends FieldType = "text"> {
   field: string;
-  value: any;
-  onChange: (value: any) => void;
-  type?: "text" | "textarea" | "select" | "number" | "email" | "phone" | "date";
+  value: FieldValue<T> | undefined;
+  onChange: (value: FieldValue<T>) => void;
+  type?: T;
   placeholder?: string;
   options?: Array<{ value: string; label: string }>;
   className?: string;
@@ -36,7 +54,7 @@ interface SmartFieldProps {
   description?: string;
 }
 
-function SmartFieldComponent({
+function SmartFieldComponent<T extends FieldType = "text">({
   field,
   value,
   onChange,
@@ -52,7 +70,7 @@ function SmartFieldComponent({
   enableSmartDefaults = true,
   label,
   description,
-}: SmartFieldProps) {
+}: SmartFieldProps<T>) {
   const { state } = useSmartDefaults();
   const [showSmartDefault, setShowSmartDefault] = useState(false);
   const [appliedDefault, setAppliedDefault] = useState<SmartDefault | null>(
@@ -74,7 +92,7 @@ function SmartFieldComponent({
 
   const handleApplyDefault = useCallback(() => {
     if (relevantDefault) {
-      onChange(relevantDefault.value);
+      onChange(relevantDefault.value as FieldValue<T>);
       setAppliedDefault(relevantDefault);
       setShowSmartDefault(false);
     }
@@ -91,13 +109,15 @@ function SmartFieldComponent({
   };
 
   const renderInput = () => {
+    const inputId = `smart-field-${field}`;
     const commonProps = {
+      id: inputId,
       value: value || "",
       onChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
       ) => {
         try {
-          onChange(e.target.value);
+          onChange(e.target.value as FieldValue<T>);
         } catch (error) {
           console.warn("SmartField onChange error:", error);
           // Silently ignore onChange errors to prevent crashes
@@ -107,6 +127,9 @@ function SmartFieldComponent({
       disabled,
       required,
       className: showSmartDefault ? "border-blue-300" : "",
+      "aria-required": required,
+      "aria-invalid": false, // Could be enhanced with validation state
+      "aria-describedby": description ? `${inputId}-description` : undefined,
     };
 
     switch (type) {
@@ -114,7 +137,7 @@ function SmartFieldComponent({
         return (
           <Textarea
             {...commonProps}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => onChange(e.target.value as FieldValue<T>)}
             rows={3}
           />
         );
@@ -147,7 +170,7 @@ function SmartFieldComponent({
             value={value || ""}
             onValueChange={(newValue) => {
               try {
-                onChange(newValue);
+                onChange(newValue as FieldValue<T>);
               } catch (error) {
                 console.warn("SmartField Select onChange error:", error);
                 // Silently ignore onChange errors to prevent crashes
@@ -191,7 +214,7 @@ function SmartFieldComponent({
             <PredictiveInput
               field={field}
               value={value || ""}
-              onChange={onChange}
+              onChange={(value: string) => onChange(value as FieldValue<T>)}
               placeholder={placeholder}
               className={showSmartDefault ? "border-blue-300" : ""}
               flowData={flowData}
@@ -207,7 +230,9 @@ function SmartFieldComponent({
               type={type}
               onChange={(e) =>
                 onChange(
-                  type === "number" ? Number(e.target.value) : e.target.value,
+                  (type === "number"
+                    ? Number(e.target.value)
+                    : e.target.value) as FieldValue<T>,
                 )
               }
             />
@@ -216,7 +241,10 @@ function SmartFieldComponent({
 
       default:
         return (
-          <Input {...commonProps} onChange={(e) => onChange(e.target.value)} />
+          <Input
+            {...commonProps}
+            onChange={(e) => onChange(e.target.value as FieldValue<T>)}
+          />
         );
     }
   };
@@ -226,13 +254,20 @@ function SmartFieldComponent({
       {/* Label */}
       {label && (
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label
+            htmlFor={`smart-field-${field}`}
+            className="text-sm font-medium text-gray-700"
+          >
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && (
+              <span className="text-red-500 ml-1" aria-label="required">
+                *
+              </span>
+            )}
           </label>
           {appliedDefault && (
-            <Badge variant="secondary" className="text-xs">
-              <Sparkles className="w-3 h-3 mr-1" />
+            <Badge variant="secondary" className="text-xs" aria-live="polite">
+              <Sparkles className="w-3 h-3 mr-1" aria-hidden="true" />
               AI Applied
             </Badge>
           )}
@@ -240,38 +275,62 @@ function SmartFieldComponent({
       )}
 
       {/* Description */}
-      {description && <p className="text-xs text-gray-500">{description}</p>}
+      {description && (
+        <p
+          id={`smart-field-${field}-description`}
+          className="text-xs text-gray-500"
+        >
+          {description}
+        </p>
+      )}
 
       {/* Smart Default Banner */}
       {showSmartDefault && relevantDefault && (
         <div
           className={`p-3 rounded-lg border ${getConfidenceColor(relevantDefault.confidence)}`}
+          role="region"
+          aria-label="AI suggestion"
+          aria-live="polite"
+          aria-atomic="true"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="w-4 h-4 text-blue-500" />
+                <Sparkles
+                  className="w-4 h-4 text-blue-500"
+                  aria-hidden="true"
+                />
                 <span className="text-sm font-medium">
                   Smart Default Available
                 </span>
                 <Badge variant="secondary" className="text-xs">
+                  <span className="sr-only">Confidence level:</span>
                   {Math.round(relevantDefault.confidence * 100)}% confident
                 </Badge>
               </div>
               <p className="text-sm text-gray-700 mb-2">
                 <strong>Suggested:</strong> {String(relevantDefault.value)}
               </p>
-              <p className="text-xs text-gray-600">
+              <p
+                className="text-xs text-gray-600"
+                id={`${field}-suggestion-reason`}
+              >
                 {relevantDefault.reasoning}
               </p>
             </div>
-            <div className="flex items-center gap-1 ml-2">
+            <div
+              className="flex items-center gap-1 ml-2"
+              role="group"
+              aria-label="Suggestion actions"
+            >
               <Button
                 size="sm"
                 onClick={handleApplyDefault}
                 className="text-xs"
+                aria-label="Apply AI suggestion"
+                aria-describedby={`${field}-suggestion-reason`}
               >
-                <CheckCircle className="w-3 h-3 mr-1" />
+                <CheckCircle className="w-3 h-3 mr-1" aria-hidden="true" />
                 Apply
               </Button>
               <Button
@@ -279,8 +338,10 @@ function SmartFieldComponent({
                 variant="ghost"
                 onClick={handleDismissDefault}
                 className="text-xs"
+                aria-label="Dismiss AI suggestion"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3 h-3" aria-hidden="true" />
+                <span className="sr-only">Dismiss</span>
               </Button>
             </div>
           </div>
@@ -303,33 +364,27 @@ function SmartFieldComponent({
 
 // Deep comparison helper for flowData
 function areFlowDataEqual(prev: GuidedFlowData, next: GuidedFlowData): boolean {
-  try {
-    // Quick reference check first
-    if (prev === next) return true;
-
-    // Deep comparison as fallback
-    return JSON.stringify(prev) === JSON.stringify(next);
-  } catch {
-    // If comparison fails, assume they're different to be safe
-    return false;
-  }
+  return deepEqual(prev, next);
 }
 
 // Optimized memo to prevent expensive AI predictions and validation re-runs
-export const SmartField = memo(SmartFieldComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.value === nextProps.value &&
-    prevProps.field === nextProps.field &&
-    areFlowDataEqual(prevProps.flowData, nextProps.flowData) &&
-    prevProps.currentStep === nextProps.currentStep &&
-    prevProps.disabled === nextProps.disabled &&
-    prevProps.type === nextProps.type &&
-    prevProps.placeholder === nextProps.placeholder &&
-    prevProps.required === nextProps.required &&
-    prevProps.enablePredictions === nextProps.enablePredictions &&
-    prevProps.enableSmartDefaults === nextProps.enableSmartDefaults
-    // Removed onChange comparison since it's unstable
-  );
-});
+export const SmartField = memo(
+  SmartFieldComponent,
+  (prevProps: SmartFieldProps<any>, nextProps: SmartFieldProps<any>) => {
+    return (
+      prevProps.value === nextProps.value &&
+      prevProps.field === nextProps.field &&
+      areFlowDataEqual(prevProps.flowData, nextProps.flowData) &&
+      prevProps.currentStep === nextProps.currentStep &&
+      prevProps.disabled === nextProps.disabled &&
+      prevProps.type === nextProps.type &&
+      prevProps.placeholder === nextProps.placeholder &&
+      prevProps.required === nextProps.required &&
+      prevProps.enablePredictions === nextProps.enablePredictions &&
+      prevProps.enableSmartDefaults === nextProps.enableSmartDefaults
+      // Removed onChange comparison since it's unstable
+    );
+  },
+);
 
 export default SmartField;

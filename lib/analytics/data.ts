@@ -162,6 +162,7 @@ export interface TrendPoint {
 
 export class AnalyticsService {
   static async checkDatabaseConnection(): Promise<boolean> {
+    const supabase = createClient();
     try {
       const { error } = await supabase.from("estimates").select("id").limit(1);
 
@@ -172,6 +173,7 @@ export class AnalyticsService {
     }
   }
   static async getOverviewMetrics(): Promise<OverviewMetrics> {
+    const supabase = createClient();
     try {
       const currentMonth = new Date();
       const lastMonth = subMonths(currentMonth, 1);
@@ -302,6 +304,7 @@ export class AnalyticsService {
   }
 
   static async getRevenueData(): Promise<RevenueData> {
+    const supabase = createClient();
     try {
       // Optimized monthly revenue query - replaces N+1 loop with single query
       const monthlyData =
@@ -364,6 +367,7 @@ export class AnalyticsService {
   }
 
   static async getServiceMetrics(): Promise<ServiceMetrics[]> {
+    const supabase = createClient();
     try {
       // Use optimized service metrics query - eliminates complex reduce operations
       const serviceData =
@@ -389,6 +393,7 @@ export class AnalyticsService {
   }
 
   static async getCustomerMetrics(): Promise<CustomerMetrics> {
+    const supabase = createClient();
     try {
       const { data: estimates } = await supabase
         .from("estimates")
@@ -498,6 +503,7 @@ export class AnalyticsService {
   }
 
   static async getConversionData(): Promise<ConversionData> {
+    const supabase = createClient();
     try {
       const { data: estimates } = await supabase
         .from("estimates")
@@ -560,6 +566,7 @@ export class AnalyticsService {
   }
 
   static async getFullAnalyticsData(): Promise<AnalyticsData> {
+    const supabase = createClient();
     try {
       console.log("Starting analytics data fetch...");
       const [overview, revenue, services, customers, conversion] =
@@ -606,6 +613,7 @@ export class AnalyticsService {
 
   // Get quarterly revenue data
   private static async getQuarterlyRevenueData(): Promise<ChartDataPoint[]> {
+    const supabase = createClient();
     try {
       const now = new Date();
       const quarters = [];
@@ -648,6 +656,7 @@ export class AnalyticsService {
 
   // Get yearly revenue data
   private static async getYearlyRevenueData(): Promise<ChartDataPoint[]> {
+    const supabase = createClient();
     try {
       const now = new Date();
       const years = [];
@@ -690,6 +699,7 @@ export class AnalyticsService {
 
   // Get conversion data by service
   private static async getConversionByService(): Promise<any[]> {
+    const supabase = createClient();
     try {
       const { data: estimates } = await supabase
         .from("estimates")
@@ -730,6 +740,7 @@ export class AnalyticsService {
 
   // Get conversion data by location (based on building address)
   private static async getConversionByLocation(): Promise<any[]> {
+    const supabase = createClient();
     try {
       const { data: estimates } = await supabase
         .from("estimates")
@@ -772,6 +783,7 @@ export class AnalyticsService {
 
   // Get location analytics data
   private static async getLocationAnalytics(): Promise<any[]> {
+    const supabase = createClient();
     try {
       const { data: estimates } = await supabase
         .from("estimates")

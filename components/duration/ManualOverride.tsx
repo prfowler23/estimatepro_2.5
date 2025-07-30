@@ -1,4 +1,9 @@
+"use client";
+
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Plus, X, Edit3, AlertTriangle, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ServiceDuration {
@@ -63,72 +77,77 @@ const OVERRIDE_REASONS = [
   "Other (specify below)",
 ];
 
+// Validation schema for duration override form
+const durationOverrideSchema = z
+  .object({
+    service: z.string().min(1, "Please select a service"),
+    duration: z
+      .string()
+      .min(1, "Duration is required")
+      .refine((val) => {
+        const num = parseFloat(val);
+        return !isNaN(num) && num > 0;
+      }, "Duration must be greater than 0")
+      .refine((val) => {
+        const num = parseFloat(val);
+        return !isNaN(num) && num <= 365;
+      }, "Duration cannot exceed 365 days"),
+    reason: z.string().min(1, "Please provide a reason for the override"),
+    customReason: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.reason === "Other (specify below)") {
+        return data.customReason && data.customReason.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Please specify the custom reason",
+      path: ["customReason"],
+    },
+  );
+
+type DurationOverrideData = z.infer<typeof durationOverrideSchema>;
+
 export function ManualOverride({
   serviceDurations,
   onOverride,
   onRemoveOverride,
   allowRemoval = true,
 }: ManualOverrideProps) {
-  const [selectedService, setSelectedService] = useState("");
-  const [newDuration, setNewDuration] = useState("");
-  const [reason, setReason] = useState("");
-  const [customReason, setCustomReason] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
 
-  const validateForm = (): boolean => {
-    const validationErrors: string[] = [];
+  // Form setup for validation
+  const form = useForm<DurationOverrideData>({
+    resolver: zodResolver(durationOverrideSchema),
+    defaultValues: {
+      service: "",
+      duration: "",
+      reason: "",
+      customReason: "",
+    },
+  });
 
-    if (!selectedService) {
-      validationErrors.push("Please select a service");
-    }
-
-    if (!newDuration || parseFloat(newDuration) <= 0) {
-      validationErrors.push("Duration must be greater than 0");
-    }
-
-    if (parseFloat(newDuration) > 365) {
-      validationErrors.push("Duration cannot exceed 365 days");
-    }
-
-    if (!reason) {
-      validationErrors.push("Please provide a reason for the override");
-    }
-
-    if (reason === "Other (specify below)" && !customReason.trim()) {
-      validationErrors.push("Please specify the custom reason");
-    }
-
-    setErrors(validationErrors);
-    return validationErrors.length === 0;
-  };
-
-  const handleSubmit = () => {
-    if (!validateForm()) return;
-
+  const onSubmit = (data: DurationOverrideData) => {
     const finalReason =
-      reason === "Other (specify below)" ? customReason : reason;
-    onOverride(selectedService, parseFloat(newDuration), finalReason);
+      data.reason === "Other (specify below)"
+        ? data.customReason || ""
+        : data.reason;
+    onOverride(data.service, parseFloat(data.duration), finalReason);
 
     // Reset form
+    form.reset();
     setShowForm(false);
-    setSelectedService("");
-    setNewDuration("");
-    setReason("");
-    setCustomReason("");
-    setErrors([]);
   };
 
   const handleCancel = () => {
+    form.reset();
     setShowForm(false);
-    setSelectedService("");
-    setNewDuration("");
-    setReason("");
-    setCustomReason("");
-    setErrors([]);
   };
 
   const getSelectedServiceData = () => {
+    const selectedService = form.watch("service");
     return serviceDurations.find((sd) => sd.service === selectedService);
   };
 
@@ -179,155 +198,183 @@ export function ManualOverride({
         {showForm && (
           <Card className="border border-blue-200 bg-blue-50/50">
             <CardContent className="p-4 space-y-4">
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Service
-                  </label>
-                  <Select
-                    value={selectedService}
-                    onValueChange={setSelectedService}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a service to override" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableServices.map((sd) => (
-                        <SelectItem key={sd.service} value={sd.service}>
-                          <div className="flex justify-between items-center w-full">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="service"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Service</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a service to override" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableServices.map((sd) => (
+                              <SelectItem key={sd.service} value={sd.service}>
+                                <div className="flex justify-between items-center w-full">
+                                  <span>
+                                    {SERVICE_NAMES[sd.service] ||
+                                      sd.serviceName ||
+                                      sd.service}
+                                  </span>
+                                  <span className="text-muted-foreground ml-4">
+                                    Current: {sd.finalDuration} days
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Duration (days)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.5"
+                            min="0.5"
+                            max="365"
+                            placeholder="Enter new duration"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        {form.watch("service") && form.watch("duration") && (
+                          <FormDescription className="text-xs">
+                            Change:{" "}
+                            {formatDurationChange(
+                              getSelectedServiceData()?.finalDuration || 0,
+                              parseFloat(form.watch("duration")) || 0,
+                            )}
+                          </FormDescription>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="reason"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reason for Override</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a reason" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {OVERRIDE_REASONS.map((reasonOption) => (
+                              <SelectItem
+                                key={reasonOption}
+                                value={reasonOption}
+                              >
+                                {reasonOption}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch("reason") === "Other (specify below)" && (
+                    <FormField
+                      control={form.control}
+                      name="customReason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Custom Reason</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Please specify the reason for this duration override..."
+                              rows={3}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Impact Preview */}
+                  {form.watch("service") && form.watch("duration") && (
+                    <Card className="bg-blue-50 border-blue-200">
+                      <CardContent className="p-3">
+                        <h5 className="font-medium text-sm mb-2">
+                          Impact Preview
+                        </h5>
+                        <div className="text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span>Original Duration:</span>
                             <span>
-                              {SERVICE_NAMES[sd.service] ||
-                                sd.serviceName ||
-                                sd.service}
-                            </span>
-                            <span className="text-muted-foreground ml-4">
-                              Current: {sd.finalDuration} days
+                              {getSelectedServiceData()?.baseDuration || 0} days
+                              (base)
                             </span>
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    New Duration (days)
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    max="365"
-                    placeholder="Enter new duration"
-                    value={newDuration}
-                    onChange={(e) => setNewDuration(e.target.value)}
-                  />
-                  {selectedService && newDuration && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Change:{" "}
-                      {formatDurationChange(
-                        getSelectedServiceData()?.finalDuration || 0,
-                        parseFloat(newDuration) || 0,
-                      )}
-                    </p>
+                          <div className="flex justify-between">
+                            <span>Weather Impact:</span>
+                            <span>
+                              +{getSelectedServiceData()?.weatherImpact || 0}{" "}
+                              days
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Current Total:</span>
+                            <span>
+                              {getSelectedServiceData()?.finalDuration || 0}{" "}
+                              days
+                            </span>
+                          </div>
+                          <div className="flex justify-between font-medium border-t pt-1">
+                            <span>New Total:</span>
+                            <span>
+                              {parseFloat(form.watch("duration")) || 0} days
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
-                </div>
 
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Reason for Override
-                  </label>
-                  <Select value={reason} onValueChange={setReason}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a reason" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {OVERRIDE_REASONS.map((reasonOption) => (
-                        <SelectItem key={reasonOption} value={reasonOption}>
-                          {reasonOption}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {reason === "Other (specify below)" && (
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Custom Reason
-                    </label>
-                    <Textarea
-                      placeholder="Please specify the reason for this duration override..."
-                      value={customReason}
-                      onChange={(e) => setCustomReason(e.target.value)}
-                      rows={3}
-                    />
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={!form.formState.isValid}>
+                      Apply Override
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancel}
+                    >
+                      Cancel
+                    </Button>
                   </div>
-                )}
-
-                {/* Validation Errors */}
-                {errors.length > 0 && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <ul className="list-disc list-inside space-y-1">
-                        {errors.map((error, index) => (
-                          <li key={index}>{error}</li>
-                        ))}
-                      </ul>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Impact Preview */}
-                {selectedService && newDuration && (
-                  <Card className="bg-blue-50 border-blue-200">
-                    <CardContent className="p-3">
-                      <h5 className="font-medium text-sm mb-2">
-                        Impact Preview
-                      </h5>
-                      <div className="text-xs space-y-1">
-                        <div className="flex justify-between">
-                          <span>Original Duration:</span>
-                          <span>
-                            {getSelectedServiceData()?.baseDuration || 0} days
-                            (base)
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Weather Impact:</span>
-                          <span>
-                            +{getSelectedServiceData()?.weatherImpact || 0} days
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Current Total:</span>
-                          <span>
-                            {getSelectedServiceData()?.finalDuration || 0} days
-                          </span>
-                        </div>
-                        <div className="flex justify-between font-medium border-t pt-1">
-                          <span>New Total:</span>
-                          <span>{parseFloat(newDuration) || 0} days</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!selectedService || !newDuration || !reason}
-                >
-                  Apply Override
-                </Button>
-                <Button variant="outline" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         )}

@@ -55,7 +55,7 @@ import {
   useFacadeAnalysesByEstimate,
   useFacadeAnalysis,
 } from "@/hooks/use-facade-analysis";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 interface AreaInput {
   id: string;
@@ -66,7 +66,7 @@ interface AreaInput {
   calculated: number;
 }
 
-export default function MeasurementsWithFacade() {
+function MeasurementsWithFacade() {
   const { flowData, updateFlowData, validateCurrentStep } = useEstimateFlow();
   const env = validateClientEnv();
 
@@ -986,3 +986,6 @@ export default function MeasurementsWithFacade() {
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+export default React.memo(MeasurementsWithFacade);

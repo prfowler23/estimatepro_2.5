@@ -29,9 +29,9 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useState, useEffect } from "react";
-import { calculationError } from "@/lib/utils/logger";
+import { useState, useMemo } from "react";
 import { Sparkles, Calculator, Info, AlertTriangle } from "lucide-react";
+import { useServiceCalculation } from "@/hooks/useServiceCalculation";
 
 interface WindowCleaningFormProps {
   onSubmit: (result: any) => void;
@@ -42,9 +42,6 @@ export function WindowCleaningForm({
   onSubmit,
   onCancel,
 }: WindowCleaningFormProps) {
-  const [calculation, setCalculation] = useState<any>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-
   const form = useForm<WindowCleaningFormData>({
     resolver: zodResolver(windowCleaningSchema),
     defaultValues: {
@@ -58,48 +55,20 @@ export function WindowCleaningForm({
     },
   });
 
-  // Calculate estimate in real-time using subscription
-  useEffect(() => {
-    const subscription = form.watch((values) => {
-      const {
-        glassArea,
-        location,
-        buildingHeightStories,
-        numberOfDrops,
-        crewSize,
-        shiftLength,
-      } = values;
-      if (
-        glassArea &&
-        glassArea > 0 &&
-        location &&
-        buildingHeightStories &&
-        numberOfDrops &&
-        crewSize &&
-        shiftLength
-      ) {
-        setIsCalculating(true);
-        setTimeout(() => {
-          try {
-            const calculator = new WindowCleaningCalculator();
-            const result = calculator.calculate(values as any);
-            setCalculation(result);
-          } catch (error) {
-            calculationError(new Error("Window cleaning calculation failed"), {
-              error,
-              formData: watchedValues,
-            });
-            setCalculation(null);
-          } finally {
-            setIsCalculating(false);
-          }
-        }, 300);
-      } else {
-        setCalculation(null);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+  // Use the optimized calculation hook
+  const { calculation, isCalculating } = useServiceCalculation({
+    form,
+    Calculator: WindowCleaningCalculator,
+    schema: windowCleaningSchema,
+    requiredFields: [
+      "glassArea",
+      "location",
+      "buildingHeightStories",
+      "numberOfDrops",
+      "crewSize",
+      "shiftLength",
+    ],
+  });
 
   // For derived values, use form.watch directly in render
   const watchedValues = form.watch();

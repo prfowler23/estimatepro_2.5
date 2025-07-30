@@ -1,9 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -12,6 +22,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Send, Bot, User } from "lucide-react";
+
+// Validation schema for basic assistant input
+const assistantInputSchema = z.object({
+  message: z
+    .string()
+    .min(1, "Message cannot be empty")
+    .max(1000, "Message must be less than 1000 characters")
+    .refine(
+      (msg) => msg.trim().length > 0,
+      "Message cannot contain only whitespace",
+    ),
+});
+
+type AssistantInputData = z.infer<typeof assistantInputSchema>;
 
 interface Message {
   id: string;
@@ -26,18 +50,27 @@ export function AIAssistant() {
   const [mode, setMode] = useState("general");
   const [isLoading, setIsLoading] = useState(false);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  // Form setup for validation
+  const form = useForm<AssistantInputData>({
+    resolver: zodResolver(assistantInputSchema),
+    defaultValues: {
+      message: "",
+    },
+  });
+
+  const sendMessage = async (data: AssistantInputData) => {
+    if (!data.message.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: data.message,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    form.reset();
     setIsLoading(true);
 
     try {
@@ -45,24 +78,24 @@ export function AIAssistant() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: input,
+          message: data.message,
           mode,
           context: { previousMessages: messages.slice(-3) }, // Last 3 messages for context
         }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.response,
+          content: responseData.response,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
       } else {
-        throw new Error(data.error || "Failed to get response");
+        throw new Error(responseData.error || "Failed to get response");
       }
     } catch (error) {
       const errorMessage: Message = {
@@ -81,7 +114,7 @@ export function AIAssistant() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      form.handleSubmit(sendMessage)();
     }
   };
 
@@ -153,22 +186,39 @@ export function AIAssistant() {
         </CardContent>
       </Card>
 
-      <div className="flex gap-2">
-        <Input
-          placeholder="Ask about estimates, services, or building maintenance..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          disabled={isLoading}
-        />
-        <Button onClick={sendMessage} disabled={!input.trim() || isLoading}>
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-        </Button>
-      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(sendMessage)} className="flex gap-2">
+          <FormField
+            control={form.control}
+            name="message"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormControl>
+                  <Input
+                    placeholder="Ask about estimates, services, or building maintenance..."
+                    {...field}
+                    value={input}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setInput(e.target.value);
+                    }}
+                    onKeyPress={handleKeyPress}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" disabled={!form.formState.isValid || isLoading}>
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }

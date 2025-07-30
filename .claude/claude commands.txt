@@ -1,0 +1,26 @@
+Claude Code Commands - Quick Reference
+Development Workflow
+
+/cleanproject - Remove debug files, backups, and temporary artifacts
+/commit - Generate conventional commit messages from your changes
+/format - Auto-detect and run your project's code formatter
+/test - Run tests and automatically fix simple test failures
+
+Code Quality
+
+/review - Comprehensive code review for bugs, security, and performance issues
+/remove-comments - Strip obvious comments while keeping valuable documentation
+/fix-imports - Repair broken imports after moving or renaming files
+/find-todos - Locate all TODO, FIXME, and HACK comments in codebase
+
+Session Management
+
+/session-start - Begin documented coding session with goal tracking
+/session-end - Summarize accomplishments and create handoff notes
+
+Safety & Performance
+
+/undo - Rollback last operation with automatic backup restore
+/make-it-pretty - Improve code readability without changing functionality
+/todos-to-issues - Convert TODO comments to GitHub issues automatically
+/human-mode - Switch to pragmatic mode for practical solutions

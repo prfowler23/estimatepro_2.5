@@ -205,12 +205,12 @@ export function EstimateFlowProvider({
     }
   }, []);
 
-  // Auto-save hook
+  // Auto-save hook with proper debouncing to prevent excessive saves
   const { isSaving, lastSaved, hasUnsavedChanges } = useAutoSave({
     data: flowData,
     estimateId,
     enabled: true,
-    debounceMs: 2000,
+    debounceMs: 2000, // 2 second debounce to prevent excessive API calls
   });
 
   // Session recovery hook

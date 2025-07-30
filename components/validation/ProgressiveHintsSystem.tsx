@@ -2,6 +2,7 @@
 // Replaces blocking validation errors with helpful, progressive guidance
 
 import React, { useState, useEffect, useMemo } from "react";
+import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
@@ -44,7 +45,7 @@ export interface ProgressiveHint {
   actionable: boolean;
   autoFixAvailable?: boolean;
   fieldPath?: string;
-  suggestedValue?: any;
+  suggestedValue?: unknown;
   contextualHelp?: {
     title: string;
     description: string;
@@ -59,7 +60,7 @@ export interface ProgressiveHint {
 
 export interface ProgressiveHintsConfig {
   stepNumber: number;
-  flowData: any;
+  flowData: GuidedFlowData;
   validationResult: ValidationResult;
   userExperienceLevel: "beginner" | "intermediate" | "advanced";
   showCompletedTasks: boolean;
@@ -69,7 +70,7 @@ export interface ProgressiveHintsConfig {
 
 interface ProgressiveHintsSystemProps {
   config: ProgressiveHintsConfig;
-  onApplyAutoFix?: (fieldPath: string, suggestedValue: any) => void;
+  onApplyAutoFix?: (fieldPath: string, suggestedValue: unknown) => void;
   onRequestHelp?: (hint: ProgressiveHint) => void;
   onHintDismiss?: (hintId: string) => void;
   className?: string;
@@ -771,7 +772,7 @@ function getContextualHelp(
 
 function getStepSpecificHints(
   stepNumber: number,
-  flowData: any,
+  flowData: GuidedFlowData,
   userExperienceLevel: "beginner" | "intermediate" | "advanced",
 ): ProgressiveHint[] {
   const hints: ProgressiveHint[] = [];

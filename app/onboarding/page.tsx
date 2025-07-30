@@ -138,13 +138,7 @@ export default function OnboardingPage() {
         .update({
           full_name: userData.fullName,
           company_name: userData.companyName,
-          phone_number: userData.phoneNumber,
-          business_type: userData.businessType,
-          selected_services: userData.selectedServices,
-          average_project_size: userData.averageProjectSize,
-          monthly_estimates: userData.monthlyEstimates,
-          onboarding_completed: true,
-          onboarding_date: new Date().toISOString(),
+          phone: userData.phoneNumber,
         })
         .eq("id", user.id);
 

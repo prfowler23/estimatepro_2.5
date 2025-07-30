@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/universal-client";
 import {
   PhotoAnalysisResult,
   analyzePhotos,
@@ -9,6 +8,11 @@ import {
   compareBeforeAfter,
   fileToBase64,
 } from "@/lib/ai/photo-analysis";
+import {
+  sanitizeFilePath,
+  isValidFileName,
+  generateSecureFileName,
+} from "@/lib/utils/path-sanitization";
 
 export interface PhotoData {
   id: string;
@@ -78,15 +82,19 @@ export class PhotoService {
         // Validate file
         this.validateFile(file);
 
+        // Validate filename for security
+        if (!isValidFileName(file.name)) {
+          throw new Error(`Invalid file name: ${file.name}`);
+        }
+
         // Process file (compress if needed)
         const processedFile = compress
           ? await this.compressImage(file, maxSizeMB)
           : file;
 
-        // Generate unique file path
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${userId}/${fileName}`;
+        // Generate secure file path with sanitization
+        const secureFileName = generateSecureFileName(file.name);
+        const filePath = sanitizeFilePath(userId, secureFileName);
 
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } =
@@ -235,13 +243,17 @@ export class PhotoService {
           // Save analysis results
           const { data: analysisData, error: analysisError } =
             await this.supabase
-              .from("photo_analysis_results")
+              .from("ai_analysis_results")
               .upsert({
-                photo_id: photoId,
+                quote_id: null, // No quote associated with individual photo analysis
                 analysis_type: analysisType,
-                analysis_data: analysisResult,
-                confidence,
-                processing_time_ms: processingTime,
+                image_url: null, // Photo ID stored in analysis_data
+                analysis_data: {
+                  ...analysisResult,
+                  photo_id: photoId,
+                  processing_time_ms: processingTime,
+                },
+                confidence_score: confidence,
               })
               .select()
               .single();
@@ -284,6 +296,7 @@ export class PhotoService {
    * Get photos for an estimate
    */
   async getPhotosForEstimate(estimateId: string): Promise<PhotoData[]> {
+    const supabase = createClient();
     const { data, error } = await this.supabase
       .from("photos")
       .select("*")
@@ -301,11 +314,12 @@ export class PhotoService {
    * Get analysis results for a photo
    */
   async getPhotoAnalysis(photoId: string): Promise<PhotoAnalysisData[]> {
+    const supabase = createClient();
     const { data, error } = await this.supabase
-      .from("photo_analysis_results")
+      .from("ai_analysis_results")
       .select("*")
-      .eq("photo_id", photoId)
-      .order("processed_at", { ascending: false });
+      .filter("analysis_data->>photo_id", "eq", photoId)
+      .order("created_at", { ascending: false });
 
     if (error) {
       throw new Error(`Failed to fetch analysis: ${error.message}`);
@@ -320,43 +334,51 @@ export class PhotoService {
 
   /**
    * Delete photo and its analysis results
+   * TODO: Implement when photos table is created
    */
   async deletePhoto(photoId: string): Promise<void> {
-    // Get photo data first
-    const { data: photo, error: fetchError } = await this.supabase
-      .from("photos")
-      .select("storage_path")
-      .eq("id", photoId)
-      .single();
+    const supabase = createClient();
+    // Temporarily commented out - photos table not in current schema
+    throw new Error(
+      "Photo deletion not implemented - photos table not available",
+    );
 
-    if (fetchError) {
-      throw new Error(`Photo not found: ${fetchError.message}`);
-    }
+    // // Get photo data first
+    // const { data: photo, error: fetchError } = await this.supabase
+    //   .from("photos")
+    //   .select("storage_path")
+    //   .eq("id", photoId)
+    //   .single();
 
-    // Delete from storage
-    const { error: storageError } = await this.supabase.storage
-      .from(this.STORAGE_BUCKET)
-      .remove([photo.storage_path]);
+    // if (fetchError) {
+    //   throw new Error(`Photo not found: ${fetchError.message}`);
+    // }
 
-    if (storageError) {
-      console.error("Failed to delete from storage:", storageError);
-    }
+    // // Delete from storage
+    // const { error: storageError } = await this.supabase.storage
+    //   .from(this.STORAGE_BUCKET)
+    //   .remove([photo.storage_path]);
 
-    // Delete from database (cascade will handle analysis results)
-    const { error: dbError } = await this.supabase
-      .from("photos")
-      .delete()
-      .eq("id", photoId);
+    // if (storageError) {
+    //   console.error("Failed to delete from storage:", storageError);
+    // }
 
-    if (dbError) {
-      throw new Error(`Failed to delete photo: ${dbError.message}`);
-    }
+    // // Delete from database (cascade will handle analysis results)
+    // const { error: dbError } = await this.supabase
+    //   .from("photos")
+    //   .delete()
+    //   .eq("id", photoId);
+
+    // if (dbError) {
+    //   throw new Error(`Failed to delete photo: ${dbError.message}`);
+    // }
   }
 
   /**
    * Batch analysis with progress tracking
    */
   async batchAnalyze3D(photoIds: string[]): Promise<any> {
+    const supabase = createClient();
     if (photoIds.length < 2) {
       throw new Error("At least 2 photos required for 3D analysis");
     }
@@ -364,54 +386,60 @@ export class PhotoService {
     // Get all photos
     const photos: PhotoData[] = [];
     for (const photoId of photoIds) {
-      const { data: photo, error } = await this.supabase
-        .from("photos")
-        .select("*")
-        .eq("id", photoId)
-        .single();
+      // Temporarily commented out - photos table not in current schema
+      // const { data: photo, error } = await this.supabase
+      //   .from("photos")
+      //   .select("*")
+      //   .eq("id", photoId)
+      //   .single();
 
-      if (error || !photo) {
-        throw new Error(`Photo not found: ${photoId}`);
-      }
-      photos.push(photo);
+      // if (error || !photo) {
+      //   throw new Error(`Photo not found: ${photoId}`);
+      // }
+      // photos.push(photo);
+      throw new Error(
+        "3D analysis not implemented - photos table not available",
+      );
     }
 
-    // Download and prepare images
-    const imageUrls: string[] = [];
-    for (const photo of photos) {
-      const { data: fileData } = await this.supabase.storage
-        .from(this.STORAGE_BUCKET)
-        .download(photo.storage_path);
+    // // Download and prepare images
+    // const imageUrls: string[] = [];
+    // for (const photo of photos) {
+    //   const { data: fileData } = await this.supabase.storage
+    //     .from(this.STORAGE_BUCKET)
+    //     .download(photo.storage_path);
 
-      if (fileData) {
-        const file = new File([fileData], photo.file_name, {
-          type: photo.mime_type,
-        });
-        const imageBase64 = await fileToBase64(file);
-        imageUrls.push(imageBase64);
-      }
-    }
+    //   if (fileData) {
+    //     const file = new File([fileData], photo.file_name, {
+    //       type: photo.mime_type,
+    //     });
+    //     const imageBase64 = await fileToBase64(file);
+    //     imageUrls.push(imageBase64);
+    //   }
+    // }
 
-    // Perform 3D analysis
-    const result = await analyze3DReconstruction(imageUrls);
+    // // Perform 3D analysis
+    // const result = await analyze3DReconstruction(imageUrls);
 
-    // Save combined analysis result
-    const { data: analysisData } = await this.supabase
-      .from("photo_analysis_results")
-      .insert({
-        photo_id: photoIds[0], // Associate with first photo
-        analysis_type: "3d_reconstruction",
-        analysis_data: {
-          ...result,
-          sourcePhotos: photoIds,
-          photoCount: photoIds.length,
-        },
-        confidence: result.reconstruction?.confidence || 0.7,
-      })
-      .select()
-      .single();
+    // // Save combined analysis result
+    // const { data: analysisData } = await this.supabase
+    //   .from("ai_analysis_results")
+    //   .insert({
+    //     quote_id: null, // No quote associated with 3D reconstruction
+    //     analysis_type: "3d_reconstruction",
+    //     image_url: null, // Multiple photos involved, stored in analysis_data
+    //     analysis_data: {
+    //       ...result,
+    //       sourcePhotos: photoIds,
+    //       photoCount: photoIds.length,
+    //       primary_photo_id: photoIds[0], // Associate with first photo
+    //     },
+    //     confidence_score: result.reconstruction?.confidence || 0.7,
+    //   })
+    //   .select()
+    //   .single();
 
-    return analysisData;
+    // return analysisData;
   }
 
   /**
@@ -444,16 +472,17 @@ export class PhotoService {
 
     // Save comparison result
     const { data: analysisData } = await this.supabase
-      .from("photo_analysis_results")
+      .from("ai_analysis_results")
       .insert({
-        photo_id: beforePhotoId,
+        quote_id: null, // No quote associated with this comparison
         analysis_type: "before_after_comparison",
+        image_url: null, // We have the image IDs in analysis_data
         analysis_data: {
           ...result,
           beforePhotoId,
           afterPhotoId,
         },
-        confidence: 0.9, // Comparisons are generally reliable
+        confidence_score: 0.9, // Comparisons are generally reliable
       })
       .select()
       .single();
@@ -477,6 +506,7 @@ export class PhotoService {
   }
 
   private async compressImage(file: File, maxSizeMB: number): Promise<File> {
+    const supabase = createClient();
     // Simple compression - in production you might use a proper image compression library
     if (file.size <= maxSizeMB * 1024 * 1024) {
       return file;
@@ -488,6 +518,7 @@ export class PhotoService {
   }
 
   private async extractFileMetadata(file: File): Promise<Record<string, any>> {
+    const supabase = createClient();
     return {
       originalName: file.name,
       size: file.size,
@@ -517,6 +548,7 @@ export class PhotoService {
   }
 
   private async getPhotoById(photoId: string): Promise<PhotoData> {
+    const supabase = createClient();
     // TODO: Implement when photos table is added to database
     // For now, return a mock photo object
     const mockPhoto: PhotoData = {
@@ -540,6 +572,7 @@ export class PhotoService {
   }
 
   private async downloadPhotoFile(photo: PhotoData): Promise<File> {
+    const supabase = createClient();
     const { data: fileData } = await this.supabase.storage
       .from(this.STORAGE_BUCKET)
       .download(photo.storage_path || photo.file_path);

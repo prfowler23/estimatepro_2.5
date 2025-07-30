@@ -149,4 +149,20 @@ function DesktopStepIndicatorComponent({
 }
 
 // PHASE 3 FIX: Memoize to prevent unnecessary re-renders
-export const DesktopStepIndicator = memo(DesktopStepIndicatorComponent);
+// Custom comparison function to handle function props and object comparisons
+export const DesktopStepIndicator = memo(
+  DesktopStepIndicatorComponent,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.currentStep === nextProps.currentStep &&
+      prevProps.className === nextProps.className &&
+      prevProps.steps === nextProps.steps &&
+      JSON.stringify(prevProps.availableSteps) ===
+        JSON.stringify(nextProps.availableSteps) &&
+      JSON.stringify(prevProps.validationResults) ===
+        JSON.stringify(nextProps.validationResults)
+      // Note: onStepClick is a function and will have new reference
+      // Parent should wrap this in useCallback to prevent re-renders
+    );
+  },
+);

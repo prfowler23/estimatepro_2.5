@@ -3,7 +3,8 @@
  * Comprehensive drone flight planning, management, and compliance system
  */
 
-import { PilotService } from "@/lib/services/pilot-service";
+// Use client-safe version to avoid server-side dependencies in client components
+import { PilotServiceClient as PilotService } from "@/lib/services/pilot-service-client";
 
 export interface DroneSpec {
   id: string;

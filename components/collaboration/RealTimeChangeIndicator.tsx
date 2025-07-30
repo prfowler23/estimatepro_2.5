@@ -380,7 +380,7 @@ export function RealTimeChangeIndicator({
                 className="w-full"
                 onClick={() => {
                   // Would open full history view
-                  console.log("Show full history");
+                  // TODO: Implement full history view
                 }}
               >
                 View Full History

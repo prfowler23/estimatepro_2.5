@@ -89,6 +89,19 @@ function DesktopNavigationControlsComponent({
 }
 
 // PHASE 3 FIX: Memoize to prevent unnecessary re-renders
+// Custom comparison function to handle function props properly
 export const DesktopNavigationControls = memo(
   DesktopNavigationControlsComponent,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.currentStep === nextProps.currentStep &&
+      prevProps.totalSteps === nextProps.totalSteps &&
+      prevProps.canProceed === nextProps.canProceed &&
+      prevProps.className === nextProps.className &&
+      JSON.stringify(prevProps.validationErrors) ===
+        JSON.stringify(nextProps.validationErrors)
+      // Note: onNext, onBack, onSaveAndExit are functions and will have new references
+      // Parent should wrap these in useCallback to prevent re-renders
+    );
+  },
 );

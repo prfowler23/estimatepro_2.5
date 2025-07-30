@@ -52,6 +52,7 @@ import { DesktopNavigationControls } from "./components/DesktopNavigationControl
 import { CollaborationProvider } from "@/components/collaboration/CollaborationProvider";
 import { ConflictResolutionDialog } from "@/components/collaboration/ConflictResolutionDialog";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
+import { logger } from "@/lib/utils/logger";
 
 // StepComponentProps now uses unified GuidedFlowData
 export interface StepComponentProps {
@@ -126,7 +127,7 @@ export function GuidedEstimationFlow({
         return stepIndices;
       }
     } catch (error) {
-      console.error("Error calculating initial available steps:", error);
+      logger.error("Error calculating initial available steps:", error);
       return [1];
     }
   };
@@ -151,20 +152,20 @@ export function GuidedEstimationFlow({
     },
     onSaveSuccess: (wasAutoSave) => {
       if (wasAutoSave) {
-        console.log("✅ Auto-save completed successfully");
+        logger.debug("Auto-save completed successfully");
       } else {
-        console.log("✅ Manual save completed successfully");
+        logger.debug("Manual save completed successfully");
       }
     },
     onSaveError: (error, wasAutoSave) => {
-      console.warn(
-        `❌ ${wasAutoSave ? "Auto-save" : "Manual save"} failed:`,
+      logger.warn(`${wasAutoSave ? "Auto-save" : "Manual save"} failed`, {
         error,
-      );
+      });
     },
     onConflictDetected: (conflictData) => {
-      console.warn(
-        "⚠️ Save conflict detected - will attempt automatic resolution",
+      logger.warn(
+        "Save conflict detected - will attempt automatic resolution",
+        { conflictData },
       );
     },
   });
@@ -190,12 +191,22 @@ export function GuidedEstimationFlow({
   } = useConflictResolution(smartAutoSave);
 
   // Session recovery integration
-  const sessionRecovery = useSessionRecovery({
+  const {
+    setCurrentSession,
+    saveAndExit,
+    showRecoveryPrompt,
+    dismissRecoveryPrompt,
+    availableDrafts,
+    isRecovering,
+    acceptRecovery,
+    deleteDraft,
+    declineRecovery,
+  } = useSessionRecovery({
     estimateId: currentEstimateId,
     enabled: true,
     autoSaveInterval: 30000, // 30 seconds
     onRecoveryComplete: (draft) => {
-      console.log("✅ Session recovered successfully:", draft.id);
+      logger.info("Session recovered successfully", { draftId: draft.id });
       setBaseFlowData(draft.data);
       setCurrentStep(
         STEPS.findIndex(
@@ -206,7 +217,7 @@ export function GuidedEstimationFlow({
       );
     },
     onRecoveryError: (error) => {
-      console.error("❌ Session recovery failed:", error);
+      logger.error("Session recovery failed", error);
     },
   });
 
@@ -232,14 +243,15 @@ export function GuidedEstimationFlow({
       setBaseFlowData(flowData);
       updateAvailableSteps(flowData);
 
-      // Update session recovery with current data (function call moved outside dependency)
-      sessionRecovery.setCurrentSession(flowData, currentStepId);
+      // Update session recovery with current data
+      setCurrentSession(flowData, currentStepId);
     }
   }, [
     flowData,
     baseFlowData,
     currentStepId,
-    // Removed sessionRecovery.setCurrentSession from dependencies to prevent infinite loop
+    setCurrentSession,
+    updateAvailableSteps,
   ]);
 
   // Real-time pricing and validation integration
@@ -248,15 +260,17 @@ export function GuidedEstimationFlow({
     enabled: true,
     debounceMs: 1500,
     onPricingUpdate: (result) => {
-      console.log("💰 Pricing updated:", result.totalCost.toLocaleString());
+      logger.debug("Pricing updated", { totalCost: result.totalCost });
     },
     onValidationUpdate: (result) => {
       if (!result.isValid) {
-        console.log("⚠️ Validation issues detected:", result.errors.length);
+        logger.debug("Validation issues detected", {
+          errorCount: result.errors.length,
+        });
       }
     },
     onError: (error) => {
-      console.error("❌ Real-time pricing error:", error);
+      logger.error("Real-time pricing error", error);
     },
   });
 
@@ -369,9 +383,9 @@ export function GuidedEstimationFlow({
       }));
 
       if (!validation.isValid) {
-        console.log(
-          `Step ${currentStep} has validation issues, but allowing navigation:`,
-          validation.errors,
+        logger.debug(
+          `Step ${currentStep} has validation issues, but allowing navigation`,
+          { errors: validation.errors },
         );
       }
     } else if (currentStep > 1) {
@@ -424,7 +438,7 @@ export function GuidedEstimationFlow({
     }
   };
 
-  const updateAvailableSteps = (data: GuidedFlowData) => {
+  const updateAvailableSteps = useCallback((data: GuidedFlowData) => {
     try {
       const workflowSteps = WorkflowService.getAvailableSteps(data || {});
       const stepIndices = workflowSteps
@@ -442,10 +456,10 @@ export function GuidedEstimationFlow({
         setAvailableSteps(stepIndices);
       }
     } catch (error) {
-      console.error("Error updating available steps:", error);
+      logger.error("Error updating available steps", error);
       setAvailableSteps([1]);
     }
-  };
+  }, []);
 
   const handleSelectTemplate = (
     template: WorkflowTemplate,
@@ -604,7 +618,7 @@ export function GuidedEstimationFlow({
               showConfidenceMetrics={true}
               enableLiveUpdates={true}
               onPricingUpdate={(result) => {
-                console.log("🎯 Cost breakdown updated:", {
+                logger.debug("Cost breakdown updated", {
                   total: result.totalCost,
                   confidence: result.confidence,
                   services: result.serviceBreakdown.length,
@@ -651,14 +665,11 @@ export function GuidedEstimationFlow({
               onNext={handleNext}
               onBack={handleBack}
               onSaveAndExit={async () => {
-                const success = await sessionRecovery.saveAndExit(
-                  flowData,
-                  currentStepId,
-                );
+                const success = await saveAndExit(flowData, currentStepId);
                 if (success) {
                   window.location.href = "/estimates";
                 } else {
-                  console.error("Failed to save session before exit");
+                  logger.error("Failed to save session before exit");
                 }
               }}
             />
@@ -692,17 +703,17 @@ export function GuidedEstimationFlow({
 
           {/* Session Recovery Modal */}
           <SessionRecoveryModal
-            isOpen={sessionRecovery.showRecoveryPrompt}
-            onClose={sessionRecovery.dismissRecoveryPrompt}
-            availableDrafts={sessionRecovery.availableDrafts}
-            isRecovering={sessionRecovery.isRecovering}
+            isOpen={showRecoveryPrompt}
+            onClose={dismissRecoveryPrompt}
+            availableDrafts={availableDrafts}
+            isRecovering={isRecovering}
             onRecoverSession={async (draftId) => {
-              await sessionRecovery.acceptRecovery(draftId);
+              await acceptRecovery(draftId);
             }}
             onDeleteDraft={async (draftId) => {
-              await sessionRecovery.deleteDraft(draftId);
+              await deleteDraft(draftId);
             }}
-            onDeclineAll={sessionRecovery.declineRecovery}
+            onDeclineAll={declineRecovery}
           />
         </HelpIntegratedFlow>
 

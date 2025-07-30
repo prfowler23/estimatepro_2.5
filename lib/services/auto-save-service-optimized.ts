@@ -1,7 +1,7 @@
 // Optimized Auto-Save Service
 // Addresses critical performance issues: memory leaks, excessive database calls, complex retry logic
 
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/universal-client";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { offlineUtils } from "@/lib/pwa/offline-manager";
@@ -223,6 +223,7 @@ export class OptimizedAutoSaveService {
     }
 
     this.saveTimer = setTimeout(async () => {
+      const supabase = createClient();
       await this.processSaveQueue();
       this.saveTimer = null;
 
@@ -234,6 +235,7 @@ export class OptimizedAutoSaveService {
   }
 
   private static async processSaveQueue(): Promise<void> {
+    const supabase = createClient();
     if (this.saveQueue.isEmpty() || this.saveQueue.isProcessing()) {
       return;
     }
@@ -276,6 +278,7 @@ export class OptimizedAutoSaveService {
   }
 
   private static async processBatchSave(batch: SaveOperation[]): Promise<void> {
+    const supabase = createClient();
     try {
       // Group by estimate ID to avoid conflicts
       const grouped = new Map<string, SaveOperation>();
@@ -389,6 +392,7 @@ export class OptimizedAutoSaveService {
     while (retryCount < this.config.maxRetries) {
       try {
         const result = await withDatabaseRetry(async () => {
+          const supabase = createClient();
           // Get authenticated user
           const {
             data: { session },

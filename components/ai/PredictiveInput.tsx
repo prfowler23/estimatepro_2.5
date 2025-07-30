@@ -10,6 +10,7 @@ import {
 } from "@/lib/ai/smart-defaults-engine";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { Loader2, Sparkles } from "lucide-react";
+import { useDeepCompareMemo } from "@/lib/utils/deep-compare";
 
 interface PredictiveInputProps {
   field: string;
@@ -46,9 +47,9 @@ export function PredictiveInput({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Memoize flowData to prevent unnecessary API calls
-  const stableFlowData = useMemo(() => {
+  const stableFlowData = useDeepCompareMemo(() => {
     return flowData;
-  }, [JSON.stringify(flowData)]);
+  }, [flowData]);
 
   // Debounced prediction loading with request cancellation
   useEffect(() => {
@@ -202,17 +203,34 @@ export function PredictiveInput({
           placeholder={placeholder}
           disabled={disabled}
           className={predictions.predictions.length > 0 ? "pr-8" : ""}
+          role="combobox"
+          aria-expanded={showPredictions}
+          aria-controls={`${field}-predictions`}
+          aria-haspopup="listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={
+            selectedIndex >= 0
+              ? `${field}-prediction-${selectedIndex}`
+              : undefined
+          }
         />
 
         {predictions.predictions.length > 0 && (
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+          <div
+            className="absolute right-2 top-1/2 transform -translate-y-1/2"
+            aria-hidden="true"
+          >
             <Sparkles className="w-4 h-4 text-blue-500" />
           </div>
         )}
 
         {predictions.isLoading && (
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+          <div
+            className="absolute right-2 top-1/2 transform -translate-y-1/2"
+            aria-hidden="true"
+          >
             <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            <span className="sr-only">Loading predictions</span>
           </div>
         )}
       </div>
@@ -221,12 +239,16 @@ export function PredictiveInput({
       {showPredictions && predictions.predictions.length > 0 && (
         <div
           ref={dropdownRef}
+          id={`${field}-predictions`}
+          role="listbox"
+          aria-label="AI predictions"
           className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
         >
           <div className="py-1">
             {predictions.predictions.map((prediction, index) => (
               <button
                 key={`prediction-${field}-${prediction.value}-${index}`}
+                id={`${field}-prediction-${index}`}
                 type="button"
                 onClick={() => handleSelectPrediction(prediction.value)}
                 onMouseDown={(e) => e.preventDefault()} // Prevent focus issues

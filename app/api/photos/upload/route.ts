@@ -3,6 +3,7 @@ import { authenticateRequest } from "@/lib/auth/server";
 import { generalRateLimiter } from "@/lib/utils/rate-limit";
 import { photoService } from "@/lib/services/photo-service";
 import { z } from "zod";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
 
 // Validation schema for upload request
 const uploadSchema = z.object({
@@ -16,19 +17,13 @@ export async function POST(request: NextRequest) {
     // Authenticate request
     const { user, error: authError } = await authenticateRequest(request);
     if (authError || !user) {
-      return NextResponse.json(
-        { error: authError || "Unauthorized" },
-        { status: 401 },
-      );
+      return ErrorResponses.unauthorized(authError || "Unauthorized");
     }
 
     // Apply rate limiting
     const rateLimitResult = await generalRateLimiter(request);
     if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { error: "Rate limit exceeded" },
-        { status: 429 },
-      );
+      return ErrorResponses.rateLimitExceeded();
     }
 
     // Parse form data
@@ -55,17 +50,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (files.length === 0) {
-      return NextResponse.json(
-        { error: "No photos provided" },
-        { status: 400 },
-      );
+      return ErrorResponses.badRequest("No photos provided");
     }
 
     // Validate file count (max 20 photos per upload)
     if (files.length > 20) {
-      return NextResponse.json(
-        { error: "Too many files. Maximum 20 photos per upload." },
-        { status: 400 },
+      return ErrorResponses.badRequest(
+        "Too many files. Maximum 20 photos per upload.",
       );
     }
 
@@ -83,32 +74,34 @@ export async function POST(request: NextRequest) {
       count: uploadedPhotos.length,
     });
   } catch (error) {
-    console.error("Photo upload error:", error);
-
     // Handle specific error types
     if (error instanceof Error) {
       if (
         error.message.includes("File too large") ||
         error.message.includes("Invalid file type")
       ) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
+        return ErrorResponses.badRequest(error.message);
       }
 
       if (
         error.message.includes("Database") ||
         error.message.includes("Storage")
       ) {
-        return NextResponse.json(
-          { error: "Failed to save photos. Please try again." },
-          { status: 500 },
-        );
+        logApiError(error, {
+          endpoint: "/api/photos/upload",
+          method: "POST",
+          userId: user.id,
+        });
+        return ErrorResponses.databaseError("Save photos");
       }
     }
 
-    return NextResponse.json(
-      { error: "Failed to upload photos" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/photos/upload",
+      method: "POST",
+      userId: user.id,
+    });
+    return ErrorResponses.internalError("Failed to upload photos");
   }
 }
 
@@ -117,20 +110,14 @@ export async function GET(request: NextRequest) {
     // Authenticate request
     const { user, error: authError } = await authenticateRequest(request);
     if (authError || !user) {
-      return NextResponse.json(
-        { error: authError || "Unauthorized" },
-        { status: 401 },
-      );
+      return ErrorResponses.unauthorized(authError || "Unauthorized");
     }
 
     const { searchParams } = new URL(request.url);
     const estimateId = searchParams.get("estimate_id");
 
     if (!estimateId) {
-      return NextResponse.json(
-        { error: "estimate_id is required" },
-        { status: 400 },
-      );
+      return ErrorResponses.badRequest("estimate_id is required");
     }
 
     // Get photos for estimate
@@ -142,11 +129,11 @@ export async function GET(request: NextRequest) {
       count: photos.length,
     });
   } catch (error) {
-    console.error("Get photos error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch photos" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/photos/upload",
+      method: "GET",
+    });
+    return ErrorResponses.internalError("Failed to fetch photos");
   }
 }
 
@@ -155,10 +142,7 @@ export async function DELETE(request: NextRequest) {
     // Authenticate request
     const { user, error: authError } = await authenticateRequest(request);
     if (authError || !user) {
-      return NextResponse.json(
-        { error: authError || "Unauthorized" },
-        { status: 401 },
-      );
+      return ErrorResponses.unauthorized(authError || "Unauthorized");
     }
 
     const { searchParams } = new URL(request.url);

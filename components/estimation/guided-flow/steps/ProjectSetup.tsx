@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { debounce } from "@/lib/utils/debounce";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +30,7 @@ import {
   Calendar,
   BrainCircuit,
 } from "lucide-react";
-import { IntelligentServiceSuggestions } from "@/components/ai/IntelligentServiceSuggestions";
+import { SimpleServiceSuggestions } from "@/components/ai/service-suggestions/SimpleServiceSuggestions";
 import { validateClientEnv } from "@/lib/config/env-validation";
 import { cn } from "@/lib/utils";
 
@@ -97,7 +98,7 @@ const SERVICE_OPTIONS = [
   },
 ];
 
-export default function ProjectSetup() {
+function ProjectSetup() {
   const { flowData, updateFlowData, validateCurrentStep } = useEstimateFlow();
   const env = validateClientEnv();
 
@@ -137,9 +138,18 @@ export default function ProjectSetup() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
 
-  // Update flow data on changes
+  // Create debounced update function to prevent excessive re-renders
+  const debouncedUpdateFlowData = useMemo(
+    () =>
+      debounce((data: any) => {
+        updateFlowData(data);
+      }, 500),
+    [updateFlowData],
+  );
+
+  // Update flow data on changes with debouncing
   useEffect(() => {
-    updateFlowData({
+    debouncedUpdateFlowData({
       initialContact: {
         customerName,
         email,
@@ -168,6 +178,7 @@ export default function ProjectSetup() {
     projectDescription,
     urgency,
     preferredDate,
+    debouncedUpdateFlowData,
   ]);
 
   // Validate on blur
@@ -247,6 +258,14 @@ export default function ProjectSetup() {
                 onChange={(e) => setCustomerName(e.target.value)}
                 onBlur={() => handleBlur("customerName")}
                 placeholder="John Smith"
+                aria-label="Customer Name"
+                aria-required="true"
+                aria-invalid={touched.has("customerName") && !customerName}
+                aria-describedby={
+                  touched.has("customerName") && !customerName
+                    ? "customerName-error"
+                    : undefined
+                }
                 className={cn(
                   touched.has("customerName") &&
                     !customerName &&
@@ -265,6 +284,7 @@ export default function ProjectSetup() {
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="ABC Corporation"
+                aria-label="Company Name"
               />
             </div>
 
@@ -279,6 +299,8 @@ export default function ProjectSetup() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@example.com"
+                aria-label="Email Address"
+                aria-describedby="email-description"
               />
             </div>
 
@@ -293,6 +315,7 @@ export default function ProjectSetup() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="(555) 123-4567"
+                aria-label="Phone Number"
               />
             </div>
           </div>
@@ -310,6 +333,7 @@ export default function ProjectSetup() {
               value={propertyAddress}
               onChange={(e) => setPropertyAddress(e.target.value)}
               placeholder="123 Main St, City, State 12345"
+              aria-label="Property Address"
             />
           </div>
         </CardContent>
@@ -332,6 +356,7 @@ export default function ProjectSetup() {
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="Office Building Window Cleaning"
+              aria-label="Project Name"
             />
           </div>
 
@@ -361,6 +386,8 @@ export default function ProjectSetup() {
               onChange={(e) => setProjectDescription(e.target.value)}
               placeholder="Describe the work needed... (e.g., Clean all exterior windows on 3-story office building, pressure wash sidewalks and entrance)"
               rows={4}
+              aria-label="Project Description"
+              aria-describedby="projectDescription-help"
             />
             {extractedData && (
               <div className="text-sm text-green-600 flex items-center gap-1 mt-1">
@@ -380,7 +407,7 @@ export default function ProjectSetup() {
             </Label>
 
             {env.NEXT_PUBLIC_ENABLE_AI && (
-              <IntelligentServiceSuggestions
+              <SimpleServiceSuggestions
                 projectDescription={projectDescription}
                 selectedServices={selectedServices}
                 onServicesSuggested={handleServiceSuggestions}
@@ -540,3 +567,6 @@ export default function ProjectSetup() {
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+export default React.memo(ProjectSetup);

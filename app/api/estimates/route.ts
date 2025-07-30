@@ -3,6 +3,7 @@ import EstimateBusinessService from "@/lib/services/estimate-service";
 import { getHandler, postHandler } from "@/lib/api/api-handler";
 import { estimateSchema } from "@/lib/schemas/api-validation";
 import { z } from "zod";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
 
 // Query parameters schema for GET requests
 const getEstimatesQuerySchema = z.object({
@@ -27,7 +28,7 @@ async function handleGET(context: any) {
   // Validate query parameters
   const validation = getEstimatesQuerySchema.safeParse(queryParams);
   if (!validation.success) {
-    throw new Error(`Invalid query parameters: ${validation.error.message}`);
+    return ErrorResponses.validationError(validation.error);
   }
 
   const { limit, offset, status, search } = validation.data;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Upload, Link, Camera, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { validateImageUrl, sanitizeFileName } from "@/lib/utils/url-validation";
+import { sanitizeUserInput } from "@/lib/utils/input-sanitization";
+import { ComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
 
 interface FacadeImageUploadProps {
   facadeAnalysisId: string;
@@ -31,7 +34,7 @@ interface FacadeImageUploadProps {
   className?: string;
 }
 
-export function FacadeImageUpload({
+function FacadeImageUploadComponent({
   facadeAnalysisId,
   onUploadComplete,
   className,
@@ -43,12 +46,42 @@ export function FacadeImageUpload({
   const [imageType, setImageType] = useState<string>("ground");
   const [viewAngle, setViewAngle] = useState<string>("front");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const filePreviewUrl = useRef<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      setSelectedFile(acceptedFiles[0]);
+      // Clean up previous preview URL if it exists
+      if (filePreviewUrl.current) {
+        URL.revokeObjectURL(filePreviewUrl.current);
+      }
+
+      const file = acceptedFiles[0];
+      setSelectedFile(file);
+
+      // Create new preview URL
+      filePreviewUrl.current = URL.createObjectURL(file);
     }
   }, []);
+
+  // Cleanup on unmount or when dialog closes
+  useEffect(() => {
+    return () => {
+      if (filePreviewUrl.current) {
+        URL.revokeObjectURL(filePreviewUrl.current);
+        filePreviewUrl.current = null;
+      }
+    };
+  }, []);
+
+  // Clean up when dialog closes
+  useEffect(() => {
+    if (!isOpen && filePreviewUrl.current) {
+      URL.revokeObjectURL(filePreviewUrl.current);
+      filePreviewUrl.current = null;
+      setSelectedFile(null);
+      setImageUrl("");
+    }
+  }, [isOpen]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -76,6 +109,53 @@ export function FacadeImageUpload({
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate file upload
+    if (uploadMethod === "file" && selectedFile) {
+      // Check file size (max 10MB)
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select a valid image file (JPG, PNG, GIF, WebP)",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Validate URL upload
+    if (uploadMethod === "url" && imageUrl) {
+      try {
+        validateImageUrl(imageUrl);
+      } catch (error) {
+        toast({
+          title: "Invalid URL",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Please enter a valid image URL",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsUploading(true);
@@ -270,5 +350,17 @@ export function FacadeImageUpload({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// Export wrapped with error boundary
+export function FacadeImageUpload(props: FacadeImageUploadProps) {
+  return (
+    <ComponentErrorBoundary
+      componentName="FacadeImageUpload"
+      showDetails={process.env.NODE_ENV === "development"}
+    >
+      <FacadeImageUploadComponent {...props} />
+    </ComponentErrorBoundary>
   );
 }

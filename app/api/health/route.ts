@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  productionConfig,
+  validateProductionConfig,
+} from "@/lib/ai/deployment/production-config";
+import { aiFallbackService } from "@/lib/ai/ai-fallback-service";
+import { aiGracefulDegradation } from "@/lib/ai/ai-graceful-degradation";
+import { getAIConfig } from "@/lib/ai/ai-config";
 
 /**
  * Health check endpoint for monitoring and deployment verification
@@ -17,6 +24,22 @@ export async function GET(request: NextRequest) {
     checks.environment = process.env.NODE_ENV;
     checks.version = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
 
+    // In development, return early if environment variables aren't loaded yet
+    if (
+      process.env.NODE_ENV === "development" &&
+      (!process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    ) {
+      return NextResponse.json(
+        {
+          status: "initializing",
+          message: "Environment variables loading",
+          checks,
+        },
+        { status: 200 },
+      );
+    }
+
     // Database connection check
     try {
       const supabase = createAdminClient();
@@ -26,16 +49,18 @@ export async function GET(request: NextRequest) {
         .limit(1);
 
       if (error) {
+        // Log detailed error server-side
+        console.error("Database health check failed:", error);
+
         checks.database = {
           status: "unhealthy",
-          error: `Database query failed: ${error.message}`,
+          error: "Database connection failed",
           latency: Date.now() - start,
         };
       } else if (!data || data.length === 0) {
         checks.database = {
           status: "unhealthy",
-          error:
-            "Query returned no data. Check RLS policies and table permissions.",
+          error: "Database query returned no data",
           latency: Date.now() - start,
         };
       } else {
@@ -45,9 +70,12 @@ export async function GET(request: NextRequest) {
         };
       }
     } catch (error) {
+      // Log detailed error server-side
+      console.error("Database health check error:", error);
+
       checks.database = {
         status: "unhealthy",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "Database health check failed",
         latency: Date.now() - start,
       };
     }
@@ -92,13 +120,85 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // AI Service health check
+    try {
+      const aiConfig = getAIConfig();
+      const isConfigured = aiConfig.isAIAvailable();
+
+      if (!isConfigured) {
+        checks.ai_service = {
+          status: "unhealthy",
+          error: "AI service not configured",
+        };
+      } else {
+        // Get model health status
+        const modelHealth = aiFallbackService.getModelHealthStatus();
+        const degradationLevel = aiGracefulDegradation.getDegradationLevel();
+
+        // Determine AI health status
+        const healthyModels = Object.values(modelHealth).filter(
+          (health: any) => health.available,
+        ).length;
+        const totalModels = Object.keys(modelHealth).length;
+
+        checks.ai_service = {
+          status:
+            healthyModels === totalModels && degradationLevel.level === "full"
+              ? "healthy"
+              : healthyModels > 0
+                ? "degraded"
+                : "unhealthy",
+          degradation_level: degradationLevel.level,
+          models: modelHealth,
+          features: degradationLevel.features,
+        };
+      }
+    } catch (error) {
+      checks.ai_service = {
+        status: "unhealthy",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+
+    // Configuration validation
+    try {
+      const configValidation = validateProductionConfig();
+      checks.configuration = {
+        status: configValidation.valid ? "healthy" : "unhealthy",
+        errors: configValidation.errors,
+        warnings: configValidation.warnings,
+        environment: productionConfig.getConfig().deployment.environment,
+        features: productionConfig.getConfig().features,
+      };
+    } catch (error) {
+      checks.configuration = {
+        status: "unhealthy",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Configuration validation failed",
+      };
+    }
+
     // Overall health determination
     const allChecksHealthy = Object.values(checks).every((check) => {
-      return typeof check !== "object" || check.status === "healthy";
+      return (
+        typeof check !== "object" ||
+        check.status === "healthy" ||
+        (check.status === "degraded" && typeof check === "object")
+      );
+    });
+
+    const hasUnhealthyCheck = Object.values(checks).some((check) => {
+      return typeof check === "object" && check.status === "unhealthy";
     });
 
     const responseTime = Date.now() - start;
-    const overallStatus = allChecksHealthy ? "healthy" : "unhealthy";
+    const overallStatus = hasUnhealthyCheck
+      ? "unhealthy"
+      : !allChecksHealthy
+        ? "degraded"
+        : "healthy";
 
     const response = {
       status: overallStatus,

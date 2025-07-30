@@ -146,17 +146,31 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           const id = rippleIdRef.current++;
 
           setRippleArray((prev) => [...prev, { x, y, id }]);
-
-          // Remove ripple after animation
-          setTimeout(() => {
-            setRippleArray((prev) => prev.filter((r) => r.id !== id));
-          }, 600);
         }
 
         onClick?.(e);
       },
       [haptic, ripple, disabled, loading, onClick],
     );
+
+    // Cleanup ripple animations on unmount or when ripples change
+    React.useEffect(() => {
+      if (rippleArray.length === 0) return;
+
+      const timeouts: NodeJS.Timeout[] = [];
+
+      rippleArray.forEach((rippleItem) => {
+        const timeout = setTimeout(() => {
+          setRippleArray((prev) => prev.filter((r) => r.id !== rippleItem.id));
+        }, 600);
+        timeouts.push(timeout);
+      });
+
+      // Cleanup function to clear all timeouts
+      return () => {
+        timeouts.forEach((timeout) => clearTimeout(timeout));
+      };
+    }, [rippleArray]);
 
     const defaultMotionProps: MotionProps = {
       whileHover: disabled || loading ? {} : { scale: 1.02 },

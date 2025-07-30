@@ -63,8 +63,7 @@ export const StepContentArea: React.FC<StepContentAreaProps> = ({
     if (onRequestHelp) {
       onRequestHelp(hint);
     } else {
-      // Default implementation: log for development
-      console.log("Help requested for hint:", hint);
+      // Default implementation: TODO: implement contextual help system
     }
   };
 

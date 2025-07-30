@@ -16,13 +16,14 @@ export const performanceConfig = {
 
   // Experimental features for better performance
   experimental: {
-    optimizeCss: true,
-    optimizePackageImports: [
-      "lucide-react",
-      "@radix-ui/react-*",
-      "framer-motion",
-      "recharts",
-    ],
+    // Temporarily disable experimental features
+    // optimizeCss: true,
+    // optimizePackageImports: [
+    //   "lucide-react",
+    //   "@radix-ui/react-*",
+    //   "framer-motion",
+    //   "recharts",
+    // ],
   },
 
   // Compiler options
@@ -35,11 +36,18 @@ export const performanceConfig = {
 
   // Webpack optimization
   webpack: (config, { isServer, dev }) => {
-    // Apply enhanced optimization in production
+    // Apply enhanced optimization in production only
     if (!dev) {
       config.optimization = {
         ...config.optimization,
         ...webpackOptimization,
+      };
+    } else {
+      // Disable complex optimizations in development
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: false,
+        runtimeChunk: false,
       };
     }
 

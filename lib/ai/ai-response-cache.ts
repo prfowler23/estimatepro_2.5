@@ -120,6 +120,7 @@ const DEFAULT_CACHE_CONFIG: AICacheConfig = {
 };
 
 export class AIResponseCache {
+  private static instance: AIResponseCache;
   private config: AICacheConfig;
 
   constructor(config: Partial<AICacheConfig> = {}) {
@@ -142,6 +143,13 @@ export class AIResponseCache {
         ...config.competitive_intelligence,
       },
     };
+  }
+
+  static getInstance(): AIResponseCache {
+    if (!AIResponseCache.instance) {
+      AIResponseCache.instance = new AIResponseCache();
+    }
+    return AIResponseCache.instance;
   }
 
   // Cache photo analysis response

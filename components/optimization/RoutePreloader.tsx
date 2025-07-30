@@ -25,7 +25,7 @@ const routePreloads = {
   },
   "/drone-demo": () => {
     import("@/components/drone/drone-dashboard");
-    import("@/lib/drone/drone-service");
+    // Skip preloading drone-service due to server-side dependencies
   },
 };
 

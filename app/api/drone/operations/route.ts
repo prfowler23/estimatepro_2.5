@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DroneService, type FlightObjective } from "@/lib/drone/drone-service";
 import { apiRateLimit } from "@/lib/utils/rate-limiter";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
 
 const droneService = new DroneService();
 
@@ -18,17 +19,14 @@ async function handleDroneOperations(request: NextRequest) {
         return handlePostOperations(operation, request);
 
       default:
-        return NextResponse.json(
-          { error: "Method not allowed" },
-          { status: 405 },
-        );
+        return ErrorResponses.badRequest("Method not allowed");
     }
   } catch (error) {
-    console.error("Drone operations error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/drone/operations",
+      method: request.method,
+    });
+    return ErrorResponses.internalError();
   }
 }
 
@@ -52,10 +50,7 @@ async function handleGetOperations(
     case "validate-plan":
       const planId = searchParams.get("planId");
       if (!planId) {
-        return NextResponse.json(
-          { error: "Plan ID required" },
-          { status: 400 },
-        );
+        return ErrorResponses.badRequest("Plan ID required");
       }
 
       const validation = await droneService.validateFlightPlan(planId);
@@ -64,21 +59,18 @@ async function handleGetOperations(
     case "drone-specs":
       const droneId = searchParams.get("droneId");
       if (!droneId) {
-        return NextResponse.json(
-          { error: "Drone ID required" },
-          { status: 400 },
-        );
+        return ErrorResponses.badRequest("Drone ID required");
       }
 
       const drone = droneService.getDroneById(droneId);
       if (!drone) {
-        return NextResponse.json({ error: "Drone not found" }, { status: 404 });
+        return ErrorResponses.notFound("Drone");
       }
 
       return NextResponse.json({ drone });
 
     default:
-      return NextResponse.json({ error: "Invalid operation" }, { status: 400 });
+      return ErrorResponses.badRequest("Invalid operation");
   }
 }
 
@@ -93,10 +85,7 @@ async function handlePostOperations(
       const { projectId, objectives, location, droneId, pilotId } = body;
 
       if (!projectId || !objectives || !location || !pilotId) {
-        return NextResponse.json(
-          { error: "Missing required fields" },
-          { status: 400 },
-        );
+        return ErrorResponses.badRequest("Missing required fields");
       }
 
       // Validate objectives
@@ -136,10 +125,7 @@ async function handlePostOperations(
       const { flightPlanId } = body;
 
       if (!flightPlanId) {
-        return NextResponse.json(
-          { error: "Flight plan ID required" },
-          { status: 400 },
-        );
+        return ErrorResponses.badRequest("Flight plan ID required");
       }
 
       const flightResult = await droneService.executeFlightPlan(flightPlanId);
@@ -166,9 +152,8 @@ async function handlePostOperations(
         !photoLocation ||
         !analysisType
       ) {
-        return NextResponse.json(
-          { error: "Missing required fields for photo analysis" },
-          { status: 400 },
+        return ErrorResponses.badRequest(
+          "Missing required fields for photo analysis",
         );
       }
 
@@ -195,10 +180,7 @@ async function handlePostOperations(
       const { lat, lng } = body;
 
       if (!lat || !lng) {
-        return NextResponse.json(
-          { error: "Latitude and longitude required" },
-          { status: 400 },
-        );
+        return ErrorResponses.badRequest("Latitude and longitude required");
       }
 
       // Simulate weather API call
@@ -250,7 +232,7 @@ async function handlePostOperations(
       });
 
     default:
-      return NextResponse.json({ error: "Invalid operation" }, { status: 400 });
+      return ErrorResponses.badRequest("Invalid operation");
   }
 }
 

@@ -47,6 +47,26 @@ export interface ServiceRecommendationParams {
   };
 }
 
+export interface SimilarProjectsParams {
+  projectType: string;
+  budget?: {
+    min?: number;
+    max?: number;
+  };
+  features?: string[];
+  userId?: string;
+}
+
+export interface SimilarProject {
+  id: string;
+  name: string;
+  type: string;
+  totalCost: number;
+  features: string[];
+  completionDate: string;
+  similarity: number;
+}
+
 export interface AIValidationResult {
   isValid: boolean;
   confidence: number;
@@ -794,6 +814,88 @@ Provide practical, actionable insights that help users make informed template de
         alternatives: [],
         confidence: 30,
       };
+    }
+  }
+
+  // Find similar projects method
+  static async findSimilarProjects(
+    params: SimilarProjectsParams,
+  ): Promise<{ projects: SimilarProject[] }> {
+    try {
+      // Simulate finding similar projects
+      // In production, this would query the database or use AI embeddings
+      const mockProjects: SimilarProject[] = [
+        {
+          id: crypto.randomUUID(),
+          name: `${params.projectType} - Downtown Office Complex`,
+          type: params.projectType,
+          totalCost: 45000,
+          features: ["High-rise", "Glass facade", "Monthly service"],
+          completionDate: new Date(
+            Date.now() - 30 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
+          similarity: 0.92,
+        },
+        {
+          id: crypto.randomUUID(),
+          name: `${params.projectType} - Corporate Campus`,
+          type: params.projectType,
+          totalCost: 38000,
+          features: ["Multi-building", "Mixed materials", "Quarterly service"],
+          completionDate: new Date(
+            Date.now() - 60 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
+          similarity: 0.85,
+        },
+        {
+          id: crypto.randomUUID(),
+          name: `${params.projectType} - Medical Center`,
+          type: params.projectType,
+          totalCost: 52000,
+          features: ["Specialized cleaning", "24/7 access", "Monthly service"],
+          completionDate: new Date(
+            Date.now() - 45 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
+          similarity: 0.78,
+        },
+      ];
+
+      // Filter by budget if provided
+      let filteredProjects = mockProjects;
+      if (params.budget) {
+        filteredProjects = mockProjects.filter((p) => {
+          if (params.budget?.min && p.totalCost < params.budget.min)
+            return false;
+          if (params.budget?.max && p.totalCost > params.budget.max)
+            return false;
+          return true;
+        });
+      }
+
+      // Filter by features if provided
+      if (params.features && params.features.length > 0) {
+        filteredProjects = filteredProjects.map((p) => {
+          const matchingFeatures = p.features.filter((f) =>
+            params.features?.some((pf) =>
+              f.toLowerCase().includes(pf.toLowerCase()),
+            ),
+          );
+          return {
+            ...p,
+            similarity:
+              p.similarity *
+              (matchingFeatures.length / params.features!.length),
+          };
+        });
+      }
+
+      // Sort by similarity
+      filteredProjects.sort((a, b) => b.similarity - a.similarity);
+
+      return { projects: filteredProjects };
+    } catch (error) {
+      console.error("Error finding similar projects:", error);
+      return { projects: [] };
     }
   }
 }

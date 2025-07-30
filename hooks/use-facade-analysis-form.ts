@@ -26,9 +26,11 @@ export function useFacadeAnalysis() {
     setIsAnalyzing(true);
     setProgress(0);
 
+    let progressInterval: NodeJS.Timeout | null = null;
+
     try {
       // Simulate progress updates
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setProgress((prev) => Math.min(prev + 10, 90));
       }, 500);
 
@@ -57,7 +59,10 @@ export function useFacadeAnalysis() {
 
       const imageAnalyses = await Promise.all(analysisPromises);
 
-      clearInterval(progressInterval);
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
       setProgress(100);
 
       // Combine results from all images
@@ -171,6 +176,11 @@ export function useFacadeAnalysis() {
       setResults(combinedResults);
       return combinedResults;
     } catch (error) {
+      // Clean up interval on error
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
       setProgress(0);
       throw error;
     } finally {

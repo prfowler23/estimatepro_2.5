@@ -8,6 +8,10 @@ import {
   createValidationError,
 } from "@/lib/error/error-types";
 import { generalRateLimiter, aiRateLimiter } from "@/lib/utils/rate-limit";
+import {
+  getCorsHeaders as getSecureCorsHeaders,
+  handleCorsPreflightRequest,
+} from "@/lib/api/cors-config";
 
 // Standard API response types
 export interface ApiSuccessResponse<T = any> {
@@ -78,14 +82,7 @@ export async function apiHandler<TInput = any, TOutput = any>(
   try {
     // 1. CORS handling
     if (cors && request.method === "OPTIONS") {
-      return new NextResponse(null, {
-        status: 200,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-      });
+      return handleCorsPreflightRequest(request);
     }
 
     // 2. Rate limiting
@@ -104,7 +101,7 @@ export async function apiHandler<TInput = any, TOutput = any>(
             status: 429,
             headers: {
               "Retry-After": String(rateLimitResult.retryAfter || 60),
-              ...(cors ? getCorsHeaders() : {}),
+              ...(cors ? getSecureCorsHeaders(request) : {}),
             },
           },
         );
@@ -123,7 +120,7 @@ export async function apiHandler<TInput = any, TOutput = any>(
           ),
           {
             status: 401,
-            headers: cors ? getCorsHeaders() : {},
+            headers: cors ? getSecureCorsHeaders(request) : {},
           },
         );
       }
@@ -145,7 +142,7 @@ export async function apiHandler<TInput = any, TOutput = any>(
             ),
             {
               status: 400,
-              headers: cors ? getCorsHeaders() : {},
+              headers: cors ? getSecureCorsHeaders(request) : {},
             },
           );
         }
@@ -159,7 +156,7 @@ export async function apiHandler<TInput = any, TOutput = any>(
           ),
           {
             status: 400,
-            headers: cors ? getCorsHeaders() : {},
+            headers: cors ? getSecureCorsHeaders(request) : {},
           },
         );
       }
@@ -256,12 +253,9 @@ function createErrorResponse(
   };
 }
 
-function getCorsHeaders(): Record<string, string> {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
+// Deprecated - use getSecureCorsHeaders from cors-config.ts instead
+function getCorsHeaders(request: NextRequest): Record<string, string> {
+  return getSecureCorsHeaders(request);
 }
 
 function getClientIP(request: NextRequest): string | undefined {
@@ -377,7 +371,7 @@ export function validateHttpMethod(
         status: 405,
         headers: {
           Allow: allowedMethods.join(", "),
-          ...getCorsHeaders(),
+          ...getSecureCorsHeaders(request),
         },
       },
     );

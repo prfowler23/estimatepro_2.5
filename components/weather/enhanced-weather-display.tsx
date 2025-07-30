@@ -35,6 +35,7 @@ import {
   Zap,
   Timer,
 } from "lucide-react";
+import { ComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
 
 interface WeatherDisplayProps {
   location: string;
@@ -128,7 +129,7 @@ interface WeatherData {
   }>;
 }
 
-export function EnhancedWeatherDisplay({
+function EnhancedWeatherDisplayComponent({
   location,
   services = [],
   projectDuration = 30,
@@ -711,5 +712,17 @@ export function EnhancedWeatherDisplay({
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// Export wrapped with error boundary
+export function EnhancedWeatherDisplay(props: WeatherDisplayProps) {
+  return (
+    <ComponentErrorBoundary
+      componentName="EnhancedWeatherDisplay"
+      showDetails={process.env.NODE_ENV === "development"}
+    >
+      <EnhancedWeatherDisplayComponent {...props} />
+    </ComponentErrorBoundary>
   );
 }

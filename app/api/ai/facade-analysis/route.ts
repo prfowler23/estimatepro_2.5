@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import OpenAI from "openai";
 import { z } from "zod";
 import { FACADE_ANALYSIS_PROMPTS } from "@/lib/ai/prompts/facade-analysis-prompts";
 import { validateAIInput, sanitizeAIResponse } from "@/lib/ai/ai-security";
 import { aiResponseCache } from "@/lib/ai/ai-response-cache";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+import { openai } from "@/lib/ai/openai";
+import { getAIConfig } from "@/lib/ai/ai-config";
+import { withRateLimit, trackAIUsage } from "@/lib/ai/rate-limiter";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
 
 const requestSchema = z.object({
   imageUrl: z.string().url(),
@@ -24,16 +23,33 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  let session: any = null;
+
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Check authentication
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const authResult = await supabase.auth.getSession();
+    session = authResult.data.session;
+
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return ErrorResponses.unauthorized();
+    }
+
+    // Check rate limit
+    const rateLimitResult = await withRateLimit(
+      "ai.facade-analysis",
+      request,
+      session.user.id,
+    );
+
+    if (!rateLimitResult.allowed) {
+      return ErrorResponses.rateLimitExceeded(
+        rateLimitResult.headers?.["Retry-After"]
+          ? parseInt(rateLimitResult.headers["Retry-After"])
+          : undefined,
+      );
     }
 
     // Parse and validate request
@@ -43,13 +59,7 @@ export async function POST(request: NextRequest) {
     // Validate AI input
     const validation = await validateAIInput(validatedData);
     if (!validation.isValid) {
-      return NextResponse.json(
-        {
-          error: "Invalid input",
-          details: validation.errors,
-        },
-        { status: 400 },
-      );
+      return ErrorResponses.badRequest("Invalid input", validation.errors);
     }
 
     // Check cache
@@ -66,8 +76,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Call OpenAI Vision API
+    // Get AI configuration
+    const aiConfigManager = getAIConfig();
+    const config = aiConfigManager.getAIConfig();
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: config.visionModel,
       messages: [
         {
           role: "system",
@@ -94,8 +108,8 @@ export async function POST(request: NextRequest) {
           ],
         },
       ],
-      max_tokens: 2000,
-      temperature: 0.1, // Low temperature for consistent measurements
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
     });
 
     // Parse and validate response
@@ -144,29 +158,53 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      result: sanitized,
-      cached: false,
-    });
-  } catch (error) {
-    console.error("Facade analysis error:", error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.errors,
-        },
-        { status: 400 },
-      );
-    }
+    // Track AI usage
+    const estimatedTokens = 1500; // Vision models use ~1.5k tokens per image analysis
+    await trackAIUsage(
+      session.user.id,
+      "ai.facade-analysis",
+      config.visionModel,
+      estimatedTokens,
+      true,
+    );
 
     return NextResponse.json(
       {
-        error: "Failed to analyze image",
-        details: error instanceof Error ? error.message : "Unknown error",
+        result: sanitized,
+        cached: false,
       },
-      { status: 500 },
+      {
+        headers: rateLimitResult.headers,
+      },
+    );
+  } catch (error) {
+    console.error("Facade analysis error:", error);
+
+    // Track failed usage - check session and user exist
+    if (session?.user?.id) {
+      await trackAIUsage(
+        session.user.id,
+        "ai.facade-analysis",
+        "gpt-4-vision-preview",
+        0,
+        false,
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
+
+    if (error instanceof z.ZodError) {
+      return ErrorResponses.validationError(error);
+    }
+
+    logApiError(error, {
+      endpoint: "/api/ai/facade-analysis",
+      method: "POST",
+      userId: session?.user?.id,
+    });
+
+    return ErrorResponses.aiServiceError(
+      "Failed to analyze image",
+      error instanceof Error ? { message: error.message } : undefined,
     );
   }
 }

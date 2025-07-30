@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,6 +33,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -45,6 +57,7 @@ import {
   Clock,
   RefreshCw,
 } from "lucide-react";
+import { ComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
 
 interface WebhookConfig {
   id: string;
@@ -102,7 +115,45 @@ const AVAILABLE_EVENTS = [
   "system.maintenance",
 ];
 
-export function WebhookManager() {
+// Zod validation schema for webhook form
+const webhookFormSchema = z.object({
+  url: z
+    .string()
+    .min(1, "URL is required")
+    .url("Please enter a valid URL")
+    .refine(
+      (url) => url.startsWith("https://"),
+      "URL must use HTTPS for security",
+    ),
+  events: z
+    .array(z.string())
+    .min(1, "At least one event must be selected")
+    .max(10, "Maximum 10 events allowed"),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
+    .optional(),
+  timeout_seconds: z
+    .number()
+    .int("Timeout must be a whole number")
+    .min(1, "Timeout must be at least 1 second")
+    .max(30, "Timeout cannot exceed 30 seconds"),
+  retry_attempts: z
+    .number()
+    .int("Retry attempts must be a whole number")
+    .min(0, "Retry attempts cannot be negative")
+    .max(5, "Maximum 5 retry attempts allowed"),
+  retry_delay_seconds: z
+    .number()
+    .int("Retry delay must be a whole number")
+    .min(1, "Retry delay must be at least 1 second")
+    .max(300, "Retry delay cannot exceed 5 minutes"),
+  active: z.boolean(),
+});
+
+type WebhookFormData = z.infer<typeof webhookFormSchema>;
+
+function WebhookManagerComponent() {
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [selectedWebhook, setSelectedWebhook] = useState<WebhookConfig | null>(
     null,
@@ -113,15 +164,31 @@ export function WebhookManager() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Form state for webhook creation/editing
-  const [formData, setFormData] = useState({
-    url: "",
-    events: [] as string[],
-    description: "",
-    timeout_seconds: 10,
-    retry_attempts: 3,
-    retry_delay_seconds: 5,
-    active: true,
+  // Form setup
+  const createForm = useForm<WebhookFormData>({
+    resolver: zodResolver(webhookFormSchema),
+    defaultValues: {
+      url: "",
+      events: [],
+      description: "",
+      timeout_seconds: 10,
+      retry_attempts: 3,
+      retry_delay_seconds: 5,
+      active: true,
+    },
+  });
+
+  const editForm = useForm<WebhookFormData>({
+    resolver: zodResolver(webhookFormSchema),
+    defaultValues: {
+      url: "",
+      events: [],
+      description: "",
+      timeout_seconds: 10,
+      retry_attempts: 3,
+      retry_delay_seconds: 5,
+      active: true,
+    },
   });
 
   useEffect(() => {
@@ -172,22 +239,13 @@ export function WebhookManager() {
     }
   };
 
-  const handleCreateWebhook = async () => {
-    if (!formData.url || formData.events.length === 0) {
-      toast({
-        title: "Error",
-        description: "URL and at least one event are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleCreateWebhook = async (data: WebhookFormData) => {
     setLoading(true);
     try {
       const response = await fetch("/api/integrations/webhooks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {
@@ -196,7 +254,7 @@ export function WebhookManager() {
           description: "Webhook created successfully",
         });
         setIsCreateDialogOpen(false);
-        resetForm();
+        createForm.reset();
         loadWebhooks();
       } else {
         const errorData = await response.json();
@@ -217,7 +275,7 @@ export function WebhookManager() {
     }
   };
 
-  const handleUpdateWebhook = async () => {
+  const handleUpdateWebhook = async (data: WebhookFormData) => {
     if (!selectedWebhook) return;
 
     setLoading(true);
@@ -227,7 +285,7 @@ export function WebhookManager() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(data),
         },
       );
 
@@ -237,7 +295,7 @@ export function WebhookManager() {
           description: "Webhook updated successfully",
         });
         setIsEditDialogOpen(false);
-        resetForm();
+        editForm.reset();
         loadWebhooks();
       } else {
         const errorData = await response.json();
@@ -248,7 +306,6 @@ export function WebhookManager() {
         });
       }
     } catch (error) {
-      // Error handled by toast notification
       toast({
         title: "Error",
         description: "Failed to update webhook",
@@ -373,21 +430,13 @@ export function WebhookManager() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      url: "",
-      events: [],
-      description: "",
-      timeout_seconds: 10,
-      retry_attempts: 3,
-      retry_delay_seconds: 5,
-      active: true,
-    });
+  const resetCreateForm = () => {
+    createForm.reset();
   };
 
   const openEditDialog = (webhook: WebhookConfig) => {
     setSelectedWebhook(webhook);
-    setFormData({
+    editForm.reset({
       url: webhook.url,
       events: webhook.events,
       description: webhook.description || "",
@@ -441,7 +490,7 @@ export function WebhookManager() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button onClick={resetCreateForm}>
               <Plus className="h-4 w-4 mr-2" />
               Add Webhook
             </Button>
@@ -451,8 +500,7 @@ export function WebhookManager() {
               <DialogTitle>Create New Webhook</DialogTitle>
             </DialogHeader>
             <WebhookForm
-              formData={formData}
-              setFormData={setFormData}
+              form={createForm}
               onSubmit={handleCreateWebhook}
               loading={loading}
               submitLabel="Create Webhook"
@@ -735,8 +783,7 @@ export function WebhookManager() {
             <DialogTitle>Edit Webhook</DialogTitle>
           </DialogHeader>
           <WebhookForm
-            formData={formData}
-            setFormData={setFormData}
+            form={editForm}
             onSubmit={handleUpdateWebhook}
             loading={loading}
             submitLabel="Update Webhook"
@@ -748,142 +795,210 @@ export function WebhookManager() {
 }
 
 interface WebhookFormProps {
-  formData: any;
-  setFormData: (data: any) => void;
-  onSubmit: () => void;
+  form: ReturnType<typeof useForm<WebhookFormData>>;
+  onSubmit: (data: WebhookFormData) => void;
   loading: boolean;
   submitLabel: string;
 }
 
 function WebhookForm({
-  formData,
-  setFormData,
+  form,
   onSubmit,
   loading,
   submitLabel,
 }: WebhookFormProps) {
-  const handleEventToggle = (event: string) => {
-    const newEvents = formData.events.includes(event)
-      ? formData.events.filter((e: string) => e !== event)
-      : [...formData.events, event];
-    setFormData({ ...formData, events: newEvents });
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="url">Webhook URL *</Label>
-        <Input
-          id="url"
-          type="url"
-          placeholder="https://your-domain.com/webhook"
-          value={formData.url}
-          onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Webhook URL *</FormLabel>
+              <FormControl>
+                <Input
+                  type="url"
+                  placeholder="https://your-domain.com/webhook"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Must be a valid HTTPS URL for security
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label>Events *</Label>
-        <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded p-2">
-          {AVAILABLE_EVENTS.map((event) => (
-            <div key={event} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id={event}
-                checked={formData.events.includes(event)}
-                onChange={() => handleEventToggle(event)}
-                className="rounded"
-              />
-              <Label htmlFor={event} className="text-sm">
-                {event}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          placeholder="Optional description for this webhook"
-          value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
+        <FormField
+          control={form.control}
+          name="events"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Events *</FormLabel>
+              <FormControl>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded p-2">
+                  {AVAILABLE_EVENTS.map((event) => (
+                    <div key={event} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={event}
+                        checked={field.value.includes(event)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            field.onChange([...field.value, event]);
+                          } else {
+                            field.onChange(
+                              field.value.filter((e) => e !== event),
+                            );
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <Label htmlFor={event} className="text-sm">
+                        {event}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </FormControl>
+              <FormDescription>
+                Select the events you want to receive notifications for
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="timeout">Timeout (seconds)</Label>
-          <Input
-            id="timeout"
-            type="number"
-            min="1"
-            max="30"
-            value={formData.timeout_seconds}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                timeout_seconds: parseInt(e.target.value),
-              })
-            }
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Optional description for this webhook"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Help identify this webhook (max 500 characters)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="timeout_seconds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Timeout (seconds)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="30"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 10)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="retry_attempts"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Retry Attempts</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="5"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 3)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="retry_delay_seconds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Retry Delay (seconds)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="300"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 5)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="retries">Retry Attempts</Label>
-          <Input
-            id="retries"
-            type="number"
-            min="0"
-            max="5"
-            value={formData.retry_attempts}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                retry_attempts: parseInt(e.target.value),
-              })
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="delay">Retry Delay (seconds)</Label>
-          <Input
-            id="delay"
-            type="number"
-            min="1"
-            max="300"
-            value={formData.retry_delay_seconds}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                retry_delay_seconds: parseInt(e.target.value),
-              })
-            }
-          />
-        </div>
-      </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="active"
-          checked={formData.active}
-          onCheckedChange={(checked) =>
-            setFormData({ ...formData, active: checked })
-          }
+        <FormField
+          control={form.control}
+          name="active"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Active</FormLabel>
+                <FormDescription>
+                  Enable this webhook to receive events
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
         />
-        <Label htmlFor="active">Active</Label>
-      </div>
 
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={() => {}}>
-          Cancel
-        </Button>
-        <Button type="button" onClick={onSubmit} disabled={loading}>
-          {loading ? "Saving..." : submitLabel}
-        </Button>
-      </div>
-    </div>
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={() => {}}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Saving..." : submitLabel}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+// Export wrapped with error boundary
+export function WebhookManager() {
+  return (
+    <ComponentErrorBoundary
+      componentName="WebhookManager"
+      showDetails={process.env.NODE_ENV === "development"}
+    >
+      <WebhookManagerComponent />
+    </ComponentErrorBoundary>
   );
 }

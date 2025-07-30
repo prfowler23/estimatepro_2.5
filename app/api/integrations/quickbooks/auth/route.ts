@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { QuickBooksIntegration } from "@/lib/integrations/providers/quickbooks-integration";
 import { integrationManager } from "@/lib/integrations/integration-framework";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
+import {
+  encryptOAuthCredentials,
+  validateEncryptionConfig,
+} from "@/lib/utils/oauth-encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,24 +18,53 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get("error");
 
     if (error) {
-      return NextResponse.json(
-        { error: `OAuth error: ${error}` },
-        { status: 400 },
-      );
+      return ErrorResponses.badRequest(`OAuth error: ${error}`);
     }
 
     if (!code || !realmId) {
-      return NextResponse.json(
-        { error: "Missing authorization code or realm ID" },
-        { status: 400 },
+      return ErrorResponses.badRequest(
+        "Missing authorization code or realm ID",
       );
     }
+
+    // Verify CSRF state token
+    if (!state) {
+      return ErrorResponses.badRequest(
+        "Missing state parameter - possible CSRF attack",
+      );
+    }
+
+    const supabase = createClient();
+    const { data: user } = await supabase.auth.getUser();
+
+    if (!user.user) {
+      return ErrorResponses.unauthorized("User not authenticated");
+    }
+
+    // Retrieve and validate stored state
+    const { data: storedState } = await supabase
+      .from("oauth_states")
+      .select("state")
+      .eq("user_id", user.user.id)
+      .eq("state", state)
+      .single();
+
+    if (!storedState) {
+      return ErrorResponses.badRequest(
+        "Invalid state parameter - possible CSRF attack",
+      );
+    }
+
+    // Clean up used state
+    await supabase.from("oauth_states").delete().eq("state", state);
 
     // Exchange code for access token
     const tokenResponse = await exchangeCodeForTokens(code, realmId);
 
     if (!tokenResponse.success) {
-      return NextResponse.json({ error: tokenResponse.error }, { status: 400 });
+      return ErrorResponses.badRequest(
+        tokenResponse.error || "Token exchange failed",
+      );
     }
 
     const { access_token, refresh_token, expires_in } = tokenResponse.data || {
@@ -48,24 +82,25 @@ export async function GET(request: NextRequest) {
     });
 
     if (!authResult.success) {
-      return NextResponse.json(
-        { error: `Authentication failed: ${authResult.error}` },
-        { status: 400 },
+      return ErrorResponses.badRequest(
+        `Authentication failed: ${authResult.error}`,
       );
     }
+
+    // Validate encryption configuration
+    validateEncryptionConfig();
 
     // Save integration configuration
-    const supabase = createClient();
-    const { data: user } = await supabase.auth.getUser();
-
-    if (!user.user) {
-      return NextResponse.json(
-        { error: "User not authenticated" },
-        { status: 401 },
-      );
-    }
+    // Variables already declared above, reuse them
 
     const expiresAt = new Date(Date.now() + expires_in * 1000);
+
+    // Encrypt OAuth credentials before storage
+    const encryptedCredentials = encryptOAuthCredentials({
+      access_token,
+      refresh_token,
+      company_id: realmId,
+    });
 
     const integrationConfig = {
       provider: "quickbooks" as const,
@@ -77,13 +112,9 @@ export async function GET(request: NextRequest) {
       },
       authentication: {
         type: "oauth2" as const,
-        credentials: {
-          access_token,
-          refresh_token,
-          company_id: realmId,
-        },
+        credentials: encryptedCredentials,
         expires_at: expiresAt.toISOString(),
-        refresh_token,
+        refresh_token: encryptedCredentials.refresh_token,
       },
       webhooks: [],
       sync_settings: {
@@ -103,7 +134,9 @@ export async function GET(request: NextRequest) {
       await integrationManager.createIntegration(integrationConfig);
 
     if (!createResult.success) {
-      return NextResponse.json({ error: createResult.error }, { status: 500 });
+      return ErrorResponses.internalError(
+        createResult.error || "Failed to create integration",
+      );
     }
 
     // Redirect to success page
@@ -113,11 +146,11 @@ export async function GET(request: NextRequest) {
     );
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
-    console.error("QuickBooks OAuth error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/integrations/quickbooks/auth",
+      method: "GET",
+    });
+    return ErrorResponses.internalError();
   }
 }
 
@@ -126,8 +159,19 @@ export async function POST(request: NextRequest) {
     const { action } = await request.json();
 
     if (action === "initiate") {
-      // Start OAuth flow
-      const authUrl = buildAuthorizationUrl();
+      // Get authenticated user
+      const supabase = createClient();
+      const { data: user } = await supabase.auth.getUser();
+
+      if (!user.user) {
+        return NextResponse.json(
+          { error: "User not authenticated" },
+          { status: 401 },
+        );
+      }
+
+      // Start OAuth flow with CSRF protection
+      const authUrl = await buildAuthorizationUrl(user.user.id);
       return NextResponse.json({ auth_url: authUrl });
     }
 
@@ -152,13 +196,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    return ErrorResponses.badRequest("Invalid action");
   } catch (error) {
-    console.error("QuickBooks auth API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/integrations/quickbooks/auth",
+      method: "POST",
+    });
+    return ErrorResponses.internalError();
   }
 }
 
@@ -215,11 +259,24 @@ async function exchangeCodeForTokens(code: string, realmId: string) {
   }
 }
 
-function buildAuthorizationUrl(): string {
+async function buildAuthorizationUrl(userId: string): Promise<string> {
   const baseUrl =
     process.env.NODE_ENV === "production"
       ? "https://appcenter.intuit.com/connect/oauth2"
       : "https://appcenter.intuit.com/connect/oauth2";
+
+  // Generate and store CSRF state token
+  const state = crypto.randomUUID();
+  const supabase = createClient();
+
+  // Store state with expiration (5 minutes)
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  await supabase.from("oauth_states").insert({
+    user_id: userId,
+    state: state,
+    provider: "quickbooks",
+    expires_at: expiresAt,
+  });
 
   const params = new URLSearchParams({
     client_id: process.env.QUICKBOOKS_CLIENT_ID!,
@@ -229,7 +286,7 @@ function buildAuthorizationUrl(): string {
       `${process.env.NEXT_PUBLIC_APP_URL}/api/integrations/quickbooks/auth`,
     response_type: "code",
     access_type: "offline",
-    state: crypto.randomUUID(),
+    state: state,
   });
 
   return `${baseUrl}?${params.toString()}`;

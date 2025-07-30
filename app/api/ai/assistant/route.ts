@@ -2,72 +2,192 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/ai/openai";
 import { getUser } from "@/lib/auth/server";
 import { withAIRetry } from "@/lib/utils/retry-logic";
-import { validateAIInput, sanitizeAIResponse } from "@/lib/ai/ai-security";
+import {
+  securityScanner,
+  outputValidator,
+  SafetyLevel,
+} from "@/lib/ai/ai-security";
+import { AIConversationService } from "@/lib/services/ai-conversation-service";
+import { getAIConfig } from "@/lib/ai/ai-config";
+import { aiRequestQueue } from "@/lib/ai/request-queue";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check if AI is available
+    const aiConfig = getAIConfig();
+    if (!aiConfig.isAIAvailable()) {
+      return ErrorResponses.serviceUnavailable("AI service");
     }
 
-    const { message, context, mode = "general" } = await request.json();
+    const user = await getUser();
+    if (!user) {
+      return ErrorResponses.unauthorized();
+    }
 
-    // Validate input
-    const validation = validateAIInput({ message, context });
-    if (!validation.isValid) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
+    const {
+      message,
+      context,
+      mode = "general",
+      conversationId,
+    } = await request.json();
+
+    // Comprehensive security scan
+    const scanResult = securityScanner.scanContent(
+      message,
+      SafetyLevel.MODERATE,
+    );
+    if (!scanResult.safe) {
+      return ErrorResponses.badRequest(
+        `Input failed security scan: ${scanResult.violations.join(", ")}`,
+        { riskScore: scanResult.risk_score },
+      );
+    }
+
+    // Additional context validation if provided
+    if (context) {
+      const contextStr = JSON.stringify(context);
+      const contextScan = securityScanner.scanContent(
+        contextStr,
+        SafetyLevel.MODERATE,
+      );
+      if (!contextScan.safe) {
+        return ErrorResponses.badRequest("Context contains unsafe content", {
+          violations: contextScan.violations,
+        });
+      }
     }
 
     const result = await withAIRetry(async () => {
+      const aiConfig = getAIConfig();
+      const config = aiConfig.getAIConfig();
       const systemPrompt = getSystemPrompt(mode);
+
+      // Get conversation context if conversationId provided
+      let conversationMessages: any[] = [];
+      if (conversationId) {
+        try {
+          conversationMessages =
+            await AIConversationService.getConversationContext(
+              conversationId,
+              user.id,
+              5, // Get last 5 message pairs
+            );
+        } catch (error) {
+          console.warn("Failed to fetch conversation context:", error);
+        }
+      }
+
+      // Build messages array with conversation history
+      const messages: any[] = [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+      ];
+
+      // Add conversation history
+      conversationMessages.forEach((msg) => {
+        messages.push({
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
+        });
+      });
+
+      // Add context if provided
       const contextPrompt = context
         ? `\n\nContext: ${JSON.stringify(context)}`
         : "";
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: `${message}${contextPrompt}`,
-          },
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
+      // Add current message
+      messages.push({
+        role: "user",
+        content: `${message}${contextPrompt}`,
       });
 
-      return (
-        completion.choices[0]?.message?.content ||
-        "I apologize, but I couldn't generate a response."
+      const completion = await aiRequestQueue.add(
+        "openai",
+        () =>
+          openai.chat.completions.create({
+            model: config.defaultModel,
+            messages,
+            max_tokens: config.maxTokens,
+            temperature: config.temperature,
+          }),
+        1, // Priority 1 for chat completions
       );
+
+      const response =
+        completion.choices[0]?.message?.content ||
+        "I apologize, but I couldn't generate a response.";
+
+      // Return both response and token usage
+      return {
+        response,
+        tokensUsed: completion.usage?.total_tokens,
+      };
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: "AI service temporarily unavailable" },
-        { status: 503 },
+      return ErrorResponses.aiServiceError(
+        "AI service temporarily unavailable",
       );
     }
 
-    // Sanitize response
-    const sanitizedResponse = sanitizeAIResponse(result.data);
+    // Comprehensive output validation and sanitization
+    const aiResponse = result.data.response;
+    const outputScan = outputValidator.scanOutput(aiResponse);
+    if (!outputScan.safe) {
+      console.error("AI response contains unsafe content:", outputScan.issues);
+      // Filter the response instead of just logging
+      const sanitized = securityScanner.scanContent(
+        aiResponse,
+        SafetyLevel.STRICT,
+      );
+      if (!sanitized.safe) {
+        return ErrorResponses.internalError(
+          "AI response contained unsafe content and was blocked",
+        );
+      }
+      // Use the sanitized version
+      result.data.response = sanitized.sanitized;
+    }
+
+    // Save the interaction to conversation history
+    let savedConversation;
+    try {
+      const { conversation } = await AIConversationService.saveInteraction(
+        user.id,
+        message,
+        result.data.response,
+        conversationId,
+        {
+          mode,
+          tokensUsed: result.data.tokensUsed,
+          model: config.defaultModel,
+        },
+      );
+      savedConversation = conversation;
+    } catch (error) {
+      console.error("Failed to save conversation:", error);
+      // Continue without saving - don't fail the request
+    }
 
     return NextResponse.json({
-      response: sanitizedResponse,
+      response: result.data.response,
+      conversationId: savedConversation?.id || conversationId,
       mode,
-      usage: "AI assistant response generated successfully",
+      usage: {
+        tokensUsed: result.data.tokensUsed,
+        message: "AI assistant response generated successfully",
+      },
     });
   } catch (error) {
-    console.error("AI Assistant error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/ai/assistant",
+      method: "POST",
+    });
+    return ErrorResponses.internalError();
   }
 }
 

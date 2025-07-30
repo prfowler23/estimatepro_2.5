@@ -39,6 +39,86 @@ export class CalculatorService {
     return calculator.calculate();
   }
 
+  // New method to calculate from AI tool parameters
+  async calculate(
+    serviceType: string,
+    parameters: Record<string, any>,
+    userId?: string,
+  ): Promise<ServiceCalculationResult> {
+    // Map common service type aliases
+    const serviceTypeMap: Record<string, ServiceType> = {
+      "window-cleaning": "WC",
+      window: "WC",
+      windows: "WC",
+      "pressure-washing": "PW",
+      pressure: "PW",
+      "soft-washing": "SW",
+      soft: "SW",
+      biofilm: "BF",
+      "glass-restoration": "GR",
+      glass: "GR",
+      "frame-restoration": "FR",
+      frame: "FR",
+      "high-dusting": "HD",
+      dusting: "HD",
+      "final-clean": "FC",
+      final: "FC",
+      granite: "GRC",
+      "pressure-seal": "PWS",
+      "parking-deck": "PD",
+      parking: "PD",
+    };
+
+    const mappedServiceType =
+      serviceTypeMap[serviceType.toLowerCase()] || (serviceType as ServiceType);
+
+    // Map AI parameters to calculator format
+    const formData: ServiceFormData = {
+      // Common fields
+      squareFootage:
+        parameters.squareFootage ||
+        parameters.area ||
+        parameters.glassArea ||
+        0,
+      stories:
+        parameters.stories ||
+        parameters.floors ||
+        parameters.buildingHeightStories ||
+        1,
+      location: parameters.location || "CA-Los Angeles",
+
+      // Service-specific fields
+      ...(mappedServiceType === "WC" && {
+        glassArea: parameters.glassArea || parameters.squareFootage || 0,
+        drops: parameters.drops || parameters.numberOfDrops || 1,
+        roofAnchors:
+          parameters.roofAnchors || parameters.hasRoofAnchors || false,
+      }),
+
+      // Pricing settings
+      markupPercentage: parameters.markup || 35,
+      marginPercentage: parameters.margin || 0,
+      crewSize: parameters.crewSize || 2,
+      shiftLength: parameters.shiftLength || 8,
+    };
+
+    const calculationParams: CalculationParams = {
+      serviceType: mappedServiceType,
+      formData,
+      buildingContext: {
+        stories: formData.stories || 1,
+        buildingType: parameters.buildingType,
+        accessDifficulty: parameters.difficulty as
+          | "easy"
+          | "moderate"
+          | "difficult"
+          | undefined,
+      },
+    };
+
+    return this.calculateService(calculationParams);
+  }
+
   static calculateMultipleServices(
     calculations: CalculationParams[],
   ): ServiceCalculationResult[] {

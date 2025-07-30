@@ -39,7 +39,7 @@ import {
   Ruler,
 } from "lucide-react";
 import { ServiceType } from "@/lib/types/estimate-types";
-import { IntelligentServiceSuggestions } from "@/components/ai/IntelligentServiceSuggestions";
+import { SimpleServiceSuggestions } from "@/components/ai/service-suggestions/SimpleServiceSuggestions";
 import { SmartDefaultsProvider } from "@/components/ai/SmartDefaultsProvider";
 import { validateClientEnv } from "@/lib/config/env-validation";
 import { cn } from "@/lib/utils";
@@ -394,7 +394,7 @@ export default function QuickEstimatePage() {
 
               {/* AI Suggestions */}
               {env.NEXT_PUBLIC_ENABLE_AI && projectDescription && (
-                <IntelligentServiceSuggestions
+                <SimpleServiceSuggestions
                   projectDescription={projectDescription}
                   selectedServices={selectedServices}
                   onServicesSuggested={setSelectedServices}

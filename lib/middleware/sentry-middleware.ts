@@ -47,22 +47,20 @@ export function withSentryMonitoring(
       return handler(req);
     }
 
-    // Start Sentry transaction
-    const transaction = Sentry.startTransaction({
-      name: `${method} ${pathname}`,
-      op: "http.server",
-      tags: {
-        method,
-        pathname,
-        component: "api",
+    // Start Sentry transaction using newer API
+    const transaction = Sentry.startSpan(
+      {
+        name: `${method} ${pathname}`,
+        op: "http.server",
       },
-    });
-
-    Sentry.getCurrentHub().configureScope((scope: any) => {
-      scope.setSpan(transaction);
-      scope.setTag("api.method", method);
-      scope.setTag("api.path", pathname);
-    });
+      () => {
+        // Set tags for the span
+        Sentry.setTag("api.method", method);
+        Sentry.setTag("api.path", pathname);
+        Sentry.setTag("component", "api");
+        return { method, pathname };
+      },
+    );
 
     let response: NextResponse;
     let statusCode = 500;
@@ -94,15 +92,15 @@ export function withSentryMonitoring(
       statusCode = response.status;
 
       // Track successful response
-      transaction.setStatus("ok");
-      transaction.setTag("http.status_code", statusCode.toString());
+      Sentry.setTag("transaction.status", "ok");
+      Sentry.setTag("http.status_code", statusCode.toString());
     } catch (err) {
       error = err instanceof Error ? err : new Error(String(err));
       statusCode = 500;
 
       // Track error
-      transaction.setStatus("internal_error");
-      transaction.setTag("http.status_code", statusCode.toString());
+      Sentry.setTag("transaction.status", "internal_error");
+      Sentry.setTag("http.status_code", statusCode.toString());
 
       if (config.trackErrors) {
         logger.logAPIError(pathname, method, error, statusCode, {
@@ -174,8 +172,7 @@ export function withSentryMonitoring(
         }
       }
 
-      // Finish transaction
-      transaction.finish();
+      // Transactions finish automatically with new SDK
     }
 
     return response;

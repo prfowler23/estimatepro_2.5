@@ -7,29 +7,51 @@ import {
   sanitizeObject,
 } from "@/lib/schemas/api-validation";
 import { generalRateLimiter } from "@/lib/utils/rate-limit";
+import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
 
 export async function POST(request: NextRequest) {
   try {
     // Authenticate request
     const { user, error: authError } = await authenticateRequest(request);
     if (authError || !user) {
-      return NextResponse.json(
-        { error: authError || "Unauthorized" },
-        { status: 401 },
-      );
+      return ErrorResponses.unauthorized(authError || "Unauthorized");
     }
 
     // Apply rate limiting
     const rateLimitResult = await generalRateLimiter(request);
     if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { error: "Rate limit exceeded" },
-        { status: 429 },
-      );
+      return ErrorResponses.rateLimitExceeded();
     }
 
     const supabase = createServerSupabaseClient();
     const requestBody = await request.json();
+
+    // Validate step transition if updating existing flow
+    if (requestBody.flow_id) {
+      const { data: existingFlow, error: fetchError } = await supabase
+        .from("estimation_flows")
+        .select("current_step, user_id")
+        .eq("id", requestBody.flow_id)
+        .single();
+
+      if (fetchError || !existingFlow) {
+        return ErrorResponses.notFound("Estimation flow not found");
+      }
+
+      // Verify ownership
+      if (existingFlow.user_id !== user.id) {
+        return ErrorResponses.forbidden(
+          "You don't have permission to modify this flow",
+        );
+      }
+
+      // Validate step progression (only allow next/previous step)
+      const currentStep = existingFlow.current_step;
+      const requestedStep = requestBody.step;
+      if (Math.abs(currentStep - requestedStep) > 1) {
+        return ErrorResponses.badRequest("Invalid step transition");
+      }
+    }
 
     // Validate and sanitize input
     const validation = validateRequest(estimationFlowSchema, {
@@ -38,7 +60,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
+      return ErrorResponses.badRequest(validation.error || "Validation failed");
     }
 
     const sanitizedData = sanitizeObject(validation.data!);
@@ -58,20 +80,102 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (flowError) {
-      console.error("Error creating estimation flow:", flowError);
-      return NextResponse.json(
-        { error: "Failed to create estimation flow" },
-        { status: 500 },
-      );
+      logApiError(flowError, {
+        endpoint: "/api/estimation-flows",
+        method: "POST",
+        userId: user.id,
+      });
+      return ErrorResponses.databaseError("Create estimation flow");
     }
 
     return NextResponse.json({ flow }, { status: 201 });
   } catch (error) {
-    console.error("Estimation flow creation error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/estimation-flows",
+      method: "POST",
+    });
+    return ErrorResponses.internalError();
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    // Authenticate request
+    const { user, error: authError } = await authenticateRequest(request);
+    if (authError || !user) {
+      return ErrorResponses.unauthorized(authError || "Unauthorized");
+    }
+
+    // Apply rate limiting
+    const rateLimitResult = await generalRateLimiter(request);
+    if (!rateLimitResult.allowed) {
+      return ErrorResponses.rateLimitExceeded();
+    }
+
+    const supabase = createServerSupabaseClient();
+    const { searchParams } = new URL(request.url);
+    const flowId = searchParams.get("id");
+
+    if (!flowId) {
+      return ErrorResponses.badRequest("Flow ID is required");
+    }
+
+    const requestBody = await request.json();
+
+    // Verify ownership and validate step transition
+    const { data: existingFlow, error: fetchError } = await supabase
+      .from("estimation_flows")
+      .select("current_step, user_id")
+      .eq("id", flowId)
+      .single();
+
+    if (fetchError || !existingFlow) {
+      return ErrorResponses.notFound("Estimation flow not found");
+    }
+
+    if (existingFlow.user_id !== user.id) {
+      return ErrorResponses.forbidden(
+        "You don't have permission to modify this flow",
+      );
+    }
+
+    // Validate step transition
+    if (requestBody.current_step !== undefined) {
+      const currentStep = existingFlow.current_step;
+      const requestedStep = requestBody.current_step;
+      if (Math.abs(currentStep - requestedStep) > 1) {
+        return ErrorResponses.badRequest("Invalid step transition");
+      }
+    }
+
+    // Update the flow
+    const { data: updatedFlow, error: updateError } = await supabase
+      .from("estimation_flows")
+      .update({
+        ...requestBody,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", flowId)
+      .eq("user_id", user.id) // Double-check ownership
+      .select()
+      .single();
+
+    if (updateError) {
+      logApiError(updateError, {
+        endpoint: "/api/estimation-flows",
+        method: "PUT",
+        userId: user.id,
+      });
+      return ErrorResponses.databaseError("Update estimation flow");
+    }
+
+    return NextResponse.json({ flow: updatedFlow });
+  } catch (error) {
+    logApiError(error, {
+      endpoint: "/api/estimation-flows",
+      method: "PUT",
+    });
+    return ErrorResponses.internalError();
   }
 }
 
@@ -80,10 +184,7 @@ export async function GET(request: NextRequest) {
     // Authenticate request
     const { user, error: authError } = await authenticateRequest(request);
     if (authError || !user) {
-      return NextResponse.json(
-        { error: authError || "Unauthorized" },
-        { status: 401 },
-      );
+      return ErrorResponses.unauthorized(authError || "Unauthorized");
     }
 
     const supabase = createServerSupabaseClient();
@@ -115,19 +216,20 @@ export async function GET(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Error fetching estimation flows:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch estimation flows" },
-        { status: 500 },
-      );
+      logApiError(error, {
+        endpoint: "/api/estimation-flows",
+        method: "GET",
+        userId: user.id,
+      });
+      return ErrorResponses.databaseError("Fetch estimation flows");
     }
 
     return NextResponse.json({ flows });
   } catch (error) {
-    console.error("Estimation flows fetch error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    logApiError(error, {
+      endpoint: "/api/estimation-flows",
+      method: "GET",
+    });
+    return ErrorResponses.internalError();
   }
 }

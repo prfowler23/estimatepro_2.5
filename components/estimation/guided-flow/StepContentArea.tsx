@@ -164,4 +164,20 @@ function StepContentAreaComponent({
 }
 
 // PHASE 3 FIX: Memoize to prevent unnecessary re-renders when props haven't changed
-export const StepContentArea = memo(StepContentAreaComponent);
+// Custom comparison function to handle function props properly
+export const StepContentArea = memo(
+  StepContentAreaComponent,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.currentStep === nextProps.currentStep &&
+      prevProps.className === nextProps.className &&
+      prevProps.attemptedNavigation === nextProps.attemptedNavigation &&
+      prevProps.CurrentStepComponent === nextProps.CurrentStepComponent &&
+      prevProps.steps === nextProps.steps &&
+      prevProps.flowData === nextProps.flowData &&
+      prevProps.currentValidation === nextProps.currentValidation
+      // Note: onUpdate, onNext, onBack are functions and will have new references
+      // Parent should wrap these in useCallback to prevent re-renders
+    );
+  },
+);

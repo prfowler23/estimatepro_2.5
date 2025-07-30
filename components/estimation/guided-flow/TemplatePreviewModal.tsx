@@ -17,7 +17,6 @@ import {
   WorkflowTemplateService,
 } from "@/lib/services/workflow-templates";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
-import { AIService } from "@/lib/services/ai-service";
 import {
   Clock,
   Star,
@@ -139,13 +138,28 @@ export function TemplatePreviewModal({
     data: Partial<GuidedFlowData>,
   ): Promise<AIRecommendation> => {
     try {
-      // Use AI service for enhanced recommendations
-      const aiRecommendation = await AIService.generateTemplateRecommendations({
-        buildingType,
-        services,
-        existingData: data,
-        projectContext: `Template: ${template.name} (${template.category}, ${template.complexity})`,
+      // Call API endpoint for AI recommendations
+      const response = await fetch("/api/ai/template-recommendations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          buildingType,
+          services,
+          constraints: {
+            existingData: data,
+            projectContext: `Template: ${template.name} (${template.category}, ${template.complexity})`,
+          },
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to get AI recommendations");
+      }
+
+      const result = await response.json();
+      const aiRecommendation = result.recommendations;
 
       return {
         score: aiRecommendation.score,

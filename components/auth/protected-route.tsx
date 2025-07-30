@@ -8,12 +8,14 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
   redirectTo?: string;
+  requireOnboarding?: boolean;
 }
 
 export function ProtectedRoute({
   children,
   fallback,
   redirectTo = "/auth/login",
+  requireOnboarding = false,
 }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -22,7 +24,16 @@ export function ProtectedRoute({
     if (!loading && !user) {
       router.push(redirectTo);
     }
-  }, [user, loading, router, redirectTo]);
+    // Handle onboarding requirement
+    if (
+      !loading &&
+      user &&
+      requireOnboarding &&
+      !user.user_metadata?.onboarding_complete
+    ) {
+      router.push("/onboarding");
+    }
+  }, [user, loading, router, redirectTo, requireOnboarding]);
 
   if (loading) {
     return (

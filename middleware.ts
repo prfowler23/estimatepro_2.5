@@ -1,7 +1,7 @@
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { rateLimit } from "@/lib/middleware/rate-limit";
+import { rateLimit } from "./lib/middleware/rate-limit";
 
 function validateEnvironmentVariables() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -157,12 +157,9 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - _next/webpack-hmr (hot module replacement)
      * - favicon.ico (favicon file)
      * - public folder
-     * - api routes (handled separately)
-     * - static assets and build files
      */
-    "/((?!_next/static|_next/image|_next/webpack-hmr|_next|favicon.ico|public|api|sw.js|manifest.json|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|public).*)",
   ],
 };

@@ -3,20 +3,25 @@ import {
   createAIServiceError,
   createNetworkError,
 } from "@/lib/error/error-types";
+import { getAIConfig } from "@/lib/ai/ai-config";
+
+// Get configuration from AIConfigManager
+const aiConfigManager = getAIConfig();
+const aiConfig = aiConfigManager.getAIConfig();
 
 // Configuration
 const OPENAI_CONFIG = {
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: aiConfig.openaiApiKey,
   timeout: 30000, // 30 seconds
-  maxRetries: 3,
-  defaultModel: "gpt-4-1106-preview",
-  maxTokens: 4096,
-  temperature: 0.1,
+  maxRetries: aiConfig.retryAttempts,
+  defaultModel: aiConfig.defaultModel,
+  maxTokens: aiConfig.maxTokens,
+  temperature: aiConfig.temperature,
 } as const;
 
-// Validate configuration
-if (!OPENAI_CONFIG.apiKey) {
-  throw new Error("OPENAI_API_KEY environment variable is required");
+// Validate configuration only on server side
+if (typeof window === "undefined" && !OPENAI_CONFIG.apiKey) {
+  console.warn("OPENAI_API_KEY environment variable is not set");
 }
 
 // Create OpenAI client with enhanced configuration
@@ -119,7 +124,7 @@ export class EnhancedOpenAIClient {
       ];
 
       const response = await this.client.chat.completions.create({
-        model: options?.model || "gpt-4-vision-preview",
+        model: options?.model || aiConfig.visionModel,
         messages,
         max_tokens: options?.maxTokens || OPENAI_CONFIG.maxTokens,
       });
@@ -217,9 +222,12 @@ export class EnhancedOpenAIClient {
   canMakeRequest(): boolean {
     const now = Date.now();
     const timeSinceLastRequest = now - this.lastRequestTime;
+    const rateLimitConfig = aiConfigManager.getRateLimitConfig();
 
-    // Basic rate limiting: max 60 requests per minute
-    return timeSinceLastRequest >= 1000; // 1 second between requests
+    // Calculate minimum delay between requests based on rate limit
+    const minDelayMs = (60 * 1000) / rateLimitConfig.requestsPerMinute;
+
+    return timeSinceLastRequest >= minDelayMs;
   }
 
   private trackRequest(): void {

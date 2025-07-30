@@ -4,20 +4,77 @@
 
 @layer base {
   :root {
-    /* Professional Color Palette - Stripe/Salesforce Inspired */
+    /* Professional Color Palette - Enhanced with Gradients & Accents */
 
-    /* Primary Blue Scale */
-    --color-primary-50: #eff6ff;
-    --color-primary-100: #dbeafe;
-    --color-primary-200: #bfdbfe;
-    --color-primary-300: #93c5fd;
-    --color-primary-400: #60a5fa;
-    --color-primary-500: #3b82f6;
-    --color-primary-600: #2563eb;
-    --color-primary-700: #1d4ed8;
-    --color-primary-800: #1e40af;
-    --color-primary-900: #1e3a8a;
-    --color-primary-950: #172554;
+    /* Primary Dusty Blue Scale - Sophisticated Industrial */
+    --color-primary-50: #f4f6f8;
+    --color-primary-100: #e5e9ed;
+    --color-primary-200: #cbd4dc;
+    --color-primary-300: #a3b2c1;
+    --color-primary-400: #8191a3;
+    --color-primary-500: #6b7a89; /* Main Dusty Blue */
+    --color-primary-600: #5a6775;
+    --color-primary-700: #4a5560;
+    --color-primary-800: #3e4650;
+    --color-primary-900: #353b44;
+    --color-primary-950: #22262d;
+
+    /* Accent Colors - Sophisticated Industrial Palette */
+    --color-accent-sand: #cdbca8; /* Light Sandy Beige */
+    --color-accent-sand-light: #dfd3c3;
+    --color-accent-sand-dark: #b8a594;
+    --color-accent-taupe: #675c5a; /* Warm Taupe */
+    --color-accent-taupe-light: #7d706e;
+    --color-accent-taupe-dark: #524847;
+    --color-accent-charcoal: #201e1f; /* Off-Black / Dark Charcoal */
+    --color-accent-charcoal-light: #2f2c2d;
+    --color-accent-charcoal-dark: #141313;
+
+    /* Gradient Definitions - Industrial Elegance */
+    --gradient-primary: linear-gradient(
+      135deg,
+      var(--color-primary-600) 0%,
+      var(--color-accent-sand) 100%
+    );
+    --gradient-secondary: linear-gradient(
+      135deg,
+      var(--color-primary-500) 0%,
+      var(--color-accent-taupe) 100%
+    );
+    --gradient-warm: linear-gradient(
+      135deg,
+      var(--color-accent-sand) 0%,
+      var(--color-accent-taupe) 100%
+    );
+    --gradient-cool: linear-gradient(
+      135deg,
+      var(--color-primary-500) 0%,
+      var(--color-primary-800) 100%
+    );
+    --gradient-subtle: linear-gradient(
+      180deg,
+      rgba(107, 122, 137, 0.05) 0%,
+      rgba(205, 188, 168, 0.05) 100%
+    );
+    --gradient-glass: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    --gradient-mesh:
+      radial-gradient(
+        at 40% 20%,
+        var(--color-accent-sand-light) 0px,
+        transparent 50%
+      ),
+      radial-gradient(at 80% 0%, var(--color-primary-300) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, var(--color-primary-400) 0px, transparent 50%),
+      radial-gradient(
+        at 80% 50%,
+        var(--color-accent-taupe-light) 0px,
+        transparent 50%
+      ),
+      radial-gradient(at 0% 100%, var(--color-accent-sand) 0px, transparent 50%);
 
     /* Neutral Gray Scale */
     --color-gray-50: #f9fafb;
@@ -125,7 +182,7 @@
     --spacing-2xl: 2rem; /* 32px */
     --spacing-3xl: 3rem; /* 48px */
 
-    /* Shadow System - Stripe Inspired */
+    /* Shadow System - Enhanced with Color */
     --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-sm:
       0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -137,9 +194,16 @@
       0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
+    /* Colored Shadows for Depth - Industrial Palette */
+    --shadow-primary: 0 4px 14px 0 rgba(107, 122, 137, 0.2);
+    --shadow-accent: 0 4px 14px 0 rgba(205, 188, 168, 0.2);
+    --shadow-success: 0 4px 14px 0 rgba(16, 185, 129, 0.2);
+    --shadow-glow: 0 0 40px rgba(205, 188, 168, 0.15);
+
     /* Focus & Interaction Shadows */
-    --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    --shadow-focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    --shadow-focus: 0 0 0 3px rgba(107, 122, 137, 0.1);
+    --shadow-focus-ring: 0 0 0 2px rgba(107, 122, 137, 0.2);
+    --shadow-focus-accent: 0 0 0 3px rgba(205, 188, 168, 0.2);
 
     /* Border Radius */
     --radius-xs: 0.25rem;
@@ -150,12 +214,22 @@
     --radius-xl: 1rem;
     --radius-full: 9999px;
 
-    /* Animation */
+    /* Animation - Enhanced Timing */
+    --duration-instant: 100ms;
     --duration-fast: 150ms;
     --duration-normal: 200ms;
     --duration-slow: 300ms;
+    --duration-slower: 500ms;
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Visual Effects */
+    --blur-sm: 4px;
+    --blur-md: 8px;
+    --blur-lg: 16px;
+    --blur-xl: 24px;
   }
 
   /* Dark Theme Variables */
@@ -194,6 +268,148 @@
       0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
     --shadow-xl:
       0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Utility Classes for Enhanced UI */
+  @layer utilities {
+    /* Gradient Text */
+    .text-gradient {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .text-gradient-warm {
+      background: var(--gradient-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Glass Morphism */
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(var(--blur-md));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-dark {
+      background: rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(var(--blur-md));
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Glow Effects */
+    .glow-primary {
+      box-shadow:
+        0 0 20px rgba(107, 122, 137, 0.4),
+        var(--shadow-primary);
+    }
+
+    .glow-accent {
+      box-shadow:
+        0 0 20px rgba(205, 188, 168, 0.4),
+        var(--shadow-accent);
+    }
+
+    /* Animated Gradient Background - Industrial Palette */
+    .bg-animated-gradient {
+      background: linear-gradient(-45deg, #6b7a89, #cdbca8, #675c5a, #8191a3);
+      background-size: 400% 400%;
+      animation: gradient-shift 15s ease infinite;
+    }
+
+    @keyframes gradient-shift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Mesh Gradient Background */
+    .bg-mesh-gradient {
+      background: var(--gradient-mesh);
+      filter: blur(40px);
+      opacity: 0.8;
+    }
+
+    /* Card Hover Effects */
+    .card-lift {
+      transition: all var(--duration-normal) var(--ease-smooth);
+    }
+
+    .card-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    /* Subtle Float Animation */
+    .float {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Pulse Animation */
+    .pulse-soft {
+      animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-soft {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.8;
+      }
+    }
+
+    /* Shimmer Effect */
+    .shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: translateX(-100%);
+      animation: shimmer-slide 2s infinite;
+    }
+
+    @keyframes shimmer-slide {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
+    }
   }
 
   /* Base Typography */

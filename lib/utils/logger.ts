@@ -1,204 +1,218 @@
 /**
- * Production-ready logging utility
- * Replaces console.log statements with proper logging
+ * Production-safe logging utility
+ * Prevents sensitive information from being exposed in production logs
  */
 
-export type LogLevel = "debug" | "info" | "warn" | "error";
+type LogLevel = "debug" | "info" | "warn" | "error";
 
-export interface LogContext {
-  component?: string;
-  action?: string;
-  userId?: string;
-  sessionId?: string;
-  timestamp?: string;
-  [key: string]: any;
+interface LoggerConfig {
+  enableInProduction: boolean;
+  logLevel: LogLevel;
+  sanitizeData: boolean;
+  maxMessageLength: number;
 }
 
+const defaultConfig: LoggerConfig = {
+  enableInProduction: false,
+  logLevel: "info",
+  sanitizeData: true,
+  maxMessageLength: 1000,
+};
+
 class Logger {
+  private config: LoggerConfig;
   private isDevelopment: boolean;
-  private isProduction: boolean;
-  private enableDebug: boolean;
 
-  constructor() {
-    this.isDevelopment = process.env.NODE_ENV === "development";
-    this.isProduction = process.env.NODE_ENV === "production";
-    this.enableDebug = process.env.NEXT_PUBLIC_DEBUG === "true";
-  }
-
-  private formatMessage(
-    level: LogLevel,
-    message: string,
-    context?: LogContext,
-  ): string {
-    const timestamp = new Date().toISOString();
-    const contextStr = context ? JSON.stringify(context) : "";
-    return `[${timestamp}] [${level.toUpperCase()}] ${message} ${contextStr}`;
+  constructor(config: Partial<LoggerConfig> = {}) {
+    this.config = { ...defaultConfig, ...config };
+    this.isDevelopment = process.env.NODE_ENV !== "production";
   }
 
   private shouldLog(level: LogLevel): boolean {
-    // In production, only log warnings and errors
-    if (this.isProduction) {
-      return level === "warn" || level === "error";
+    if (!this.isDevelopment && !this.config.enableInProduction) {
+      return false;
     }
 
-    // In development, log everything except debug unless explicitly enabled
-    if (this.isDevelopment) {
-      return level !== "debug" || this.enableDebug;
-    }
+    const levels: LogLevel[] = ["debug", "info", "warn", "error"];
+    const currentLevelIndex = levels.indexOf(this.config.logLevel);
+    const messageLevelIndex = levels.indexOf(level);
 
-    return true;
+    return messageLevelIndex >= currentLevelIndex;
   }
 
-  private logToConsole(
-    level: LogLevel,
-    message: string,
-    context?: LogContext,
-  ): void {
-    if (!this.shouldLog(level)) return;
+  private sanitize(data: any): any {
+    if (!this.config.sanitizeData) return data;
 
-    const formattedMessage = this.formatMessage(level, message, context);
-
-    switch (level) {
-      case "debug":
-        console.debug(formattedMessage);
-        break;
-      case "info":
-        console.info(formattedMessage);
-        break;
-      case "warn":
-        console.warn(formattedMessage);
-        break;
-      case "error":
-        console.error(formattedMessage);
-        break;
-    }
-  }
-
-  private async logToExternal(
-    level: LogLevel,
-    message: string,
-    context?: LogContext,
-  ): Promise<void> {
-    // Only log errors and warnings to external services in production
-    if (!this.isProduction || (level !== "error" && level !== "warn")) {
-      return;
+    if (typeof data === "string") {
+      // Remove potential sensitive patterns
+      return data
+        .replace(/password["\s]*[:=]\s*["']?[^"'\s,}]+["']?/gi, "password=***")
+        .replace(/token["\s]*[:=]\s*["']?[^"'\s,}]+["']?/gi, "token=***")
+        .replace(
+          /api[_-]?key["\s]*[:=]\s*["']?[^"'\s,}]+["']?/gi,
+          "api_key=***",
+        )
+        .replace(/secret["\s]*[:=]\s*["']?[^"'\s,}]+["']?/gi, "secret=***")
+        .replace(
+          /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+          "***@***.***",
+        )
+        .substring(0, this.config.maxMessageLength);
     }
 
-    try {
-      // Send to external logging service (e.g., Sentry, LogRocket, etc.)
-      // This is a placeholder - implement based on your monitoring solution
-      if (typeof window !== "undefined" && (window as any).Sentry) {
-        const sentry = (window as any).Sentry;
+    if (typeof data === "object" && data !== null) {
+      const sanitized: any = Array.isArray(data) ? [] : {};
+      const sensitiveKeys = [
+        "password",
+        "token",
+        "apiKey",
+        "api_key",
+        "secret",
+        "authorization",
+        "auth",
+      ];
 
-        if (level === "error") {
-          sentry.captureException(new Error(message), {
-            extra: context,
-            level: "error",
-          });
-        } else {
-          sentry.captureMessage(message, {
-            extra: context,
-            level: level,
-          });
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          if (sensitiveKeys.some((k) => key.toLowerCase().includes(k))) {
+            sanitized[key] = "***";
+          } else {
+            sanitized[key] = this.sanitize(data[key]);
+          }
         }
       }
-    } catch (error) {
-      // Fallback to console if external logging fails
-      console.error("Failed to log to external service:", error);
+
+      return sanitized;
+    }
+
+    return data;
+  }
+
+  private formatMessage(level: LogLevel, message: string, data?: any): string {
+    const timestamp = new Date().toISOString();
+    const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
+
+    if (data !== undefined) {
+      const sanitizedData = this.sanitize(data);
+      return `${prefix} ${message} ${JSON.stringify(sanitizedData)}`;
+    }
+
+    return `${prefix} ${message}`;
+  }
+
+  debug(message: string, data?: any): void {
+    if (this.shouldLog("debug")) {
+      console.log(this.formatMessage("debug", message, data));
     }
   }
 
-  debug(message: string, context?: LogContext): void {
-    this.logToConsole("debug", message, context);
+  info(message: string, data?: any): void {
+    if (this.shouldLog("info")) {
+      console.log(this.formatMessage("info", message, data));
+    }
   }
 
-  info(message: string, context?: LogContext): void {
-    this.logToConsole("info", message, context);
-    this.logToExternal("info", message, context);
+  warn(message: string, data?: any): void {
+    if (this.shouldLog("warn")) {
+      console.warn(this.formatMessage("warn", message, data));
+    }
   }
 
-  warn(message: string, context?: LogContext): void {
-    this.logToConsole("warn", message, context);
-    this.logToExternal("warn", message, context);
+  error(message: string, error?: Error | any, data?: any): void {
+    if (this.shouldLog("error")) {
+      const errorData =
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: this.isDevelopment ? error.stack : undefined,
+              ...data,
+            }
+          : { error, ...data };
+
+      console.error(this.formatMessage("error", message, errorData));
+    }
   }
 
-  error(message: string, context?: LogContext): void {
-    this.logToConsole("error", message, context);
-    this.logToExternal("error", message, context);
+  // Group logging for related messages
+  group(label: string): void {
+    if (this.shouldLog("debug")) {
+      console.group(label);
+    }
   }
 
-  /**
-   * Log calculation errors with specific context
-   */
-  calculationError(error: Error, context: LogContext): void {
-    this.error(`Calculation error: ${error.message}`, {
-      ...context,
-      component: "Calculator",
-      error: error.stack,
+  groupEnd(): void {
+    if (this.shouldLog("debug")) {
+      console.groupEnd();
+    }
+  }
+
+  // Timing utilities
+  time(label: string): void {
+    if (this.shouldLog("debug")) {
+      console.time(label);
+    }
+  }
+
+  timeEnd(label: string): void {
+    if (this.shouldLog("debug")) {
+      console.timeEnd(label);
+    }
+  }
+
+  // Table logging for structured data
+  table(data: any, columns?: string[]): void {
+    if (this.shouldLog("debug")) {
+      const sanitizedData = this.sanitize(data);
+      console.table(sanitizedData, columns);
+    }
+  }
+
+  // Create a child logger with specific context
+  child(context: Record<string, any>): Logger {
+    const childLogger = new Logger(this.config);
+    const originalMethods = ["debug", "info", "warn", "error"] as const;
+
+    originalMethods.forEach((method) => {
+      const original = childLogger[method].bind(childLogger);
+      (childLogger as any)[method] = (message: string, data?: any) => {
+        original(message, { ...context, ...data });
+      };
     });
-  }
 
-  /**
-   * Log API errors with request context
-   */
-  apiError(error: Error, context: LogContext): void {
-    this.error(`API error: ${error.message}`, {
-      ...context,
-      component: "API",
-      error: error.stack,
-    });
-  }
-
-  /**
-   * Log user actions for analytics
-   */
-  userAction(action: string, context: LogContext): void {
-    this.info(`User action: ${action}`, {
-      ...context,
-      component: "Analytics",
-    });
-  }
-
-  /**
-   * Log AI operations
-   */
-  aiOperation(operation: string, context: LogContext): void {
-    this.debug(`AI operation: ${operation}`, {
-      ...context,
-      component: "AI",
-    });
-  }
-
-  /**
-   * Log database operations
-   */
-  dbOperation(operation: string, context: LogContext): void {
-    this.debug(`Database operation: ${operation}`, {
-      ...context,
-      component: "Database",
-    });
+    return childLogger;
   }
 }
 
-// Create singleton instance
-export const logger = new Logger();
+// Create default logger instance
+const logger = new Logger({
+  enableInProduction: process.env.ENABLE_PRODUCTION_LOGS === "true",
+  logLevel: (process.env.LOG_LEVEL as LogLevel) || "info",
+});
 
-// Export convenient methods
+// Export logger instance and class for custom configurations
+export { logger, Logger };
+
+// Export individual logging methods for easier imports
 export const debug = logger.debug.bind(logger);
 export const info = logger.info.bind(logger);
 export const warn = logger.warn.bind(logger);
 export const error = logger.error.bind(logger);
 
-// Export specialized logging methods
-export const calculationError = logger.calculationError.bind(logger);
-export const apiError = logger.apiError.bind(logger);
-export const userAction = logger.userAction.bind(logger);
-export const aiOperation = logger.aiOperation.bind(logger);
-export const dbOperation = logger.dbOperation.bind(logger);
-
-// Development helper - can be removed in production
-export const devLog = (message: string, ...args: any[]) => {
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[DEV] ${message}`, ...args);
-  }
+// Specialized logging methods
+export const logError = error;
+export const logWarn = warn;
+export const logInfo = info;
+export const logDebug = debug;
+export const calculationError = (message: string, error?: Error | any) => {
+  logger.error(`[CALCULATION] ${message}`, error);
 };
+
+// Helper function to replace console.log in existing code
+export function replaceConsoleLog(): void {
+  if (process.env.NODE_ENV === "production") {
+    console.log = logger.info.bind(logger);
+    console.warn = logger.warn.bind(logger);
+    console.error = logger.error.bind(logger);
+    console.debug = logger.debug.bind(logger);
+  }
+}

@@ -21,6 +21,7 @@ import {
   MobileStepIndicator,
 } from "@/components/ui/mobile-step-navigation";
 import { useSwipeGestures } from "@/hooks/useSwipeGestures";
+import { GuidedFlowErrorBoundary } from "@/components/error-handling/guided-flow-error-boundary";
 
 // Loading component for lazy-loaded steps
 function StepLoading() {
@@ -355,9 +356,11 @@ function StepRenderer() {
         )}
       >
         <div className="max-w-4xl mx-auto">
-          <Suspense fallback={<StepLoading />}>
-            <StepComponent />
-          </Suspense>
+          <GuidedFlowErrorBoundary>
+            <Suspense fallback={<StepLoading />}>
+              <StepComponent />
+            </Suspense>
+          </GuidedFlowErrorBoundary>
 
           {/* Desktop Navigation Buttons */}
           {!isMobile && (
@@ -406,10 +409,13 @@ function StepRenderer() {
   );
 }
 
+// Memoize the StepRenderer to prevent unnecessary re-renders
+const MemoizedStepRenderer = React.memo(StepRenderer);
+
 export default function GuidedFlowPage() {
   return (
     <EstimateFlowProvider>
-      <StepRenderer />
+      <MemoizedStepRenderer />
     </EstimateFlowProvider>
   );
 }

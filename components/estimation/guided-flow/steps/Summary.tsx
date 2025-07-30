@@ -306,7 +306,7 @@ export function Summary({ data, onUpdate, onNext, onBack }: SummaryProps) {
 
   const trackEvent = (event: string, properties: any) => {
     // Analytics tracking implementation
-    console.log("Analytics Event:", event, properties);
+    // TODO: Implement actual analytics tracking
   };
 
   const handleCustomizationChange = (key: string, value: any) => {

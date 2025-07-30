@@ -224,7 +224,7 @@ export function CostBreakdown({
 
   const exportBreakdown = () => {
     // Export functionality would go here
-    console.log("Exporting cost breakdown...");
+    // TODO: Implement cost breakdown export functionality
   };
 
   return (
