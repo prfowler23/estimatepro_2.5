@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { authenticateRequest } from "@/lib/auth/server";
 import { generalRateLimiter } from "@/lib/utils/rate-limit";
 import { extractCompetitiveIntelligence } from "../../../../lib/ai/extraction";
+import { validateRequestBody } from "@/lib/validation/api-schemas";
+import { ErrorResponses } from "@/lib/api/error-responses";
+
+// Zod schema for competitive intelligence request
+const competitiveIntelligenceSchema = z.object({
+  competitorContent: z.string().min(1).max(50000, "Content too large"),
+  options: z
+    .object({
+      focusAreas: z
+        .array(
+          z.enum([
+            "pricing",
+            "services",
+            "strengths",
+            "weaknesses",
+            "opportunities",
+          ]),
+        )
+        .optional(),
+      compareToOwnPricing: z.boolean().optional(),
+    })
+    .optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,23 +47,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    // Validate request body with Zod
+    const { data: body, error: validationError } = await validateRequestBody(
+      request,
+      competitiveIntelligenceSchema,
+    );
+
+    if (validationError || !body) {
+      return ErrorResponses.badRequest(validationError || "Invalid request");
+    }
+
     const { competitorContent } = body;
-
-    // Validate input
-    if (!competitorContent) {
-      return NextResponse.json(
-        { error: "Competitor content is required" },
-        { status: 400 },
-      );
-    }
-
-    if (typeof competitorContent !== "string") {
-      return NextResponse.json(
-        { error: "Competitor content must be a string" },
-        { status: 400 },
-      );
-    }
 
     // Extract competitive intelligence
     const analysis = await extractCompetitiveIntelligence(competitorContent);

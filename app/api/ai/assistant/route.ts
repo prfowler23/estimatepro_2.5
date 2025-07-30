@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { openai } from "@/lib/ai/openai";
 import { getUser } from "@/lib/auth/server";
 import { withAIRetry } from "@/lib/utils/retry-logic";
@@ -11,21 +12,25 @@ import { AIConversationService } from "@/lib/services/ai-conversation-service";
 import { getAIConfig } from "@/lib/ai/ai-config";
 import { aiRequestQueue } from "@/lib/ai/request-queue";
 import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
+import { validateRequestBody } from "@/lib/validation/api-schemas";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
-interface AssistantRequest {
-  message: string;
-  context?: Record<string, unknown>;
-  mode?: AssistantMode;
-  conversationId?: string;
-}
+// Zod schema for request validation
+const assistantRequestSchema = z.object({
+  message: z.string().min(1).max(4000, "Message too long"),
+  context: z.record(z.unknown()).optional(),
+  mode: z
+    .enum(["general", "estimation", "technical", "business"])
+    .default("general"),
+  conversationId: z.string().uuid().optional(),
+});
 
-type AssistantMode = "general" | "estimation" | "technical" | "business";
+type AssistantRequest = z.infer<typeof assistantRequestSchema>;
 
 interface AssistantResponse {
   response: string;
   conversationId?: string;
-  mode: AssistantMode;
+  mode: AssistantRequest["mode"];
   usage: {
     tokensUsed?: number;
     message: string;
@@ -45,7 +50,14 @@ export async function POST(request: NextRequest) {
       return ErrorResponses.unauthorized();
     }
 
-    const requestBody = (await request.json()) as AssistantRequest;
+    // Validate request body with Zod
+    const { data: requestBody, error: validationError } =
+      await validateRequestBody(request, assistantRequestSchema);
+
+    if (validationError || !requestBody) {
+      return ErrorResponses.badRequest(validationError || "Invalid request");
+    }
+
     const { message, context, mode = "general", conversationId } = requestBody;
 
     // Comprehensive security scan

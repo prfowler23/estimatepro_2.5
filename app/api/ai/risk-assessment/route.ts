@@ -1,8 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { authenticateRequest } from "@/lib/auth/server";
 import { generalRateLimiter } from "@/lib/utils/rate-limit";
 import { performRiskAssessment } from "../../../../lib/ai/extraction";
 import { ExtractedData } from "../../../../lib/ai/extraction";
+import { validateRequestBody } from "@/lib/validation/api-schemas";
+import { ErrorResponses } from "@/lib/api/error-responses";
+
+// Zod schema for risk assessment request
+const extractedDataSchema = z.object({
+  customer: z.object({
+    name: z.string().optional(),
+    email: z.string().email().optional(),
+    phone: z.string().optional(),
+    company: z.string().optional(),
+    address: z.string().optional(),
+  }),
+  requirements: z.object({
+    description: z.string().optional(),
+    services: z.array(z.string()).optional(),
+    specialRequests: z.array(z.string()).optional(),
+    constraints: z.string().optional(),
+  }),
+  building: z
+    .object({
+      type: z.string().optional(),
+      size: z.string().optional(),
+      floors: z.number().optional(),
+      windows: z.number().optional(),
+      materials: z.array(z.string()).optional(),
+    })
+    .optional(),
+  timeline: z
+    .object({
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      flexibility: z.string().optional(),
+      urgency: z.string().optional(),
+    })
+    .optional(),
+});
+
+const riskAssessmentRequestSchema = z.object({
+  extractedData: extractedDataSchema,
+  projectContext: z.string().max(5000).optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,24 +66,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    // Validate request body with Zod
+    const { data: body, error: validationError } = await validateRequestBody(
+      request,
+      riskAssessmentRequestSchema,
+    );
+
+    if (validationError || !body) {
+      return ErrorResponses.badRequest(validationError || "Invalid request");
+    }
+
     const { extractedData, projectContext } = body;
-
-    // Validate input
-    if (!extractedData) {
-      return NextResponse.json(
-        { error: "Extracted data is required" },
-        { status: 400 },
-      );
-    }
-
-    // Validate extractedData structure
-    if (!extractedData.customer || !extractedData.requirements) {
-      return NextResponse.json(
-        { error: "Invalid extracted data structure" },
-        { status: 400 },
-      );
-    }
 
     // Perform risk assessment
     const riskAssessment = await performRiskAssessment(

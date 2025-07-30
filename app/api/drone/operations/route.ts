@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { DroneService, type FlightObjective } from "@/lib/drone/drone-service";
 import { apiRateLimit } from "@/lib/utils/rate-limiter";
 import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
+import {
+  validateRequestBody,
+  validateQueryParams,
+  droneOperationSchema,
+} from "@/lib/validation/api-schemas";
 
 const droneService = new DroneService();
 
