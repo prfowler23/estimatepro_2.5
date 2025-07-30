@@ -56,14 +56,14 @@ export interface PricingDependency {
   stepId: string;
   fieldPath: string;
   affects: string[];
-  validator?: (value: any) => boolean;
+  validator?: (value: unknown) => boolean;
 }
 
 // Real-time pricing configuration
 export interface RealTimePricingConfig {
-  updateInterval: number; // milliseconds
+  updateInterval: number; // Update interval in milliseconds
   enableLiveUpdates: boolean;
-  confidenceThreshold: number; // 0-1
+  confidenceThreshold: number; // Confidence threshold between 0-1
   includeRiskAdjustments: boolean;
   enableDependencyTracking: boolean;
 }
@@ -72,9 +72,12 @@ export class RealTimePricingService {
   private static instance: RealTimePricingService | null = null;
   private config: RealTimePricingConfig;
   private dependencies: Map<string, PricingDependency[]>;
-  private listeners: Map<string, ((result: RealTimePricingResult) => void)[]>;
+  private listeners: Map<
+    string,
+    Array<(result: RealTimePricingResult) => void>
+  >;
   private lastResults: Map<string, RealTimePricingResult>;
-  private updateTimers: Map<string, NodeJS.Timeout>;
+  private updateTimers: Map<string, ReturnType<typeof setTimeout>>;
 
   private constructor(config: Partial<RealTimePricingConfig> = {}) {
     this.config = {
@@ -111,7 +114,7 @@ export class RealTimePricingService {
           stepId: "scope-details",
           fieldPath: "selectedServices",
           affects: ["takeoff", "duration", "expenses", "pricing"],
-          validator: (services) =>
+          validator: (services: unknown) =>
             Array.isArray(services) && services.length > 0,
         },
       ],
@@ -120,13 +123,14 @@ export class RealTimePricingService {
           stepId: "area-of-work",
           fieldPath: "measurements.totalArea",
           affects: ["takeoff", "duration", "expenses", "pricing"],
-          validator: (area) => typeof area === "number" && area > 0,
+          validator: (area: unknown) => typeof area === "number" && area > 0,
         },
         {
           stepId: "area-of-work",
           fieldPath: "buildingDetails.height",
           affects: ["duration", "expenses", "pricing"],
-          validator: (height) => typeof height === "number" && height > 0,
+          validator: (height: unknown) =>
+            typeof height === "number" && height > 0,
         },
       ],
       takeoff: [
@@ -134,8 +138,10 @@ export class RealTimePricingService {
           stepId: "takeoff",
           fieldPath: "measurements",
           affects: ["duration", "expenses", "pricing"],
-          validator: (measurements) =>
-            measurements && Object.keys(measurements).length > 0,
+          validator: (measurements: unknown) =>
+            measurements !== null &&
+            typeof measurements === "object" &&
+            Object.keys(measurements).length > 0,
         },
       ],
       duration: [
@@ -143,7 +149,7 @@ export class RealTimePricingService {
           stepId: "duration",
           fieldPath: "timeline.estimatedHours",
           affects: ["expenses", "pricing"],
-          validator: (hours) => typeof hours === "number" && hours > 0,
+          validator: (hours: unknown) => typeof hours === "number" && hours > 0,
         },
       ],
       expenses: [
@@ -151,7 +157,12 @@ export class RealTimePricingService {
           stepId: "expenses",
           fieldPath: "breakdown",
           affects: ["pricing"],
-          validator: (breakdown) => breakdown && breakdown.totalCost > 0,
+          validator: (breakdown: unknown) =>
+            breakdown !== null &&
+            typeof breakdown === "object" &&
+            "totalCost" in breakdown &&
+            typeof (breakdown as any).totalCost === "number" &&
+            (breakdown as any).totalCost > 0,
         },
       ],
     };
@@ -170,7 +181,10 @@ export class RealTimePricingService {
       this.listeners.set(estimateId, []);
     }
 
-    this.listeners.get(estimateId)!.push(callback);
+    const listenersList = this.listeners.get(estimateId);
+    if (listenersList) {
+      listenersList.push(callback);
+    }
 
     // Unsubscribe function
     return () => {

@@ -399,7 +399,7 @@ export const queryOptimizationMiddleware = {
       // Pre-warm recent customers
       await optimizedQueries.getCustomers(userId, { limit: 20 });
 
-      console.log(`Cache pre-warmed for user ${userId}`);
+      console.log(`Cache pre-warmed for user "[user]"`);
     } catch (error) {
       console.error("Cache pre-warm failed:", error);
     }

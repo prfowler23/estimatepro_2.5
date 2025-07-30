@@ -53,7 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email);
+      console.log(
+        "Auth state changed:",
+        event,
+        session?.user ? "[user authenticated]" : null,
+      );
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -69,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    console.log("🔐 AuthContext: signIn called with email:", email);
+    console.log("🔐 AuthContext: signIn called");
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,

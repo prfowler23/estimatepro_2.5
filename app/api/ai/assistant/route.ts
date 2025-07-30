@@ -11,6 +11,26 @@ import { AIConversationService } from "@/lib/services/ai-conversation-service";
 import { getAIConfig } from "@/lib/ai/ai-config";
 import { aiRequestQueue } from "@/lib/ai/request-queue";
 import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+
+interface AssistantRequest {
+  message: string;
+  context?: Record<string, unknown>;
+  mode?: AssistantMode;
+  conversationId?: string;
+}
+
+type AssistantMode = "general" | "estimation" | "technical" | "business";
+
+interface AssistantResponse {
+  response: string;
+  conversationId?: string;
+  mode: AssistantMode;
+  usage: {
+    tokensUsed?: number;
+    message: string;
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,12 +45,8 @@ export async function POST(request: NextRequest) {
       return ErrorResponses.unauthorized();
     }
 
-    const {
-      message,
-      context,
-      mode = "general",
-      conversationId,
-    } = await request.json();
+    const requestBody = (await request.json()) as AssistantRequest;
+    const { message, context, mode = "general", conversationId } = requestBody;
 
     // Comprehensive security scan
     const scanResult = securityScanner.scanContent(
@@ -59,60 +75,57 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await withAIRetry(async () => {
-      const aiConfig = getAIConfig();
-      const config = aiConfig.getAIConfig();
+      const configManager = getAIConfig();
+      const aiConfiguration = configManager.getAIConfig();
       const systemPrompt = getSystemPrompt(mode);
 
       // Get conversation context if conversationId provided
-      let conversationMessages: any[] = [];
+      let conversationHistory: ChatCompletionMessageParam[] = [];
       if (conversationId) {
         try {
-          conversationMessages =
+          const contextMessages =
             await AIConversationService.getConversationContext(
               conversationId,
               user.id,
               5, // Get last 5 message pairs
             );
+          conversationHistory = contextMessages.map((msg) => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+          }));
         } catch (error) {
           console.warn("Failed to fetch conversation context:", error);
         }
       }
 
       // Build messages array with conversation history
-      const messages: any[] = [
+      const messages: ChatCompletionMessageParam[] = [
         {
           role: "system",
           content: systemPrompt,
         },
+        ...conversationHistory,
       ];
 
-      // Add conversation history
-      conversationMessages.forEach((msg) => {
-        messages.push({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        });
-      });
-
       // Add context if provided
-      const contextPrompt = context
+      const contextSuffix = context
         ? `\n\nContext: ${JSON.stringify(context)}`
         : "";
 
-      // Add current message
+      // Add current user message
       messages.push({
         role: "user",
-        content: `${message}${contextPrompt}`,
+        content: `${message}${contextSuffix}`,
       });
 
       const completion = await aiRequestQueue.add(
         "openai",
         () =>
           openai.chat.completions.create({
-            model: config.defaultModel,
+            model: aiConfiguration.defaultModel,
             messages,
-            max_tokens: config.maxTokens,
-            temperature: config.temperature,
+            max_tokens: aiConfiguration.maxTokens,
+            temperature: aiConfiguration.temperature,
           }),
         1, // Priority 1 for chat completions
       );
@@ -164,7 +177,7 @@ export async function POST(request: NextRequest) {
         {
           mode,
           tokensUsed: result.data.tokensUsed,
-          model: config.defaultModel,
+          model: aiConfiguration.defaultModel,
         },
       );
       savedConversation = conversation;
@@ -173,7 +186,7 @@ export async function POST(request: NextRequest) {
       // Continue without saving - don't fail the request
     }
 
-    return NextResponse.json({
+    const response: AssistantResponse = {
       response: result.data.response,
       conversationId: savedConversation?.id || conversationId,
       mode,
@@ -181,7 +194,9 @@ export async function POST(request: NextRequest) {
         tokensUsed: result.data.tokensUsed,
         message: "AI assistant response generated successfully",
       },
-    });
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     logApiError(error, {
       endpoint: "/api/ai/assistant",
@@ -191,7 +206,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function getSystemPrompt(mode: string): string {
+function getSystemPrompt(mode: AssistantMode): string {
   const basePrompt =
     "You are an AI assistant for EstimatePro, a building services estimation platform. You help users with creating estimates, understanding services, and providing guidance on building cleaning and maintenance projects.";
 

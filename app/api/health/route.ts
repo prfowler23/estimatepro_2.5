@@ -14,15 +14,17 @@ import { getAIConfig } from "@/lib/ai/ai-config";
 
 export async function GET(request: NextRequest) {
   const start = Date.now();
-  const checks: Record<string, any> = {};
 
   try {
-    // Basic application health
-    checks.status = "healthy";
-    checks.timestamp = new Date().toISOString();
-    checks.uptime = process.uptime();
-    checks.environment = process.env.NODE_ENV;
-    checks.version = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";
+    // Public health endpoint - returns minimal information
+    // For detailed health information, use /api/health/secure
+
+    // Basic health check
+    const response = {
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      version: process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0",
+    };
 
     // In development, return early if environment variables aren't loaded yet
     if (

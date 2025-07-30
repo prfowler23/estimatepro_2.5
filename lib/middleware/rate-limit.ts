@@ -48,15 +48,31 @@ function getClientId(request: NextRequest): string {
   // Try to get user ID from auth token
   const authHeader = request.headers.get("authorization");
   if (authHeader) {
-    // Extract user ID from JWT token (simplified)
+    // Extract user ID from JWT token
     try {
       const token = authHeader.replace("Bearer ", "");
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      if (payload.sub) {
+      // Parse JWT parts
+      const parts = token.split(".");
+      if (parts.length !== 3) {
+        throw new Error("Invalid JWT format");
+      }
+
+      // Decode payload (we can't verify signature without the secret here)
+      // In production, this should be verified by Supabase auth middleware
+      const payload = JSON.parse(atob(parts[1]));
+
+      // Basic validation
+      if (payload.sub && payload.exp) {
+        // Check if token is expired
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp < now) {
+          throw new Error("Token expired");
+        }
         return `user:${payload.sub}`;
       }
     } catch {
       // Fall through to IP-based limiting
+      // Invalid tokens get IP-based rate limiting instead
     }
   }
 
