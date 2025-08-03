@@ -222,9 +222,44 @@ export function CostBreakdown({
     return "bg-red-100 text-red-700 border-red-200";
   };
 
-  const exportBreakdown = () => {
-    // Export functionality would go here
-    // TODO: Implement cost breakdown export functionality
+  const exportBreakdown = async (format: "json" | "csv" | "pdf" = "csv") => {
+    if (!data.id) {
+      console.error("Cannot export: estimate ID is missing");
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        estimateId: data.id,
+        format,
+        includeLineItems: "true",
+        includeTaxes: "true",
+        includeMarkup: "true",
+      });
+
+      const response = await fetch(`/api/exports/cost-breakdown?${params}`);
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      if (format === "csv") {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `cost-breakdown-${data.id}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const result = await response.json();
+        console.log("Export result:", result);
+      }
+    } catch (error) {
+      console.error("Failed to export cost breakdown:", error);
+    }
   };
 
   return (

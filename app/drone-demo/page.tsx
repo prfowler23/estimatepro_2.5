@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +26,26 @@ import {
   Map,
   Eye,
 } from "lucide-react";
-import { DroneDashboard } from "@/components/drone/drone-dashboard";
 import Link from "next/link";
+
+// Lazy load the heavy drone dashboard component
+const DroneDashboard = dynamic(
+  () =>
+    import("@/components/drone/drone-dashboard").then((mod) => ({
+      default: mod.DroneDashboard,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-96 bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+          <p className="text-text-secondary">Loading Drone Dashboard...</p>
+        </div>
+      </div>
+    ),
+  },
+);
 import { config } from "@/lib/config";
 
 export default function DroneDemo() {
@@ -193,16 +212,29 @@ export default function DroneDemo() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <DroneDashboard
-              projectId="demo-project"
-              location={{ latitude: 40.7128, longitude: -74.006 }}
-              onFlightPlanCreated={(plan) => {
-                console.log("Flight plan created:", plan);
-              }}
-              onAnalysisComplete={(analysis) => {
-                console.log("Analysis complete:", analysis);
-              }}
-            />
+            <Suspense
+              fallback={
+                <div className="h-96 bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+                  <div className="text-center space-y-2">
+                    <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+                    <p className="text-text-secondary">
+                      Loading Drone Dashboard...
+                    </p>
+                  </div>
+                </div>
+              }
+            >
+              <DroneDashboard
+                projectId="demo-project"
+                location={{ latitude: 40.7128, longitude: -74.006 }}
+                onFlightPlanCreated={(plan) => {
+                  console.log("Flight plan created:", plan);
+                }}
+                onAnalysisComplete={(analysis) => {
+                  console.log("Analysis complete:", analysis);
+                }}
+              />
+            </Suspense>
           </CardContent>
         </Card>
       )}

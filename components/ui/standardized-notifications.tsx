@@ -510,9 +510,32 @@ export function useErrorNotification() {
           label: "Report Issue",
           icon: MessageCircle,
           variant: "outline",
-          handler: () => {
-            // Open support or issue reporting
-            // TODO: Implement issue reporting functionality
+          handler: async () => {
+            // Open issue reporting
+            try {
+              const response = await fetch("/api/support/issue-report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  type: "bug",
+                  title: "Error encountered in application",
+                  description: `An error occurred: ${error.message}`,
+                  priority: "medium",
+                  browser_info: {
+                    userAgent: navigator.userAgent,
+                    url: window.location.href,
+                    timestamp: new Date().toISOString(),
+                  },
+                }),
+              });
+
+              if (response.ok) {
+                const result = await response.json();
+                console.log("Issue reported successfully:", result.issueId);
+              }
+            } catch (reportError) {
+              console.error("Failed to report issue:", reportError);
+            }
           },
         },
       ];

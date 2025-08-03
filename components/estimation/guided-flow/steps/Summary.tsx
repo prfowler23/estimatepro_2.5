@@ -304,9 +304,30 @@ export function Summary({ data, onUpdate, onNext, onBack }: SummaryProps) {
     alert("Proposal sent successfully! Tracking link has been enabled.");
   };
 
-  const trackEvent = (event: string, properties: any) => {
-    // Analytics tracking implementation
-    // TODO: Implement actual analytics tracking
+  const trackEvent = async (event: string, properties: any) => {
+    try {
+      const response = await fetch("/api/analytics/track-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_name: event,
+          properties,
+          session_id: `session-${Date.now()}`,
+          page_url: window.location.href,
+          user_agent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`Analytics event tracked: ${event}`, result.event_id);
+      } else {
+        console.warn(`Failed to track event: ${event}`);
+      }
+    } catch (error) {
+      console.error("Analytics tracking error:", error);
+    }
   };
 
   const handleCustomizationChange = (key: string, value: any) => {

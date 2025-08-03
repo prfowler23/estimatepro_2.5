@@ -321,26 +321,23 @@ export function HelpProvider({
     // Update help analytics if we have a workflow ID
     if (state.workflowId) {
       try {
-        const analyticsService = new (
-          await import("@/lib/services/analytics-service")
-        ).AnalyticsService(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        );
-
         const helpContent = state.triggeredHelp.find((h) => h.id === helpId);
-        await analyticsService.recordHelpInteraction(
-          state.workflowId,
-          helpId,
-          "helpful",
-          {
-            helpContent: helpContent?.content || "",
-            context:
-              typeof state.currentContext === "string"
-                ? state.currentContext
-                : state.currentContext?.stepId || "",
-          },
-        );
+        await fetch("/api/help/analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workflowId: state.workflowId,
+            helpId,
+            interaction: "helpful",
+            context: {
+              helpContent: helpContent?.content || "",
+              context:
+                typeof state.currentContext === "string"
+                  ? state.currentContext
+                  : state.currentContext?.stepId || "",
+            },
+          }),
+        });
       } catch (error) {
         console.warn("Failed to record help analytics:", error);
       }
@@ -353,26 +350,23 @@ export function HelpProvider({
     // Update help analytics if we have a workflow ID
     if (state.workflowId) {
       try {
-        const analyticsService = new (
-          await import("@/lib/services/analytics-service")
-        ).AnalyticsService(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        );
-
         const helpContent = state.triggeredHelp.find((h) => h.id === helpId);
-        await analyticsService.recordHelpInteraction(
-          state.workflowId,
-          helpId,
-          "not_helpful",
-          {
-            helpContent: helpContent?.content || "",
-            context:
-              typeof state.currentContext === "string"
-                ? state.currentContext
-                : state.currentContext?.stepId || "",
-          },
-        );
+        await fetch("/api/help/analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workflowId: state.workflowId,
+            helpId,
+            interaction: "not_helpful",
+            context: {
+              helpContent: helpContent?.content || "",
+              context:
+                typeof state.currentContext === "string"
+                  ? state.currentContext
+                  : state.currentContext?.stepId || "",
+            },
+          }),
+        });
       } catch (error) {
         console.warn("Failed to record help analytics:", error);
       }
@@ -389,26 +383,23 @@ export function HelpProvider({
     // Update help analytics if we have a workflow ID
     if (state.workflowId) {
       try {
-        const analyticsService = new (
-          await import("@/lib/services/analytics-service")
-        ).AnalyticsService(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        );
-
         const helpContent = state.triggeredHelp.find((h) => h.id === helpId);
-        await analyticsService.recordHelpInteraction(
-          state.workflowId,
-          helpId,
-          "dismissed",
-          {
-            helpContent: helpContent?.content || "",
-            context:
-              typeof state.currentContext === "string"
-                ? state.currentContext
-                : state.currentContext?.stepId || "",
-          },
-        );
+        await fetch("/api/help/analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workflowId: state.workflowId,
+            helpId,
+            interaction: "dismissed",
+            context: {
+              helpContent: helpContent?.content || "",
+              context:
+                typeof state.currentContext === "string"
+                  ? state.currentContext
+                  : state.currentContext?.stepId || "",
+            },
+          }),
+        });
       } catch (error) {
         console.warn("Failed to record help analytics:", error);
       }

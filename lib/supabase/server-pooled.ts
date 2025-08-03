@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/supabase";
 
 // Connection pool configuration
@@ -28,7 +28,7 @@ const POOL_CONFIG = {
 };
 
 // Singleton instance for connection pooling
-let pooledClient: ReturnType<typeof createClient<Database>> | null = null;
+let pooledClient: SupabaseClient<Database> | null = null;
 
 /**
  * Create a Supabase client with connection pooling for server-side use
@@ -49,7 +49,6 @@ export function createPooledClient() {
 
   // Create pooled client with optimized settings
   pooledClient = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    global: POOL_CONFIG.global,
     auth: {
       ...POOL_CONFIG.auth,
       // Use service role key for server-side operations

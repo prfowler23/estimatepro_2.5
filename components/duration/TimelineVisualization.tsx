@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import {
   Calendar,
   AlertTriangle,
@@ -84,16 +84,41 @@ export function TimelineVisualization({
     );
   }
 
-  // Calculate timeline bounds with safety checks
-  const validEntries = timeline.filter(
-    (entry) =>
-      entry.startDate &&
-      entry.endDate &&
-      entry.startDate instanceof Date &&
-      entry.endDate instanceof Date,
-  );
+  // Memoize timeline bounds calculation with safety checks
+  const timelineBounds = useMemo(() => {
+    const validEntries = timeline.filter(
+      (entry) =>
+        entry.startDate &&
+        entry.endDate &&
+        entry.startDate instanceof Date &&
+        entry.endDate instanceof Date &&
+        !isNaN(entry.startDate.getTime()) &&
+        !isNaN(entry.endDate.getTime()),
+    );
 
-  if (validEntries.length === 0) {
+    if (validEntries.length === 0) {
+      return null;
+    }
+
+    const startDate = validEntries.reduce(
+      (min, entry) => (entry.startDate < min ? entry.startDate : min),
+      validEntries[0].startDate,
+    );
+
+    const endDate = validEntries.reduce(
+      (max, entry) => (entry.endDate > max ? entry.endDate : max),
+      validEntries[0].endDate,
+    );
+
+    const totalDays =
+      Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
+
+    return { validEntries, startDate, endDate, totalDays };
+  }, [timeline]);
+
+  if (!timelineBounds) {
     return (
       <Card>
         <CardContent className="p-8 text-center text-muted-foreground">
@@ -104,20 +129,7 @@ export function TimelineVisualization({
     );
   }
 
-  const startDate = validEntries.reduce(
-    (min, entry) => (entry.startDate < min ? entry.startDate : min),
-    validEntries[0].startDate,
-  );
-
-  const endDate = validEntries.reduce(
-    (max, entry) => (entry.endDate > max ? entry.endDate : max),
-    validEntries[0].endDate,
-  );
-
-  const totalDays =
-    Math.ceil(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-    ) + 1;
+  const { validEntries, startDate, endDate, totalDays } = timelineBounds;
 
   const handleOpenAdjustmentDialog = (serviceEntry: TimelineEntry) => {
     setSelectedService(serviceEntry.service);
@@ -130,17 +142,49 @@ export function TimelineVisualization({
     setIsAdjustmentDialogOpen(true);
   };
 
-  const handleAdjustmentSubmit = () => {
+  const handleAdjustmentSubmit = useCallback(() => {
     if (selectedService && onAdjust) {
+      // Validate and sanitize date input
+      const startDateValue = adjustmentForm.startDate.trim();
+      if (!startDateValue || !/^\d{4}-\d{2}-\d{2}$/.test(startDateValue)) {
+        console.error("Invalid date format");
+        return;
+      }
+
+      const newStartDate = new Date(startDateValue);
+      if (isNaN(newStartDate.getTime())) {
+        console.error("Invalid date value");
+        return;
+      }
+
+      // Validate and sanitize duration input with bounds checking
+      const durationValue = adjustmentForm.duration.trim();
+      if (!/^\d+$/.test(durationValue)) {
+        console.error("Invalid duration format");
+        return;
+      }
+
+      const newDuration = parseInt(durationValue, 10);
+      if (isNaN(newDuration) || newDuration < 1 || newDuration > 365) {
+        console.error("Duration must be between 1 and 365 days");
+        return;
+      }
+
+      // Sanitize reason input (prevent XSS)
+      const sanitizedReason = adjustmentForm.reason
+        .trim()
+        .replace(/[<>]/g, "")
+        .substring(0, 500);
+
       const adjustment = {
         service: selectedService,
-        newStartDate: new Date(adjustmentForm.startDate),
-        newDuration: parseInt(adjustmentForm.duration),
+        newStartDate,
+        newDuration,
         adjustmentType: adjustmentForm.adjustmentType,
-        reason: adjustmentForm.reason,
+        reason: sanitizedReason,
       };
 
-      onAdjust(selectedService, new Date(adjustmentForm.startDate));
+      onAdjust(selectedService, newStartDate);
       setIsAdjustmentDialogOpen(false);
       setAdjustmentForm({
         startDate: "",
@@ -149,7 +193,7 @@ export function TimelineVisualization({
         adjustmentType: "delay",
       });
     }
-  };
+  }, [selectedService, onAdjust, adjustmentForm]);
 
   const getServiceColor = (
     service: string,
@@ -191,53 +235,71 @@ export function TimelineVisualization({
     return `${baseColor} ${riskOpacity[weatherRisk as keyof typeof riskOpacity]}`;
   };
 
-  const calculatePosition = (date: Date): number => {
-    const daysSinceStart = Math.max(
-      0,
-      Math.ceil((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
-    );
-    return Math.min(100, (daysSinceStart / totalDays) * 100);
-  };
+  const calculatePosition = useCallback(
+    (date: Date): number => {
+      if (!date || isNaN(date.getTime())) return 0;
+      const daysSinceStart = Math.max(
+        0,
+        Math.ceil(
+          (date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      );
+      return Math.min(100, (daysSinceStart / totalDays) * 100);
+    },
+    [startDate, totalDays],
+  );
 
-  const calculateWidth = (start: Date, end: Date): number => {
-    const duration = Math.max(
-      1,
-      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)),
-    );
-    return Math.min(100, (duration / totalDays) * 100);
-  };
+  const calculateWidth = useCallback(
+    (start: Date, end: Date): number => {
+      if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime()))
+        return 1;
+      const duration = Math.max(
+        1,
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)),
+      );
+      return Math.min(100, (duration / totalDays) * 100);
+    },
+    [totalDays],
+  );
 
-  // Generate week markers (every 7 days or at most 10 markers)
-  const markerInterval = Math.max(1, Math.floor(totalDays / 10));
-  const weekMarkers: Array<{
-    date: Date;
-    position: number;
-    label: string;
-    isWeekend: boolean;
-  }> = [];
-  for (let i = 0; i <= totalDays; i += markerInterval) {
-    const markerDate = new Date(startDate);
-    markerDate.setDate(markerDate.getDate() + i);
-    weekMarkers.push({
-      position: (i / totalDays) * 100,
-      date: markerDate,
-      label: markerDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      isWeekend: markerDate.getDay() === 0 || markerDate.getDay() === 6,
-    });
-  }
+  // Memoize week markers generation
+  const weekMarkers = useMemo(() => {
+    const markerInterval = Math.max(1, Math.floor(totalDays / 10));
+    const markers: Array<{
+      date: Date;
+      position: number;
+      label: string;
+      isWeekend: boolean;
+    }> = [];
 
-  // Find overlapping services
-  const findOverlaps = (entry: TimelineEntry): TimelineEntry[] => {
-    return timeline.filter(
-      (other) =>
-        other.service !== entry.service &&
-        other.startDate < entry.endDate &&
-        other.endDate > entry.startDate,
-    );
-  };
+    for (let i = 0; i <= totalDays; i += markerInterval) {
+      const markerDate = new Date(startDate);
+      markerDate.setDate(markerDate.getDate() + i);
+      markers.push({
+        position: (i / totalDays) * 100,
+        date: markerDate,
+        label: markerDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        isWeekend: markerDate.getDay() === 0 || markerDate.getDay() === 6,
+      });
+    }
+    return markers;
+  }, [startDate, totalDays]);
+
+  // Memoize overlapping services calculation
+  const findOverlaps = useCallback(
+    (entry: TimelineEntry): TimelineEntry[] => {
+      return timeline.filter(
+        (other) =>
+          other.service !== entry.service &&
+          other.startDate < entry.endDate &&
+          other.endDate > entry.startDate,
+      );
+    },
+    [timeline],
+  );
 
   const getSelectedServiceDetails = () => {
     const entry = timeline.find((t) => t.service === selectedService);

@@ -17,7 +17,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,10 +48,7 @@ import {
 
 // Safe HTML sanitization
 const sanitizeHtml = (html: string) => {
-  if (typeof window !== "undefined") {
-    return DOMPurify.sanitize(html);
-  }
-  return html; // Server-side fallback
+  return DOMPurify.sanitize(html);
 };
 
 const estimateSchema = z.object({

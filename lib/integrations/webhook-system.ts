@@ -3,8 +3,8 @@
 
 import { z } from "zod";
 import crypto from "crypto";
-import { createClient } from "@/lib/supabase/client";
-import { auditSystem } from "@/lib/audit/audit-system";
+import { createClient } from "@/lib/supabase/server";
+import { AuditSystem } from "@/lib/audit/audit-system";
 import { isNotNull, safeString } from "@/lib/utils/null-safety";
 import { retryWithBackoff } from "@/lib/utils/retry-logic";
 
@@ -90,14 +90,14 @@ export type WebhookDelivery = z.infer<typeof WebhookDeliverySchema>;
 // Webhook Integration System Class
 export class WebhookSystem {
   private static instance: WebhookSystem;
-  private supabase = createClient();
   private activeWebhooks: Map<string, WebhookConfig> = new Map();
   private deliveryQueue: WebhookDelivery[] = [];
   private isProcessing = false;
   private processingInterval?: NodeJS.Timeout;
 
   private constructor() {
-    this.loadActiveWebhooks();
+    // Note: Don't load webhooks here as it creates Supabase client outside request context
+    // Webhooks will be loaded lazily when first needed
     this.startDeliveryProcessor();
   }
 
@@ -110,7 +110,9 @@ export class WebhookSystem {
 
   // Webhook Registration and Management
   async registerWebhook(config: Partial<WebhookConfig>): Promise<string> {
+    const supabase = createClient();
     try {
+      const auditSystem = AuditSystem.getInstance();
       const webhookId = crypto.randomUUID();
       const secret = this.generateWebhookSecret();
 
@@ -142,7 +144,7 @@ export class WebhookSystem {
       }
 
       // Store in database
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from("webhook_configs")
         .insert(validatedWebhook)
         .select("id")
@@ -183,7 +185,9 @@ export class WebhookSystem {
     updates: Partial<WebhookConfig>,
     userId: string,
   ): Promise<void> {
+    const supabase = createClient();
     try {
+      await this.ensureWebhooksLoaded();
       const existingWebhook = this.activeWebhooks.get(webhookId);
       if (!existingWebhook) {
         throw new Error("Webhook not found");
@@ -209,7 +213,7 @@ export class WebhookSystem {
       }
 
       // Update in database
-      const { error } = await this.supabase
+      const { error } = await supabase
         .from("webhook_configs")
         .update(validatedWebhook)
         .eq("id", webhookId);
@@ -243,14 +247,16 @@ export class WebhookSystem {
   }
 
   async deleteWebhook(webhookId: string, userId: string): Promise<void> {
+    const supabase = createClient();
     try {
+      await this.ensureWebhooksLoaded();
       const webhook = this.activeWebhooks.get(webhookId);
       if (!webhook) {
         throw new Error("Webhook not found");
       }
 
       // Mark as inactive first
-      await this.supabase
+      await supabase
         .from("webhook_configs")
         .update({ active: false, updated_at: new Date().toISOString() })
         .eq("id", webhookId);
@@ -259,7 +265,7 @@ export class WebhookSystem {
       this.activeWebhooks.delete(webhookId);
 
       // Cancel any pending deliveries
-      await this.supabase
+      await supabase
         .from("webhook_deliveries")
         .update({ status: "failed", error_message: "Webhook deleted" })
         .eq("webhook_id", webhookId)
@@ -292,6 +298,7 @@ export class WebhookSystem {
     metadata?: Record<string, any>,
   ): Promise<string[]> {
     try {
+      await this.ensureWebhooksLoaded();
       const deliveryIds: string[] = [];
       const relevantWebhooks = Array.from(this.activeWebhooks.values()).filter(
         (webhook) => webhook.active && webhook.events.includes(event),
@@ -313,6 +320,7 @@ export class WebhookSystem {
       }
 
       // Log event publication
+      const auditSystem = AuditSystem.getInstance();
       await auditSystem.logEvent({
         event_type: "webhook_sent",
         severity: "low",
@@ -340,6 +348,7 @@ export class WebhookSystem {
     data: Record<string, any>,
     metadata?: Record<string, any>,
   ): Promise<string> {
+    const supabase = createClient();
     const deliveryId = crypto.randomUUID();
     const payload = this.createWebhookPayload(event, data, metadata);
 
@@ -355,7 +364,7 @@ export class WebhookSystem {
     };
 
     // Store delivery record
-    await this.supabase.from("webhook_deliveries").insert(delivery);
+    await supabase.from("webhook_deliveries").insert(delivery);
 
     // Add to processing queue
     this.deliveryQueue.push(delivery);
@@ -364,6 +373,7 @@ export class WebhookSystem {
   }
 
   private async processDelivery(delivery: WebhookDelivery): Promise<void> {
+    await this.ensureWebhooksLoaded();
     const webhook = this.activeWebhooks.get(delivery.webhook_id);
     if (!webhook || !webhook.active) {
       await this.updateDeliveryStatus(
@@ -584,9 +594,19 @@ export class WebhookSystem {
     }
   }
 
+  private webhooksLoaded = false;
+
+  private async ensureWebhooksLoaded(): Promise<void> {
+    if (!this.webhooksLoaded) {
+      await this.loadActiveWebhooks();
+      this.webhooksLoaded = true;
+    }
+  }
+
   private async loadActiveWebhooks(): Promise<void> {
+    const supabase = createClient();
     try {
-      const { data: webhooks, error } = await this.supabase
+      const { data: webhooks, error } = await supabase
         .from("webhook_configs")
         .select("*")
         .eq("active", true);
@@ -636,6 +656,7 @@ export class WebhookSystem {
     errorMessage?: string,
     nextRetryAt?: string,
   ): Promise<void> {
+    const supabase = createClient();
     const updates: any = {
       status,
       response_status: responseStatus,
@@ -648,7 +669,7 @@ export class WebhookSystem {
       updates.delivered_at = new Date().toISOString();
     }
 
-    await this.supabase
+    await supabase
       .from("webhook_deliveries")
       .update(updates)
       .eq("id", deliveryId);
@@ -658,6 +679,8 @@ export class WebhookSystem {
     webhookId: string,
     type: "success" | "failure",
   ): Promise<void> {
+    const supabase = createClient();
+    await this.ensureWebhooksLoaded();
     const webhook = this.activeWebhooks.get(webhookId);
     if (!webhook) return;
 
@@ -672,10 +695,7 @@ export class WebhookSystem {
       (updates as any).failure_count = webhook.failure_count + 1;
     }
 
-    await this.supabase
-      .from("webhook_configs")
-      .update(updates)
-      .eq("id", webhookId);
+    await supabase.from("webhook_configs").update(updates).eq("id", webhookId);
 
     // Update cache
     Object.assign(webhook, updates);
@@ -683,7 +703,8 @@ export class WebhookSystem {
 
   // Public Query Methods
   async getWebhooks(userId?: string): Promise<WebhookConfig[]> {
-    let query = this.supabase.from("webhook_configs").select("*");
+    const supabase = createClient();
+    let query = supabase.from("webhook_configs").select("*");
 
     if (userId) {
       query = query.eq("created_by", userId);
@@ -705,7 +726,8 @@ export class WebhookSystem {
     limit = 50,
     offset = 0,
   ): Promise<WebhookDelivery[]> {
-    const { data, error } = await this.supabase
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from("webhook_deliveries")
       .select("*")
       .eq("webhook_id", webhookId)
@@ -726,7 +748,8 @@ export class WebhookSystem {
     success_rate: number;
     average_response_time: number;
   }> {
-    const { data, error } = await this.supabase.rpc("get_webhook_statistics", {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("get_webhook_statistics", {
       webhook_id: webhookId,
     });
 

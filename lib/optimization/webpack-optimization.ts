@@ -28,7 +28,7 @@ export const webpackOptimization: Configuration["optimization"] = {
 
       // PDF libraries
       pdf: {
-        test: /[\\/]node_modules[\\/](jspdf|pdfjs-dist|@react-pdf|react-pdf)[\\/]/,
+        test: /[\\/]node_modules[\\/](jspdf|pdfjs-dist)[\\/]/,
         name: "pdf",
         priority: 30,
         enforce: true,

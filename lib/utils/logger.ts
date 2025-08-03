@@ -207,6 +207,11 @@ export const calculationError = (message: string, error?: Error | any) => {
   logger.error(`[CALCULATION] ${message}`, error);
 };
 
+// User action logging
+export const userAction = (action: string, data?: any) => {
+  logger.info(`[USER_ACTION] ${action}`, data);
+};
+
 // Helper function to replace console.log in existing code
 export function replaceConsoleLog(): void {
   if (process.env.NODE_ENV === "production") {

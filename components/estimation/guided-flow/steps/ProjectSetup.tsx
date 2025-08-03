@@ -139,11 +139,11 @@ function ProjectSetup() {
   const [extractedData, setExtractedData] = useState<any>(null);
 
   // Create debounced update function to prevent excessive re-renders
-  const debouncedUpdateFlowData = useMemo(
-    () =>
-      debounce((data: any) => {
-        updateFlowData(data);
-      }, 500),
+  // Use useCallback to create a stable debounced function that won't change on every render
+  const debouncedUpdateFlowData = useCallback(
+    debounce((data: any) => {
+      updateFlowData(data);
+    }, 500),
     [updateFlowData],
   );
 

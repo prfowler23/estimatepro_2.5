@@ -99,8 +99,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Enhanced focus management integration
     const { announceToScreenReader } = useFocusManager();
+    const generatedId = React.useId();
     const focusRef = useFocusable(
-      focusId || `button-${React.useId()}`,
+      focusId || `button-${generatedId}`,
       focusPriority,
       [disabled, loading],
     );

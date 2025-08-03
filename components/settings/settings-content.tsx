@@ -27,9 +27,11 @@ import {
   Building2,
   Camera,
   ExternalLink,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase/client";
+import { TwoFactorSetup } from "@/components/auth/two-factor-setup";
 
 interface UserProfile {
   id: string;
@@ -209,7 +211,7 @@ export function SettingsContent() {
       )}
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
@@ -217,6 +219,10 @@ export function SettingsContent() {
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
             Company
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Security
           </TabsTrigger>
           <TabsTrigger value="labs" className="flex items-center gap-2">
             <Flask className="h-4 w-4" />
@@ -431,6 +437,23 @@ export function SettingsContent() {
                   production workflows.
                 </AlertDescription>
               </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Security Settings
+              </CardTitle>
+              <CardDescription>
+                Manage your account security and two-factor authentication
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TwoFactorSetup />
             </CardContent>
           </Card>
         </TabsContent>

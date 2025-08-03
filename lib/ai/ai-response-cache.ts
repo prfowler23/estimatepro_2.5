@@ -1,5 +1,3 @@
-"use client";
-
 // PHASE 3 FIX: AI response caching system for improved performance
 import { aiCache, aiCacheWrapper } from "./ai-cache";
 

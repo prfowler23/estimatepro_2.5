@@ -14,9 +14,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Building, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Building, Mail, Lock, Github } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
+import { SiMicrosoft } from "react-icons/si";
 import { useAuth } from "@/contexts/auth-context";
 import { error as logError } from "@/lib/utils/logger";
+import {
+  signInWithOAuth,
+  getSupportedOAuthProviders,
+  getOAuthProviderInfo,
+  isOAuthProviderConfigured,
+} from "@/lib/auth/oauth-providers";
 
 export default function LoginPage() {
   const { signIn, loading: authLoading, user } = useAuth();
@@ -29,6 +37,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [envError, setEnvError] = useState("");
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
   // Environment validation
   useEffect(() => {
@@ -184,6 +193,38 @@ export default function LoginPage() {
     }
   };
 
+  const handleOAuthSignIn = async (provider: "github" | "azure" | "google") => {
+    setOauthLoading(provider);
+    setError("");
+
+    try {
+      const result = await signInWithOAuth(provider);
+
+      if (!result.success) {
+        logError(`OAuth ${provider} authentication failed`, {
+          component: "LoginPage",
+          action: "oauthSignIn",
+          provider,
+          error: result.error,
+        });
+        setError(result.error || `Failed to sign in with ${provider}`);
+      } else if (result.requiresRedirect && result.redirectUrl) {
+        // Redirect to OAuth provider
+        window.location.href = result.redirectUrl;
+      }
+    } catch (err: any) {
+      logError(`Unexpected error during ${provider} OAuth`, {
+        component: "LoginPage",
+        action: "oauthSignIn",
+        provider,
+        error: err.message,
+      });
+      setError(`An unexpected error occurred with ${provider}: ${err.message}`);
+    } finally {
+      setOauthLoading(null);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -308,6 +349,85 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+
+            {/* OAuth Providers */}
+            <div className="mt-6 space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                {/* GitHub */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOAuthSignIn("github")}
+                  disabled={loading || oauthLoading !== null || !!envError}
+                  className="w-full"
+                >
+                  {oauthLoading === "github" ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                      Connecting...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Github className="h-4 w-4" />
+                      Continue with GitHub
+                    </div>
+                  )}
+                </Button>
+
+                {/* Google */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOAuthSignIn("google")}
+                  disabled={loading || oauthLoading !== null || !!envError}
+                  className="w-full"
+                >
+                  {oauthLoading === "google" ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                      Connecting...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <FcGoogle className="h-4 w-4" />
+                      Continue with Google
+                    </div>
+                  )}
+                </Button>
+
+                {/* Microsoft */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOAuthSignIn("azure")}
+                  disabled={loading || oauthLoading !== null || !!envError}
+                  className="w-full"
+                >
+                  {oauthLoading === "azure" ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                      Connecting...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <SiMicrosoft className="h-4 w-4 text-blue-600" />
+                      Continue with Microsoft
+                    </div>
+                  )}
+                </Button>
+              </div>
+            </div>
 
             <div className="mt-6 space-y-4">
               <div className="text-center">

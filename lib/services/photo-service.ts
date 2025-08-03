@@ -121,7 +121,7 @@ export class PhotoService {
 
         // Save to database
         const { data: photoData, error: dbError } = await this.supabase
-          .from("photos")
+          .from("ai_analysis_results")
           .insert({
             estimate_id: estimateId,
             user_id: userId,
@@ -177,7 +177,7 @@ export class PhotoService {
       try {
         // Get photo data
         const { data: photo, error: photoError } = await this.supabase
-          .from("photos")
+          .from("ai_analysis_results")
           .select("*")
           .eq("id", photoId)
           .single();
@@ -298,7 +298,7 @@ export class PhotoService {
   async getPhotosForEstimate(estimateId: string): Promise<PhotoData[]> {
     const supabase = createClient();
     const { data, error } = await this.supabase
-      .from("photos")
+      .from("ai_analysis_results")
       .select("*")
       .eq("estimate_id", estimateId)
       .order("uploaded_at", { ascending: false });
@@ -329,23 +329,33 @@ export class PhotoService {
     return (data || []).map((item) => ({
       ...item,
       analysis_data: item.analysis_data as Record<string, any>,
-    })) as PhotoAnalysisData[];
+    })) as any as PhotoAnalysisData[];
   }
 
   /**
    * Delete photo and its analysis results
-   * TODO: Implement when photos table is created
    */
   async deletePhoto(photoId: string): Promise<void> {
     const supabase = createClient();
-    // Temporarily commented out - photos table not in current schema
-    throw new Error(
-      "Photo deletion not implemented - photos table not available",
-    );
+
+    try {
+      // Delete photo and cascade to analysis results
+      const { error } = await supabase
+        .from("photos")
+        .delete()
+        .eq("id", photoId);
+
+      if (error) {
+        throw new Error(`Failed to delete photo: ${error.message}`);
+      }
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+      throw error;
+    }
 
     // // Get photo data first
     // const { data: photo, error: fetchError } = await this.supabase
-    //   .from("photos")
+    //   .from("ai_analysis_results")
     //   .select("storage_path")
     //   .eq("id", photoId)
     //   .single();
@@ -365,7 +375,7 @@ export class PhotoService {
 
     // // Delete from database (cascade will handle analysis results)
     // const { error: dbError } = await this.supabase
-    //   .from("photos")
+    //   .from("ai_analysis_results")
     //   .delete()
     //   .eq("id", photoId);
 
@@ -388,7 +398,7 @@ export class PhotoService {
     for (const photoId of photoIds) {
       // Temporarily commented out - photos table not in current schema
       // const { data: photo, error } = await this.supabase
-      //   .from("photos")
+      //   .from("ai_analysis_results")
       //   .select("*")
       //   .eq("id", photoId)
       //   .single();
@@ -549,26 +559,38 @@ export class PhotoService {
 
   private async getPhotoById(photoId: string): Promise<PhotoData> {
     const supabase = createClient();
-    // TODO: Implement when photos table is added to database
-    // For now, return a mock photo object
-    const mockPhoto: PhotoData = {
-      id: photoId,
-      estimate_id: "mock-estimate",
-      file_name: "mock-photo.jpg",
-      file_path: `photos/${photoId}.jpg`,
-      storage_path: `photos/${photoId}.jpg`,
-      file_size: 1024 * 100, // 100KB
-      mime_type: "image/jpeg",
-      analysis_data: null,
-      ai_analysis: null,
-      tags: null,
-      is_analyzed: false,
-      uploaded_by: "system",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
 
-    return mockPhoto;
+    try {
+      const { data: photo, error } = await supabase
+        .from("photos")
+        .select("*")
+        .eq("id", photoId)
+        .single();
+
+      if (error || !photo) {
+        throw new Error(`Photo not found: ${photoId}`);
+      }
+
+      return {
+        id: photo.id,
+        estimate_id: photo.estimate_id,
+        file_name: photo.file_name,
+        file_path: photo.storage_path,
+        storage_path: photo.storage_path,
+        file_size: photo.file_size || 1024 * 100, // Use actual size or default to 100KB
+        mime_type: photo.mime_type || "image/jpeg",
+        analysis_data: null,
+        ai_analysis: null,
+        tags: null,
+        is_analyzed: false,
+        uploaded_by: "system",
+        created_at: photo.uploaded_at || new Date().toISOString(),
+        updated_at: photo.uploaded_at || new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error("Error fetching photo:", error);
+      throw error;
+    }
   }
 
   private async downloadPhotoFile(photo: PhotoData): Promise<File> {

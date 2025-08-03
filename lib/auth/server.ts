@@ -1,19 +1,28 @@
-import {
-  createServerComponentClient,
-  createRouteHandlerClient,
-} from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 // Server-side Supabase client for API routes
-export function createServerSupabaseClient() {
-  return createRouteHandlerClient({ cookies });
+export async function createServerSupabaseClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    },
+  );
 }
 
 // Authenticate API requests and return user
 export async function authenticateRequest(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
 
     // First, try to get session from cookies
     let session = null;
@@ -62,7 +71,7 @@ export async function authenticateRequest(request: NextRequest) {
 // Get server session
 export async function getServerSession() {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const {
       data: { session },
       error,
@@ -89,7 +98,7 @@ export async function getUser() {
 // Get user profile with role information
 export async function getUserProfile(userId: string) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: profile, error } = await supabase
       .from("profiles")
       .select("*")

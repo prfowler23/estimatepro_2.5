@@ -1,7 +1,7 @@
 // Enhanced Analytics Service with Real Statistical Analysis
 // Replaces hardcoded analytics calculations with sophisticated data analysis
 
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import {
   startOfMonth,
   endOfMonth,
@@ -306,7 +306,6 @@ class StatisticalAnalysis {
 }
 
 export class EnhancedAnalyticsService {
-  private supabase = createClient();
   private statisticalAnalysis = StatisticalAnalysis;
 
   // Business Metrics Analysis
@@ -314,12 +313,13 @@ export class EnhancedAnalyticsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<BusinessMetrics> {
+    const supabase = createClient();
     const start = startDate || subMonths(new Date(), 12);
     const end = endDate || new Date();
 
     try {
       // Get all estimates data
-      const { data: estimates, error } = await this.supabase
+      const { data: estimates, error } = await createClient()
         .from("estimates")
         .select(
           `
@@ -380,11 +380,12 @@ export class EnhancedAnalyticsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<FinancialAnalysis> {
+    const supabase = createClient();
     const start = startDate || subMonths(new Date(), 12);
     const end = endDate || new Date();
 
     try {
-      const { data: estimates, error } = await this.supabase
+      const { data: estimates, error } = await createClient()
         .from("estimates")
         .select(
           `
@@ -431,6 +432,7 @@ export class EnhancedAnalyticsService {
 
   // Predictive Analytics
   async getPredictiveAnalytics(): Promise<PredictiveAnalytics> {
+    const supabase = createClient();
     try {
       const revenueForecasts = await this.generateRevenueForecasts();
       const demandForecasting = await this.generateDemandForecasts();
@@ -459,6 +461,7 @@ export class EnhancedAnalyticsService {
 
   // Generate AI-powered recommendations
   async generateRecommendations(): Promise<Recommendation[]> {
+    const supabase = createClient();
     try {
       const recommendations: Recommendation[] = [];
 
@@ -606,6 +609,7 @@ export class EnhancedAnalyticsService {
     start: Date,
     end: Date,
   ): Promise<number> {
+    const supabase = createClient();
     const previousStart = subMonths(start, 12);
     const previousEnd = subMonths(end, 12);
 
@@ -621,7 +625,7 @@ export class EnhancedAnalyticsService {
   }
 
   private async getRevenueForPeriod(start: Date, end: Date): Promise<number> {
-    const { data: estimates } = await this.supabase
+    const { data: estimates } = await createClient()
       .from("estimates")
       .select("total_price")
       .eq("status", "approved")
@@ -644,6 +648,7 @@ export class EnhancedAnalyticsService {
     start: Date,
     end: Date,
   ): Promise<number> {
+    const supabase = createClient();
     const currentPeriodDeals = await this.getDealsForPeriod(start, end);
     const previousPeriodDeals = await this.getDealsForPeriod(
       subMonths(start, 12),
@@ -657,7 +662,7 @@ export class EnhancedAnalyticsService {
   }
 
   private async getDealsForPeriod(start: Date, end: Date): Promise<any[]> {
-    const { data: estimates } = await this.supabase
+    const { data: estimates } = await createClient()
       .from("estimates")
       .select("*")
       .eq("status", "approved")
@@ -710,6 +715,7 @@ export class EnhancedAnalyticsService {
     churnRate: number;
     retentionRate: number;
   }> {
+    const supabase = createClient();
     // Simplified calculation - would need more customer data for accurate metrics
     const uniqueCustomers = new Set(estimates.map((e) => e.customer_email));
     const totalRevenue = this.calculateTotalRevenue(estimates);
@@ -725,6 +731,7 @@ export class EnhancedAnalyticsService {
   }
 
   private async calculateProfitMargin(estimates: any[]): Promise<number> {
+    const supabase = createClient();
     // Simplified calculation - would need actual cost data
     const totalRevenue = this.calculateTotalRevenue(estimates);
     const estimatedCosts = totalRevenue * 0.7; // Assume 70% cost ratio
@@ -734,6 +741,7 @@ export class EnhancedAnalyticsService {
   }
 
   private async calculateOperatingRatio(estimates: any[]): Promise<number> {
+    const supabase = createClient();
     // Simplified calculation - would need actual operating expense data
     const totalRevenue = this.calculateTotalRevenue(estimates);
     const estimatedOperatingExpenses = totalRevenue * 0.6; // Assume 60% operating expense ratio

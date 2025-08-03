@@ -1,25 +1,26 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { ValidationResult } from "@/lib/validation/guided-flow-validation";
+import type { StepComponentProps } from "../index";
+
+interface Step {
+  id: number;
+  name: string;
+  component: React.ComponentType<StepComponentProps>;
+}
 
 interface DesktopStepIndicatorProps {
-  steps: any[];
+  steps: Step[];
   currentStep: number;
   availableSteps: number[];
   validationResults: Record<number, ValidationResult>;
   onStepClick: (stepId: number) => void;
 }
 
-export const DesktopStepIndicator: React.FC<DesktopStepIndicatorProps> = ({
-  steps,
-  currentStep,
-  availableSteps,
-  validationResults,
-  onStepClick,
-}) => {
-  return (
-    <div className="hidden md:block mb-8">
-      <ol className="flex items-center w-full">
-        {steps.map((step, index) => {
+export const DesktopStepIndicator = React.memo<DesktopStepIndicatorProps>(
+  ({ steps, currentStep, availableSteps, validationResults, onStepClick }) => {
+    const stepElements = useMemo(
+      () =>
+        steps.map((step, index) => {
           const stepNumber = index + 1;
           const isCompleted = stepNumber < currentStep;
           const isCurrent = stepNumber === currentStep;
@@ -32,6 +33,8 @@ export const DesktopStepIndicator: React.FC<DesktopStepIndicatorProps> = ({
               <button
                 onClick={() => isAvailable && onStepClick(stepNumber)}
                 disabled={!isAvailable}
+                aria-label={`Go to step ${stepNumber}: ${step.name}`}
+                aria-current={isCurrent ? "step" : undefined}
                 className={`flex items-center justify-center w-10 h-10 rounded-full text-lg font-semibold ${
                   isCurrent
                     ? "bg-blue-600 text-white"
@@ -51,8 +54,16 @@ export const DesktopStepIndicator: React.FC<DesktopStepIndicatorProps> = ({
               )}
             </li>
           );
-        })}
-      </ol>
-    </div>
-  );
-};
+        }),
+      [steps, currentStep, availableSteps, validationResults, onStepClick],
+    );
+
+    return (
+      <div className="hidden md:block mb-8">
+        <ol className="flex items-center w-full">{stepElements}</ol>
+      </div>
+    );
+  },
+);
+
+DesktopStepIndicator.displayName = "DesktopStepIndicator";

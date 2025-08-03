@@ -147,7 +147,7 @@ export default function OnboardingPage() {
       toast({
         title: "Welcome aboard! 🎉",
         description:
-          "Your account is all set up. Let's create your first estimate!",
+          "Your account is all set up. Let&apos;s create your first estimate!",
       });
 
       router.push("/dashboard");
@@ -283,14 +283,14 @@ function WelcomeStep() {
         </div>
         <CardTitle className="text-3xl">Welcome to EstimatePro!</CardTitle>
         <CardDescription className="text-lg">
-          Let's get you set up in just a few minutes
+          Let&apos;s get you set up in just a few minutes
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <p className="text-center text-text-secondary">
           EstimatePro helps building service contractors create professional
           estimates in minutes, not hours. With AI-powered features and smart
-          workflows, you'll win more jobs and save valuable time.
+          workflows, you&apos;ll win more jobs and save valuable time.
         </p>
 
         <div className="grid md:grid-cols-3 gap-4">
@@ -499,8 +499,8 @@ function ServicesStep({ userData, onServiceToggle }: any) {
         {userData.selectedServices.length > 0 && (
           <div className="mt-4 p-3 bg-success-subtle rounded-lg">
             <p className="text-sm text-success-primary">
-              Great! You've selected {userData.selectedServices.length}{" "}
-              services. We'll configure calculators for each one.
+              Great! You&apos;ve selected {userData.selectedServices.length}{" "}
+              services. We&apos;ll configure calculators for each one.
             </p>
           </div>
         )}
@@ -538,7 +538,9 @@ function FeaturesStep() {
     <Card>
       <CardHeader>
         <CardTitle>Powerful Features at Your Fingertips</CardTitle>
-        <CardDescription>Here's what makes EstimatePro special</CardDescription>
+        <CardDescription>
+          Here&apos;s what makes EstimatePro special
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {features.map((feature, index) => {
@@ -575,7 +577,7 @@ function CompleteStep({ userData }: any) {
         <div className="mx-auto mb-4 p-4 bg-success-subtle rounded-full w-fit">
           <CheckCircle className="h-12 w-12 text-success-primary" />
         </div>
-        <CardTitle className="text-3xl">You're All Set!</CardTitle>
+        <CardTitle className="text-3xl">You&apos;re All Set!</CardTitle>
         <CardDescription className="text-lg">
           Welcome to EstimatePro, {userData.fullName || "there"}!
         </CardDescription>
@@ -604,7 +606,7 @@ function CompleteStep({ userData }: any) {
             Ready to create your first estimate?
           </p>
           <p className="text-text-secondary">
-            We'll guide you through the process step by step.
+            We&apos;ll guide you through the process step by step.
           </p>
         </div>
 

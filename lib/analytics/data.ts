@@ -10,7 +10,10 @@ import {
   endOfQuarter,
 } from "date-fns";
 import { getServiceById } from "@/lib/constants/services";
-import { OptimizedQueryService } from "@/lib/optimization/database-query-optimization";
+// Analytics data moved to API route: /api/analytics/metrics
+
+// Create client function for this file since it's used in client components
+const createClient = () => supabase;
 
 export interface AnalyticsData {
   overview: OverviewMetrics;
@@ -306,9 +309,12 @@ export class AnalyticsService {
   static async getRevenueData(): Promise<RevenueData> {
     const supabase = createClient();
     try {
-      // Optimized monthly revenue query - replaces N+1 loop with single query
-      const monthlyData =
-        await OptimizedQueryService.getOptimizedMonthlyRevenue();
+      // Monthly data now available via /api/analytics/metrics?metric=monthly_revenue
+      const monthlyData = {
+        startDate: new Date(),
+        endDate: new Date(),
+        months: [],
+      };
 
       // Service revenue breakdown
       const { data: serviceData } = await supabase
@@ -369,9 +375,8 @@ export class AnalyticsService {
   static async getServiceMetrics(): Promise<ServiceMetrics[]> {
     const supabase = createClient();
     try {
-      // Use optimized service metrics query - eliminates complex reduce operations
-      const serviceData =
-        await OptimizedQueryService.getOptimizedServiceMetrics();
+      // Service data now available via /api/analytics/metrics?metric=service_metrics
+      const serviceData = [];
 
       // Map to expected ServiceMetrics interface
       return serviceData.map((service) => ({

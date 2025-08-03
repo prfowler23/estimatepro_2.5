@@ -86,9 +86,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const configManager = getAIConfig();
+    const aiConfiguration = configManager.getAIConfig();
+
     const result = await withAIRetry(async () => {
-      const configManager = getAIConfig();
-      const aiConfiguration = configManager.getAIConfig();
       const systemPrompt = getSystemPrompt(mode);
 
       // Get conversation context if conversationId provided
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Comprehensive output validation and sanitization
-    const aiResponse = result.data.response;
+    const aiResponse = result.data?.response || "";
     const outputScan = outputValidator.scanOutput(aiResponse);
     if (!outputScan.safe) {
       console.error("AI response contains unsafe content:", outputScan.issues);
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
         );
       }
       // Use the sanitized version
-      result.data.response = sanitized.sanitized;
+      if (result.data) result.data.response = sanitized.sanitized;
     }
 
     // Save the interaction to conversation history
@@ -184,11 +185,11 @@ export async function POST(request: NextRequest) {
       const { conversation } = await AIConversationService.saveInteraction(
         user.id,
         message,
-        result.data.response,
+        result.data?.response || "",
         conversationId,
         {
           mode,
-          tokensUsed: result.data.tokensUsed,
+          tokensUsed: result.data?.tokensUsed,
           model: aiConfiguration.defaultModel,
         },
       );
@@ -218,7 +219,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function getSystemPrompt(mode: AssistantMode): string {
+function getSystemPrompt(mode: AssistantRequest["mode"]): string {
   const basePrompt =
     "You are an AI assistant for EstimatePro, a building services estimation platform. You help users with creating estimates, understanding services, and providing guidance on building cleaning and maintenance projects.";
 

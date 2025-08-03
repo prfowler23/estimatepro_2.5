@@ -45,11 +45,7 @@ export interface ImportCandidate {
 export const CURRENT_BUNDLE_ISSUES = {
   // Heavy Third-Party Dependencies
   heavyDependencies: [
-    {
-      name: "@react-pdf/renderer",
-      size: "~2.5MB",
-      usage: "PDF generation - lazy loadable",
-    },
+    // @react-pdf/renderer removed - not actively used
     {
       name: "recharts",
       size: "~800KB",
@@ -283,7 +279,7 @@ export const ROUTE_SPLITTING_CONFIG = {
     {
       name: "pdf-generation",
       trigger: "user-action",
-      components: ["@react-pdf/renderer", "PDFGenerator", "EstimateTemplate"],
+      components: ["PDFGenerator", "EstimateTemplate"],
     },
   ],
 } as const;
@@ -293,8 +289,8 @@ export const createOptimizedLazyComponents = () => {
   // Heavy Third-Party Components
   const LazyPDFRenderer = OptimizedLazyLoader.createLazyComponent(
     () =>
-      import("@react-pdf/renderer").then((mod) => ({ default: mod.Document })),
-    undefined,
+      // @react-pdf/renderer removed - using jsPDF instead
+      undefined,
     "PDFRenderer",
   );
 
@@ -448,7 +444,7 @@ export const getOptimizedWebpackConfig = (
           },
           // Heavy third-party libraries
           heavy: {
-            test: /[\\/]node_modules[\\/](@react-pdf|three|tesseract|recharts)[\\/]/,
+            test: /[\\/]node_modules[\\/](three|tesseract|recharts)[\\/]/,
             name: "heavy-libs",
             priority: 20,
             chunks: "async",
@@ -472,18 +468,8 @@ export const getOptimizedWebpackConfig = (
       },
     };
 
-    // Bundle analyzer in development
-    if (process.env.ANALYZE_BUNDLE === "true") {
-      const BundleAnalyzerPlugin =
-        require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
-      config.plugins.push(
-        new BundleAnalyzerPlugin({
-          analyzerMode: "static",
-          openAnalyzer: false,
-          reportFilename: "bundle-analysis.html",
-        }),
-      );
-    }
+    // Bundle analyzer only available in server-side webpack config
+    // Removed client-side import to prevent build errors
   }
 
   return config;

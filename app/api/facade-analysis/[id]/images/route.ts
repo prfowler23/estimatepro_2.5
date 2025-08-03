@@ -13,7 +13,7 @@ interface RouteParams {
 
 const uploadImageSchema = z
   .object({
-    image: z.instanceof(File).optional(),
+    image: z.any().optional(), // Changed from instanceof(File) to avoid server build issues
     imageUrl: z.string().url().optional(),
     imageType: z.enum(["aerial", "ground", "drone", "satellite"]),
     viewAngle: z.enum(["front", "rear", "left", "right", "oblique", "top"]),

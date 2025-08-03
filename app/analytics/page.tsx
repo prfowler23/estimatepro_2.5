@@ -1,7 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { AnalyticsOverview } from "@/components/analytics/analytics-overview";
+import { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
+
+// Lazy load the heavy analytics components
+const AnalyticsOverview = dynamic(
+  () =>
+    import("@/components/analytics/analytics-overview").then((mod) => ({
+      default: mod.AnalyticsOverview,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-32 bg-border-primary/20 rounded-lg animate-pulse"
+            />
+          ))}
+        </div>
+        <div className="h-96 bg-border-primary/20 rounded-lg animate-pulse" />
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-64 bg-border-primary/20 rounded-lg animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    ),
+  },
+);
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -334,7 +366,31 @@ function AnalyticsContent() {
             </CardContent>
           </Card>
         ) : (
-          <AnalyticsOverview data={data} />
+          <Suspense
+            fallback={
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-32 bg-border-primary/20 rounded-lg animate-pulse"
+                    />
+                  ))}
+                </div>
+                <div className="h-96 bg-border-primary/20 rounded-lg animate-pulse" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-64 bg-border-primary/20 rounded-lg animate-pulse"
+                    />
+                  ))}
+                </div>
+              </div>
+            }
+          >
+            <AnalyticsOverview data={data} />
+          </Suspense>
         ))}
 
       {/* True Empty State */}

@@ -76,14 +76,14 @@ export default function ForgotPasswordPage() {
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    We've sent a password reset link to <strong>{email}</strong>
-                    . Please check your email and follow the instructions to
-                    reset your password.
+                    We&apos;ve sent a password reset link to{" "}
+                    <strong>{email}</strong>. Please check your email and follow
+                    the instructions to reset your password.
                   </AlertDescription>
                 </Alert>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Didn't receive the email? Check your spam folder or{" "}
+                    Didn&apos;t receive the email? Check your spam folder or{" "}
                     <button
                       onClick={() => {
                         setSuccess(false);
@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
 
         {/* Sign Up Link */}
         <div className="text-center text-sm">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/auth/signup"
             className="text-primary hover:underline font-medium"

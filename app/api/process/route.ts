@@ -21,7 +21,10 @@ const PDFProcessRequestSchema = z.object({
   imageDensity: z.number().min(72).max(300).default(150),
 });
 
-async function processPDFHandler(request: NextRequest) {
+async function processPDFHandler(
+  request: NextRequest,
+  context: { params: Record<string, string> },
+) {
   try {
     const supabase = createClient();
     const { data: user } = await supabase.auth.getUser();
@@ -174,25 +177,23 @@ async function processPDFHandler(request: NextRequest) {
       },
     };
 
-    // Save processing result to database (optional - for history/caching)
-    // TODO: Uncomment when pdf_processing_history table is created
-    // try {
-    //   await supabase.from("pdf_processing_history").insert({
-    //     user_id: user.user.id,
-    //     filename: file.name,
-    //     file_size: file.size,
-    //     pages_processed: processingResult.metadata.pageCount,
-    //     text_extracted: processingResult.text.length > 0,
-    //     images_found: processingResult.images.length,
-    //     measurements_found: processingResult.measurements.length,
-    //     building_analysis: buildingDimensions,
-    //     processing_options: validatedOptions,
-    //     created_at: new Date().toISOString(),
-    //   });
-    // } catch (dbError) {
-    //   // Don't fail the request if logging fails
-    //   console.warn("Failed to save PDF processing history:", dbError);
-    // }
+    // Save processing result to database for history/caching
+    try {
+      await supabase.from("pdf_processing_history").insert({
+        user_id: user.user.id,
+        filename: file.name,
+        file_size: file.size,
+        pages_processed: processingResult.metadata.pageCount,
+        text_extracted: processingResult.text.length > 0,
+        images_found: processingResult.images.length,
+        measurements_found: processingResult.measurements.length,
+        building_analysis: buildingDimensions,
+        processing_options: validatedOptions,
+      });
+    } catch (dbError) {
+      // Don't fail the request if logging fails
+      console.warn("Failed to save PDF processing history:", dbError);
+    }
 
     return NextResponse.json(responseData);
   } catch (error) {
@@ -322,7 +323,10 @@ async function extractTextHandler(request: NextRequest) {
 export const POST = withWriteRateLimit(processPDFHandler);
 
 // Named exports for different operations
-export async function PUT(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  context: { params: Record<string, string> },
+) {
   const url = new URL(request.url);
   const operation = url.searchParams.get("operation");
 

@@ -13,7 +13,10 @@ import {
 } from "../../../../lib/ai/ai-error-handler";
 import { withAIRateLimit } from "../../../../lib/middleware/rate-limit-middleware";
 
-async function handlePOST(request: NextRequest) {
+async function handlePOST(
+  request: NextRequest,
+  context: { params: Record<string, string> },
+) {
   try {
     const body: AutoEstimateRequest = await request.json();
 
@@ -112,7 +115,10 @@ async function handlePOST(request: NextRequest) {
   }
 }
 
-async function handleGET() {
+async function handleGET(
+  request: NextRequest,
+  context: { params: Record<string, string> },
+) {
   return NextResponse.json({
     message: "Auto-estimate generation endpoint",
     methods: ["POST"],

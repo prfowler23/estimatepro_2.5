@@ -159,13 +159,16 @@ export default function AIToolsPage() {
               <h4 className="font-medium text-sm">Analysis & Calculation</h4>
               <div className="space-y-1">
                 <Badge variant="outline" className="text-xs">
-                  "Analyze this photo: [image URL] for window measurements"
+                  &quot;Analyze this photo: [image URL] for window
+                  measurements&quot;
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  "Calculate pressure washing for 5000 sq ft parking deck"
+                  &quot;Calculate pressure washing for 5000 sq ft parking
+                  deck&quot;
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  "What's the cost for window cleaning a 20-story building?"
+                  &quot;What&apos;s the cost for window cleaning a 20-story
+                  building?&quot;
                 </Badge>
               </div>
             </div>
@@ -173,13 +176,14 @@ export default function AIToolsPage() {
               <h4 className="font-medium text-sm">Search & Information</h4>
               <div className="space-y-1">
                 <Badge variant="outline" className="text-xs">
-                  "Find all estimates from last month over $10,000"
+                  &quot;Find all estimates from last month over $10,000&quot;
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  "What's the weather forecast for Seattle this week?"
+                  &quot;What&apos;s the weather forecast for Seattle this
+                  week?&quot;
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  "Show me similar office building cleaning projects"
+                  &quot;Show me similar office building cleaning projects&quot;
                 </Badge>
               </div>
             </div>

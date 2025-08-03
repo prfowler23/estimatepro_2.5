@@ -8,7 +8,7 @@ function analyzeChunk(filePath) {
 
   // Pattern to find library names
   const patterns = {
-    "react-pdf": /react-pdf|@react-pdf/gi,
+    // "react-pdf": removed - no longer used
     sentry: /@sentry|sentry/gi,
     openai: /openai/gi,
     exceljs: /exceljs/gi,

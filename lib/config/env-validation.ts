@@ -437,11 +437,43 @@ const clientEnvSchema = z.object({
 
 export type ClientEnvConfig = z.infer<typeof clientEnvSchema>;
 
+// Memoized client env config to prevent infinite re-renders
+let cachedClientEnv: ClientEnvConfig | null = null;
+let lastEnvHash: string | null = null;
+
 /**
  * Validates only client-side environment variables
  * Safe to run in the browser
+ * Memoized to prevent infinite re-renders in React components
  */
 export function validateClientEnv(): ClientEnvConfig {
+  // Create a hash of the current environment variables to detect changes
+  const currentEnvHash = JSON.stringify({
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION,
+    NEXT_PUBLIC_ENABLE_AI: process.env.NEXT_PUBLIC_ENABLE_AI,
+    NEXT_PUBLIC_ENABLE_3D: process.env.NEXT_PUBLIC_ENABLE_3D,
+    NEXT_PUBLIC_ENABLE_WEATHER: process.env.NEXT_PUBLIC_ENABLE_WEATHER,
+    NEXT_PUBLIC_ENABLE_DRONE: process.env.NEXT_PUBLIC_ENABLE_DRONE,
+    NEXT_PUBLIC_ENABLE_GUIDED_FLOW: process.env.NEXT_PUBLIC_ENABLE_GUIDED_FLOW,
+    NEXT_PUBLIC_NEW_ESTIMATE_FLOW: process.env.NEXT_PUBLIC_NEW_ESTIMATE_FLOW,
+    NEXT_PUBLIC_QUICK_ESTIMATE_MODE:
+      process.env.NEXT_PUBLIC_QUICK_ESTIMATE_MODE,
+    NEXT_PUBLIC_LEGACY_FLOW_SUPPORT:
+      process.env.NEXT_PUBLIC_LEGACY_FLOW_SUPPORT,
+    NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG,
+    NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS:
+      process.env.NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS,
+  });
+
+  // Return cached config if environment hasn't changed
+  if (cachedClientEnv && lastEnvHash === currentEnvHash) {
+    return cachedClientEnv;
+  }
+
   // In development, be more lenient with client-side validation
   // as Next.js environment variable injection timing can vary
   if (process.env.NODE_ENV === "development") {
@@ -464,8 +496,8 @@ export function validateClientEnv(): ClientEnvConfig {
         );
       }
 
-      // Return a minimal config for development
-      return {
+      // Cache and return a minimal config for development
+      const devConfig: ClientEnvConfig = {
         NEXT_PUBLIC_SUPABASE_URL:
           process.env.NEXT_PUBLIC_SUPABASE_URL ||
           "https://placeholder.supabase.co",
@@ -493,6 +525,10 @@ export function validateClientEnv(): ClientEnvConfig {
         NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS:
           process.env.NEXT_PUBLIC_ENABLE_FACADE_ANALYSIS !== "false",
       };
+
+      cachedClientEnv = devConfig;
+      lastEnvHash = currentEnvHash;
+      return devConfig;
     }
   }
 
@@ -509,6 +545,9 @@ export function validateClientEnv(): ClientEnvConfig {
     );
   }
 
+  // Cache the result
+  cachedClientEnv = result.data;
+  lastEnvHash = currentEnvHash;
   return result.data;
 }
 

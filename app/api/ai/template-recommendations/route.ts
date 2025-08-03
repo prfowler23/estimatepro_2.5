@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getUser } from "@/lib/auth/server";
 import { authenticateRequest } from "@/lib/auth/server";
 import { AIService } from "@/lib/services/ai-service";
 import { z } from "zod";

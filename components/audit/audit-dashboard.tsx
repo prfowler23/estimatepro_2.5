@@ -3,8 +3,19 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useTransition,
+  useDeferredValue,
+  useId,
+  useMemo,
+  useCallback,
+} from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import DOMPurify from "isomorphic-dompurify";
+import { FixedSizeList as List } from "react-window";
+import { z } from "zod";
 import {
   Shield,
   AlertTriangle,
@@ -48,16 +59,36 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 
+// Validation Schemas
+const AuditEventDetailsSchema = z.record(z.string(), z.unknown());
+
+const AuditFiltersSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  eventTypes: z.array(z.string()).optional(),
+  severity: z.array(z.enum(["low", "medium", "high", "critical"])).optional(),
+  userId: z.string().min(1).max(100).optional(),
+  resourceType: z.string().min(1).max(50).optional(),
+  search: z.string().min(1).max(200).optional(),
+});
+
 // Types
+type SeverityLevel = "low" | "medium" | "high" | "critical";
+type ComplianceStatus = "compliant" | "non_compliant" | "warning";
+
+interface AuditEventDetails {
+  [key: string]: unknown;
+}
+
 interface AuditEvent {
   id: string;
   event_type: string;
-  severity: "low" | "medium" | "high" | "critical";
+  severity: SeverityLevel;
   user_id?: string;
   action: string;
   resource_type?: string;
   resource_id?: string;
-  details: Record<string, any>;
+  details: AuditEventDetails;
   ip_address?: string;
   created_at: string;
   compliance_tags: string[];
@@ -70,7 +101,7 @@ interface ComplianceReport {
   period_end: string;
   total_events: number;
   violations_count: number;
-  status: "compliant" | "non_compliant" | "warning";
+  status: ComplianceStatus;
   generated_at: string;
 }
 
@@ -78,11 +109,67 @@ interface AuditFilters {
   startDate?: string;
   endDate?: string;
   eventTypes?: string[];
-  severity?: string[];
+  severity?: SeverityLevel[];
   userId?: string;
   resourceType?: string;
   search?: string;
 }
+
+interface AuditError {
+  type: "network" | "validation" | "permission" | "unknown";
+  message: string;
+  details?: unknown;
+}
+
+// Custom hook for debounced filters
+const useAuditFilters = (initialFilters: AuditFilters = {}) => {
+  const [filters, setFilters] = useState<AuditFilters>(initialFilters);
+  const [isPending, startTransition] = useTransition();
+  const deferredFilters = useDeferredValue(filters);
+
+  const updateFilters = useCallback(
+    (newFilters: Partial<AuditFilters>) => {
+      startTransition(() => {
+        const result = AuditFiltersSchema.safeParse({
+          ...filters,
+          ...newFilters,
+        });
+        if (result.success) {
+          setFilters(result.data);
+        } else {
+          console.warn("Invalid filter data:", result.error);
+        }
+      });
+    },
+    [filters],
+  );
+
+  const clearFilters = useCallback(() => {
+    startTransition(() => {
+      setFilters({});
+    });
+  }, []);
+
+  return {
+    filters: deferredFilters,
+    updateFilters,
+    clearFilters,
+    isPending,
+  };
+};
+
+// Utility function to safely display JSON
+const sanitizeAndFormatJSON = (data: unknown): string => {
+  try {
+    const jsonString = JSON.stringify(data, null, 2);
+    return DOMPurify.sanitize(jsonString, {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: [],
+    });
+  } catch (error) {
+    return "Invalid JSON data";
+  }
+};
 
 // Severity badge component
 const SeverityBadge: React.FC<{ severity: string }> = ({ severity }) => {
@@ -120,11 +207,107 @@ const EventTypeIcon: React.FC<{ eventType: string }> = ({ eventType }) => {
   return iconMap[eventType] || iconMap.default;
 };
 
+// Error Boundary Component
+class AuditErrorBoundary extends React.Component<
+  {
+    children: React.ReactNode;
+    fallback?: React.ComponentType<{ error: Error }>;
+  },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: {
+    children: React.ReactNode;
+    fallback?: React.ComponentType<{ error: Error }>;
+  }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Audit Dashboard Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      const FallbackComponent = this.props.fallback || DefaultErrorFallback;
+      return <FallbackComponent error={this.state.error!} />;
+    }
+
+    return this.props.children;
+  }
+}
+
+const DefaultErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
+  <div className="p-6 text-center">
+    <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+    <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+    <p className="text-gray-600 mb-4">Unable to load the audit dashboard</p>
+    <Button onClick={() => window.location.reload()}>Reload Page</Button>
+  </div>
+);
+
+// Virtual List Item Component
+const AuditEventItem: React.FC<{
+  index: number;
+  style: React.CSSProperties;
+  data: { events: AuditEvent[]; onSelectEvent: (event: AuditEvent) => void };
+}> = ({ index, style, data }) => {
+  const event = data.events[index];
+  if (!event) return null;
+
+  return (
+    <div style={style} className="px-2">
+      <div
+        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer mb-2"
+        onClick={() => data.onSelectEvent(event)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            data.onSelectEvent(event);
+          }
+        }}
+        aria-label={`Audit event: ${event.action} at ${new Date(event.created_at).toLocaleString()}`}
+      >
+        <div className="flex items-center space-x-3">
+          <EventTypeIcon eventType={event.event_type} />
+          <div>
+            <div className="font-medium">{event.action}</div>
+            <div className="text-sm text-gray-600">
+              {new Date(event.created_at).toLocaleString()}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <SeverityBadge severity={event.severity} />
+          {event.compliance_tags.length > 0 && (
+            <Badge variant="outline">{event.compliance_tags[0]}</Badge>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const AuditDashboard: React.FC = () => {
-  const [filters, setFilters] = useState<AuditFilters>({});
+  const { filters, updateFilters, clearFilters, isPending } = useAuditFilters();
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
   const [activeTab, setActiveTab] = useState("events");
+  const [exportUserId, setExportUserId] = useState("");
   const queryClient = useQueryClient();
+
+  // Generate unique IDs for form elements
+  const startDateId = useId();
+  const endDateId = useId();
+  const severityId = useId();
+  const eventTypeId = useId();
+  const userIdFilterId = useId();
+  const exportUserIdId = useId();
 
   // Fetch audit events
   const { data: eventsData, isLoading: eventsLoading } = useQuery({
@@ -363,39 +546,53 @@ export const AuditDashboard: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor={startDateId}
+                    className="text-sm font-medium mb-1 block"
+                  >
                     Start Date
                   </label>
                   <Input
+                    id={startDateId}
                     type="date"
                     value={filters.startDate || ""}
                     onChange={(e) =>
-                      setFilters({ ...filters, startDate: e.target.value })
+                      updateFilters({ startDate: e.target.value })
                     }
+                    aria-label="Filter by start date"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor={endDateId}
+                    className="text-sm font-medium mb-1 block"
+                  >
                     End Date
                   </label>
                   <Input
+                    id={endDateId}
                     type="date"
                     value={filters.endDate || ""}
-                    onChange={(e) =>
-                      setFilters({ ...filters, endDate: e.target.value })
-                    }
+                    onChange={(e) => updateFilters({ endDate: e.target.value })}
+                    aria-label="Filter by end date"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor={severityId}
+                    className="text-sm font-medium mb-1 block"
+                  >
                     Severity
                   </label>
                   <Select
                     onValueChange={(value) =>
-                      setFilters({ ...filters, severity: [value] })
+                      updateFilters({ severity: [value as SeverityLevel] })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id={severityId}
+                      aria-label="Filter by severity level"
+                    >
                       <SelectValue placeholder="Select severity" />
                     </SelectTrigger>
                     <SelectContent>
@@ -407,15 +604,21 @@ export const AuditDashboard: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor={eventTypeId}
+                    className="text-sm font-medium mb-1 block"
+                  >
                     Event Type
                   </label>
                   <Select
                     onValueChange={(value) =>
-                      setFilters({ ...filters, eventTypes: [value] })
+                      updateFilters({ eventTypes: [value] })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id={eventTypeId}
+                      aria-label="Filter by event type"
+                    >
                       <SelectValue placeholder="Select event type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -430,26 +633,40 @@ export const AuditDashboard: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor={userIdFilterId}
+                    className="text-sm font-medium mb-1 block"
+                  >
                     User ID
                   </label>
                   <Input
+                    id={userIdFilterId}
                     placeholder="Enter user ID"
                     value={filters.userId || ""}
-                    onChange={(e) =>
-                      setFilters({ ...filters, userId: e.target.value })
-                    }
+                    onChange={(e) => updateFilters({ userId: e.target.value })}
+                    maxLength={100}
+                    aria-label="Filter by user ID"
                   />
                 </div>
                 <div className="flex items-end">
                   <Button
                     variant="outline"
-                    onClick={() => setFilters({})}
+                    onClick={clearFilters}
                     className="w-full"
+                    disabled={isPending}
+                    aria-label="Clear all filters"
                   >
                     Clear Filters
                   </Button>
                 </div>
+                {isPending && (
+                  <div className="col-span-full">
+                    <div className="text-sm text-blue-600 flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Updating filters...
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -457,38 +674,52 @@ export const AuditDashboard: React.FC = () => {
           {/* Events List */}
           <Card>
             <CardHeader>
-              <CardTitle>Audit Events</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Audit Events
+                {eventsData?.events?.length > 0 && (
+                  <Badge variant="secondary">
+                    {eventsData.events.length.toLocaleString()} events
+                  </Badge>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {eventsLoading ? (
-                <div className="text-center py-8">Loading events...</div>
+                <div
+                  className="text-center py-8"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  Loading events...
+                </div>
+              ) : eventsData?.events?.length === 0 ? (
+                <div className="text-center py-8">
+                  <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No audit events found
+                  </h3>
+                  <p className="text-gray-500">
+                    Try adjusting your filters or check back later.
+                  </p>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {eventsData?.events?.map((event: AuditEvent) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setSelectedEvent(event)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <EventTypeIcon eventType={event.event_type} />
-                        <div>
-                          <div className="font-medium">{event.action}</div>
-                          <div className="text-sm text-gray-600">
-                            {new Date(event.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <SeverityBadge severity={event.severity} />
-                        {event.compliance_tags.length > 0 && (
-                          <Badge variant="outline">
-                            {event.compliance_tags[0]}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div
+                  className="h-96"
+                  role="region"
+                  aria-label="Audit events list"
+                >
+                  <List
+                    height={384}
+                    itemCount={eventsData?.events?.length || 0}
+                    itemSize={80}
+                    itemData={{
+                      events: eventsData?.events || [],
+                      onSelectEvent: setSelectedEvent,
+                    }}
+                  >
+                    {AuditEventItem}
+                  </List>
                 </div>
               )}
             </CardContent>

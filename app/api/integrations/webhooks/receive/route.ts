@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { webhookSystem } from "@/lib/integrations/webhook-system";
-import { auditSystem } from "@/lib/audit/audit-system";
+import { AuditSystem } from "@/lib/audit/audit-system";
 import { withAuditLogging } from "@/lib/audit/audit-middleware";
 import { z } from "zod";
 
@@ -29,6 +29,7 @@ const IncomingWebhookSchema = z.object({
 });
 
 async function handlePOST(request: NextRequest) {
+  const auditSystem = AuditSystem.getInstance();
   try {
     const supabase = createClient();
     const { searchParams } = new URL(request.url);

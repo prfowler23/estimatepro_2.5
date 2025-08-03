@@ -115,7 +115,7 @@ export default function NewEstimate() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Create New Estimate</h1>
         <p className="text-text-secondary">
-          Choose how you'd like to create your estimate
+          Choose how you&apos;d like to create your estimate
         </p>
       </div>
 

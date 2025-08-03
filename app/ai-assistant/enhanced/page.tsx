@@ -1,8 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import { AIAssistantChatEnhanced } from "@/components/ai/AIAssistantChatEnhanced";
-import { AIAssistantChat } from "@/components/ai/AIAssistantChat";
+import { useState, Suspense } from "react";
+import dynamic from "next/dynamic";
+
+// Lazy load heavy AI components
+const AIAssistantChatEnhanced = dynamic(
+  () =>
+    import("@/components/ai/AIAssistantChatEnhanced").then((mod) => ({
+      default: mod.AIAssistantChatEnhanced,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[600px] bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+          <p className="text-text-secondary">Loading Enhanced Assistant...</p>
+        </div>
+      </div>
+    ),
+  },
+);
+
+const AIAssistantChat = dynamic(
+  () =>
+    import("@/components/ai/AIAssistantChat").then((mod) => ({
+      default: mod.AIAssistantChat,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[600px] bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+          <p className="text-text-secondary">Loading Standard Assistant...</p>
+        </div>
+      </div>
+    ),
+  },
+);
 import {
   Card,
   CardHeader,
@@ -56,7 +92,7 @@ export default function EnhancedAIAssistantPage() {
               <CardTitle className="text-base">Real-time Streaming</CardTitle>
             </div>
             <CardDescription className="text-sm">
-              See AI responses as they're generated with smooth animations
+              See AI responses as they&apos;re generated with smooth animations
             </CardDescription>
           </CardHeader>
         </Card>
@@ -140,18 +176,44 @@ export default function EnhancedAIAssistantPage() {
         </TabsList>
 
         <TabsContent value="enhanced" className="mt-6">
-          <AIAssistantChatEnhanced
-            mode={mode}
-            showFeatures={true}
-            placeholder="Try asking about estimates, calculations, or business advice..."
-          />
+          <Suspense
+            fallback={
+              <div className="h-[600px] bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+                  <p className="text-text-secondary">
+                    Loading Enhanced Assistant...
+                  </p>
+                </div>
+              </div>
+            }
+          >
+            <AIAssistantChatEnhanced
+              mode={mode}
+              showFeatures={true}
+              placeholder="Try asking about estimates, calculations, or business advice..."
+            />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="standard" className="mt-6">
-          <AIAssistantChat
-            mode={mode}
-            placeholder="Try asking about estimates, calculations, or business advice..."
-          />
+          <Suspense
+            fallback={
+              <div className="h-[600px] bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+                  <p className="text-text-secondary">
+                    Loading Standard Assistant...
+                  </p>
+                </div>
+              </div>
+            }
+          >
+            <AIAssistantChat
+              mode={mode}
+              placeholder="Try asking about estimates, calculations, or business advice..."
+            />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

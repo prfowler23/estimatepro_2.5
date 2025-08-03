@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { auditSystem } from "@/lib/audit/audit-system";
+import { AuditSystem } from "@/lib/audit/audit-system";
 import { withAuditLogging } from "@/lib/audit/audit-middleware";
 
 async function handleGET(request: NextRequest) {
@@ -89,6 +89,7 @@ async function handleGET(request: NextRequest) {
 
 async function handlePOST(request: NextRequest) {
   try {
+    const auditSystem = AuditSystem.getInstance();
     const supabase = createClient();
 
     const {

@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { withRetry } from "@/lib/utils/retry-logic";
 import { isNotNull, safeString, safeNumber } from "@/lib/utils/null-safety";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 
 // Integration Provider Types
 export type IntegrationProvider =
@@ -169,7 +169,6 @@ export interface BaseIntegration {
 export class IntegrationManager {
   private static instance: IntegrationManager;
   private integrations: Map<string, BaseIntegration> = new Map();
-  private supabase = createClient();
 
   static getInstance(): IntegrationManager {
     if (!IntegrationManager.instance) {
@@ -215,7 +214,8 @@ export class IntegrationManager {
       }
 
       // Save to database
-      const { data, error } = await this.supabase
+      const supabase = createClient();
+      const { data, error } = await supabase
         .from("integrations")
         .insert({
           ...config,
@@ -336,7 +336,8 @@ export class IntegrationManager {
 
   // Data Synchronization
   async syncAllIntegrations(): Promise<IntegrationResponse[]> {
-    const { data: configs } = await this.supabase
+    const supabase = createClient();
+    const { data: configs } = await supabase
       .from("integrations")
       .select("*")
       .eq("enabled", true);
@@ -375,7 +376,8 @@ export class IntegrationManager {
     eventType: IntegrationEvent,
     eventData: any,
   ): Promise<string> {
-    const { data, error } = await this.supabase
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from("integration_events")
       .insert({
         id: crypto.randomUUID(),
@@ -400,6 +402,7 @@ export class IntegrationManager {
     status: "pending" | "processing" | "completed" | "failed",
     errorMessage?: string,
   ): Promise<void> {
+    const supabase = createClient();
     const updates: any = {
       status,
       updated_at: new Date().toISOString(),
@@ -413,10 +416,7 @@ export class IntegrationManager {
       updates.error_message = errorMessage;
     }
 
-    await this.supabase
-      .from("integration_events")
-      .update(updates)
-      .eq("id", eventId);
+    await supabase.from("integration_events").update(updates).eq("id", eventId);
   }
 
   private async logWebhookEvent(
@@ -424,19 +424,27 @@ export class IntegrationManager {
     payload: any,
     result: IntegrationResponse,
   ): Promise<void> {
-    // TODO: Add webhook_logs table to Supabase types
-    // await this.supabase.from("webhook_logs").insert({
-    //   id: crypto.randomUUID(),
-    //   provider,
-    //   payload,
-    //   response: result,
-    //   created_at: new Date().toISOString(),
-    // });
+    try {
+      await supabase.from("webhook_logs").insert({
+        source: provider,
+        event_type: "integration_response",
+        payload: {
+          provider,
+          request_payload: payload,
+          response: result,
+        },
+        processed: true,
+        processed_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Failed to log webhook event:", error);
+    }
   }
 
   // Health Check
   async checkIntegrationHealth(): Promise<Record<string, IntegrationResponse>> {
-    const { data: configs } = await this.supabase
+    const supabase = createClient();
+    const { data: configs } = await supabase
       .from("integrations")
       .select("*")
       .eq("enabled", true);

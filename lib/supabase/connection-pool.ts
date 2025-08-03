@@ -80,14 +80,6 @@ export class SupabaseConnectionPool {
             persistSession: false,
             autoRefreshToken: false,
           },
-          db: {
-            schema: "public",
-          },
-          global: {
-            headers: {
-              "x-connection-pool": "true",
-            },
-          },
         },
       );
 

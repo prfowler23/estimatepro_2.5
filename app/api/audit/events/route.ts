@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { auditSystem } from "@/lib/audit/audit-system";
+import { AuditSystem } from "@/lib/audit/audit-system";
 import { withAuditLogging } from "@/lib/audit/audit-middleware";
 
 async function handleGET(request: NextRequest) {
@@ -36,6 +36,7 @@ async function handleGET(request: NextRequest) {
     const targetUserId = isAdmin ? userId : user.id;
 
     // Query audit logs
+    const auditSystem = AuditSystem.getInstance();
     const events = await auditSystem.queryAuditLogs({
       startDate: startDate || undefined,
       endDate: endDate || undefined,
@@ -114,6 +115,7 @@ async function handlePOST(request: NextRequest) {
     }
 
     // Log the event
+    const auditSystem = AuditSystem.getInstance();
     const eventId = await auditSystem.logEvent({
       event_type,
       severity,

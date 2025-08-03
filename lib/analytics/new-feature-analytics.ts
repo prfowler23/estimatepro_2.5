@@ -3,7 +3,7 @@
  * Tracks usage, performance, and adoption metrics for recent feature additions
  */
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/supabase";
 
 // Analytics event types for new features
@@ -101,7 +101,10 @@ export interface FeatureAdoptionMetrics {
 }
 
 export class NewFeatureAnalytics {
-  private supabase = createClientComponentClient<Database>();
+  private supabase = createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
   private analyticsQueue: NewFeatureAnalyticsEvent[] = [];
   private batchSize = 10;
   private flushInterval = 30000; // 30 seconds

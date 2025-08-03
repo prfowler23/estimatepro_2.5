@@ -21,6 +21,13 @@ export interface Measurement {
   color: string;
 }
 
+export interface DirtyRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export class DrawingService {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -36,6 +43,9 @@ export class DrawingService {
     "#8B5CF6",
     "#EC4899",
   ];
+  private dirtyRegions: DirtyRegion[] = [];
+  private backgroundImage: HTMLImageElement | null = null;
+  private isFullRedrawNeeded: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -314,13 +324,227 @@ export class DrawingService {
   }
 
   /**
-   * Redraw all shapes and measurements
+   * Redraw all shapes and measurements with optimized dirty region tracking
    */
   redrawAll() {
-    this.clearCanvas();
-    this.shapes.forEach((shape) => this.renderShape(shape));
-    this.measurements.forEach((measurement) =>
-      this.renderMeasurement(measurement),
+    if (this.isFullRedrawNeeded || this.dirtyRegions.length === 0) {
+      // Full redraw needed
+      this.clearCanvas();
+      if (this.backgroundImage) {
+        this.ctx.drawImage(
+          this.backgroundImage,
+          0,
+          0,
+          this.canvas.width,
+          this.canvas.height,
+        );
+      }
+      this.shapes.forEach((shape) => this.renderShape(shape));
+      this.measurements.forEach((measurement) =>
+        this.renderMeasurement(measurement),
+      );
+      this.isFullRedrawNeeded = false;
+      this.dirtyRegions = [];
+    } else {
+      // Selective redraw of dirty regions
+      this.redrawDirtyRegions();
+    }
+  }
+
+  /**
+   * Redraw only the dirty regions for improved performance
+   */
+  private redrawDirtyRegions() {
+    // Merge overlapping dirty regions to reduce redundant drawing
+    const mergedRegions = this.mergeDirtyRegions(this.dirtyRegions);
+
+    for (const region of mergedRegions) {
+      // Save current context state
+      this.ctx.save();
+
+      // Set clipping region to limit drawing area
+      this.ctx.beginPath();
+      this.ctx.rect(region.x, region.y, region.width, region.height);
+      this.ctx.clip();
+
+      // Clear the dirty region
+      this.ctx.clearRect(region.x, region.y, region.width, region.height);
+
+      // Redraw background image in the dirty region
+      if (this.backgroundImage) {
+        this.ctx.drawImage(
+          this.backgroundImage,
+          region.x,
+          region.y,
+          region.width,
+          region.height,
+          region.x,
+          region.y,
+          region.width,
+          region.height,
+        );
+      }
+
+      // Redraw shapes that intersect with the dirty region
+      this.shapes.forEach((shape) => {
+        const shapeBounds = this.getShapeBoundingBox(shape);
+        if (this.regionsIntersect(region, shapeBounds)) {
+          this.renderShape(shape);
+        }
+      });
+
+      // Redraw measurements that intersect with the dirty region
+      this.measurements.forEach((measurement) => {
+        const measurementBounds = this.getMeasurementBoundingBox(measurement);
+        if (this.regionsIntersect(region, measurementBounds)) {
+          this.renderMeasurement(measurement);
+        }
+      });
+
+      // Restore context state
+      this.ctx.restore();
+    }
+
+    // Clear dirty regions after redrawing
+    this.dirtyRegions = [];
+  }
+
+  /**
+   * Add a dirty region to the tracking list
+   */
+  addDirtyRegion(region: DirtyRegion) {
+    this.dirtyRegions.push(region);
+  }
+
+  /**
+   * Mark the entire canvas as needing a full redraw
+   */
+  markFullRedrawNeeded() {
+    this.isFullRedrawNeeded = true;
+  }
+
+  /**
+   * Get the bounding box of a shape for dirty region calculations
+   */
+  private getShapeBoundingBox(shape: Shape): DirtyRegion {
+    const points = shape.points;
+    let minX = points[0].x;
+    let maxX = points[0].x;
+    let minY = points[0].y;
+    let maxY = points[0].y;
+
+    for (const point of points) {
+      minX = Math.min(minX, point.x);
+      maxX = Math.max(maxX, point.x);
+      minY = Math.min(minY, point.y);
+      maxY = Math.max(maxY, point.y);
+    }
+
+    // Add padding for borders and labels
+    const padding = 20;
+    return {
+      x: minX - padding,
+      y: minY - padding,
+      width: maxX - minX + padding * 2,
+      height: maxY - minY + padding * 2,
+    };
+  }
+
+  /**
+   * Get the bounding box of a measurement for dirty region calculations
+   */
+  private getMeasurementBoundingBox(measurement: Measurement): DirtyRegion {
+    const { start, end } = measurement;
+    const minX = Math.min(start.x, end.x);
+    const maxX = Math.max(start.x, end.x);
+    const minY = Math.min(start.y, end.y);
+    const maxY = Math.max(start.y, end.y);
+
+    // Add padding for line width, arrows, and labels
+    const padding = 30;
+    return {
+      x: minX - padding,
+      y: minY - padding,
+      width: maxX - minX + padding * 2,
+      height: maxY - minY + padding * 2,
+    };
+  }
+
+  /**
+   * Merge overlapping dirty regions to optimize redrawing
+   */
+  private mergeDirtyRegions(regions: DirtyRegion[]): DirtyRegion[] {
+    if (regions.length <= 1) return regions;
+
+    const merged: DirtyRegion[] = [];
+    const sorted = [...regions].sort((a, b) => a.x - b.x);
+
+    for (const region of sorted) {
+      let wasmerged = false;
+
+      for (let i = 0; i < merged.length; i++) {
+        const existing = merged[i];
+
+        // Check if regions overlap or are adjacent
+        if (this.regionsOverlap(region, existing)) {
+          // Merge regions
+          const minX = Math.min(region.x, existing.x);
+          const minY = Math.min(region.y, existing.y);
+          const maxX = Math.max(
+            region.x + region.width,
+            existing.x + existing.width,
+          );
+          const maxY = Math.max(
+            region.y + region.height,
+            existing.y + existing.height,
+          );
+
+          merged[i] = {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          };
+
+          wasmerged = true;
+          break;
+        }
+      }
+
+      if (!wasmerged) {
+        merged.push(region);
+      }
+    }
+
+    // If we merged regions, recursively merge again in case of chain merging
+    if (merged.length < regions.length) {
+      return this.mergeDirtyRegions(merged);
+    }
+
+    return merged;
+  }
+
+  /**
+   * Check if two regions overlap or are adjacent
+   */
+  private regionsOverlap(a: DirtyRegion, b: DirtyRegion): boolean {
+    return !(
+      a.x + a.width < b.x ||
+      b.x + b.width < a.x ||
+      a.y + a.height < b.y ||
+      b.y + b.height < a.y
+    );
+  }
+
+  /**
+   * Check if two regions intersect
+   */
+  private regionsIntersect(a: DirtyRegion, b: DirtyRegion): boolean {
+    return !(
+      a.x + a.width <= b.x ||
+      b.x + b.width <= a.x ||
+      a.y + a.height <= b.y ||
+      b.y + b.height <= a.y
     );
   }
 

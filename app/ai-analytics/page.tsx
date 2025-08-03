@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getUser } from "@/lib/auth/server";
-import { AIAnalyticsDashboard } from "@/components/ai/AIAnalyticsDashboard";
 import { AIAnalyticsErrorBoundary } from "@/components/ai/AIAnalyticsErrorBoundary";
+import AIAnalyticsDashboardDynamic from "@/components/ai/AIAnalyticsDashboardDynamic";
 
 export const metadata: Metadata = {
   title: "AI Analytics | EstimatePro",
@@ -25,7 +26,7 @@ export default async function AIAnalyticsPage() {
   return (
     <AIAnalyticsErrorBoundary>
       <div className="container mx-auto px-4 py-8">
-        <AIAnalyticsDashboard />
+        <AIAnalyticsDashboardDynamic />
       </div>
     </AIAnalyticsErrorBoundary>
   );

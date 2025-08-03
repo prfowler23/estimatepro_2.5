@@ -2,7 +2,7 @@
 // Tracks all user actions, data changes, and system events for regulatory compliance
 
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { isNotNull, safeString, safeNumber } from "@/lib/utils/null-safety";
 
 // Audit Event Types
@@ -157,7 +157,6 @@ export interface ComplianceViolation {
 // Enhanced Audit System Class
 export class AuditSystem {
   private static instance: AuditSystem;
-  private supabase = createClient();
   private config: AuditConfig;
 
   private constructor() {
@@ -209,7 +208,8 @@ export class AuditSystem {
       const anonymizedEvent = this.anonymizeEvent(validatedEvent);
 
       // Store in database
-      const { data, error } = await this.supabase
+      const supabase = createClient();
+      const { data, error } = await supabase
         .from("audit_events")
         .insert(anonymizedEvent)
         .select("id")
@@ -313,7 +313,8 @@ export class AuditSystem {
     limit?: number;
     offset?: number;
   }): Promise<AuditEvent[]> {
-    let query = this.supabase.from("audit_events").select("*");
+    const supabase = createClient();
+    let query = supabase.from("audit_events").select("*");
 
     if (params.startDate) {
       query = query.gte("created_at", params.startDate);
@@ -401,14 +402,16 @@ export class AuditSystem {
     };
 
     // Store report
-    await this.supabase.from("compliance_reports").insert(report);
+    const supabase = createClient();
+    await supabase.from("compliance_reports").insert(report);
 
     return report;
   }
 
   // Data Retention and Purging
   async purgeExpiredEvents(): Promise<number> {
-    const { data, error } = await this.supabase
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from("audit_events")
       .delete()
       .lt("expires_at", new Date().toISOString())
@@ -460,11 +463,12 @@ export class AuditSystem {
   }
 
   async anonymizeUserData(userId: string): Promise<number> {
-    const { data, error } = await this.supabase
+    const supabase = createClient();
+    const { data, error } = await supabase
       .from("audit_events")
       .update({
         user_id: null,
-        details: this.supabase.rpc("anonymize_user_details", {
+        details: supabase.rpc("anonymize_user_details", {
           user_id: userId,
         }),
       })
@@ -878,7 +882,8 @@ export class AuditSystem {
     violation: ComplianceViolation,
   ): Promise<void> {
     try {
-      const { error } = await this.supabase
+      const supabase = createClient();
+      const { error } = await supabase
         .from("compliance_violations")
         .insert(violation);
 
@@ -909,7 +914,8 @@ export class AuditSystem {
       });
 
       // Store in alerts table
-      const { error } = await this.supabase.from("security_alerts").insert({
+      const supabase = createClient();
+      const { error } = await supabase.from("security_alerts").insert({
         id: crypto.randomUUID(),
         alert_type: alertType,
         severity: "critical",
@@ -930,8 +936,8 @@ export class AuditSystem {
   }
 }
 
-// Export singleton instance
-export const auditSystem = AuditSystem.getInstance();
+// Note: AuditSystem class is already exported above
+// API routes should create instances as needed using AuditSystem.getInstance()
 
 // Audit decorators for automatic logging
 export function AuditLog(
@@ -952,7 +958,8 @@ export function AuditLog(
         const result = await originalMethod.apply(this, args);
 
         // Log successful operation
-        await auditSystem.logEvent({
+        const audit = AuditSystem.getInstance();
+        await audit.logEvent({
           event_type: eventType,
           severity,
           action: propertyKey,
@@ -966,7 +973,8 @@ export function AuditLog(
         return result;
       } catch (error) {
         // Log failed operation
-        await auditSystem.logEvent({
+        const audit = AuditSystem.getInstance();
+        await audit.logEvent({
           event_type: eventType,
           severity: "high",
           action: propertyKey,

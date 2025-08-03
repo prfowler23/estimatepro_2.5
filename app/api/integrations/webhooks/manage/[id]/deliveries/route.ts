@@ -128,16 +128,13 @@ async function handlePOST(
       });
     } else if (action === "retry_failed") {
       // Retry failed deliveries
-      // TODO: Uncomment when webhook_deliveries table is created
-      // const { data: failedDeliveries, error } = await supabase
-      //   .from("webhook_deliveries")
-      //   .select("*")
-      //   .eq("webhook_id", webhookId)
-      //   .eq("status", "failed")
-      //   .order("created_at", { ascending: false })
-      //   .limit(10);
-      const failedDeliveries: any[] = [];
-      const error = null;
+      const { data: failedDeliveries, error } = await supabase
+        .from("webhook_deliveries")
+        .select("*")
+        .eq("webhook_id", webhookId)
+        .eq("status", "failed")
+        .order("created_at", { ascending: false })
+        .limit(10);
 
       if (error) {
         throw new Error(`Failed to fetch failed deliveries: ${error}`);
@@ -146,16 +143,15 @@ async function handlePOST(
       let retriedCount = 0;
       for (const delivery of failedDeliveries || []) {
         // Reset delivery status to pending for retry
-        // TODO: Uncomment when webhook_deliveries table is created
-        // await supabase
-        //   .from("webhook_deliveries")
-        //   .update({
-        //     status: "pending",
-        //     attempts: 0,
-        //     error_message: null,
-        //     next_retry_at: null,
-        //   })
-        //   .eq("id", delivery.id);
+        await supabase
+          .from("webhook_deliveries")
+          .update({
+            status: "pending",
+            attempts: 0,
+            error_message: null,
+            next_retry_at: null,
+          })
+          .eq("id", delivery.id);
 
         retriedCount++;
       }

@@ -912,13 +912,15 @@ export class WorkflowService {
     currentStep: number,
   ): Promise<boolean> {
     const result = await withDatabaseRetry(async () => {
-      const { error } = await supabase.from("estimation_flows").upsert({
-        user_id: userId,
-        estimate_id: estimateId,
-        flow_data: guidedFlowData as any,
-        current_step: currentStep,
-        updated_at: new Date().toISOString(),
-      });
+      const { error } = await createClient()
+        .from("estimation_flows")
+        .upsert({
+          user_id: userId,
+          estimate_id: estimateId,
+          flow_data: guidedFlowData as any,
+          current_step: currentStep,
+          updated_at: new Date().toISOString(),
+        });
 
       if (error) throw error;
       return true;
@@ -936,7 +938,7 @@ export class WorkflowService {
     currentStep: number;
   } | null> {
     const result = await withDatabaseRetry(async () => {
-      const { data, error } = await supabase
+      const { data, error } = await createClient()
         .from("estimation_flows")
         .select("flow_data, current_step")
         .eq("estimate_id", estimateId)
@@ -959,7 +961,7 @@ export class WorkflowService {
 
   static async deleteWorkflowProgress(estimateId: string): Promise<boolean> {
     const result = await withDatabaseRetry(async () => {
-      const { error } = await supabase
+      const { error } = await createClient()
         .from("estimation_flows")
         .delete()
         .eq("estimate_id", estimateId);

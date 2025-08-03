@@ -1,10 +1,10 @@
 /**
- * AI Analytics Service
+ * AI Analytics Service - Fixed version without background processing
  * Tracks and analyzes AI assistant usage patterns and performance
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { aiPerformanceMonitor } from "../monitoring/ai-performance-monitor";
+import { AIPerformanceMonitor } from "../monitoring/ai-performance-monitor";
 import { productionConfig } from "../deployment/production-config";
 
 interface AIUsageMetrics {
@@ -50,15 +50,10 @@ interface UserAnalytics {
 
 export class AIAnalyticsService {
   private static instance: AIAnalyticsService;
-  private processingInterval: NodeJS.Timeout | null = null;
-  private readonly PROCESS_INTERVAL = 30000; // 30 seconds
   private readonly BATCH_SIZE = 50;
 
   private constructor() {
-    // Start processor only in server environment
-    if (typeof window === "undefined") {
-      this.startQueueProcessor();
-    }
+    // No background processing in constructor
   }
 
   static getInstance(): AIAnalyticsService {
@@ -69,447 +64,225 @@ export class AIAnalyticsService {
   }
 
   /**
-   * Track AI usage event
+   * Track AI usage event - now processes immediately
    */
   async trackUsage(metrics: AIUsageMetrics): Promise<void> {
     try {
       const supabase = createClient();
 
-      // Insert into persistent queue
-      const { error } = await supabase.from("ai_analytics_queue").insert({
-        event_data: {
-          userId: metrics.userId,
-          conversationId: metrics.conversationId,
-          timestamp: metrics.timestamp.toISOString(),
-          endpoint: metrics.endpoint,
-          model: metrics.model,
-          tokensUsed: metrics.tokensUsed,
-          responseTime: metrics.responseTime,
-          success: metrics.success,
-          error: metrics.error,
-          features: metrics.features,
-          metadata: metrics.metadata,
-        },
+      // Insert directly into analytics table instead of queue
+      const { error } = await supabase.from("ai_analytics").insert({
+        user_id: metrics.userId,
+        conversation_id: metrics.conversationId,
+        timestamp: metrics.timestamp.toISOString(),
+        endpoint: metrics.endpoint,
+        model: metrics.model,
+        tokens_used: metrics.tokensUsed,
+        response_time: metrics.responseTime,
+        success: metrics.success,
+        error: metrics.error,
+        features: metrics.features,
+        metadata: metrics.metadata,
       });
 
       if (error) {
-        console.error("Failed to queue analytics event:", error);
+        console.error("Failed to track AI usage:", error);
+        // Don't throw - analytics should not break the main flow
       }
 
-      // Also send to performance monitor for real-time tracking
-      if (productionConfig.getConfig().ai.monitoring.performanceTracking) {
-        aiPerformanceMonitor.recordMetric(metrics.endpoint, {
-          duration: metrics.responseTime,
-          tokensUsed: metrics.tokensUsed,
-          cacheHit: false,
-          toolsUsed: [],
-          modelFallback: false,
-        });
-      }
+      // Also record in performance monitor for in-memory metrics
+      const monitor = AIPerformanceMonitor.getInstance();
+      monitor.recordMetric({
+        requestId: crypto.randomUUID(),
+        timestamp: Date.now(),
+        duration: metrics.responseTime,
+        model: metrics.model,
+        mode: metrics.endpoint,
+        toolsUsed: metrics.features.tools ? ["tools"] : [],
+        tokensUsed: metrics.tokensUsed,
+        cacheHit: false,
+        streamingEnabled: metrics.features.streaming,
+        error: metrics.error,
+        statusCode: metrics.success ? 200 : 500,
+      });
     } catch (error) {
-      console.error("Analytics tracking error:", error);
+      console.error("Error tracking AI usage:", error);
+      // Don't throw - analytics should not break the main flow
     }
   }
 
   /**
-   * Start queue processor
-   */
-  private startQueueProcessor(): void {
-    // Process queue periodically
-    this.processingInterval = setInterval(async () => {
-      await this.processQueue();
-    }, this.PROCESS_INTERVAL);
-
-    // Also process on startup
-    this.processQueue().catch(console.error);
-  }
-
-  /**
-   * Process analytics queue
-   */
-  private async processQueue(): Promise<void> {
-    try {
-      const supabase = createClient();
-
-      // Call the database function to process queue
-      const { data, error } = await supabase.rpc("process_analytics_queue", {
-        batch_size: this.BATCH_SIZE,
-      });
-
-      if (error) {
-        console.error("Failed to process analytics queue:", error);
-        return;
-      }
-
-      if (data && data > 0) {
-        console.log(`Processed ${data} analytics events`);
-      }
-
-      // Cleanup old processed items periodically (10% chance)
-      if (Math.random() < 0.1) {
-        const { error: cleanupError } = await supabase.rpc(
-          "cleanup_analytics_queue",
-          { days_to_keep: 7 },
-        );
-
-        if (cleanupError) {
-          console.error("Failed to cleanup analytics queue:", cleanupError);
-        }
-      }
-    } catch (error) {
-      console.error("Analytics queue processing error:", error);
-    }
-  }
-
-  /**
-   * Get analytics summary for a time period
+   * Get analytics summary for a date range
    */
   async getAnalyticsSummary(
     startDate: Date,
     endDate: Date,
     page: number = 1,
-    limit: number = 1000,
-  ): Promise<
-    AIAnalyticsSummary & {
-      pagination: { page: number; limit: number; total: number };
+    limit: number = 50,
+  ): Promise<{
+    summary: AIAnalyticsSummary;
+    recentActivity: any[];
+    pagination: { page: number; limit: number; total: number };
+  }> {
+    try {
+      const supabase = createClient();
+
+      // Get summary data
+      const { data: summaryData, error: summaryError } = await supabase.rpc(
+        "get_ai_analytics_summary",
+        {
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+        },
+      );
+
+      if (summaryError) throw summaryError;
+
+      // Get recent activity with pagination
+      const offset = (page - 1) * limit;
+      const {
+        data: activityData,
+        error: activityError,
+        count,
+      } = await supabase
+        .from("ai_analytics")
+        .select("*", { count: "exact" })
+        .gte("timestamp", startDate.toISOString())
+        .lte("timestamp", endDate.toISOString())
+        .order("timestamp", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (activityError) throw activityError;
+
+      // Process summary data
+      const summary: AIAnalyticsSummary = {
+        totalRequests: summaryData?.[0]?.total_requests || 0,
+        successRate: summaryData?.[0]?.success_rate || 0,
+        averageResponseTime: summaryData?.[0]?.avg_response_time || 0,
+        totalTokensUsed: summaryData?.[0]?.total_tokens || 0,
+        uniqueUsers: summaryData?.[0]?.unique_users || 0,
+        modelUsage: summaryData?.[0]?.model_usage || {},
+        featureUsage: summaryData?.[0]?.feature_usage || {},
+        errorTypes: summaryData?.[0]?.error_types || {},
+        peakUsageHours: summaryData?.[0]?.peak_hours || [],
+      };
+
+      return {
+        summary,
+        recentActivity: activityData || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+        },
+      };
+    } catch (error) {
+      console.error("Error getting analytics summary:", error);
+      throw error;
     }
-  > {
-    const supabase = createClient();
-
-    // Get total count first
-    const { count } = await supabase
-      .from("ai_analytics_events")
-      .select("*", { count: "exact", head: true })
-      .gte("timestamp", startDate.toISOString())
-      .lte("timestamp", endDate.toISOString());
-
-    const offset = (page - 1) * limit;
-
-    const { data, error } = await supabase
-      .from("ai_analytics_events")
-      .select("*")
-      .gte("timestamp", startDate.toISOString())
-      .lte("timestamp", endDate.toISOString())
-      .order("timestamp", { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error || !data) {
-      throw new Error(`Failed to fetch analytics: ${error?.message}`);
-    }
-
-    // Calculate summary metrics
-    const summary: AIAnalyticsSummary = {
-      totalRequests: data.length,
-      successRate: data.filter((d) => d.success).length / data.length,
-      averageResponseTime:
-        data.reduce((sum, d) => sum + d.response_time, 0) / data.length,
-      totalTokensUsed: data.reduce((sum, d) => sum + d.tokens_used, 0),
-      uniqueUsers: new Set(data.map((d) => d.user_id)).size,
-      modelUsage: {},
-      featureUsage: {},
-      errorTypes: {},
-      peakUsageHours: this.calculatePeakHours(data),
-    };
-
-    // Calculate model usage
-    data.forEach((event) => {
-      summary.modelUsage[event.model] =
-        (summary.modelUsage[event.model] || 0) + 1;
-
-      // Calculate feature usage
-      if (event.features_used) {
-        Object.entries(event.features_used).forEach(([feature, used]) => {
-          if (used) {
-            summary.featureUsage[feature] =
-              (summary.featureUsage[feature] || 0) + 1;
-          }
-        });
-      }
-
-      // Track error types
-      if (!event.success && event.error) {
-        const errorType = this.categorizeError(event.error);
-        summary.errorTypes[errorType] =
-          (summary.errorTypes[errorType] || 0) + 1;
-      }
-    });
-
-    return {
-      ...summary,
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-      },
-    };
   }
 
   /**
    * Get user-specific analytics
    */
-  async getUserAnalytics(userId: string): Promise<UserAnalytics> {
-    const supabase = createClient();
+  async getUserAnalytics(
+    userId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<UserAnalytics> {
+    try {
+      const supabase = createClient();
 
-    // Get user's AI conversations
-    const { data: conversations, error: convError } = await supabase
-      .from("ai_conversations")
-      .select("*")
-      .eq("user_id", userId);
+      const query = supabase
+        .from("ai_analytics")
+        .select("*")
+        .eq("user_id", userId);
 
-    if (convError) {
-      throw new Error(
-        `Failed to fetch user conversations: ${convError.message}`,
-      );
-    }
-
-    // Get user's analytics events
-    const { data: events, error: eventError } = await supabase
-      .from("ai_analytics_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("timestamp", { ascending: false });
-
-    if (eventError) {
-      throw new Error(`Failed to fetch user events: ${eventError.message}`);
-    }
-
-    const totalMessages =
-      conversations?.reduce(
-        (sum, conv) => sum + (conv.message_count || 0),
-        0,
-      ) || 0;
-
-    const totalTokens =
-      events?.reduce((sum, event) => sum + event.tokens_used, 0) || 0;
-
-    // Calculate feature usage
-    const featureUsage: Record<string, number> = {};
-    events?.forEach((event) => {
-      if (event.features_used) {
-        Object.entries(event.features_used).forEach(([feature, used]) => {
-          if (used) {
-            featureUsage[feature] = (featureUsage[feature] || 0) + 1;
-          }
-        });
+      if (startDate) {
+        query.gte("timestamp", startDate.toISOString());
       }
-    });
+      if (endDate) {
+        query.lte("timestamp", endDate.toISOString());
+      }
 
-    const mostUsedFeatures = Object.entries(featureUsage)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([feature]) => feature);
+      const { data, error } = await query;
 
-    return {
-      userId,
-      totalConversations: conversations?.length || 0,
-      totalMessages,
-      totalTokensUsed: totalTokens,
-      averageConversationLength: conversations?.length
-        ? totalMessages / conversations.length
-        : 0,
-      mostUsedFeatures,
-      lastActive: events?.[0]?.timestamp
-        ? new Date(events[0].timestamp)
-        : new Date(),
-      engagementScore: this.calculateEngagementScore({
-        conversations: conversations?.length || 0,
-        messages: totalMessages,
-        features: mostUsedFeatures.length,
-        lastActive: events?.[0]?.timestamp,
-      }),
-    };
-  }
+      if (error) throw error;
 
-  /**
-   * Get real-time analytics dashboard data
-   */
-  async getDashboardMetrics(): Promise<{
-    current: {
-      activeUsers: number;
-      requestsPerMinute: number;
-      averageResponseTime: number;
-      errorRate: number;
-    };
-    trends: {
-      requestsOverTime: Array<{ time: string; count: number }>;
-      tokensOverTime: Array<{ time: string; tokens: number }>;
-      errorRateOverTime: Array<{ time: string; rate: number }>;
-    };
-    health: {
-      status: "healthy" | "degraded" | "critical";
-      issues: string[];
-    };
-  }> {
-    const supabase = createClient();
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      // Process user analytics
+      const conversations = new Set(
+        data
+          ?.map((d) => d.conversation_id)
+          .filter((id): id is string => Boolean(id)),
+      );
+      const totalTokens =
+        data?.reduce((sum, d) => sum + (d.tokens_used || 0), 0) || 0;
+      const features: Record<string, number> = {};
 
-    // Get recent events
-    const { data: recentEvents, error } = await supabase
-      .from("ai_analytics_events")
-      .select("*")
-      .gte("timestamp", oneHourAgo.toISOString())
-      .order("timestamp", { ascending: true });
+      data?.forEach((d) => {
+        if (d.features?.streaming)
+          features.streaming = (features.streaming || 0) + 1;
+        if (d.features?.tools) features.tools = (features.tools || 0) + 1;
+        if (d.features?.contextMemory)
+          features.contextMemory = (features.contextMemory || 0) + 1;
+      });
 
-    if (error) {
-      throw new Error(`Failed to fetch dashboard metrics: ${error.message}`);
+      const mostUsedFeatures = Object.entries(features)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([feature]) => feature);
+
+      return {
+        userId,
+        totalConversations: conversations.size,
+        totalMessages: data?.length || 0,
+        totalTokensUsed: totalTokens,
+        averageConversationLength:
+          conversations.size > 0 ? (data?.length || 0) / conversations.size : 0,
+        mostUsedFeatures,
+        lastActive: data?.[0]?.timestamp
+          ? new Date(data[0].timestamp)
+          : new Date(),
+        engagementScore: this.calculateEngagementScore(data || []),
+      };
+    } catch (error) {
+      console.error("Error getting user analytics:", error);
+      throw error;
     }
-
-    // Calculate current metrics
-    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-    const recentFiveMinEvents =
-      recentEvents?.filter((e) => new Date(e.timestamp) >= fiveMinutesAgo) ||
-      [];
-
-    const current = {
-      activeUsers: new Set(recentFiveMinEvents.map((e) => e.user_id)).size,
-      requestsPerMinute: recentFiveMinEvents.length / 5,
-      averageResponseTime:
-        recentFiveMinEvents.reduce((sum, e) => sum + e.response_time, 0) /
-        (recentFiveMinEvents.length || 1),
-      errorRate:
-        recentFiveMinEvents.filter((e) => !e.success).length /
-        (recentFiveMinEvents.length || 1),
-    };
-
-    // Calculate trends (group by 5-minute intervals)
-    const trends = this.calculateTrends(recentEvents || []);
-
-    // Determine health status
-    const health = this.determineHealthStatus(current, recentEvents || []);
-
-    return { current, trends, health };
-  }
-
-  /**
-   * Calculate peak usage hours
-   */
-  private calculatePeakHours(events: any[]): number[] {
-    const hourCounts: Record<number, number> = {};
-
-    events.forEach((event) => {
-      const hour = new Date(event.timestamp).getHours();
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-    });
-
-    return Object.entries(hourCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3)
-      .map(([hour]) => parseInt(hour));
-  }
-
-  /**
-   * Categorize error types
-   */
-  private categorizeError(error: string): string {
-    if (error.includes("rate limit")) return "rate_limit";
-    if (error.includes("timeout")) return "timeout";
-    if (error.includes("model")) return "model_error";
-    if (error.includes("auth")) return "authentication";
-    if (error.includes("network")) return "network";
-    return "other";
   }
 
   /**
    * Calculate user engagement score
    */
-  private calculateEngagementScore(data: {
-    conversations: number;
-    messages: number;
-    features: number;
-    lastActive?: string;
-  }): number {
-    let score = 0;
+  private calculateEngagementScore(data: any[]): number {
+    if (!data.length) return 0;
 
-    // Conversation frequency (max 30 points)
-    score += Math.min(data.conversations * 3, 30);
+    // Factors: frequency, recency, feature usage, success rate
+    const now = Date.now();
+    const dayInMs = 24 * 60 * 60 * 1000;
 
-    // Message volume (max 30 points)
-    score += Math.min(data.messages * 0.5, 30);
+    // Recency score (0-25)
+    const lastActive = new Date(data[0].timestamp).getTime();
+    const daysSinceActive = (now - lastActive) / dayInMs;
+    const recencyScore = Math.max(0, 25 - daysSinceActive);
 
-    // Feature diversity (max 20 points)
-    score += Math.min(data.features * 4, 20);
+    // Frequency score (0-25)
+    const messagesPerDay = data.length / 30; // Assuming 30-day window
+    const frequencyScore = Math.min(25, messagesPerDay * 5);
 
-    // Recency (max 20 points)
-    if (data.lastActive) {
-      const daysSinceActive =
-        (Date.now() - new Date(data.lastActive).getTime()) /
-        (1000 * 60 * 60 * 24);
-      score += Math.max(20 - daysSinceActive * 2, 0);
-    }
+    // Feature usage score (0-25)
+    const featureUsage = data.filter(
+      (d) => d.features?.tools || d.features?.contextMemory,
+    ).length;
+    const featureScore = Math.min(25, (featureUsage / data.length) * 50);
 
-    return Math.round(score);
-  }
+    // Success rate score (0-25)
+    const successRate = data.filter((d) => d.success).length / data.length;
+    const successScore = successRate * 25;
 
-  /**
-   * Calculate trend data
-   */
-  private calculateTrends(events: any[]) {
-    const intervals: Record<
-      string,
-      { count: number; tokens: number; errors: number }
-    > = {};
-
-    events.forEach((event) => {
-      const time = new Date(event.timestamp);
-      const intervalKey = `${time.getHours()}:${Math.floor(time.getMinutes() / 5) * 5}`;
-
-      if (!intervals[intervalKey]) {
-        intervals[intervalKey] = { count: 0, tokens: 0, errors: 0 };
-      }
-
-      intervals[intervalKey].count++;
-      intervals[intervalKey].tokens += event.tokens_used;
-      if (!event.success) intervals[intervalKey].errors++;
-    });
-
-    const sortedKeys = Object.keys(intervals).sort();
-
-    return {
-      requestsOverTime: sortedKeys.map((time) => ({
-        time,
-        count: intervals[time].count,
-      })),
-      tokensOverTime: sortedKeys.map((time) => ({
-        time,
-        tokens: intervals[time].tokens,
-      })),
-      errorRateOverTime: sortedKeys.map((time) => ({
-        time,
-        rate: intervals[time].errors / intervals[time].count,
-      })),
-    };
-  }
-
-  /**
-   * Determine system health status
-   */
-  private determineHealthStatus(
-    current: any,
-    events: any[],
-  ): { status: "healthy" | "degraded" | "critical"; issues: string[] } {
-    const issues: string[] = [];
-
-    if (current.errorRate > 0.2) {
-      issues.push("High error rate detected");
-    }
-
-    if (current.averageResponseTime > 5000) {
-      issues.push("Slow response times");
-    }
-
-    if (current.requestsPerMinute > 100) {
-      issues.push("High request volume");
-    }
-
-    const status =
-      issues.length === 0
-        ? "healthy"
-        : issues.length === 1
-          ? "degraded"
-          : "critical";
-
-    return { status, issues };
+    return Math.round(
+      recencyScore + frequencyScore + featureScore + successScore,
+    );
   }
 
   /**
@@ -520,66 +293,158 @@ export class AIAnalyticsService {
     endDate: Date,
     format: "json" | "csv" = "json",
   ): Promise<string> {
-    const summary = await this.getAnalyticsSummary(startDate, endDate);
+    try {
+      const { summary, recentActivity } = await this.getAnalyticsSummary(
+        startDate,
+        endDate,
+        1,
+        10000, // Get all data for export
+      );
 
-    if (format === "json") {
-      return JSON.stringify(summary, null, 2);
+      if (format === "json") {
+        return JSON.stringify({ summary, data: recentActivity }, null, 2);
+      } else {
+        // CSV format
+        const headers = [
+          "timestamp",
+          "user_id",
+          "endpoint",
+          "model",
+          "tokens_used",
+          "response_time",
+          "success",
+          "error",
+        ];
+
+        const rows = recentActivity.map((row) =>
+          [
+            row.timestamp,
+            row.user_id,
+            row.endpoint,
+            row.model,
+            row.tokens_used,
+            row.response_time,
+            row.success,
+            row.error || "",
+          ].join(","),
+        );
+
+        return [headers.join(","), ...rows].join("\n");
+      }
+    } catch (error) {
+      console.error("Error exporting analytics:", error);
+      throw error;
     }
-
-    // CSV format
-    const csv = [
-      "Metric,Value",
-      `Total Requests,${summary.totalRequests}`,
-      `Success Rate,${(summary.successRate * 100).toFixed(2)}%`,
-      `Average Response Time,${summary.averageResponseTime.toFixed(2)}ms`,
-      `Total Tokens Used,${summary.totalTokensUsed}`,
-      `Unique Users,${summary.uniqueUsers}`,
-      "",
-      "Model,Usage Count",
-      ...Object.entries(summary.modelUsage).map(
-        ([model, count]) => `${model},${count}`,
-      ),
-      "",
-      "Feature,Usage Count",
-      ...Object.entries(summary.featureUsage).map(
-        ([feature, count]) => `${feature},${count}`,
-      ),
-    ].join("\n");
-
-    return csv;
   }
 
   /**
-   * Cleanup old analytics data
+   * Get dashboard data combining multiple analytics views
    */
-  async cleanupOldAnalytics(daysToKeep: number = 90): Promise<number> {
-    const supabase = createClient();
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+  async getDashboardData(userId?: string): Promise<{
+    performanceMetrics: any;
+    systemHealth: any;
+    userEngagement: any;
+    costAnalysis: any;
+  }> {
+    try {
+      const endDate = new Date();
+      const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000); // Last 7 days
 
-    const { data, error } = await supabase
-      .from("ai_analytics_events")
-      .delete()
-      .lt("timestamp", cutoffDate.toISOString())
-      .select("id");
+      // Get performance metrics from monitor
+      const monitor = AIPerformanceMonitor.getInstance();
+      const performanceMetrics = monitor.getAggregatedMetrics();
+      const systemHealth = monitor.getHealthStatus();
 
-    if (error) {
-      throw new Error(`Failed to cleanup analytics: ${error.message}`);
+      // Get analytics summary
+      const { summary } = await this.getAnalyticsSummary(startDate, endDate);
+
+      // Get user engagement data if userId provided
+      let userEngagement = null;
+      if (userId) {
+        userEngagement = await this.getUserAnalytics(
+          userId,
+          startDate,
+          endDate,
+        );
+      }
+
+      // Calculate cost analysis
+      const costAnalysis = {
+        totalCost: this.calculateCost(
+          summary.totalTokensUsed,
+          summary.modelUsage,
+        ),
+        costByModel: this.calculateCostByModel(summary.modelUsage),
+        projectedMonthlyCost: this.projectMonthlyCost(
+          summary.totalTokensUsed,
+          7,
+        ),
+      };
+
+      return {
+        performanceMetrics,
+        systemHealth,
+        userEngagement,
+        costAnalysis,
+      };
+    } catch (error) {
+      console.error("Error getting dashboard data:", error);
+      throw error;
     }
-
-    return data?.length || 0;
   }
 
   /**
-   * Stop the analytics service
+   * Calculate AI usage costs
    */
-  stop(): void {
-    if (this.processingInterval) {
-      clearInterval(this.processingInterval);
-      this.processingInterval = null;
-    }
+  private calculateCost(
+    totalTokens: number,
+    modelUsage: Record<string, number>,
+  ): number {
+    // Simplified cost calculation - adjust rates as needed
+    const rates = {
+      "gpt-4": 0.03,
+      "gpt-4-turbo": 0.01,
+      "gpt-3.5-turbo": 0.002,
+    };
+
+    let totalCost = 0;
+    Object.entries(modelUsage).forEach(([model, count]) => {
+      const rate = rates[model as keyof typeof rates] || 0.01;
+      const tokensPerRequest =
+        totalTokens / Object.values(modelUsage).reduce((a, b) => a + b, 1);
+      totalCost += (count * tokensPerRequest * rate) / 1000;
+    });
+
+    return totalCost;
+  }
+
+  private calculateCostByModel(
+    modelUsage: Record<string, number>,
+  ): Record<string, number> {
+    const rates = {
+      "gpt-4": 0.03,
+      "gpt-4-turbo": 0.01,
+      "gpt-3.5-turbo": 0.002,
+    };
+
+    const costByModel: Record<string, number> = {};
+    Object.entries(modelUsage).forEach(([model, count]) => {
+      const rate = rates[model as keyof typeof rates] || 0.01;
+      costByModel[model] = count * rate;
+    });
+
+    return costByModel;
+  }
+
+  private projectMonthlyCost(
+    tokensInPeriod: number,
+    periodDays: number,
+  ): number {
+    const tokensPerDay = tokensInPeriod / periodDays;
+    const monthlyTokens = tokensPerDay * 30;
+    return (monthlyTokens * 0.01) / 1000; // Average rate
   }
 }
 
-// Singleton instance
+// Export singleton instance
 export const aiAnalytics = AIAnalyticsService.getInstance();

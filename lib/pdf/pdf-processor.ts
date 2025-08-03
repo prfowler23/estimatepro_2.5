@@ -1,18 +1,30 @@
 // PDF Processing Service with Image Extraction and OCR
 // Handles PDF text extraction, image extraction, and measurement detection
 
-import * as pdfjsLib from "pdfjs-dist";
-import { createWorker } from "tesseract.js";
+// Dynamic imports to avoid loading PDF.js during build/module init
 import pdf2pic from "pdf2pic";
 import { withRetry } from "@/lib/utils/retry-logic";
 import { isNotNull, safeString, safeNumber } from "@/lib/utils/null-safety";
 
-// Configure PDF.js worker
-if (typeof window !== "undefined") {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
-} else {
-  // Node.js environment - use CDN worker for server-side rendering
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+// Lazy load PDF.js to avoid build-time issues
+async function getPDFLib() {
+  const pdfjsLib = await import("pdfjs-dist");
+
+  // Configure PDF.js worker only when actually needed
+  if (typeof window !== "undefined") {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+  } else {
+    // Node.js environment - use CDN worker for server-side rendering
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+  }
+
+  return pdfjsLib;
+}
+
+// Lazy load Tesseract.js to avoid loading ~1.8MB during build/module init
+async function getTesseractLib() {
+  const tesseract = await import("tesseract.js");
+  return tesseract;
 }
 
 // PDF Processing Types
@@ -137,7 +149,7 @@ const MEASUREMENT_PATTERNS = [
 ];
 
 export class PDFProcessor {
-  private ocrWorker: Tesseract.Worker | null = null;
+  private ocrWorker: any | null = null; // Will be Tesseract.Worker when loaded
   private pdf2picConverter: any;
 
   constructor() {
@@ -156,6 +168,8 @@ export class PDFProcessor {
       await this.ocrWorker.terminate();
     }
 
+    // Lazy load Tesseract.js when actually needed
+    const { createWorker } = await getTesseractLib();
     this.ocrWorker = await createWorker(config.language);
 
     const parameters: Record<string, string> = {
@@ -192,7 +206,8 @@ export class PDFProcessor {
     } = options;
 
     try {
-      // Load PDF document
+      // Load PDF document using lazy-loaded PDF.js
+      const pdfjsLib = await getPDFLib();
       const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
       const metadata = await this.extractMetadata(pdf);
 
@@ -272,6 +287,7 @@ export class PDFProcessor {
         const images: PDFImageData[] = [];
         const operatorList = await page.getOperatorList();
 
+        const pdfjsLib = await getPDFLib();
         let imageIndex = 0;
         for (let i = 0; i < operatorList.fnArray.length; i++) {
           if (operatorList.fnArray[i] === pdfjsLib.OPS.paintImageXObject) {
@@ -500,6 +516,7 @@ export class PDFProcessor {
     endPage: number,
   ): Promise<{ success: boolean; text: string; error?: string }> {
     try {
+      const pdfjsLib = await getPDFLib();
       const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
       let extractedText = "";
 
@@ -543,6 +560,7 @@ export class PDFProcessor {
     error?: string;
   }> {
     try {
+      const pdfjsLib = await getPDFLib();
       const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
       const matches: Array<{
         pageNumber: number;

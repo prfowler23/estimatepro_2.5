@@ -13,7 +13,7 @@ async function handleCreateCustomer(
   data: z.infer<typeof createCustomerSchema>,
   context: any,
 ) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   // Check if customer already exists by email
   if (data.email) {
@@ -56,7 +56,7 @@ const getCustomersQuerySchema = z.object({
 
 async function handleGetCustomers(context: any) {
   const { request } = context;
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   // Get and validate query parameters
   const searchParams = request.nextUrl.searchParams;

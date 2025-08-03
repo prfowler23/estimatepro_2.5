@@ -1,3 +1,4 @@
+import { createClient } from "@/lib/supabase/server";
 import { AIResponseCache } from "@/lib/ai/ai-response-cache";
 
 export interface WeatherData {

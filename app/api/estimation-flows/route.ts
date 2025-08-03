@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return ErrorResponses.rateLimitExceeded();
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const requestBody = await request.json();
 
     // Validate step transition if updating existing flow
@@ -112,7 +112,7 @@ export async function PUT(request: NextRequest) {
       return ErrorResponses.rateLimitExceeded();
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { searchParams } = new URL(request.url);
     const flowId = searchParams.get("id");
 
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
       return ErrorResponses.unauthorized(authError || "Unauthorized");
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 

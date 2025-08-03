@@ -333,3 +333,6 @@ export function createPerformanceTracker(
     },
   };
 }
+
+// Export singleton instance
+export const aiPerformanceMonitor = AIPerformanceMonitor.getInstance();

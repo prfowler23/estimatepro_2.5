@@ -13,6 +13,9 @@ const customJestConfig = {
     "^@/(.*)$": "<rootDir>/$1",
   },
   testEnvironment: "jest-environment-jsdom",
+  transformIgnorePatterns: [
+    "node_modules/(?!(isows|@supabase|jose|p-queue|eventemitter3)/)",
+  ],
   collectCoverageFrom: [
     "components/**/*.{js,jsx,ts,tsx}",
     "lib/**/*.{js,jsx,ts,tsx}",
@@ -34,13 +37,15 @@ const customJestConfig = {
     },
   },
   testMatch: [
-    "<rootDir>/__tests__/**/*.{js,jsx,ts,tsx}",
+    "<rootDir>/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}",
     "<rootDir>/**/*.{test,spec}.{js,jsx,ts,tsx}",
   ],
   testPathIgnorePatterns: [
     "<rootDir>/node_modules/",
     "<rootDir>/.next/",
     "<rootDir>/coverage/",
+    "<rootDir>/__tests__/test-utils.tsx",
+    "<rootDir>/__tests__/.*\\.md$",
   ],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx"],
 };

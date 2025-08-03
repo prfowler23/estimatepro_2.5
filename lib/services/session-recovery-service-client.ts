@@ -117,8 +117,8 @@ export class SessionRecoveryServiceClient {
         tabId: this.tabId,
         pageUrl: window.location.href,
         isActive: true,
-        lastActiveStep: data.currentStep,
-        completedSteps: data.completedSteps || [],
+        lastActiveStep: (data as any).currentStep,
+        completedSteps: (data as any).completedSteps || [],
         version: 1,
       };
 

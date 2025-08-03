@@ -361,11 +361,28 @@ export async function createDatabaseIndexes() {
 
   for (const statement of statements) {
     if (statement.trim()) {
-      // TODO: Implement exec_sql function or use direct SQL execution
-      // const { error } = await supabase.rpc("exec_sql", { sql: statement });
-      const error = null; // Temporary fix
-      if (error) {
-        console.error("Failed to create index:", error);
+      try {
+        const response = await fetch("/api/database/exec-sql", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sql: statement,
+            operation_type: "index",
+            description: "Database index creation",
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to create index:", errorData.error);
+        } else {
+          const result = await response.json();
+          console.log(
+            `Index created successfully: ${statement.split(" ")[4] || "unknown"}`,
+          );
+        }
+      } catch (error) {
+        console.error("Failed to execute SQL:", error);
       }
     }
   }

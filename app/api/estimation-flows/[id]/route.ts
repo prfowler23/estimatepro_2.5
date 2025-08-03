@@ -16,7 +16,7 @@ export async function GET(
       );
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { id: flowId } = await params;
 
     // Get estimation flow with access control via RLS
@@ -74,7 +74,7 @@ export async function PUT(
       );
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { id: flowId } = await params;
     const body = await request.json();
 
@@ -121,7 +121,7 @@ export async function DELETE(
       );
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { id: flowId } = await params;
 
     // Delete estimation flow (RLS will ensure user can only delete their own)

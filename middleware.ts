@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { rateLimit } from "./lib/middleware/rate-limit";
@@ -41,8 +41,43 @@ export async function middleware(request: NextRequest) {
   try {
     validateEnvironmentVariables();
 
-    const res = NextResponse.next();
-    const supabase = createMiddlewareClient({ req: request, res });
+    const response = NextResponse.next();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options) {
+            request.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options) {
+            request.cookies.set({
+              name,
+              value: "",
+              ...options,
+            });
+            response.cookies.set({
+              name,
+              value: "",
+              ...options,
+            });
+          },
+        },
+      },
+    );
 
     // Refresh session to ensure latest state
     await supabase.auth.getSession();
@@ -114,8 +149,8 @@ export async function middleware(request: NextRequest) {
           request.nextUrl.pathname,
         );
         // Add a header to indicate this was allowed in development
-        res.headers.set("X-Dev-Auth-Bypass", "true");
-        return res;
+        response.headers.set("X-Dev-Auth-Bypass", "true");
+        return response;
       }
 
       // Redirect to login page
@@ -124,7 +159,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    return res;
+    return response;
   } catch (error) {
     console.error("Middleware error:", error);
 

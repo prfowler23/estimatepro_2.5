@@ -521,18 +521,18 @@ export const withMemoization = <P extends object>(
   return React.memo(Component, propsAreEqual);
 };
 
-export const createStableCallback = <T extends (...args: any[]) => any>(
+export const useStableCallback = <T extends (...args: any[]) => any>(
   callback: T,
   deps: React.DependencyList,
 ): T => {
-  return useCallback(callback, deps);
+  return useCallback(callback, [...deps, callback]);
 };
 
-export const createStableValue = <T>(
+export const useStableValue = <T>(
   factory: () => T,
   deps: React.DependencyList,
 ): T => {
-  return useMemo(factory, deps);
+  return useMemo(factory, [...deps, factory]);
 };
 
 // 8. State Update Batching

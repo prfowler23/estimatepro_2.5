@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/utils/logger";
 import { getUser } from "@/lib/auth/server";
 import { aiAnalytics } from "@/lib/ai/analytics/ai-analytics-service";
 import { z } from "zod";
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
       }
 
       case "dashboard": {
-        const dashboardMetrics = await aiAnalytics.getDashboardMetrics();
+        const dashboardMetrics = await aiAnalytics.getDashboardData();
         return NextResponse.json(dashboardMetrics);
       }
 

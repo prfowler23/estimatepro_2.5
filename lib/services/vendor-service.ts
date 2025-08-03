@@ -68,9 +68,8 @@ export class VendorService {
     type?: "equipment" | "materials" | "both";
     preferredOnly?: boolean;
   }): Promise<Vendor[]> {
-    const supabase = createClient();
-    // TODO: Implement database query when vendors table is added
-    // For now, always use fallback vendors
+    // Vendors table not yet implemented in database schema
+    // Using fallback data until schema is updated
     return this.getFallbackVendors(filters);
   }
 

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createServerSupabaseClient } from "@/lib/auth/server";
 import { z } from "zod";
 import { FACADE_ANALYSIS_PROMPTS } from "@/lib/ai/prompts/facade-analysis-prompts";
 import { validateAIInput, sanitizeAIResponse } from "@/lib/ai/ai-security";
@@ -26,8 +25,7 @@ export async function POST(request: NextRequest) {
   let session: any = null;
 
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createServerSupabaseClient();
 
     // Check authentication
     const authResult = await supabase.auth.getSession();
@@ -59,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Validate AI input
     const validation = await validateAIInput(validatedData);
     if (!validation.isValid) {
-      return ErrorResponses.badRequest("Invalid input", validation.errors);
+      return ErrorResponses.badRequest("Invalid input", validation.error);
     }
 
     // Check cache

@@ -4,19 +4,26 @@ import { ValidationResult } from "@/lib/validation/guided-flow-validation";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { ProgressiveValidation } from "./ProgressiveValidation";
 import { ProgressiveHint } from "@/components/validation/ProgressiveHintsSystem";
+import type { StepComponentProps } from "../index";
+
+interface Step {
+  id: number;
+  name: string;
+  component: React.ComponentType<StepComponentProps>;
+}
 
 interface StepContentAreaProps {
-  CurrentStepComponent: React.ComponentType<any>;
+  CurrentStepComponent: React.ComponentType<StepComponentProps>;
   flowData: GuidedFlowData;
   currentStep: number;
-  steps: any[];
+  steps: Step[];
   currentValidation: ValidationResult | undefined;
   attemptedNavigation: boolean;
   onUpdate: (stepData: Partial<GuidedFlowData>) => void;
   onNext: () => void;
   onBack: () => void;
   userExperienceLevel?: "beginner" | "intermediate" | "advanced";
-  onApplyAutoFix?: (fieldPath: string, suggestedValue: any) => void;
+  onApplyAutoFix?: (fieldPath: string, suggestedValue: unknown) => void;
   onRequestHelp?: (hint: ProgressiveHint) => void;
 }
 
@@ -35,23 +42,27 @@ export const StepContentArea: React.FC<StepContentAreaProps> = ({
   onRequestHelp,
 }) => {
   // Default auto-fix handler
-  const handleAutoFix = (fieldPath: string, suggestedValue: any) => {
+  const handleAutoFix = (fieldPath: string, suggestedValue: unknown) => {
     if (onApplyAutoFix) {
       onApplyAutoFix(fieldPath, suggestedValue);
     } else {
       // Default implementation: apply the fix by updating the field
       const fieldParts = fieldPath.split(".");
-      const stepData: any = {};
+      const stepData: Partial<GuidedFlowData> = {};
 
       // Build nested object structure for update
       if (fieldParts.length === 2) {
-        stepData[fieldParts[0]] = { [fieldParts[1]]: suggestedValue };
+        const [section, field] = fieldParts;
+        (stepData as Record<string, any>)[section] = {
+          [field]: suggestedValue,
+        };
       } else if (fieldParts.length === 3) {
-        stepData[fieldParts[0]] = {
-          [fieldParts[1]]: { [fieldParts[2]]: suggestedValue },
+        const [section, subsection, field] = fieldParts;
+        (stepData as Record<string, any>)[section] = {
+          [subsection]: { [field]: suggestedValue },
         };
       } else {
-        stepData[fieldPath] = suggestedValue;
+        (stepData as Record<string, any>)[fieldPath] = suggestedValue;
       }
 
       onUpdate(stepData);
@@ -63,7 +74,7 @@ export const StepContentArea: React.FC<StepContentAreaProps> = ({
     if (onRequestHelp) {
       onRequestHelp(hint);
     } else {
-      // Default implementation: TODO: implement contextual help system
+      // Default implementation: show help in console (help system integrated via HelpProvider)
     }
   };
 

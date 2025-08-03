@@ -54,7 +54,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { QuotePDFGenerator } from "@/lib/pdf/generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
 import { Database } from "@/types/supabase";
@@ -185,7 +184,9 @@ function EstimatesContent() {
 
       if (servicesError) throw servicesError;
 
-      await QuotePDFGenerator.downloadQuotePDF({
+      // Dynamically import and use PDF generator
+      const { QuotePDFGenerator: PDFGen } = await import("@/lib/pdf/generator");
+      await PDFGen.downloadQuotePDF({
         ...fullEstimate,
         services,
       });

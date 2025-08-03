@@ -4,7 +4,7 @@ import { AIConversationService } from "@/lib/services/ai-conversation-service";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getUser();
@@ -12,11 +12,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const conversation =
-      await AIConversationService.getConversationWithMessages(
-        params.id,
-        user.id,
-      );
+      await AIConversationService.getConversationWithMessages(id, user.id);
 
     if (!conversation) {
       return NextResponse.json(
@@ -37,7 +35,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getUser();
@@ -45,9 +43,10 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const conversation = await AIConversationService.updateConversation(
-      params.id,
+      id,
       user.id,
       body,
     );
@@ -64,7 +63,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getUser();
@@ -72,7 +71,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await AIConversationService.deleteConversation(params.id, user.id);
+    const { id } = await params;
+    await AIConversationService.deleteConversation(id, user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

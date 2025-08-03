@@ -3,7 +3,7 @@
  * Supports dynamic feature flags, user-based flags, and A/B testing
  */
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/supabase";
 
 export interface FeatureFlag {
@@ -35,7 +35,10 @@ export interface UserContext {
 }
 
 export class FeatureFlagManager {
-  private supabase = createClientComponentClient<Database>();
+  private supabase = createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
   private flagCache: Map<string, FeatureFlag> = new Map();
   private cacheExpiry: Date = new Date(0);
   private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes

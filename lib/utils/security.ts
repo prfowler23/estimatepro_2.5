@@ -3,7 +3,7 @@
  */
 
 import { NextRequest } from "next/server";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 
 /**
  * Input sanitization utilities
@@ -13,16 +13,7 @@ export const sanitize = {
    * Sanitize HTML content to prevent XSS
    */
   html(input: string): string {
-    if (typeof window === "undefined") {
-      // Server-side: basic sanitization
-      return input
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-        .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
-        .replace(/javascript:/gi, "")
-        .replace(/on\w+\s*=/gi, "");
-    }
-
-    // Client-side: use DOMPurify
+    // Use isomorphic-dompurify which handles both server and client environments
     return DOMPurify.sanitize(input, {
       ALLOWED_TAGS: [
         "p",

@@ -67,14 +67,8 @@ export const LazyPieChart = createLazyComponent(
   <ChartLoading />,
 );
 
-// Lazy load PDF generation components
-export const LazyReactPDF = createLazyComponent(
-  () =>
-    import("@react-pdf/renderer").then((module) => ({
-      default: module.Document,
-    })),
-  <PDFLoading />,
-);
+// Note: @react-pdf/renderer removed - not actively used
+// PDF generation handled by jsPDF in lib/pdf/generator.ts
 
 // Lazy load guided flow components
 export const LazyGuidedFlow = createLazyComponent(

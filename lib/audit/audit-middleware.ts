@@ -2,8 +2,7 @@
 // Intercepts API requests and logs them for compliance and security monitoring
 
 import { NextRequest, NextResponse } from "next/server";
-import { auditSystem } from "./audit-system";
-import { AuditEventType, AuditSeverity } from "./audit-system";
+import { AuditSystem, AuditEventType, AuditSeverity } from "./audit-system";
 
 // Request context for audit logging
 interface AuditContext {
@@ -239,6 +238,7 @@ export async function auditMiddleware(
   const logRequest = async (): Promise<void> => {
     if (!shouldAudit) return;
 
+    const auditSystem = AuditSystem.getInstance();
     let requestBody: any = null;
 
     if (config.logRequestBodies && ["POST", "PUT", "PATCH"].includes(method)) {
@@ -283,6 +283,7 @@ export async function auditMiddleware(
     response: NextResponse,
     error?: Error,
   ): Promise<void> => {
+    const auditSystem = AuditSystem.getInstance();
     if (!shouldAudit) return;
 
     const duration = Date.now() - startTime;
@@ -386,6 +387,7 @@ export async function logAuthenticationEvent(
   details: Record<string, any> = {},
   request?: NextRequest,
 ): Promise<void> {
+  const auditSystem = AuditSystem.getInstance();
   const severity: AuditSeverity =
     eventType === "login_failed" ? "high" : "medium";
 
@@ -411,6 +413,7 @@ export async function logSecurityEvent(
   userId?: string,
   request?: NextRequest,
 ): Promise<void> {
+  const auditSystem = AuditSystem.getInstance();
   await auditSystem.logEvent({
     event_type: eventType,
     severity: "critical",
@@ -434,6 +437,7 @@ export async function logDataAccess(
   userId: string,
   details: Record<string, any> = {},
 ): Promise<void> {
+  const auditSystem = AuditSystem.getInstance();
   const severity: AuditSeverity = action === "delete" ? "high" : "medium";
 
   await auditSystem.logEvent({

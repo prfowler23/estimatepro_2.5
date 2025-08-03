@@ -44,7 +44,7 @@ export default function IntegratedAIAssistantPage() {
           <div>
             <h1 className="text-4xl font-bold">AI Assistant Pro</h1>
             <p className="text-muted-foreground text-lg">
-              Integrated with EstimatePro's powerful platform features
+              Integrated with EstimatePro&apos;s powerful platform features
             </p>
           </div>
         </div>
@@ -186,19 +186,20 @@ export default function IntegratedAIAssistantPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            • Be specific with measurements: "20-story building" instead of
-            "tall building"
+            • Be specific with measurements: &quot;20-story building&quot;
+            instead of &quot;tall building&quot;
           </p>
           <p className="text-sm text-muted-foreground">
-            • Include location for accurate pricing: "window cleaning in Los
-            Angeles"
+            • Include location for accurate pricing: &quot;window cleaning in
+            Los Angeles&quot;
           </p>
           <p className="text-sm text-muted-foreground">
-            • Combine multiple services: "quote for window cleaning AND pressure
-            washing"
+            • Combine multiple services: &quot;quote for window cleaning AND
+            pressure washing&quot;
           </p>
           <p className="text-sm text-muted-foreground">
-            • Use natural language: "How much to clean a parking garage?"
+            • Use natural language: &quot;How much to clean a parking
+            garage?&quot;
           </p>
         </CardContent>
       </Card>

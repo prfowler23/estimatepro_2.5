@@ -252,10 +252,10 @@ export function EstimateFlowProvider({
     [steps.length],
   );
 
-  // Data management
+  // Data management with stable reference to prevent infinite re-renders
   const updateFlowData = useCallback((data: Partial<GuidedFlowData>) => {
     setFlowData((prev) => ({ ...prev, ...data }));
-  }, []);
+  }, []); // Empty dependency array since we only use the state setter
 
   const updateStepData = useCallback((stepId: string, data: any) => {
     setFlowData((prev) => ({

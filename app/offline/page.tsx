@@ -116,12 +116,13 @@ export default function OfflinePage() {
           </motion.div>
 
           <h1 className="text-4xl font-bold text-gray-900">
-            You're Working Offline
+            You&apos;re Working Offline
           </h1>
 
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Don't worry! EstimatePro works offline. You can continue working,
-            and your changes will automatically sync when you're back online.
+            Don&apos;t worry! EstimatePro works offline. You can continue
+            working, and your changes will automatically sync when you&apos;re
+            back online.
           </p>
         </motion.div>
 

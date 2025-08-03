@@ -1,7 +1,26 @@
 "use client";
 
-import React from "react";
-import { AIAssistantChatEnhanced } from "@/components/ai/AIAssistantChatEnhanced";
+import React, { Suspense } from "react";
+import dynamic from "next/dynamic";
+
+// Lazy load the heavy AI assistant component
+const AIAssistantChatEnhanced = dynamic(
+  () =>
+    import("@/components/ai/AIAssistantChatEnhanced").then((mod) => ({
+      default: mod.AIAssistantChatEnhanced,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[700px] bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+          <p className="text-text-secondary">Loading AI Assistant...</p>
+        </div>
+      </div>
+    ),
+  },
+);
 import {
   Card,
   CardHeader,
@@ -70,11 +89,22 @@ export default function AIAssistantPage() {
 
       {/* AI Assistant Component */}
       <div className="max-w-4xl mx-auto">
-        <AIAssistantChatEnhanced
-          mode="general"
-          showFeatures={true}
-          className="h-[700px]"
-        />
+        <Suspense
+          fallback={
+            <div className="h-[700px] bg-border-primary/20 rounded-lg animate-pulse flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <div className="animate-spin w-8 h-8 border-2 border-primary-action border-t-transparent rounded-full mx-auto" />
+                <p className="text-text-secondary">Loading AI Assistant...</p>
+              </div>
+            </div>
+          }
+        >
+          <AIAssistantChatEnhanced
+            mode="general"
+            showFeatures={true}
+            className="h-[700px]"
+          />
+        </Suspense>
       </div>
     </div>
   );

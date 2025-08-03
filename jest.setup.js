@@ -64,6 +64,54 @@ process.env.API_RATE_LIMIT_WINDOW = "60000";
 process.env.ENABLE_ERROR_MONITORING = "false";
 process.env.ENABLE_PERFORMANCE_MONITORING = "false";
 
+// Mock jose library
+jest.mock("jose", () => ({
+  jwtVerify: jest.fn(),
+  SignJWT: jest.fn(() => ({
+    setProtectedHeader: jest.fn().mockReturnThis(),
+    setIssuedAt: jest.fn().mockReturnThis(),
+    setExpirationTime: jest.fn().mockReturnThis(),
+    sign: jest.fn(),
+  })),
+}));
+
+// Mock @supabase/ssr
+jest.mock("@supabase/ssr", () => ({
+  createServerClient: jest.fn(() => ({
+    auth: {
+      getUser: jest
+        .fn()
+        .mockResolvedValue({ data: { user: null }, error: null }),
+      getSession: jest
+        .fn()
+        .mockResolvedValue({ data: { session: null }, error: null }),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  })),
+  createBrowserClient: jest.fn(() => ({
+    auth: {
+      getUser: jest
+        .fn()
+        .mockResolvedValue({ data: { user: null }, error: null }),
+      getSession: jest
+        .fn()
+        .mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  })),
+}));
+
 // Mock Next.js router
 jest.mock("next/navigation", () => ({
   useRouter() {
@@ -83,6 +131,56 @@ jest.mock("next/navigation", () => ({
     return new URLSearchParams();
   },
 }));
+
+// Mock Next.js server for API routes
+jest.mock("next/server", () => {
+  class MockHeaders {
+    constructor(init = {}) {
+      this.headers = new Map(Object.entries(init));
+    }
+    get(key) {
+      return this.headers.get(key) || null;
+    }
+    set(key, value) {
+      this.headers.set(key, value);
+    }
+  }
+
+  class NextRequest {
+    constructor(url, init = {}) {
+      this.url = url;
+      this.method = init.method || "GET";
+      this.headers = new MockHeaders(init.headers || {});
+      this.body = init.body;
+      this._jsonBody = null;
+    }
+    async json() {
+      if (!this._jsonBody && this.body) {
+        this._jsonBody = JSON.parse(this.body);
+      }
+      return this._jsonBody || {};
+    }
+  }
+
+  class NextResponse {
+    constructor(body, init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.headers = new MockHeaders(init.headers || {});
+    }
+    json() {
+      return Promise.resolve(this.body);
+    }
+    static json(body, init = {}) {
+      return new NextResponse(body, init);
+    }
+  }
+
+  return {
+    NextRequest,
+    NextResponse,
+  };
+});
 
 // Mock Supabase
 jest.mock("@/lib/supabase/client", () => ({
@@ -106,6 +204,60 @@ jest.mock("@/lib/supabase/client", () => ({
       single: jest.fn().mockResolvedValue({ data: null, error: null }),
     })),
   },
+}));
+
+// Mock Supabase admin
+jest.mock("@/lib/supabase/admin", () => ({
+  supabaseAdmin: {
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+}));
+
+// Mock universal client
+jest.mock("@/lib/supabase/universal-client", () => ({
+  createUniversalClient: jest.fn(() => ({
+    auth: {
+      getSession: jest.fn(),
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  })),
+  createClient: jest.fn(() => ({
+    auth: {
+      getSession: jest.fn(),
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  })),
 }));
 
 // Mock OpenAI
@@ -133,6 +285,24 @@ global.fetch = jest.fn(() =>
     json: () => Promise.resolve({}),
   }),
 );
+
+// Mock window.location for Jest 30+
+// Comment out for now to get tests running
+// global.window.location = {
+//   ...window.location,
+//   href: "http://localhost:3000",
+//   origin: "http://localhost:3000",
+//   protocol: "http:",
+//   host: "localhost:3000",
+//   hostname: "localhost",
+//   port: "3000",
+//   pathname: "/",
+//   search: "",
+//   hash: "",
+//   assign: jest.fn(),
+//   reload: jest.fn(),
+//   replace: jest.fn(),
+// };
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
@@ -162,6 +332,25 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
+
+// Mock Next.js Request/Response objects
+global.Request = jest.fn().mockImplementation((url, init) => ({
+  url,
+  method: init?.method || "GET",
+  headers: new Map(Object.entries(init?.headers || {})),
+  json: jest.fn().mockResolvedValue(init?.body ? JSON.parse(init.body) : {}),
+}));
+
+global.Response = jest.fn().mockImplementation((body, init) => ({
+  body,
+  status: init?.status || 200,
+  headers: new Map(Object.entries(init?.headers || {})),
+  json: jest
+    .fn()
+    .mockResolvedValue(typeof body === "string" ? JSON.parse(body) : body),
+}));
+
+// NextResponse mock is in __mocks__/next/server.js
 
 // Clean up after each test
 afterEach(() => {

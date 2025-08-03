@@ -20,21 +20,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { SERVICE_TYPES } from "@/lib/calculations/constants";
-import {
-  LazyGlassRestorationForm,
-  LazyWindowCleaningForm,
-  LazyPressureWashingForm,
-  LazyPressureWashSealForm,
-  LazyFinalCleanForm,
-  LazyFrameRestorationForm,
-  LazyHighDustingForm,
-  LazySoftWashingForm,
-  LazyParkingDeckForm,
-  LazyGraniteReconditioningForm,
-  LazyBiofilmRemovalForm,
-  LazyFacadeAnalysisForm,
-  FormWrapper,
-} from "./lazy-forms";
+import { FormWrapper } from "./lazy-forms";
+import { lazy } from "react";
 import { useEstimateStore } from "@/lib/stores/estimate-store";
 import { ServiceType } from "@/lib/types/estimate-types";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -483,133 +470,12 @@ function ServiceCalculatorComponent() {
 
           {/* Service Form Content */}
           <div className="py-4">
-            {currentService === "GR" && (
-              <FormWrapper>
-                <LazyGlassRestorationForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "WC" && (
-              <FormWrapper>
-                <LazyWindowCleaningForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "PW" && (
-              <FormWrapper>
-                <LazyPressureWashingForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "PWS" && (
-              <FormWrapper>
-                <LazyPressureWashSealForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "FC" && (
-              <FormWrapper>
-                <LazyFinalCleanForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "FR" && (
-              <FormWrapper>
-                <LazyFrameRestorationForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "HD" && (
-              <FormWrapper>
-                <LazyHighDustingForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "SW" && (
-              <FormWrapper>
-                <LazySoftWashingForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "PD" && (
-              <FormWrapper>
-                <LazyParkingDeckForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "GRC" && (
-              <FormWrapper>
-                <LazyGraniteReconditioningForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "BF" && (
-              <FormWrapper>
-                <LazyBiofilmRemovalForm
-                  onSubmit={handleServiceCalculated}
-                  onCancel={() => setIsModalOpen(false)}
-                />
-              </FormWrapper>
-            )}
-            {currentService === "FACADE_ANALYSIS" && (
-              <FormWrapper>
-                <LazyFacadeAnalysisForm
-                  onComplete={handleServiceCalculated}
-                  estimateId={currentEstimate?.id || ""}
-                />
-              </FormWrapper>
-            )}
-            {currentService &&
-              ![
-                "GR",
-                "WC",
-                "PW",
-                "PWS",
-                "FC",
-                "FR",
-                "HD",
-                "SW",
-                "PD",
-                "GRC",
-                "BF",
-                "FACADE_ANALYSIS",
-              ].includes(currentService) && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    Service calculator not found for:{" "}
-                    {SERVICES.find((s) => s.id === currentService)?.name}
-                  </p>
-                  <p className="text-sm text-red-600 mt-2">
-                    Please contact support if this service should be available.
-                  </p>
-                  <Button
-                    className="mt-4"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              )}
+            <DynamicFormLoader
+              serviceType={currentService}
+              onSubmit={handleServiceCalculated}
+              onCancel={() => setIsModalOpen(false)}
+              estimateId={currentEstimate?.id || ""}
+            />
           </div>
         </DialogContent>
       </Dialog>
