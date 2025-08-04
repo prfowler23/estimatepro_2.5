@@ -20,7 +20,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { SERVICE_TYPES } from "@/lib/calculations/constants";
-import { FormWrapper } from "./lazy-forms";
+import { FormWrapper, DynamicFormLoader } from "./lazy-forms";
 import { lazy } from "react";
 import { useEstimateStore } from "@/lib/stores/estimate-store";
 import { ServiceType } from "@/lib/types/estimate-types";

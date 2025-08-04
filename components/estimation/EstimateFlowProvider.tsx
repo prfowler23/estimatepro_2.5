@@ -79,7 +79,9 @@ const FOUR_STEP_FLOW: FlowStep[] = [
     id: "measurements",
     title: "Measurements",
     description: "Area and dimensions",
-    component: React.lazy(() => import("./guided-flow/steps/Measurements")),
+    component: React.lazy(
+      () => import("./guided-flow/steps/MeasurementsWithFacade"),
+    ),
     validation: (data) => {
       const errors: string[] = [];
       if (!data.areaOfWork?.totalArea || data.areaOfWork.totalArea <= 0) {

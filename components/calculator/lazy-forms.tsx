@@ -123,6 +123,154 @@ export const LazyFacadeAnalysisForm = OptimizedLazyLoader.createLazyComponent(
   "FacadeAnalysisForm",
 );
 
+// Dynamic form loader that maps service types to forms
+export const DynamicFormLoader = ({
+  serviceType,
+  onSubmit,
+  onCancel,
+  estimateId,
+}: {
+  serviceType: string | null;
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+  estimateId: string;
+}) => {
+  if (!serviceType) {
+    return <div>No service selected</div>;
+  }
+
+  switch (serviceType) {
+    case "window-cleaning":
+      return (
+        <FormWrapper>
+          <LazyWindowCleaningForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "pressure-washing":
+      return (
+        <FormWrapper>
+          <LazyPressureWashingForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "soft-washing":
+      return (
+        <FormWrapper>
+          <LazySoftWashingForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "biofilm-removal":
+      return (
+        <FormWrapper>
+          <LazyBiofilmRemovalForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "glass-restoration":
+      return (
+        <FormWrapper>
+          <LazyGlassRestorationForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "frame-restoration":
+      return (
+        <FormWrapper>
+          <LazyFrameRestorationForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "high-dusting":
+      return (
+        <FormWrapper>
+          <LazyHighDustingForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "final-clean":
+      return (
+        <FormWrapper>
+          <LazyFinalCleanForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "granite-reconditioning":
+      return (
+        <FormWrapper>
+          <LazyGraniteReconditioningForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "pressure-wash-seal":
+      return (
+        <FormWrapper>
+          <LazyPressureWashSealForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "parking-deck":
+      return (
+        <FormWrapper>
+          <LazyParkingDeckForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    case "facade-analysis":
+      return (
+        <FormWrapper>
+          <LazyFacadeAnalysisForm
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            estimateId={estimateId}
+          />
+        </FormWrapper>
+      );
+    default:
+      return (
+        <div className="p-4 text-center">
+          <p className="text-muted-foreground">
+            Form not available for service: {serviceType}
+          </p>
+        </div>
+      );
+  }
+};
+
 // Form component wrapper with suspense (legacy compatibility)
 export const FormWrapper = ({
   children,

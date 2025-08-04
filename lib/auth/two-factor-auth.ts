@@ -4,7 +4,6 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
-import { createClient } from "@/lib/supabase/server";
 import { authenticator } from "otplib";
 import QRCode from "qrcode";
 
@@ -22,7 +21,7 @@ export interface TwoFactorVerification {
 /**
  * Generate a new 2FA secret and QR code for setup
  */
-export async function setupTwoFactor(
+export async function setupTwoFactorForUser(
   userId: string,
   email: string,
 ): Promise<TwoFactorSetup> {
@@ -39,8 +38,7 @@ export async function setupTwoFactor(
   );
 
   // Store secret and backup codes in database (encrypted)
-  const supabaseServer = createClient();
-  const { error } = await supabaseServer.from("user_two_factor").upsert({
+  const { error } = await supabase.from("user_two_factor").upsert({
     user_id: userId,
     secret_encrypted: btoa(secret), // In production, use proper encryption
     backup_codes: backupCodes,
@@ -66,10 +64,8 @@ export async function verifyAndEnable2FA(
   userId: string,
   token: string,
 ): Promise<TwoFactorVerification> {
-  const supabaseServer = createClient();
-
   // Get user's 2FA secret
-  const { data: twoFactorData, error: fetchError } = await supabaseServer
+  const { data: twoFactorData, error: fetchError } = await supabase
     .from("user_two_factor")
     .select("secret_encrypted")
     .eq("user_id", userId)
@@ -87,7 +83,7 @@ export async function verifyAndEnable2FA(
   }
 
   // Enable 2FA
-  const { error: updateError } = await supabaseServer
+  const { error: updateError } = await supabase
     .from("user_two_factor")
     .update({
       enabled: true,
@@ -109,10 +105,8 @@ export async function verify2FAToken(
   userId: string,
   token: string,
 ): Promise<TwoFactorVerification> {
-  const supabaseServer = createClient();
-
   // Get user's 2FA configuration
-  const { data: twoFactorData, error: fetchError } = await supabaseServer
+  const { data: twoFactorData, error: fetchError } = await supabase
     .from("user_two_factor")
     .select("secret_encrypted, backup_codes, enabled")
     .eq("user_id", userId)
@@ -129,7 +123,7 @@ export async function verify2FAToken(
       (code) => code !== token.toUpperCase(),
     );
 
-    await supabaseServer
+    await supabase
       .from("user_two_factor")
       .update({ backup_codes: updatedBackupCodes })
       .eq("user_id", userId);
@@ -167,8 +161,7 @@ export async function disable2FA(
   // In a real implementation, you'd verify the password here
   // For now, we'll assume the user is authenticated
 
-  const supabaseServer = createClient();
-  const { error } = await supabaseServer
+  const { error } = await supabase
     .from("user_two_factor")
     .delete()
     .eq("user_id", userId);
@@ -184,13 +177,130 @@ export async function disable2FA(
  * Check if user has 2FA enabled
  */
 export async function is2FAEnabled(userId: string): Promise<boolean> {
-  const supabaseServer = createClient();
-
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabase
     .from("user_two_factor")
     .select("enabled")
     .eq("user_id", userId)
     .single();
 
   return !error && data?.enabled === true;
+}
+
+/**
+ * Setup 2FA for current authenticated user (wrapper function)
+ */
+export async function setupTwoFactor(): Promise<{
+  success: boolean;
+  data?: { secret: string; qr_code: string; backup_codes: string[] };
+  error?: string;
+}> {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    const setup = await setupTwoFactorForUser(user.id, user.email || "");
+    return {
+      success: true,
+      data: {
+        secret: setup.secret,
+        qr_code: setup.qrCodeUrl,
+        backup_codes: setup.backupCodes,
+      },
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Verify 2FA token for current user (wrapper function)
+ */
+export async function verifyTwoFactor(
+  token: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    return await verifyAndEnable2FA(user.id, token);
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Disable 2FA for current user (wrapper function)
+ */
+export async function disableTwoFactor(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    return await disable2FA(user.id, ""); // Password verification would be added here
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Generate backup codes for current user
+ */
+export async function generateBackupCodes(): Promise<{
+  success: boolean;
+  backup_codes?: string[];
+  error?: string;
+}> {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    // Generate new backup codes
+    const backupCodes = Array.from({ length: 8 }, () =>
+      Math.random().toString(36).substring(2, 8).toUpperCase(),
+    );
+
+    // Update in database
+    const { error } = await supabase
+      .from("user_two_factor")
+      .update({
+        backup_codes: backupCodes,
+        backup_codes_generated: true,
+      })
+      .eq("user_id", user.id);
+
+    if (error) {
+      return { success: false, error: "Failed to generate backup codes" };
+    }
+
+    return { success: true, backup_codes: backupCodes };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }

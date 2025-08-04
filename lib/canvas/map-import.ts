@@ -626,10 +626,9 @@ export class MapImportService {
       const pdfjsLib = await import("pdfjs-dist");
 
       // Set up PDF.js worker
-      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/build/pdf.worker.min.js",
-        import.meta.url,
-      ).toString();
+      if (typeof window !== "undefined") {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+      }
 
       // Convert file to ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
@@ -706,10 +705,9 @@ export class MapImportService {
       ]);
 
       // Set up PDF.js worker
-      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/build/pdf.worker.min.js",
-        import.meta.url,
-      ).toString();
+      if (typeof window !== "undefined") {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+      }
 
       // Convert file to ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();

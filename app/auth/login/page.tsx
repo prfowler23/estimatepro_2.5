@@ -16,7 +16,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Building, Mail, Lock, Github } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { SiMicrosoft } from "react-icons/si";
 import { useAuth } from "@/contexts/auth-context";
 import { error as logError } from "@/lib/utils/logger";
 import {
@@ -421,7 +420,7 @@ export default function LoginPage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <SiMicrosoft className="h-4 w-4 text-blue-600" />
+                      <Building className="h-4 w-4 text-blue-600" />
                       Continue with Microsoft
                     </div>
                   )}

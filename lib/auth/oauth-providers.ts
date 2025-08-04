@@ -3,7 +3,6 @@
  * Supports GitHub and Microsoft OAuth authentication
  */
 
-import { createClient } from "@/lib/supabase/server";
 import { supabase } from "@/lib/supabase/client";
 import { AuthError, Provider } from "@supabase/supabase-js";
 
@@ -436,9 +435,7 @@ async function logOAuthEvent(
   metadata: Record<string, any> = {},
 ): Promise<void> {
   try {
-    const supabaseServer = createClient();
-
-    await supabaseServer.from("auth_security_events").insert({
+    await supabase.from("auth_security_events").insert({
       user_id: userId,
       event_type: eventType,
       severity: "low",

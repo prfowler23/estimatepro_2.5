@@ -133,16 +133,18 @@ export function AIAssistantWithTools() {
                     <p className="text-muted-foreground">Try asking me to:</p>
                     <div className="mt-4 space-y-2">
                       <p className="text-sm">
-                        • "Analyze this photo for facade details"
+                        • &quot;Analyze this photo for facade details&quot;
                       </p>
                       <p className="text-sm">
-                        • "Calculate window cleaning for a 10-story building"
+                        • &quot;Calculate window cleaning for a 10-story
+                        building&quot;
                       </p>
                       <p className="text-sm">
-                        • "Search for recent estimates over $5000"
+                        • &quot;Search for recent estimates over $5000&quot;
                       </p>
                       <p className="text-sm">
-                        • "What's the weather forecast for tomorrow?"
+                        • &quot;What&apos;s the weather forecast for
+                        tomorrow?&quot;
                       </p>
                     </div>
                   </div>

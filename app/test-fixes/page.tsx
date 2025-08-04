@@ -60,9 +60,9 @@ export default function TestFixesPage() {
         <div className="p-4 border rounded">
           <h2 className="font-semibold mb-2">Fix 3: Framer Motion Warnings</h2>
           <p className="text-sm text-gray-600">
-            Fixed backgroundColor animations by replacing "transparent" with
-            "rgba(0,0,0,0)" in skeleton.tsx, MobileStepNavigation.tsx, and
-            mobile-bottom-nav.tsx.
+            Fixed backgroundColor animations by replacing
+            &quot;transparent&quot; with &quot;rgba(0,0,0,0)&quot; in
+            skeleton.tsx, MobileStepNavigation.tsx, and mobile-bottom-nav.tsx.
           </p>
         </div>
       </div>

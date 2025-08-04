@@ -30,18 +30,9 @@ EstimatePro is a comprehensive Next.js 15 application for building services cont
 
 ### MCP Servers
 
-**awkoy-notion-mcp-server**: MCP server for Notion integration
 
-- Create, update, and delete Notion entities
-- Operations for pages, blocks, databases, comments, and users
-- Comprehensive schema validation for all Notion operations
 
-**matthew-dailey-figma-mcp**: Figma integration server
 
-- Add Figma files to context
-- View specific nodes with thumbnails
-- Read and post comments on designs
-- Reply to existing comments
 
 **supabase**: Supabase database operations
 
