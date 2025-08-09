@@ -70,19 +70,44 @@ async function notifySupport(
   issueId: string,
   issueData: z.infer<typeof IssueReportSchema>,
 ) {
-  // In a real implementation, this would send notifications to support team
-  // via email, Slack, or other channels
-  try {
-    console.log(`New ${issueData.type} report created:`, {
-      id: issueId,
-      title: issueData.title,
-      priority: issueData.priority,
-    });
+  const supportEmail = process.env.SUPPORT_TEAM_EMAIL;
+  const slackWebhook = process.env.SUPPORT_SLACK_WEBHOOK_URL;
+  const notifications: Promise<Response>[] = [];
 
-    // TODO: Implement actual notification system
-    // - Send email to support team
-    // - Create Slack notification
-    // - Update dashboard metrics
+  try {
+    if (supportEmail && process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
+      notifications.push(
+        fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: process.env.EMAIL_FROM,
+            to: supportEmail,
+            subject: `New ${issueData.type} report: ${issueData.title}`,
+            text: `Priority: ${issueData.priority}\n\n${issueData.description}`,
+          }),
+        }),
+      );
+    }
+
+    if (slackWebhook) {
+      notifications.push(
+        fetch(slackWebhook, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: `New ${issueData.type} issue (${issueData.priority}): ${issueData.title}`,
+          }),
+        }),
+      );
+    }
+
+    if (notifications.length > 0) {
+      await Promise.all(notifications);
+    }
   } catch (error) {
     console.warn("Failed to notify support team:", error);
   }

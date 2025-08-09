@@ -11,6 +11,10 @@ export const config = {
     apiKey: process.env.RESEND_API_KEY!,
     from: process.env.EMAIL_FROM!,
   },
+  notifications: {
+    supportEmail: process.env.SUPPORT_TEAM_EMAIL,
+    slackWebhook: process.env.SUPPORT_SLACK_WEBHOOK_URL,
+  },
   app: {
     url: process.env.NEXT_PUBLIC_APP_URL!,
     name: process.env.NEXT_PUBLIC_APP_NAME!,

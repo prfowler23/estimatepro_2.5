@@ -67,6 +67,9 @@ const envSchema = z.object({
 
   EMAIL_FROM: z.string().email("Invalid email address for EMAIL_FROM"),
 
+  SUPPORT_TEAM_EMAIL: z.string().email().optional(),
+  SUPPORT_SLACK_WEBHOOK_URL: z.string().url().optional(),
+
   // Application Configuration
   NEXT_PUBLIC_APP_URL: z
     .string()
