@@ -106,29 +106,94 @@ const errorRecoveryMap = {
   },
 } as const;
 
+/**
+ * Props for the ErrorAlert component
+ *
+ * @interface ErrorAlertProps
+ * @extends React.HTMLAttributes<HTMLDivElement>
+ * @extends VariantProps<typeof errorAlertVariants>
+ */
 export interface ErrorAlertProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof errorAlertVariants> {
+  /** The title of the error alert. If not provided, will use a default based on errorType */
   title?: string;
+  /** The main description of the error */
   description?: string;
+  /** The type of error, which determines the icon and suggested recovery actions */
   errorType?: keyof typeof errorRecoveryMap;
+  /** Optional error code for technical reference */
   errorCode?: string;
+  /** Whether the alert can be dismissed by the user */
   dismissible?: boolean;
+  /** Whether a retry action should be available */
   retryable?: boolean;
+  /** Callback function when the alert is dismissed */
   onDismiss?: () => void;
+  /** Callback function when retry is requested */
   onRetry?: () => void;
+  /** Callback function when any recovery action is triggered */
   onAction?: (action: string) => void;
+  /** Whether to show additional technical details */
   showDetails?: boolean;
+  /** Additional technical details to display when expanded */
   details?: string;
+  /** Custom recovery actions to display instead of default ones */
   recoveryActions?: Array<{
+    /** Label text for the action button */
     label: string;
+    /** Action identifier passed to onAction callback */
     action: string;
+    /** Visual variant of the action button */
     variant?: "default" | "outline" | "ghost";
+    /** Icon component to display in the action button */
     icon?: React.ComponentType<any>;
   }>;
+  /** Whether to enable entrance/exit animations */
   animate?: boolean;
 }
 
+/**
+ * A comprehensive error alert component with contextual recovery suggestions
+ *
+ * This component provides:
+ * - Contextual error messaging with predefined error types
+ * - Automated recovery action suggestions based on error type
+ * - Copy-to-clipboard functionality for error details
+ * - Expandable technical details section
+ * - Full accessibility support with proper ARIA attributes
+ * - Smooth animations with reduced motion support
+ * - Customizable recovery actions and styling
+ *
+ * @example
+ * ```tsx
+ * // Basic error alert
+ * <ErrorAlert
+ *   title="Upload Failed"
+ *   description="The file could not be uploaded due to a network error."
+ *   errorType="network"
+ *   retryable
+ *   onRetry={handleRetry}
+ * />
+ *
+ * // With custom recovery actions
+ * <ErrorAlert
+ *   errorType="server"
+ *   recoveryActions={[
+ *     { label: "Try Again", action: "retry", icon: RefreshCw },
+ *     { label: "Contact Support", action: "support", variant: "outline" }
+ *   ]}
+ *   onAction={handleAction}
+ * />
+ *
+ * // With technical details
+ * <ErrorAlert
+ *   errorCode="E001"
+ *   details="Stack trace: Error at line 42..."
+ *   showDetails
+ * />
+ * ```
+ */
 const ErrorAlert = React.forwardRef<HTMLDivElement, ErrorAlertProps>(
   (
     {

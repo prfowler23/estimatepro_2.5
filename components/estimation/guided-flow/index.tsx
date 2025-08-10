@@ -8,7 +8,7 @@ import { Takeoff } from "./steps/Takeoff";
 import { Duration } from "./steps/Duration";
 import { Expenses } from "./steps/Expenses";
 import { Pricing } from "./steps/Pricing";
-import { Summary } from "./steps/Summary";
+import { LazySummary } from "@/components/lazy-loading/estimation-lazy";
 import { SmartDefaultsProvider } from "@/components/ai/SmartDefaultsProvider";
 import { SmartDefaultsPanel } from "@/components/ai/SmartDefaultsPanel";
 import {
@@ -77,7 +77,7 @@ const STEPS: Step[] = [
   { id: 6, name: "Duration", component: Duration },
   { id: 7, name: "Expenses", component: Expenses },
   { id: 8, name: "Pricing", component: Pricing },
-  { id: 9, name: "Summary", component: Summary },
+  { id: 9, name: "Summary", component: LazySummary },
 ];
 
 interface GuidedEstimationFlowProps {

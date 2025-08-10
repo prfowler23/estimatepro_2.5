@@ -2,11 +2,14 @@ import {
   MeasurementEntry,
   MeasurementCategory,
 } from "@/lib/types/measurements";
-
-// Helper function to generate unique IDs
-function generateId(): string {
-  return Math.random().toString(36).substr(2, 9);
-}
+import {
+  generateUniqueId,
+  sanitizeInput,
+  parseNumber,
+  calculateArea,
+  convertToSquareFeet,
+} from "./utils";
+import { ImportError, ParseError, FileFormatError } from "./errors";
 
 export class TakeoffImportService {
   // Import from photo analysis (Step 3)
@@ -17,7 +20,7 @@ export class TakeoffImportService {
     if (analysisData.windows) {
       analysisData.windows.locations.forEach((window: any, index: number) => {
         entries.push({
-          id: generateId(),
+          id: generateUniqueId(),
           category: "glass_windows",
           description: `Window ${index + 1}`,
           location: `Grid position ${window.gridPosition}`,
@@ -34,7 +37,7 @@ export class TakeoffImportService {
     if (analysisData.doors) {
       analysisData.doors.locations.forEach((door: any, index: number) => {
         entries.push({
-          id: generateId(),
+          id: generateUniqueId(),
           category: "glass_doors",
           description: `Door ${index + 1}`,
           location: `Grid position ${door.gridPosition}`,
@@ -52,7 +55,7 @@ export class TakeoffImportService {
       analysisData.facades.forEach((facade: any, index: number) => {
         const category = this.inferFacadeCategory(facade.material);
         entries.push({
-          id: generateId(),
+          id: generateUniqueId(),
           category,
           description: `${facade.material} Facade ${index + 1}`,
           location: facade.orientation || "Unknown",
@@ -75,7 +78,7 @@ export class TakeoffImportService {
     shapes.forEach((shape) => {
       const category = this.inferCategory(shape.label);
       entries.push({
-        id: generateId(),
+        id: generateUniqueId(),
         category,
         description: shape.label,
         location: "See area map",
@@ -90,7 +93,9 @@ export class TakeoffImportService {
     return entries;
   }
 
-  // Import from CSV (measurement tools)
+  /**
+   * Import measurements from CSV file with validation and sanitization
+   */
   async importFromCSV(file: File): Promise<MeasurementEntry[]> {
     const text = await file.text();
     const lines = text.split("\n");
@@ -103,26 +108,28 @@ export class TakeoffImportService {
       if (values.length < 3) continue;
 
       const entry: MeasurementEntry = {
-        id: generateId(),
-        category: this.inferCategory(values[0]),
-        description: values[0],
-        location: values[1] || "",
-        width: parseFloat(values[2]) || 0,
-        height: parseFloat(values[3]) || 0,
-        quantity: parseInt(values[4]) || 1,
+        id: generateUniqueId(),
+        category: this.inferCategory(sanitizeInput(values[0])),
+        description: sanitizeInput(values[0]),
+        location: sanitizeInput(values[1] || ""),
+        width: parseNumber(values[2], 0),
+        height: parseNumber(values[3], 0),
+        quantity: parseNumber(values[4], 1),
         unit: "sqft",
         total: 0,
-        notes: values[5] || "",
+        notes: sanitizeInput(values[5] || ""),
       };
 
-      entry.total = entry.width * entry.height * entry.quantity;
+      entry.total = calculateArea(entry.width, entry.height, entry.quantity);
       entries.push(entry);
     }
 
     return entries;
   }
 
-  // Import from Excel
+  /**
+   * Import measurements from Excel file with validation
+   */
   async importFromExcel(file: File): Promise<MeasurementEntry[]> {
     try {
       // Use ExcelJS to parse Excel
@@ -165,7 +172,12 @@ export class TakeoffImportService {
       return jsonData.map((row: any) => this.parseExcelRow(row));
     } catch (error) {
       console.error("Error importing Excel file:", error);
-      throw new Error("Failed to import Excel file. Please check the format.");
+      throw new ImportError(
+        "Failed to import Excel file. Please check the format.",
+        "excel",
+        undefined,
+        undefined,
+      );
     }
   }
 
@@ -177,7 +189,7 @@ export class TakeoffImportService {
       nearMapData.measurements.forEach((measurement: any) => {
         const category = this.inferCategory(measurement.type);
         entries.push({
-          id: generateId(),
+          id: generateUniqueId(),
           category,
           description: measurement.name || measurement.type,
           location: measurement.address || "NearMap Location",
@@ -189,7 +201,7 @@ export class TakeoffImportService {
             measurement.unit === "sq_m"
               ? "sqft"
               : (measurement.unit as any) || "sqft",
-          total: this.convertToSquareFeet(measurement.area, measurement.unit),
+          total: convertToSquareFeet(measurement.area, measurement.unit),
           notes: `Imported from NearMap - ${measurement.date || "Unknown date"}`,
         });
       });
@@ -201,24 +213,26 @@ export class TakeoffImportService {
   // Parse Excel row data
   private parseExcelRow(row: any): MeasurementEntry {
     const entry: MeasurementEntry = {
-      id: generateId(),
-      category: this.inferCategory(row.Description || row.description || ""),
-      description: row.Description || row.description || "",
-      location: row.Location || row.location || "",
-      width: parseFloat(row.Width || row.width || "0") || 0,
-      height: parseFloat(row.Height || row.height || "0") || 0,
-      length: parseFloat(row.Length || row.length || "0") || undefined,
-      quantity: parseInt(row.Quantity || row.quantity || "1") || 1,
+      id: generateUniqueId(),
+      category: this.inferCategory(
+        sanitizeInput(row.Description || row.description || ""),
+      ),
+      description: sanitizeInput(row.Description || row.description || ""),
+      location: sanitizeInput(row.Location || row.location || ""),
+      width: parseNumber(row.Width || row.width, 0),
+      height: parseNumber(row.Height || row.height, 0),
+      length: parseNumber(row.Length || row.length, 0) || undefined,
+      quantity: parseNumber(row.Quantity || row.quantity, 1),
       unit: "sqft",
       total: 0,
-      notes: row.Notes || row.notes || "",
+      notes: sanitizeInput(row.Notes || row.notes || ""),
     };
 
     // Calculate total based on available dimensions
     if (entry.length) {
       entry.total = entry.width * entry.length * entry.quantity;
     } else {
-      entry.total = entry.width * entry.height * entry.quantity;
+      entry.total = calculateArea(entry.width, entry.height, entry.quantity);
     }
 
     return entry;
@@ -299,24 +313,6 @@ export class TakeoffImportService {
 
     // Default to concrete for unknown materials
     return "facade_concrete";
-  }
-
-  // Convert various units to square feet
-  private convertToSquareFeet(value: number, unit: string): number {
-    switch (unit?.toLowerCase()) {
-      case "sq_m":
-      case "sqm":
-      case "m2":
-        return value * 10.764; // Square meters to square feet
-      case "sq_yd":
-      case "sqyd":
-        return value * 9; // Square yards to square feet
-      case "sq_ft":
-      case "sqft":
-      case "ft2":
-      default:
-        return value;
-    }
   }
 
   // Validate imported data

@@ -88,12 +88,36 @@ function ThreeDDemoPageLoading() {
   );
 }
 
-// Dynamic import of the actual 3D demo page with lazy loading
-const Demo3DPageContent = dynamic(() => import("../../app/3d-demo/page"), {
-  ssr: false, // Disable SSR for Three.js components
-  loading: () => <ThreeDDemoPageLoading />,
-});
+// Dynamic import of the 3D building component to avoid circular imports
+const Demo3DPageContent = dynamic(
+  () =>
+    import("../visualizer/building-3d").then((mod) => ({
+      default: mod.Building3D,
+    })),
+  {
+    ssr: false, // Disable SSR for Three.js components
+    loading: () => <ThreeDDemoPageLoading />,
+  },
+);
 
 export default function ThreeDDemoPageDynamic() {
-  return <Demo3DPageContent />;
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center w-12 h-12 bg-primary rounded-lg">
+          <span className="text-2xl">🏢</span>
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary">
+            3D Building Visualizer
+          </h1>
+          <p className="text-text-secondary">
+            Interactive 3D building modeling and analysis
+          </p>
+        </div>
+      </div>
+
+      <Demo3DPageContent />
+    </div>
+  );
 }

@@ -24,7 +24,30 @@ export class ChartErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Chart error:", error, errorInfo);
+    // Only log to console in development
+    if (process.env.NODE_ENV === "development") {
+      console.error("Chart error:", error, errorInfo);
+    }
+
+    // In production, send to error tracking
+    if (
+      process.env.NODE_ENV === "production" &&
+      typeof window !== "undefined"
+    ) {
+      // Send to Sentry if available
+      if (window.Sentry?.captureException) {
+        window.Sentry.captureException(error, {
+          contexts: {
+            react: {
+              componentStack: errorInfo.componentStack,
+            },
+            chart: {
+              title: this.props.fallbackTitle || "Unknown Chart",
+            },
+          },
+        });
+      }
+    }
   }
 
   handleReset = () => {

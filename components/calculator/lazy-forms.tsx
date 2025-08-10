@@ -123,8 +123,9 @@ export const LazyFacadeAnalysisForm = OptimizedLazyLoader.createLazyComponent(
   "FacadeAnalysisForm",
 );
 
-// Dynamic form loader that maps service types to forms
-export const DynamicFormLoader = ({
+// Legacy dynamic form loader - use DynamicFormLoader from ./DynamicFormLoader.tsx instead
+// @deprecated This is kept for backward compatibility only
+export const LegacyDynamicFormLoader = ({
   serviceType,
   onSubmit,
   onCancel,
@@ -285,3 +286,6 @@ export const FormWrapper = ({
     </div>
   );
 };
+
+// Export the improved DynamicFormLoader
+export { default as DynamicFormLoader } from "./DynamicFormLoader";

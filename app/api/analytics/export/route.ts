@@ -317,7 +317,7 @@ ${data.detailedData.length > 10 ? `... and ${data.detailedData.length - 10} more
 
 async function handlePOST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -410,7 +410,7 @@ async function handlePOST(request: NextRequest) {
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

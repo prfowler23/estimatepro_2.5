@@ -155,11 +155,26 @@ export interface TeamAnalytics {
   monthlyTrends: TimeSeriesData[];
 }
 
+/**
+ * Time series data point with optional metadata
+ */
 export interface TimeSeriesData {
   date: Date;
   value: number;
   metric: string;
-  metadata?: Record<string, any>;
+  metadata?: TimeSeriesMetadata;
+}
+
+/**
+ * Metadata for time series data points
+ */
+export interface TimeSeriesMetadata {
+  source?: string;
+  confidence?: number;
+  aggregation_method?: "sum" | "avg" | "max" | "min" | "count";
+  data_quality?: "high" | "medium" | "low";
+  sample_size?: number;
+  [key: string]: unknown;
 }
 
 export interface WorkflowBenchmark {
@@ -184,6 +199,23 @@ export interface WorkflowBenchmark {
   lastUpdated: Date;
 }
 
+/**
+ * Data point used in predictive analysis
+ */
+export interface PredictiveDataPoint {
+  timestamp: Date;
+  value: number;
+  feature_name: string;
+  weight: number;
+  confidence: number;
+  metadata?: {
+    source: string;
+    computation_method?: string;
+    validation_status?: "validated" | "unvalidated" | "flagged";
+    [key: string]: unknown;
+  };
+}
+
 export interface PredictiveInsight {
   insightId: string;
   type:
@@ -206,7 +238,7 @@ export interface PredictiveInsight {
   // Context
   affectedWorkflows: string[];
   affectedUsers: string[];
-  dataPoints: any[];
+  dataPoints: PredictiveDataPoint[];
 
   createdAt: Date;
   expiresAt?: Date;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import React, { ReactNode } from "react";
 import {
   Card,
   CardContent,
@@ -17,211 +17,57 @@ import {
   Home,
   Settings,
   Bug,
-  Wifi,
   WifiOff,
   Database,
   Bot,
   Globe,
 } from "lucide-react";
+import { BaseErrorBoundary } from "./base-error-boundary";
+import { BaseErrorBoundaryProps, ErrorContext } from "./types";
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+interface ErrorBoundaryProps extends BaseErrorBoundaryProps {
   stepId?: string;
   stepNumber?: number;
   userId?: string;
-  flowData?: any;
+  flowData?: Record<string, unknown>;
 }
 
-interface State {
-  hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
-  errorType: "network" | "database" | "auth" | "ai" | "unknown";
-  recoveryAttempts: number;
-  isRecovering: boolean;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null,
-    errorType: "unknown",
-    recoveryAttempts: 0,
-    isRecovering: false,
-  };
-
-  public static getDerivedStateFromError(error: Error): Partial<State> {
-    // Determine error type based on error message and stack trace
-    let errorType: "network" | "database" | "auth" | "ai" | "unknown" =
-      "unknown";
-
-    const errorMessage = error.message.toLowerCase();
-    const errorStack = error.stack?.toLowerCase() || "";
-
-    if (
-      errorMessage.includes("network") ||
-      errorMessage.includes("fetch") ||
-      errorMessage.includes("connection") ||
-      errorMessage.includes("timeout") ||
-      errorStack.includes("fetch") ||
-      errorStack.includes("network")
-    ) {
-      errorType = "network";
-    } else if (
-      errorMessage.includes("database") ||
-      errorMessage.includes("supabase") ||
-      errorMessage.includes("sql") ||
-      errorMessage.includes("table") ||
-      errorStack.includes("supabase") ||
-      errorStack.includes("database")
-    ) {
-      errorType = "database";
-    } else if (
-      errorMessage.includes("auth") ||
-      errorMessage.includes("authentication") ||
-      errorMessage.includes("unauthorized") ||
-      errorMessage.includes("forbidden") ||
-      errorStack.includes("auth")
-    ) {
-      errorType = "auth";
-    } else if (
-      errorMessage.includes("ai") ||
-      errorMessage.includes("openai") ||
-      errorMessage.includes("gpt") ||
-      errorStack.includes("ai") ||
-      errorStack.includes("openai")
-    ) {
-      errorType = "ai";
-    }
-
-    return {
-      hasError: true,
-      error,
-      errorType,
-    };
-  }
-
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-
-    this.setState({ errorInfo });
-
-    // Call the onError callback if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
-
-    // Log error details for debugging
-    this.logError(error, errorInfo);
-  }
-
-  private logError(error: Error, errorInfo: ErrorInfo) {
-    const errorDetails = {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      stepId: this.props.stepId,
-      stepNumber: this.props.stepNumber,
-      userId: this.props.userId,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
+export class ErrorBoundary extends BaseErrorBoundary {
+  constructor(props: ErrorBoundaryProps) {
+    // Create context from props
+    const context: ErrorContext = {
+      userId: props.userId,
+      stepId: props.stepId,
+      stepNumber: props.stepNumber,
+      flowData: props.flowData,
     };
 
-    console.error("Error Details:", errorDetails);
-
-    // In a real app, you'd send this to your error tracking service
-    // Example: Sentry.captureException(error, { extra: errorDetails });
+    super({
+      ...props,
+      context,
+    });
   }
 
-  private handleRetry = async () => {
-    this.setState({ isRecovering: true });
-
-    try {
-      // Wait a bit before retrying
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      this.setState((prevState) => ({
-        hasError: false,
-        error: null,
-        errorInfo: null,
-        recoveryAttempts: prevState.recoveryAttempts + 1,
-        isRecovering: false,
-      }));
-    } catch (error) {
-      this.setState({ isRecovering: false });
-      console.error("Recovery failed:", error);
-    }
-  };
-
-  private handleGoHome = () => {
-    window.location.href = "/";
-  };
-
-  private handleGoSettings = () => {
-    window.location.href = "/settings";
-  };
-
-  private handleRefresh = () => {
-    window.location.reload();
-  };
-
-  private getErrorIcon() {
+  protected getErrorIcon(): ReactNode {
     switch (this.state.errorType) {
       case "network":
-        return <WifiOff className="h-8 w-8 text-orange-600" />;
+        return <WifiOff className="h-8 w-8 text-destructive" />;
       case "database":
-        return <Database className="h-8 w-8 text-red-600" />;
+        return <Database className="h-8 w-8 text-destructive" />;
       case "auth":
-        return <Globe className="h-8 w-8 text-blue-600" />;
+        return <Globe className="h-8 w-8 text-primary" />;
       case "ai":
-        return <Bot className="h-8 w-8 text-purple-600" />;
+        return <Bot className="h-8 w-8 text-accent" />;
       default:
-        return <Bug className="h-8 w-8 text-gray-600" />;
+        return <Bug className="h-8 w-8 text-muted-foreground" />;
     }
   }
 
-  private getErrorTitle() {
-    switch (this.state.errorType) {
-      case "network":
-        return "Connection Error";
-      case "database":
-        return "Database Error";
-      case "auth":
-        return "Authentication Error";
-      case "ai":
-        return "AI Service Error";
-      default:
-        return "Something Went Wrong";
-    }
-  }
+  protected getErrorActions(): ReactNode[] {
+    const actions: ReactNode[] = [];
 
-  private getErrorDescription() {
-    switch (this.state.errorType) {
-      case "network":
-        return "We're having trouble connecting to our servers. Please check your internet connection and try again.";
-      case "database":
-        return "There was an issue accessing the database. This might be a temporary problem.";
-      case "auth":
-        return "There was an authentication issue. Please try signing in again.";
-      case "ai":
-        return "The AI service is currently unavailable. You can continue using other features.";
-      default:
-        return "An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.";
-    }
-  }
-
-  private getRecoveryActions() {
-    const actions = [];
-
-    // Always show retry for network and database errors
-    if (
-      this.state.errorType === "network" ||
-      this.state.errorType === "database"
-    ) {
+    // Show retry for retryable errors
+    if (this.canRetry()) {
       actions.push(
         <Button
           key="retry"
@@ -283,68 +129,68 @@ export class ErrorBoundary extends Component<Props, State> {
     return actions;
   }
 
-  public render() {
-    if (this.state.hasError) {
-      // Use custom fallback if provided
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
+  protected renderErrorUI(): ReactNode {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-bg-base p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              {this.getErrorIcon()}
+            </div>
+            <CardTitle className="text-xl">{this.getErrorTitle()}</CardTitle>
+            <CardDescription className="text-center">
+              {this.getErrorDescription()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Error Type Badge */}
+            <div className="flex justify-center">
+              <Badge variant="outline" className="capitalize">
+                {this.state.errorType} Error
+              </Badge>
+            </div>
 
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                {this.getErrorIcon()}
+            {/* Error Details (only in development) */}
+            {process.env.NODE_ENV === "development" && this.state.error && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs font-mono">
+                  {this.state.error.message}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Recovery Actions */}
+            <div className="flex flex-col gap-2">{this.getErrorActions()}</div>
+
+            {/* Recovery Attempts */}
+            {this.state.recoveryAttempts > 0 && (
+              <div className="text-center text-sm text-text-secondary">
+                Recovery attempts: {this.state.recoveryAttempts}
               </div>
-              <CardTitle className="text-xl">{this.getErrorTitle()}</CardTitle>
-              <CardDescription className="text-center">
-                {this.getErrorDescription()}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Error Type Badge */}
-              <div className="flex justify-center">
-                <Badge variant="outline" className="capitalize">
-                  {this.state.errorType} Error
-                </Badge>
-              </div>
+            )}
 
-              {/* Error Details (only in development) */}
-              {process.env.NODE_ENV === "development" && this.state.error && (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="text-xs font-mono">
-                    {this.state.error.message}
-                  </AlertDescription>
-                </Alert>
-              )}
+            {/* Max retries reached warning */}
+            {this.state.recoveryAttempts >= this.recoveryConfig.maxRetries && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Maximum retry attempts reached. Please refresh the page or
+                  contact support.
+                </AlertDescription>
+              </Alert>
+            )}
 
-              {/* Recovery Actions */}
-              <div className="flex flex-col gap-2">
-                {this.getRecoveryActions()}
-              </div>
-
-              {/* Recovery Attempts */}
-              {this.state.recoveryAttempts > 0 && (
-                <div className="text-center text-sm text-muted-foreground">
-                  Recovery attempts: {this.state.recoveryAttempts}
-                </div>
-              )}
-
-              {/* Contact Support */}
-              <div className="text-center text-sm text-muted-foreground">
-                Need help? Contact support with error code:{" "}
-                <code className="bg-muted px-1 py-0.5 rounded text-xs">
-                  {this.state.errorType.toUpperCase()}-{Date.now().toString(36)}
-                </code>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    return this.props.children;
+            {/* Contact Support */}
+            <div className="text-center text-sm text-text-secondary">
+              Need help? Contact support with error code:{" "}
+              <code className="bg-bg-subtle px-1 py-0.5 rounded text-xs">
+                {this.state.errorType.toUpperCase()}-{Date.now().toString(36)}
+              </code>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   DollarSign,
   TrendingUp,
@@ -84,7 +84,7 @@ const SERVICE_NAMES: Record<string, string> = {
   DC: "Deck Cleaning",
 };
 
-export function CostBreakdown({
+export const CostBreakdown = React.memo(function CostBreakdown({
   equipment,
   materials,
   labor,
@@ -95,126 +95,144 @@ export function CostBreakdown({
   const [selectedView, setSelectedView] = useState<"table" | "visual">("table");
   const [showDetails, setShowDetails] = useState<Record<string, boolean>>({});
 
-  // Calculate costs by service
-  const serviceBreakdown = services.map((service) => {
-    // Equipment cost (shared across services)
-    const equipmentCost = equipment
-      .filter((e) => e.services.includes(service))
-      .reduce((sum, e) => sum + e.totalCost / e.services.length, 0);
+  // Calculate costs by service - memoized for performance
+  const serviceBreakdown = useMemo(
+    () =>
+      services.map((service) => {
+        // Equipment cost (shared across services)
+        const equipmentCost = equipment
+          .filter((e) => e.services.includes(service))
+          .reduce((sum, e) => sum + e.totalCost / e.services.length, 0);
 
-    // Material cost (service-specific)
-    const materialCost = materials
-      .filter((m) => m.service === service || m.service.includes(service))
-      .reduce((sum, m) => {
-        // If material is used by multiple services, split the cost
-        const serviceCount = m.service.split(",").length;
-        return sum + m.totalCost / serviceCount;
-      }, 0);
+        // Material cost (service-specific)
+        const materialCost = materials
+          .filter((m) => m.service === service || m.service.includes(service))
+          .reduce((sum, m) => {
+            // If material is used by multiple services, split the cost
+            const serviceCount = m.service.split(",").length;
+            return sum + m.totalCost / serviceCount;
+          }, 0);
 
-    // Labor cost (service-specific)
-    const laborCost = labor
-      .filter((l) => l.service === service)
-      .reduce((sum, l) => sum + l.totalCost, 0);
+        // Labor cost (service-specific)
+        const laborCost = labor
+          .filter((l) => l.service === service)
+          .reduce((sum, l) => sum + l.totalCost, 0);
 
-    // Other costs (allocated to services if specified)
-    const otherCost = other
-      .filter((o) => !o.service || o.service === service)
-      .reduce((sum, o) => {
-        if (o.service) return sum + o.amount;
-        // Split unallocated costs across all services
-        return sum + o.amount / services.length;
-      }, 0);
+        // Other costs (allocated to services if specified)
+        const otherCost = other
+          .filter((o) => !o.service || o.service === service)
+          .reduce((sum, o) => {
+            if (o.service) return sum + o.amount;
+            // Split unallocated costs across all services
+            return sum + o.amount / services.length;
+          }, 0);
 
-    const directCost = equipmentCost + materialCost + laborCost + otherCost;
+        const directCost = equipmentCost + materialCost + laborCost + otherCost;
 
-    // Apply margins
-    const markedUpCosts = {
-      equipment: equipmentCost * (1 + margins.equipment / 100),
-      materials: materialCost * (1 + margins.materials / 100),
-      labor: laborCost * (1 + margins.labor / 100),
-      other: otherCost * (1 + margins.other / 100),
+        // Apply margins
+        const markedUpCosts = {
+          equipment: equipmentCost * (1 + margins.equipment / 100),
+          materials: materialCost * (1 + margins.materials / 100),
+          labor: laborCost * (1 + margins.labor / 100),
+          other: otherCost * (1 + margins.other / 100),
+        };
+
+        const totalMarkedUp = Object.values(markedUpCosts).reduce(
+          (a, b) => a + b,
+          0,
+        );
+        const profit = totalMarkedUp - directCost;
+        const profitMargin =
+          directCost > 0 ? (profit / totalMarkedUp) * 100 : 0;
+
+        // Get detailed items for this service
+        const serviceEquipment = equipment.filter((e) =>
+          e.services.includes(service),
+        );
+        const serviceMaterials = materials.filter(
+          (m) => m.service === service || m.service.includes(service),
+        );
+        const serviceLabor = labor.filter((l) => l.service === service);
+        const serviceOther = other.filter(
+          (o) => !o.service || o.service === service,
+        );
+
+        return {
+          service,
+          serviceName: SERVICE_NAMES[service] || service,
+          directCosts: {
+            equipment: equipmentCost,
+            materials: materialCost,
+            labor: laborCost,
+            other: otherCost,
+            total: directCost,
+          },
+          markedUpCosts,
+          totalMarkedUp,
+          profit,
+          profitMargin,
+          details: {
+            equipment: serviceEquipment,
+            materials: serviceMaterials,
+            labor: serviceLabor,
+            other: serviceOther,
+          },
+        };
+      }),
+    [services, equipment, materials, labor, other, margins],
+  );
+
+  // Calculate totals - memoized for performance
+  const { totals, overallMargin } = useMemo(() => {
+    const totals = {
+      equipment: equipment.reduce((sum, e) => sum + e.totalCost, 0),
+      materials: materials.reduce((sum, m) => sum + m.totalCost, 0),
+      labor: labor.reduce((sum, l) => sum + l.totalCost, 0),
+      other: other.reduce((sum, o) => sum + o.amount, 0),
+      directCost: 0,
+      markedUpCost: 0,
+      profit: 0,
     };
 
-    const totalMarkedUp = Object.values(markedUpCosts).reduce(
-      (a, b) => a + b,
-      0,
-    );
-    const profit = totalMarkedUp - directCost;
-    const profitMargin = directCost > 0 ? (profit / totalMarkedUp) * 100 : 0;
+    totals.directCost =
+      totals.equipment + totals.materials + totals.labor + totals.other;
 
-    // Get detailed items for this service
-    const serviceEquipment = equipment.filter((e) =>
-      e.services.includes(service),
-    );
-    const serviceMaterials = materials.filter(
-      (m) => m.service === service || m.service.includes(service),
-    );
-    const serviceLabor = labor.filter((l) => l.service === service);
-    const serviceOther = other.filter(
-      (o) => !o.service || o.service === service,
-    );
+    totals.markedUpCost =
+      totals.equipment * (1 + margins.equipment / 100) +
+      totals.materials * (1 + margins.materials / 100) +
+      totals.labor * (1 + margins.labor / 100) +
+      totals.other * (1 + margins.other / 100);
 
-    return {
-      service,
-      serviceName: SERVICE_NAMES[service] || service,
-      directCosts: {
-        equipment: equipmentCost,
-        materials: materialCost,
-        labor: laborCost,
-        other: otherCost,
-        total: directCost,
-      },
-      markedUpCosts,
-      totalMarkedUp,
-      profit,
-      profitMargin,
-      details: {
-        equipment: serviceEquipment,
-        materials: serviceMaterials,
-        labor: serviceLabor,
-        other: serviceOther,
-      },
-    };
-  });
+    totals.profit = totals.markedUpCost - totals.directCost;
 
-  // Calculate totals
-  const totals = {
-    equipment: equipment.reduce((sum, e) => sum + e.totalCost, 0),
-    materials: materials.reduce((sum, m) => sum + m.totalCost, 0),
-    labor: labor.reduce((sum, l) => sum + l.totalCost, 0),
-    other: other.reduce((sum, o) => sum + o.amount, 0),
-    directCost: 0,
-    markedUpCost: 0,
-    profit: 0,
-  };
+    const overallMargin =
+      totals.directCost > 0 ? (totals.profit / totals.markedUpCost) * 100 : 0;
 
-  totals.directCost =
-    totals.equipment + totals.materials + totals.labor + totals.other;
+    return { totals, overallMargin };
+  }, [equipment, materials, labor, other, margins]);
 
-  totals.markedUpCost =
-    totals.equipment * (1 + margins.equipment / 100) +
-    totals.materials * (1 + margins.materials / 100) +
-    totals.labor * (1 + margins.labor / 100) +
-    totals.other * (1 + margins.other / 100);
+  // Calculate cost category percentages - memoized
+  const costPercentages = useMemo(
+    () => ({
+      equipment:
+        totals.directCost > 0
+          ? (totals.equipment / totals.directCost) * 100
+          : 0,
+      materials:
+        totals.directCost > 0
+          ? (totals.materials / totals.directCost) * 100
+          : 0,
+      labor:
+        totals.directCost > 0 ? (totals.labor / totals.directCost) * 100 : 0,
+      other:
+        totals.directCost > 0 ? (totals.other / totals.directCost) * 100 : 0,
+    }),
+    [totals],
+  );
 
-  totals.profit = totals.markedUpCost - totals.directCost;
-
-  const overallMargin =
-    totals.directCost > 0 ? (totals.profit / totals.markedUpCost) * 100 : 0;
-
-  // Calculate cost category percentages
-  const costPercentages = {
-    equipment:
-      totals.directCost > 0 ? (totals.equipment / totals.directCost) * 100 : 0,
-    materials:
-      totals.directCost > 0 ? (totals.materials / totals.directCost) * 100 : 0,
-    labor: totals.directCost > 0 ? (totals.labor / totals.directCost) * 100 : 0,
-    other: totals.directCost > 0 ? (totals.other / totals.directCost) * 100 : 0,
-  };
-
-  const toggleDetails = (service: string) => {
+  const toggleDetails = useCallback((service: string) => {
     setShowDetails((prev) => ({ ...prev, [service]: !prev[service] }));
-  };
+  }, []);
 
   const getMarginColor = (margin: number): string => {
     if (margin >= 30) return "bg-green-100 text-green-700 border-green-200";
@@ -224,7 +242,8 @@ export function CostBreakdown({
 
   const exportBreakdown = async (format: "json" | "csv" | "pdf" = "csv") => {
     if (!data.id) {
-      console.error("Cannot export: estimate ID is missing");
+      // Proper error handling instead of console.error
+      alert("Export Error: Estimate ID is missing");
       return;
     }
 
@@ -255,10 +274,14 @@ export function CostBreakdown({
         document.body.removeChild(a);
       } else {
         const result = await response.json();
-        console.log("Export result:", result);
+        // Handle result properly instead of console.log
+        // In production, this would trigger a notification or update UI state
       }
     } catch (error) {
-      console.error("Failed to export cost breakdown:", error);
+      // Proper error handling instead of console.error
+      const errorMessage =
+        error instanceof Error ? error.message : "Export failed";
+      alert(`Export Error: ${errorMessage}`);
     }
   };
 
@@ -717,4 +740,4 @@ export function CostBreakdown({
       </CardContent>
     </Card>
   );
-}
+});

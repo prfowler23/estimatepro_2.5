@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -38,10 +39,10 @@ interface WindowCleaningFormProps {
   onCancel: () => void;
 }
 
-export function WindowCleaningForm({
+const WindowCleaningFormBase = ({
   onSubmit,
   onCancel,
-}: WindowCleaningFormProps) {
+}: WindowCleaningFormProps) => {
   const form = useForm<WindowCleaningFormData>({
     resolver: zodResolver(windowCleaningSchema),
     defaultValues: {
@@ -473,4 +474,17 @@ export function WindowCleaningForm({
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const WindowCleaningForm = React.memo(
+  WindowCleaningFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+WindowCleaningForm.displayName = "WindowCleaningForm";

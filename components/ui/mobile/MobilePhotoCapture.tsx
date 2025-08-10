@@ -430,20 +430,26 @@ export function MobilePhotoCapture({
     await analyzePhotos([photo]);
   };
 
-  // PHASE 3 FIX: Enhanced photo management with cleanup and animations
+  // Enhanced photo management with optimized cleanup and animations
   const removePhoto = useCallback(
     (photoId: string) => {
+      const photoToRemove = photos.find((p) => p.id === photoId);
       const updatedPhotos = photos.filter((p) => p.id !== photoId);
+
+      // Update state immediately for better UX
       setPhotos(updatedPhotos);
       onPhotosChange(updatedPhotos);
 
-      // Clean up object URLs
-      const photo = photos.find((p) => p.id === photoId);
-      if (photo) {
-        URL.revokeObjectURL(photo.url);
-        if (photo.thumbnail.startsWith("blob:")) {
-          URL.revokeObjectURL(photo.thumbnail);
-        }
+      // Clean up object URLs asynchronously to prevent blocking
+      if (photoToRemove) {
+        const scheduleCleanup =
+          typeof window !== "undefined" && "requestIdleCallback" in window
+            ? requestIdleCallback
+            : (callback: () => void) => setTimeout(callback, 0);
+
+        scheduleCleanup(() => {
+          cleanupPhotoUrls([photoToRemove]);
+        });
       }
 
       // Clean up compression progress
@@ -458,7 +464,7 @@ export function MobilePhotoCapture({
         navigator.vibrate(30);
       }
     },
-    [photos, onPhotosChange, touchDevice],
+    [photos, onPhotosChange, touchDevice, cleanupPhotoUrls],
   );
 
   const retakePhoto = () => {
@@ -489,18 +495,24 @@ export function MobilePhotoCapture({
   const processingPhotos = photos.filter((p) => p.status === "processing");
   const errorPhotos = photos.filter((p) => p.status === "error");
 
-  // PHASE 3 FIX: Cleanup on unmount
+  // Enhanced cleanup with memory management
+  const cleanupPhotoUrls = useCallback((photosToCleanup: CapturedPhoto[]) => {
+    photosToCleanup.forEach((photo) => {
+      if (photo.url && photo.url.startsWith("blob:")) {
+        URL.revokeObjectURL(photo.url);
+      }
+      if (photo.thumbnail && photo.thumbnail.startsWith("blob:")) {
+        URL.revokeObjectURL(photo.thumbnail);
+      }
+    });
+  }, []);
+
+  // Cleanup on unmount and when photos change
   useEffect(() => {
     return () => {
-      // Clean up all object URLs
-      photos.forEach((photo) => {
-        URL.revokeObjectURL(photo.url);
-        if (photo.thumbnail.startsWith("blob:")) {
-          URL.revokeObjectURL(photo.thumbnail);
-        }
-      });
+      cleanupPhotoUrls(photos);
     };
-  }, []); // Only run on unmount
+  }, [cleanupPhotoUrls, photos]);
 
   return (
     <div className={`space-y-4 ${className}`}>

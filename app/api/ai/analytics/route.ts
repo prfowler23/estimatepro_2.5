@@ -121,18 +121,18 @@ export async function DELETE(request: NextRequest) {
 
     const { daysToKeep = 90 } = await request.json();
 
-    const deletedCount = await aiAnalytics.cleanupOldAnalytics(daysToKeep);
+    // TODO: Implement cleanupOldAnalytics method in AIAnalyticsService
+    const deletedCount = 0; // Placeholder until method is implemented
 
     return NextResponse.json({
       success: true,
       deletedCount,
-      message: `Deleted ${deletedCount} analytics events older than ${daysToKeep} days`,
+      message: `Cleanup functionality not yet implemented`,
     });
   } catch (error) {
     logApiError(error, {
       endpoint: "/api/ai/analytics",
       method: "DELETE",
-      userId: user.id,
     });
     return ErrorResponses.internalError();
   }

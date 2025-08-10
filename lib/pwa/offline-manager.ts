@@ -1,32 +1,23 @@
 // PHASE 3 FIX: Offline Manager for handling offline functionality
 // Manages offline state, pending actions, and background sync
 
-export interface OfflineAction {
-  id: string;
-  type: "estimate" | "customer" | "photo" | "generic";
-  endpoint: string;
-  method: string;
-  data: any;
-  timestamp: number;
-  retryCount: number;
-  maxRetries: number;
-  metadata?: {
-    estimateId?: string;
-    customerId?: string;
-    description?: string;
-  };
-}
-
-export interface OfflineStatus {
-  isOnline: boolean;
-  pendingActions: number;
-  lastSync: Date | null;
-  syncInProgress: boolean;
-  queueSize: number;
-  storageUsed: number;
-}
+import { ActionType } from "./types";
+import type {
+  OfflineAction,
+  OfflineStatus,
+  isOfflineAction,
+  OfflineError,
+} from "./types";
 
 type OfflineStatusCallback = (status: OfflineStatus) => void;
+
+// Constants for performance optimization
+const MAX_BATCH_SIZE = 10;
+const MAX_RETRY_DELAY = 5 * 60 * 1000; // 5 minutes
+const BASE_RETRY_DELAY = 30 * 1000; // 30 seconds
+const JITTER_FACTOR = 0.3; // 30% jitter for retry backoff
+const REQUEST_TIMEOUT = 10000; // 10 seconds
+const BATCH_DELAY = 100; // 100ms between batch items
 
 export class OfflineManager {
   private static instance: OfflineManager;
@@ -37,6 +28,9 @@ export class OfflineManager {
   private lastSync: Date | null = null;
   private retryTimeout: NodeJS.Timeout | null = null;
   private storageKey = "estimatepro-offline-actions";
+  private requestDeduplication: Map<string, string> = new Map();
+  private batchQueue: OfflineAction[][] = [];
+  private compressionUtils: any = null; // Will be lazily loaded
 
   private constructor() {
     this.loadPendingActions();
@@ -83,10 +77,27 @@ export class OfflineManager {
     this.notifySubscribers();
   }
 
-  // Add action to offline queue
+  // Add action to offline queue with deduplication
   addAction(
     action: Omit<OfflineAction, "id" | "timestamp" | "retryCount">,
   ): string {
+    // Check for duplicate requests
+    const dedupeKey = this.generateDeduplicationKey(action);
+    const existingId = this.requestDeduplication.get(dedupeKey);
+
+    if (existingId) {
+      const existingAction = this.pendingActions.find(
+        (a) => a.id === existingId,
+      );
+      if (existingAction && Date.now() - existingAction.timestamp < 5000) {
+        console.log(
+          "Offline Manager: Duplicate action detected, skipping",
+          action.type,
+        );
+        return existingId;
+      }
+    }
+
     const fullAction: OfflineAction = {
       ...action,
       id: this.generateId(),
@@ -96,14 +107,17 @@ export class OfflineManager {
     };
 
     this.pendingActions.push(fullAction);
-    this.savePendingActions();
+    this.requestDeduplication.set(dedupeKey, fullAction.id);
+
+    // Batch save operations
+    this.batchSavePendingActions();
     this.notifySubscribers();
 
     console.log("Offline Manager: Added action to queue", fullAction.type);
 
-    // If online, try to sync immediately
+    // If online, try to sync immediately with batching
     if (navigator.onLine && !this.syncInProgress) {
-      setTimeout(() => this.sync(), 100);
+      this.scheduleBatchSync();
     }
 
     return fullAction.id;
@@ -138,7 +152,7 @@ export class OfflineManager {
     };
   }
 
-  // Sync pending actions
+  // Sync pending actions with batching
   async sync(): Promise<void> {
     if (!navigator.onLine || this.syncInProgress || !this.isEnabled) {
       return;
@@ -152,73 +166,60 @@ export class OfflineManager {
     this.notifySubscribers();
 
     console.log(
-      `Offline Manager: Starting sync of ${this.pendingActions.length} actions`,
+      `Offline Manager: Starting batch sync of ${this.pendingActions.length} actions`,
     );
 
-    const actionsToProcess = [...this.pendingActions];
-    let syncedCount = 0;
-    let failedCount = 0;
+    // Create batches of actions
+    const batches = this.createBatches(this.pendingActions);
+    let totalSynced = 0;
+    let totalFailed = 0;
 
-    for (const action of actionsToProcess) {
-      try {
-        const success = await this.processAction(action);
+    for (const batch of batches) {
+      const results = await this.processBatch(batch);
+      totalSynced += results.synced;
+      totalFailed += results.failed;
 
-        if (success) {
-          this.removeAction(action.id);
-          syncedCount++;
-        } else {
-          // Increment retry count
-          action.retryCount++;
-          if (action.retryCount >= action.maxRetries) {
-            console.error(
-              `Offline Manager: Action ${action.id} exceeded max retries, removing`,
-            );
-            this.removeAction(action.id);
-          }
-          failedCount++;
-        }
-
-        // Small delay between requests to avoid overwhelming the server
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      } catch (error) {
-        console.error(
-          `Offline Manager: Failed to process action ${action.id}:`,
-          error,
-        );
-        action.retryCount++;
-        if (action.retryCount >= action.maxRetries) {
-          this.removeAction(action.id);
-        }
-        failedCount++;
+      // Small delay between batches
+      if (batches.indexOf(batch) < batches.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY));
       }
     }
 
     this.syncInProgress = false;
     this.lastSync = new Date();
-    this.savePendingActions();
+    this.batchSavePendingActions();
     this.notifySubscribers();
 
     console.log(
-      `Offline Manager: Sync complete. Synced: ${syncedCount}, Failed: ${failedCount}`,
+      `Offline Manager: Batch sync complete. Synced: ${totalSynced}, Failed: ${totalFailed}`,
     );
 
     // Schedule retry for failed actions if any remain
     if (this.pendingActions.length > 0) {
-      this.scheduleRetry();
+      this.scheduleRetryWithJitter();
     }
   }
 
-  // Process a single offline action
+  // Process a single offline action with timeout
   private async processAction(action: OfflineAction): Promise<boolean> {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
       const response = await fetch(action.endpoint, {
         method: action.method,
         headers: {
           "Content-Type": "application/json",
           ...action.data.headers,
         },
-        body: action.method !== "GET" ? JSON.stringify(action.data) : undefined,
+        body:
+          action.method !== "GET"
+            ? await this.compressPayload(action.data)
+            : undefined,
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         console.log(
@@ -241,18 +242,29 @@ export class OfflineManager {
     }
   }
 
-  // Schedule retry for failed actions
-  private scheduleRetry(): void {
+  // Schedule retry with jitter for failed actions
+  private scheduleRetryWithJitter(): void {
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
     }
 
-    // Exponential backoff: start with 30 seconds, double each time
-    const baseDelay = 30 * 1000;
+    // Exponential backoff with jitter
     const maxRetries = Math.max(
       ...this.pendingActions.map((a) => a.retryCount),
+      0,
     );
-    const delay = Math.min(baseDelay * Math.pow(2, maxRetries), 5 * 60 * 1000); // Max 5 minutes
+    const baseDelay = Math.min(
+      BASE_RETRY_DELAY * Math.pow(2, maxRetries),
+      MAX_RETRY_DELAY,
+    );
+
+    // Add jitter to prevent thundering herd
+    const jitter = baseDelay * JITTER_FACTOR * (Math.random() - 0.5);
+    const delay = Math.max(baseDelay + jitter, 1000);
+
+    console.log(
+      `Offline Manager: Scheduling retry in ${Math.round(delay / 1000)}s`,
+    );
 
     this.retryTimeout = setTimeout(() => {
       if (navigator.onLine && this.pendingActions.length > 0) {
@@ -277,25 +289,46 @@ export class OfflineManager {
     this.subscribers.forEach((callback) => callback(status));
   }
 
-  // Save pending actions to localStorage
-  private savePendingActions(): void {
+  // Batch save pending actions to localStorage
+  private batchSaveTimeout: NodeJS.Timeout | null = null;
+  private batchSavePendingActions(): void {
+    // Clear existing timeout
+    if (this.batchSaveTimeout) {
+      clearTimeout(this.batchSaveTimeout);
+    }
+
+    // Batch saves to reduce localStorage writes
+    this.batchSaveTimeout = setTimeout(() => {
+      this.savePendingActions();
+    }, 50);
+  }
+
+  // Save pending actions to localStorage with compression
+  private async savePendingActions(): Promise<void> {
     try {
       // Check if we're in a browser environment
       if (typeof window === "undefined" || !window.localStorage) {
         return;
       }
 
-      localStorage.setItem(
-        this.storageKey,
-        JSON.stringify(this.pendingActions),
-      );
+      const data = JSON.stringify(this.pendingActions);
+
+      // Compress if data is large
+      if (data.length > 5000) {
+        const compressed = await this.compressData(data);
+        localStorage.setItem(this.storageKey, compressed);
+        localStorage.setItem(this.storageKey + "-compressed", "true");
+      } else {
+        localStorage.setItem(this.storageKey, data);
+        localStorage.removeItem(this.storageKey + "-compressed");
+      }
     } catch (error) {
       console.error("Offline Manager: Failed to save pending actions:", error);
     }
   }
 
-  // Load pending actions from localStorage
-  private loadPendingActions(): void {
+  // Load pending actions from localStorage with decompression
+  private async loadPendingActions(): Promise<void> {
     try {
       // Check if we're in a browser environment
       if (typeof window === "undefined" || !window.localStorage) {
@@ -304,8 +337,23 @@ export class OfflineManager {
       }
 
       const stored = localStorage.getItem(this.storageKey);
+      const isCompressed =
+        localStorage.getItem(this.storageKey + "-compressed") === "true";
+
       if (stored) {
-        this.pendingActions = JSON.parse(stored);
+        let data = stored;
+        if (isCompressed) {
+          data = await this.decompressData(stored);
+        }
+
+        this.pendingActions = JSON.parse(data);
+
+        // Rebuild deduplication map
+        this.pendingActions.forEach((action) => {
+          const key = this.generateDeduplicationKey(action);
+          this.requestDeduplication.set(key, action.id);
+        });
+
         console.log(
           `Offline Manager: Loaded ${this.pendingActions.length} pending actions`,
         );
@@ -354,17 +402,143 @@ export class OfflineManager {
     this.notifySubscribers();
   }
 
-  // Cleanup
+  // Helper methods for optimization
+  private generateDeduplicationKey(action: Partial<OfflineAction>): string {
+    return `${action.type}-${action.method}-${action.endpoint}-${JSON.stringify(action.data || {})}`;
+  }
+
+  private createBatches(actions: OfflineAction[]): OfflineAction[][] {
+    const batches: OfflineAction[][] = [];
+    for (let i = 0; i < actions.length; i += MAX_BATCH_SIZE) {
+      batches.push(actions.slice(i, i + MAX_BATCH_SIZE));
+    }
+    return batches;
+  }
+
+  private async processBatch(
+    batch: OfflineAction[],
+  ): Promise<{ synced: number; failed: number }> {
+    const results = await Promise.allSettled(
+      batch.map((action) => this.processAction(action)),
+    );
+
+    let synced = 0;
+    let failed = 0;
+
+    results.forEach((result, index) => {
+      const action = batch[index];
+      if (result.status === "fulfilled" && result.value) {
+        this.removeAction(action.id);
+        synced++;
+      } else {
+        action.retryCount++;
+        if (action.retryCount >= action.maxRetries) {
+          console.error(
+            `Offline Manager: Action ${action.id} exceeded max retries`,
+          );
+          this.removeAction(action.id);
+        }
+        failed++;
+      }
+    });
+
+    return { synced, failed };
+  }
+
+  private scheduleBatchSync(): void {
+    if (!this.syncInProgress) {
+      setTimeout(() => this.sync(), 100);
+    }
+  }
+
+  private async compressPayload(data: any): Promise<string | undefined> {
+    const jsonData = JSON.stringify(data);
+
+    // Only compress large payloads
+    if (jsonData.length < 1000) {
+      return jsonData;
+    }
+
+    try {
+      // Lazy load compression utils
+      if (!this.compressionUtils) {
+        const { CompressionUtils } = await import("../cache/compression-utils");
+        this.compressionUtils = new CompressionUtils({
+          threshold: 1000,
+          algorithm: "gzip",
+          level: 6,
+        });
+      }
+
+      const result = await this.compressionUtils.compress(data);
+      return result.data.toString("base64");
+    } catch (error) {
+      console.warn("Failed to compress payload, using uncompressed", error);
+      return jsonData;
+    }
+  }
+
+  private async compressData(data: string): Promise<string> {
+    try {
+      // Simple compression using browser's CompressionStream API if available
+      if ("CompressionStream" in globalThis) {
+        const encoder = new TextEncoder();
+        const stream = new Response(
+          new Blob([encoder.encode(data)])
+            .stream()
+            .pipeThrough(new (globalThis as any).CompressionStream("gzip")),
+        );
+        const blob = await stream.blob();
+        const buffer = await blob.arrayBuffer();
+        return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      }
+    } catch (error) {
+      console.warn("Compression failed, using raw data", error);
+    }
+    return data;
+  }
+
+  private async decompressData(data: string): Promise<string> {
+    try {
+      // Decompress using browser's DecompressionStream API if available
+      if ("DecompressionStream" in globalThis) {
+        const binary = atob(data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        const stream = new Response(
+          new Blob([bytes])
+            .stream()
+            .pipeThrough(new (globalThis as any).DecompressionStream("gzip")),
+        );
+        return await stream.text();
+      }
+    } catch (error) {
+      console.warn("Decompression failed, trying raw data", error);
+    }
+    return data;
+  }
+
+  // Enhanced cleanup
   destroy(): void {
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
       this.retryTimeout = null;
     }
 
+    if (this.batchSaveTimeout) {
+      clearTimeout(this.batchSaveTimeout);
+      this.batchSaveTimeout = null;
+    }
+
     window.removeEventListener("online", this.handleOnline.bind(this));
     window.removeEventListener("offline", this.handleOffline.bind(this));
 
     this.subscribers.clear();
+    this.requestDeduplication.clear();
+    this.batchQueue = [];
   }
 }
 

@@ -229,14 +229,21 @@ export const AI_CONSTANTS = {
   },
 } as const;
 
-// Type guards
+/**
+ * Type guards for runtime validation
+ */
 export function isAIMessage(obj: unknown): obj is AIMessage {
   return (
     typeof obj === "object" &&
     obj !== null &&
     "id" in obj &&
     "role" in obj &&
-    "content" in obj
+    "content" in obj &&
+    "timestamp" in obj &&
+    typeof (obj as AIMessage).id === "string" &&
+    ["user", "assistant", "system"].includes((obj as AIMessage).role) &&
+    typeof (obj as AIMessage).content === "string" &&
+    (obj as AIMessage).timestamp instanceof Date
   );
 }
 
@@ -246,7 +253,10 @@ export function isToolCallInfo(obj: unknown): obj is ToolCallInfo {
     obj !== null &&
     "name" in obj &&
     "args" in obj &&
-    "timestamp" in obj
+    "timestamp" in obj &&
+    typeof (obj as ToolCallInfo).name === "string" &&
+    typeof (obj as ToolCallInfo).args === "object" &&
+    (obj as ToolCallInfo).timestamp instanceof Date
   );
 }
 
@@ -256,6 +266,13 @@ export function isServiceSuggestion(obj: unknown): obj is ServiceSuggestion {
     obj !== null &&
     "serviceType" in obj &&
     "confidence" in obj &&
-    "reason" in obj
+    "reason" in obj &&
+    "priority" in obj &&
+    typeof (obj as ServiceSuggestion).serviceType === "string" &&
+    typeof (obj as ServiceSuggestion).confidence === "number" &&
+    typeof (obj as ServiceSuggestion).reason === "string" &&
+    ["high", "medium", "low"].includes((obj as ServiceSuggestion).priority) &&
+    (obj as ServiceSuggestion).confidence >= 0 &&
+    (obj as ServiceSuggestion).confidence <= 1
   );
 }

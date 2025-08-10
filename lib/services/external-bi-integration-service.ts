@@ -811,17 +811,18 @@ export class ExternalBIIntegrationService {
   ): Promise<void> {
     try {
       const supabase = createClient();
-      await supabase.from("bi_connections").upsert({
-        id: connection.id,
-        name: connection.name,
-        type: connection.type,
-        endpoint: connection.endpoint,
-        credentials: connection.credentials,
-        is_active: connection.isActive,
-        last_sync: connection.lastSync,
-        created_at: connection.createdAt,
-        metadata: connection.metadata,
-      });
+      // TODO: Create bi_connections table in database migration
+      // await supabase.from("bi_connections").upsert({
+      //   id: connection.id,
+      //   name: connection.name,
+      //   type: connection.type,
+      //   endpoint: connection.endpoint,
+      //   credentials: connection.credentials,
+      //   is_active: connection.isActive,
+      //   last_sync: connection.lastSync,
+      //   created_at: connection.createdAt,
+      //   metadata: connection.metadata,
+      // });
     } catch (error) {
       logger.error("Failed to save connection to database:", error);
     }

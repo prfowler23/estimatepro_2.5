@@ -1,37 +1,118 @@
+/**
+ * Enhanced database transaction utilities with type safety and retry logic
+ * Provides ACID-compliant operations with automatic rollback support
+ */
+
 import { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { Database } from "@/types/supabase";
+import { withRetry, RetryResult } from "./retry-logic";
+import nullSafetyUtils from "./null-safety";
 
-// Valid table names from the database schema
+const { ValidationError } = nullSafetyUtils;
+
+// Enhanced type definitions for database operations
 type ValidTableName = keyof Database["public"]["Tables"];
+type TableRecord<T extends ValidTableName> =
+  Database["public"]["Tables"][T]["Row"];
+type TableInsert<T extends ValidTableName> =
+  Database["public"]["Tables"][T]["Insert"];
+type TableUpdate<T extends ValidTableName> =
+  Database["public"]["Tables"][T]["Update"];
 
-// Export OperationContext interface for use by other modules
-export interface OperationContext {
-  operation: "create" | "update" | "delete";
-  table: ValidTableName;
+// Transaction operation types
+type TransactionOperation = "create" | "update" | "delete" | "select";
+
+// Enhanced error types for database operations
+export class DatabaseError extends ValidationError {
+  constructor(
+    message: string,
+    public readonly operation?: TransactionOperation,
+    public readonly table?: ValidTableName,
+    public readonly recordId?: string,
+    code?: string,
+  ) {
+    super(message, `${operation}:${table}:${recordId}`, code);
+    this.name = "DatabaseError";
+  }
+}
+
+export class TransactionError extends DatabaseError {
+  constructor(
+    message: string,
+    public readonly failedOperations: OperationContext[],
+  ) {
+    super(message, undefined, undefined, undefined, "TRANSACTION_FAILED");
+    this.name = "TransactionError";
+  }
+}
+
+// Enhanced OperationContext with better type safety
+export interface OperationContext<T extends ValidTableName = ValidTableName> {
+  operation: TransactionOperation;
+  table: T;
   recordId?: string;
-  originalData?: Record<string, unknown>;
-  newData?: Record<string, unknown>;
+  originalData?: Partial<TableRecord<T>>;
+  newData?: Partial<TableInsert<T> | TableUpdate<T>>;
+  timestamp: number;
+  userId?: string;
 }
 
 export interface TransactionResult<T> {
   success: boolean;
   data?: T;
-  error?: string;
+  error?: DatabaseError;
+  operationsCompleted: OperationContext[];
+  rollbackExecuted: boolean;
+  duration: number;
 }
 
+export interface BatchOperationResult<T> extends TransactionResult<T[]> {
+  partialSuccess: boolean;
+  successfulOperations: OperationContext[];
+  failedOperations: OperationContext[];
+}
+
+/**
+ * Basic transaction wrapper with enhanced error handling
+ */
 export async function withTransaction<T>(
   operation: (client: SupabaseClient) => Promise<T>,
+  context?: Partial<OperationContext>,
 ): Promise<TransactionResult<T>> {
+  const startTime = Date.now();
+  const operationsCompleted: OperationContext[] = [];
+
   try {
-    // Execute operation with the client
     const result = await operation(supabase);
-    return { success: true, data: result };
+
+    return {
+      success: true,
+      data: result,
+      operationsCompleted,
+      rollbackExecuted: false,
+      duration: Date.now() - startTime,
+    };
   } catch (error) {
-    console.error("Transaction operation error:", error);
+    const dbError =
+      error instanceof DatabaseError
+        ? error
+        : new DatabaseError(
+            error instanceof Error ? error.message : "Transaction failed",
+            context?.operation,
+            context?.table,
+            context?.recordId,
+            "TRANSACTION_ERROR",
+          );
+
+    console.error("Transaction operation error:", dbError);
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Transaction failed",
+      error: dbError,
+      operationsCompleted,
+      rollbackExecuted: false,
+      duration: Date.now() - startTime,
     };
   }
 }
@@ -52,7 +133,13 @@ export async function withEnhancedTransaction<T>(
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const result = await operation(supabase);
-      return { success: true, data: result };
+      return {
+        success: true,
+        data: result,
+        operationsCompleted: [],
+        rollbackExecuted: false,
+        duration: 0,
+      };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error("Unknown error");
 
@@ -78,35 +165,60 @@ export async function withEnhancedTransaction<T>(
   }
 
   console.error("Enhanced transaction failed after all retries:", lastError);
+  const dbError =
+    lastError instanceof DatabaseError
+      ? lastError
+      : new DatabaseError(
+          lastError?.message || "Transaction failed after retries",
+          undefined,
+          undefined,
+          undefined,
+          "TRANSACTION_FAILED",
+        );
+
   return {
     success: false,
-    error: lastError?.message || "Transaction failed after retries",
+    error: dbError,
+    operationsCompleted: [],
+    rollbackExecuted: !!onRollback,
+    duration: 0,
   };
 }
 
-// Atomic estimate creation with services using enhanced transaction support
+// Type-safe estimate creation with services
 export async function createEstimateWithServices(
-  estimateData: any,
-  services: any[],
-): Promise<TransactionResult<{ estimate: any; services: any[] }>> {
+  estimateData: TableInsert<"estimates">,
+  services: TableInsert<"estimate_services">[],
+): Promise<
+  TransactionResult<{
+    estimate: TableRecord<"estimates">;
+    services: TableRecord<"estimate_services">[];
+  }>
+> {
   let createdEstimateId: string | null = null;
 
   return withEnhancedTransaction(
     async (supabase) => {
-      // Create estimate
+      // Create estimate with type safety
       const { data: estimate, error: estimateError } = await supabase
         .from("estimates")
         .insert(estimateData)
         .select()
         .single();
 
-      if (estimateError) {
-        throw new Error(`Failed to create estimate: ${estimateError.message}`);
+      if (estimateError || !estimate) {
+        throw new DatabaseError(
+          `Failed to create estimate: ${estimateError?.message || "No data returned"}`,
+          "create",
+          "estimates",
+          undefined,
+          "ESTIMATE_CREATE_FAILED",
+        );
       }
 
       createdEstimateId = estimate.id;
 
-      // Create services
+      // Create services with type safety
       const servicesWithEstimateId = services.map((service) => ({
         ...service,
         estimate_id: estimate.id,
@@ -117,8 +229,14 @@ export async function createEstimateWithServices(
         .insert(servicesWithEstimateId)
         .select();
 
-      if (servicesError) {
-        throw new Error(`Failed to create services: ${servicesError.message}`);
+      if (servicesError || !createdServices) {
+        throw new DatabaseError(
+          `Failed to create services: ${servicesError?.message || "No data returned"}`,
+          "create",
+          "estimate_services",
+          estimate.id,
+          "SERVICES_CREATE_FAILED",
+        );
       }
 
       return { estimate, services: createdServices };
@@ -153,14 +271,19 @@ export async function createEstimateWithServices(
   );
 }
 
-// Atomic estimate update with services using enhanced transaction support
+// Type-safe estimate update with services
 export async function updateEstimateWithServices(
   estimateId: string,
-  estimateData: any,
-  services: any[],
-): Promise<TransactionResult<{ estimate: any; services: any[] }>> {
-  let originalEstimate: any = null;
-  let originalServices: any[] = [];
+  estimateData: TableUpdate<"estimates">,
+  services: TableInsert<"estimate_services">[],
+): Promise<
+  TransactionResult<{
+    estimate: TableRecord<"estimates">;
+    services: TableRecord<"estimate_services">[];
+  }>
+> {
+  let originalEstimate: TableRecord<"estimates"> | null = null;
+  let originalServices: TableRecord<"estimate_services">[] = [];
 
   return withEnhancedTransaction(
     async (supabase) => {
@@ -179,7 +302,7 @@ export async function updateEstimateWithServices(
       originalEstimate = currentEstimate;
       originalServices = currentServices || [];
 
-      // Update estimate
+      // Update estimate with validation
       const { data: estimate, error: estimateError } = await supabase
         .from("estimates")
         .update(estimateData)
@@ -187,23 +310,33 @@ export async function updateEstimateWithServices(
         .select()
         .single();
 
-      if (estimateError) {
-        throw new Error(`Failed to update estimate: ${estimateError.message}`);
+      if (estimateError || !estimate) {
+        throw new DatabaseError(
+          `Failed to update estimate: ${estimateError?.message || "No data returned"}`,
+          "update",
+          "estimates",
+          estimateId,
+          "ESTIMATE_UPDATE_FAILED",
+        );
       }
 
-      // Delete existing services
+      // Delete existing services with validation
       const { error: deleteError } = await supabase
         .from("estimate_services")
         .delete()
         .eq("estimate_id", estimateId);
 
       if (deleteError) {
-        throw new Error(
+        throw new DatabaseError(
           `Failed to delete existing services: ${deleteError.message}`,
+          "delete",
+          "estimate_services",
+          estimateId,
+          "SERVICES_DELETE_FAILED",
         );
       }
 
-      // Create new services
+      // Create new services with validation
       const servicesWithEstimateId = services.map((service) => ({
         ...service,
         estimate_id: estimateId,
@@ -214,8 +347,14 @@ export async function updateEstimateWithServices(
         .insert(servicesWithEstimateId)
         .select();
 
-      if (servicesError) {
-        throw new Error(`Failed to create services: ${servicesError.message}`);
+      if (servicesError || !createdServices) {
+        throw new DatabaseError(
+          `Failed to create services: ${servicesError?.message || "No data returned"}`,
+          "create",
+          "estimate_services",
+          estimateId,
+          "SERVICES_CREATE_FAILED",
+        );
       }
 
       return { estimate, services: createdServices };
@@ -260,25 +399,39 @@ export async function updateEstimateWithServices(
   );
 }
 
-// Atomic service update
+// Type-safe service update
 export async function updateService(
   serviceId: string,
-  serviceData: any,
-): Promise<TransactionResult<any>> {
-  return withTransaction(async (supabase) => {
-    const { data: service, error } = await supabase
-      .from("estimate_services")
-      .update(serviceData)
-      .eq("id", serviceId)
-      .select()
-      .single();
+  serviceData: TableUpdate<"estimate_services">,
+): Promise<TransactionResult<TableRecord<"estimate_services">>> {
+  return withTransaction(
+    async (client) => {
+      const { data: service, error } = await client
+        .from("estimate_services")
+        .update(serviceData)
+        .eq("id", serviceId)
+        .select()
+        .single();
 
-    if (error) {
-      throw new Error(`Failed to update service: ${error.message}`);
-    }
+      if (error || !service) {
+        throw new DatabaseError(
+          `Failed to update service: ${error?.message || "No data returned"}`,
+          "update",
+          "estimate_services",
+          serviceId,
+          "SERVICE_UPDATE_FAILED",
+        );
+      }
 
-    return service;
-  });
+      return service;
+    },
+    {
+      operation: "update",
+      table: "estimate_services",
+      recordId: serviceId,
+      timestamp: Date.now(),
+    },
+  );
 }
 
 // Enhanced batch operations helper with proper rollback support
@@ -364,8 +517,10 @@ export async function batchOperation<T>(
   );
 }
 
-// Execute rollback for a specific operation context
-async function executeRollback(context: OperationContext): Promise<void> {
+// Enhanced rollback execution with better type safety
+async function executeRollback<T extends ValidTableName>(
+  context: OperationContext<T>,
+): Promise<void> {
   const { operation, table, recordId, originalData } = context;
 
   try {
@@ -373,11 +528,19 @@ async function executeRollback(context: OperationContext): Promise<void> {
       case "create":
         // Compensate creation by deleting the created record
         if (recordId) {
-          const { error } = await supabase
+          const { error } = await (supabase as any)
             .from(table)
             .delete()
             .eq("id", recordId);
-          if (error) throw error;
+          if (error) {
+            throw new DatabaseError(
+              `Rollback failed: ${error.message}`,
+              "delete",
+              table,
+              recordId,
+              "ROLLBACK_DELETE_FAILED",
+            );
+          }
           console.log(`Rolled back creation of ${table}:${recordId}`);
         }
         break;
@@ -385,11 +548,19 @@ async function executeRollback(context: OperationContext): Promise<void> {
       case "update":
         // Compensate update by restoring original data
         if (recordId && originalData) {
-          const { error } = await supabase
+          const { error } = await (supabase as any)
             .from(table)
-            .update(originalData as Record<string, unknown>)
+            .update(originalData as any)
             .eq("id", recordId);
-          if (error) throw error;
+          if (error) {
+            throw new DatabaseError(
+              `Rollback failed: ${error.message}`,
+              "update",
+              table,
+              recordId,
+              "ROLLBACK_UPDATE_FAILED",
+            );
+          }
           console.log(`Rolled back update of ${table}:${recordId}`);
         }
         break;
@@ -397,29 +568,57 @@ async function executeRollback(context: OperationContext): Promise<void> {
       case "delete":
         // Compensate deletion by recreating the record
         if (originalData) {
-          const { error } = await (supabase.from(table) as any).insert(
-            originalData as Record<string, unknown>,
-          );
-          if (error) throw error;
+          const { error } = await supabase
+            .from(table)
+            .insert(originalData as any);
+          if (error) {
+            throw new DatabaseError(
+              `Rollback failed: ${error.message}`,
+              "create",
+              table,
+              undefined,
+              "ROLLBACK_CREATE_FAILED",
+            );
+          }
           console.log(`Rolled back deletion from ${table}`);
         }
         break;
 
+      case "select":
+        // No rollback needed for read operations
+        console.log(`No rollback needed for select operation on ${table}`);
+        break;
+
       default:
-        console.warn(`Unknown operation type for rollback: ${operation}`);
+        throw new DatabaseError(
+          `Unknown operation type for rollback: ${operation}`,
+          operation as any,
+          table,
+          recordId,
+          "UNKNOWN_ROLLBACK_OPERATION",
+        );
     }
   } catch (error) {
-    console.error(`Rollback failed for ${operation} on ${table}:`, error);
-    throw error;
+    if (error instanceof DatabaseError) {
+      throw error;
+    }
+    throw new DatabaseError(
+      `Rollback failed for ${operation} on ${table}: ${error}`,
+      operation,
+      table,
+      recordId,
+      "ROLLBACK_GENERAL_FAILURE",
+    );
   }
 }
 
-// Utility function to create compensating actions for common operations
-export function createCompensatingAction(
-  operation: "create" | "update" | "delete",
-  table: ValidTableName,
+// Enhanced compensating action factory
+export function createCompensatingAction<T extends ValidTableName>(
+  operation: TransactionOperation,
+  table: T,
   recordId: string,
-  originalData?: Record<string, unknown>,
+  originalData?: Partial<TableRecord<T>>,
+  userId?: string,
 ): () => Promise<void> {
   return async () => {
     await executeRollback({
@@ -427,24 +626,29 @@ export function createCompensatingAction(
       table,
       recordId,
       originalData,
+      timestamp: Date.now(),
+      userId,
     });
   };
 }
 
-// Helper function to create operation contexts for batch operations
-export function createOperationContext(
-  operation: "create" | "update" | "delete",
-  table: ValidTableName,
+// Enhanced operation context factory with type safety
+export function createOperationContext<T extends ValidTableName>(
+  operation: TransactionOperation,
+  table: T,
   recordId?: string,
-  originalData?: Record<string, unknown>,
-  newData?: Record<string, unknown>,
-): OperationContext {
+  originalData?: Partial<TableRecord<T>>,
+  newData?: Partial<TableInsert<T> | TableUpdate<T>>,
+  userId?: string,
+): OperationContext<T> {
   return {
     operation,
     table,
     recordId,
     originalData,
     newData,
+    timestamp: Date.now(),
+    userId,
   };
 }
 

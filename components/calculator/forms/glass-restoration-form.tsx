@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -38,10 +39,10 @@ interface GlassRestorationFormProps {
   onCancel: () => void;
 }
 
-export function GlassRestorationForm({
+const GlassRestorationFormBase = ({
   onSubmit,
   onCancel,
-}: GlassRestorationFormProps) {
+}: GlassRestorationFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -458,4 +459,17 @@ export function GlassRestorationForm({
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const GlassRestorationForm = React.memo(
+  GlassRestorationFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+GlassRestorationForm.displayName = "GlassRestorationForm";

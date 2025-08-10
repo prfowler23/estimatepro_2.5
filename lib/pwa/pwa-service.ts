@@ -2,40 +2,12 @@
 // Manages PWA lifecycle, caching strategies, and advanced features
 
 import { offlineManager } from "./offline-manager";
+import { CacheStrategy, NetworkStatus } from "./types";
+import type { PWAConfig, PWAStatus, isPWAConfig, PWAError } from "./types";
 
-export interface PWAConfig {
-  enabled: boolean;
-  offlineMode: boolean;
-  backgroundSync: boolean;
-  pushNotifications: boolean;
-  autoUpdate: boolean;
-  cacheStrategies: {
-    images: "cache-first" | "network-first" | "stale-while-revalidate";
-    api: "cache-first" | "network-first" | "stale-while-revalidate";
-    documents: "cache-first" | "network-first" | "stale-while-revalidate";
-  };
-  offlinePages: string[];
-  criticalResources: string[];
-}
-
-export interface PWAStatus {
-  isInstalled: boolean;
-  isStandalone: boolean;
-  isOfflineReady: boolean;
-  hasServiceWorker: boolean;
-  hasPushPermission: boolean;
-  updateAvailable: boolean;
-  networkStatus: "online" | "offline" | "slow";
-  cacheStatus: {
-    totalSize: number;
-    itemCount: number;
-    lastCleared: Date | null;
-  };
-}
-
-export interface CacheStrategy {
+interface CacheStrategyConfig {
   pattern: RegExp;
-  strategy: "cache-first" | "network-first" | "stale-while-revalidate";
+  strategy: CacheStrategy;
   cacheName: string;
   maxAge?: number;
   maxEntries?: number;
@@ -49,6 +21,9 @@ export class PWAService {
   private updateCheckInterval: NodeJS.Timeout | null = null;
   private networkSpeed: "fast" | "slow" | "offline" = "fast";
   private cacheStrategies: CacheStrategy[] = [];
+  private broadcastChannel: BroadcastChannel | null = null;
+  private eventListeners: Map<string, EventListener> = new Map();
+  private abortController: AbortController | null = null;
 
   private constructor() {
     this.config = {
@@ -242,39 +217,55 @@ export class PWAService {
     }
   }
 
-  // Set up event listeners
+  // Set up event listeners with proper cleanup
   private setupEventListeners(): void {
-    // Online/offline events
-    window.addEventListener("online", () => {
+    // Create abort controller for fetch requests
+    this.abortController = new AbortController();
+
+    // Online/offline events with proper cleanup
+    const onlineHandler = () => {
       this.status.networkStatus = "online";
       this.checkNetworkSpeed();
-    });
-
-    window.addEventListener("offline", () => {
+    };
+    const offlineHandler = () => {
       this.status.networkStatus = "offline";
-    });
+    };
+
+    window.addEventListener("online", onlineHandler);
+    window.addEventListener("offline", offlineHandler);
+    this.eventListeners.set("online", onlineHandler);
+    this.eventListeners.set("offline", offlineHandler);
 
     // App visibility change
-    document.addEventListener("visibilitychange", () => {
+    const visibilityHandler = () => {
       if (!document.hidden && this.config.autoUpdate) {
         this.checkForUpdates();
       }
-    });
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+    this.eventListeners.set("visibilitychange", visibilityHandler);
 
     // Service worker controller change
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const controllerChangeHandler = () => {
       // New service worker has taken control
       window.location.reload();
-    });
+    };
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      controllerChangeHandler,
+    );
+    this.eventListeners.set("controllerchange", controllerChangeHandler);
 
     // Listen for app install
-    window.addEventListener("appinstalled", () => {
+    const appInstalledHandler = () => {
       this.status.isInstalled = true;
       console.log("PWA installed successfully");
-    });
+    };
+    window.addEventListener("appinstalled", appInstalledHandler);
+    this.eventListeners.set("appinstalled", appInstalledHandler);
   }
 
-  // Check network status and speed
+  // Check network status and speed with abort signal
   private async checkNetworkStatus(): Promise<void> {
     if (!navigator.onLine) {
       this.status.networkStatus = "offline";
@@ -286,6 +277,7 @@ export class PWAService {
       const response = await fetch("/api/health", {
         method: "GET",
         cache: "no-cache",
+        signal: this.abortController?.signal,
       });
       const endTime = Date.now();
       const duration = endTime - startTime;
@@ -414,10 +406,12 @@ export class PWAService {
 
   // Notify user about available update
   private notifyUpdateAvailable(): void {
-    // Send message to main thread
+    // Send message to main thread using existing or new channel
     if ("BroadcastChannel" in window) {
-      const channel = new BroadcastChannel("pwa-updates");
-      channel.postMessage({ type: "UPDATE_AVAILABLE" });
+      if (!this.broadcastChannel) {
+        this.broadcastChannel = new BroadcastChannel("pwa-updates");
+      }
+      this.broadcastChannel.postMessage({ type: "UPDATE_AVAILABLE" });
     }
   }
 
@@ -570,11 +564,60 @@ export class PWAService {
     }
   }
 
-  // Clean up
+  // Clean up with proper resource management
   destroy(): void {
+    // Clear update check interval
     if (this.updateCheckInterval) {
       clearInterval(this.updateCheckInterval);
       this.updateCheckInterval = null;
+    }
+
+    // Abort any pending fetch requests
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+
+    // Remove all event listeners
+    window.removeEventListener(
+      "online",
+      this.eventListeners.get("online") as EventListener,
+    );
+    window.removeEventListener(
+      "offline",
+      this.eventListeners.get("offline") as EventListener,
+    );
+    document.removeEventListener(
+      "visibilitychange",
+      this.eventListeners.get("visibilitychange") as EventListener,
+    );
+
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.removeEventListener(
+        "controllerchange",
+        this.eventListeners.get("controllerchange") as EventListener,
+      );
+    }
+
+    window.removeEventListener(
+      "appinstalled",
+      this.eventListeners.get("appinstalled") as EventListener,
+    );
+
+    this.eventListeners.clear();
+
+    // Close broadcast channel
+    if (this.broadcastChannel) {
+      this.broadcastChannel.close();
+      this.broadcastChannel = null;
+    }
+
+    // Clear cache strategies
+    this.cacheStrategies = [];
+
+    // Reset instance to allow garbage collection
+    if (PWAService.instance === this) {
+      PWAService.instance = null as any;
     }
   }
 }

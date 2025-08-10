@@ -53,7 +53,7 @@ describe("/api/estimates", () => {
     jest.clearAllMocks();
 
     // Set up default mock implementations
-    (EstimateBusinessService.getAllEstimates as jest.Mock).mockResolvedValue({
+    (EstimateBusinessService.listEstimates as jest.Mock).mockResolvedValue({
       estimates: [],
       total: 0,
       hasMore: false,
@@ -135,7 +135,7 @@ describe("/api/estimates", () => {
         createMockEstimate({ id: "2" }),
       ];
 
-      (EstimateBusinessService.getAllEstimates as jest.Mock).mockResolvedValue({
+      (EstimateBusinessService.listEstimates as jest.Mock).mockResolvedValue({
         estimates: mockEstimates,
         total: 2,
         hasMore: false,
@@ -146,7 +146,7 @@ describe("/api/estimates", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(EstimateBusinessService.getAllEstimates).toHaveBeenCalledWith({
+      expect(EstimateBusinessService.listEstimates).toHaveBeenCalledWith({
         limit: 50,
         offset: 0,
         status: undefined,
@@ -159,7 +159,7 @@ describe("/api/estimates", () => {
     });
 
     it("should handle custom pagination parameters", async () => {
-      (EstimateBusinessService.getAllEstimates as jest.Mock).mockResolvedValue({
+      (EstimateBusinessService.listEstimates as jest.Mock).mockResolvedValue({
         estimates: [],
         total: 100,
         hasMore: true,
@@ -172,7 +172,7 @@ describe("/api/estimates", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(EstimateBusinessService.getAllEstimates).toHaveBeenCalledWith({
+      expect(EstimateBusinessService.listEstimates).toHaveBeenCalledWith({
         limit: 20,
         offset: 40,
         status: undefined,
@@ -184,7 +184,7 @@ describe("/api/estimates", () => {
     });
 
     it("should filter by status", async () => {
-      (EstimateBusinessService.getAllEstimates as jest.Mock).mockResolvedValue({
+      (EstimateBusinessService.listEstimates as jest.Mock).mockResolvedValue({
         estimates: [],
         total: 5,
         hasMore: false,
@@ -196,7 +196,7 @@ describe("/api/estimates", () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(EstimateBusinessService.getAllEstimates).toHaveBeenCalledWith({
+      expect(EstimateBusinessService.listEstimates).toHaveBeenCalledWith({
         limit: 50,
         offset: 0,
         status: "draft",
@@ -206,7 +206,7 @@ describe("/api/estimates", () => {
     });
 
     it("should handle search parameter", async () => {
-      (EstimateBusinessService.getAllEstimates as jest.Mock).mockResolvedValue({
+      (EstimateBusinessService.listEstimates as jest.Mock).mockResolvedValue({
         estimates: [],
         total: 3,
         hasMore: false,
@@ -218,7 +218,7 @@ describe("/api/estimates", () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(EstimateBusinessService.getAllEstimates).toHaveBeenCalledWith({
+      expect(EstimateBusinessService.listEstimates).toHaveBeenCalledWith({
         limit: 50,
         offset: 0,
         status: undefined,

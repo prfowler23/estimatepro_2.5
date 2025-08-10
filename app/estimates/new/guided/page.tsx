@@ -22,6 +22,11 @@ import {
 } from "@/components/ui/mobile-step-navigation";
 import { useSwipeGestures } from "@/hooks/useSwipeGestures";
 import { GuidedFlowErrorBoundary } from "@/components/error-handling/guided-flow-error-boundary";
+import {
+  LazyMeasurementsWithFacade,
+  LazySummary,
+  LazyInitialContact,
+} from "@/components/lazy-loading/estimation-lazy";
 
 // Loading component for lazy-loaded steps
 function StepLoading() {
@@ -76,17 +81,17 @@ function StepRenderer() {
   });
 
   // Get the current step configuration
+  // Clear validation errors when step changes
+  useEffect(() => {
+    setValidationErrors([]);
+  }, [currentStep]);
+
   const steps = isLegacyMode
     ? [
         {
           id: "initial-contact",
           title: "Initial Contact",
-          component: React.lazy(
-            () =>
-              import(
-                "@/components/estimation/guided-flow/steps/InitialContact"
-              ),
-          ),
+          component: LazyInitialContact,
         },
         {
           id: "scope-details",
@@ -153,12 +158,7 @@ function StepRenderer() {
         {
           id: "measurements",
           title: "Measurements",
-          component: React.lazy(
-            () =>
-              import(
-                "@/components/estimation/guided-flow/steps/MeasurementsWithFacade"
-              ),
-          ),
+          component: LazyMeasurementsWithFacade,
         },
         {
           id: "pricing",
@@ -189,13 +189,21 @@ function StepRenderer() {
     router.push("/estimates");
   };
 
-  // Validate before next
-  const handleNext = () => {
+  // State for validation errors
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  // Validate before next - prevent multiple rapid calls
+  const handleNext = useCallback(() => {
     const validation = validateCurrentStep();
     if (validation.isValid) {
+      setValidationErrors([]); // Clear any previous errors
       nextStep();
+    } else {
+      // Show validation errors to user
+      setValidationErrors(validation.errors);
+      console.log("Validation failed:", validation.errors);
     }
-  };
+  }, [validateCurrentStep, nextStep]);
 
   return (
     <div
@@ -356,6 +364,30 @@ function StepRenderer() {
         )}
       >
         <div className="max-w-4xl mx-auto">
+          {/* Validation Errors Display */}
+          {validationErrors.length > 0 && (
+            <div className="mb-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-medium text-red-800 mb-1">
+                      Please fix the following issues:
+                    </h4>
+                    <ul className="text-sm text-red-700 space-y-1">
+                      {validationErrors.map((error, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="text-red-500">•</span>
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <GuidedFlowErrorBoundary>
             <Suspense fallback={<StepLoading />}>
               <StepComponent />

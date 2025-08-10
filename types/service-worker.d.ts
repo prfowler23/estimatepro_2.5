@@ -1,4 +1,8 @@
-// Service Worker Type Definitions
+/**
+ * Service Worker Type Definitions
+ * Provides type definitions for service worker APIs including
+ * fetch, sync, push, and notification events
+ */
 
 declare global {
   interface ServiceWorkerGlobalScope extends WorkerGlobalScope {
@@ -8,7 +12,11 @@ declare global {
   }
 
   interface ExtendableEvent extends Event {
-    waitUntil(promise: Promise<any>): void;
+    /**
+     * Extends the lifetime of the event
+     * @param promise Promise to wait for
+     */
+    waitUntil(promise: Promise<unknown>): void;
   }
 
   interface FetchEvent extends ExtendableEvent {
@@ -30,7 +38,7 @@ declare global {
   interface PushMessageData {
     arrayBuffer(): ArrayBuffer;
     blob(): Blob;
-    json(): any;
+    json<T = unknown>(): T;
     text(): string;
   }
 
@@ -41,7 +49,7 @@ declare global {
   }
 
   interface ExtendableMessageEvent extends ExtendableEvent {
-    readonly data: any;
+    readonly data: unknown;
     readonly origin: string;
     readonly lastEventId: string;
     readonly source: Client | ServiceWorker | MessagePort | null;

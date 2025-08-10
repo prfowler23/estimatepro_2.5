@@ -1,3 +1,7 @@
+/**
+ * @deprecated Use UnifiedAnalyticsDashboard with mode="basic" instead
+ * This component will be removed in the next major version
+ */
 "use client";
 
 import React, { useState, useEffect } from "react";

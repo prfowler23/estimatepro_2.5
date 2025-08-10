@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -23,34 +24,58 @@ export function FacadeMaterialsList({
   measurements,
   className,
 }: FacadeMaterialsListProps) {
-  const getMaterialColor = (type: string) => {
-    const colors: Record<string, string> = {
-      glass: "bg-blue-100 text-blue-800",
-      concrete: "bg-gray-100 text-gray-800",
-      brick: "bg-red-100 text-red-800",
-      metal: "bg-slate-100 text-slate-800",
-      stone: "bg-amber-100 text-amber-800",
-      wood: "bg-yellow-100 text-yellow-800",
-      composite: "bg-purple-100 text-purple-800",
-      stucco: "bg-orange-100 text-orange-800",
+  // Memoize color mapping functions to prevent recreation on each render
+  const getMaterialColor = useMemo(() => {
+    return (type: string) => {
+      const colors: Record<string, string> = {
+        glass: "bg-blue-100 text-blue-800",
+        concrete: "bg-gray-100 text-gray-800",
+        brick: "bg-red-100 text-red-800",
+        metal: "bg-slate-100 text-slate-800",
+        stone: "bg-amber-100 text-amber-800",
+        wood: "bg-yellow-100 text-yellow-800",
+        composite: "bg-purple-100 text-purple-800",
+        stucco: "bg-orange-100 text-orange-800",
+      };
+      return colors[type.toLowerCase()] || "bg-gray-100 text-gray-800";
     };
-    return colors[type.toLowerCase()] || "bg-gray-100 text-gray-800";
-  };
+  }, []);
 
-  const getConditionColor = (condition: string) => {
-    switch (condition.toLowerCase()) {
-      case "excellent":
-        return "text-green-600";
-      case "good":
-        return "text-blue-600";
-      case "fair":
-        return "text-yellow-600";
-      case "poor":
-        return "text-red-600";
-      default:
-        return "text-gray-600";
-    }
-  };
+  const getConditionColor = useMemo(() => {
+    return (condition: string) => {
+      switch (condition.toLowerCase()) {
+        case "excellent":
+          return "text-green-600";
+        case "good":
+          return "text-blue-600";
+        case "fair":
+          return "text-yellow-600";
+        case "poor":
+          return "text-red-600";
+        default:
+          return "text-gray-600";
+      }
+    };
+  }, []);
+
+  // Memoize material calculations
+  const materialStats = useMemo(() => {
+    if (!materials.length) return null;
+
+    const totalArea = materials.reduce(
+      (sum, mat) => sum + (mat.estimated_sqft || 0),
+      0,
+    );
+    const avgCoverage =
+      materials.reduce((sum, mat) => sum + mat.coverage_percentage, 0) /
+      materials.length;
+
+    return {
+      totalArea,
+      avgCoverage,
+      count: materials.length,
+    };
+  }, [materials]);
 
   if (materials.length === 0) {
     return (

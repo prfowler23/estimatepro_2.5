@@ -16,6 +16,7 @@ import {
 } from "@/lib/ai/smart-defaults-engine";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { deepEqual, useDeepCompareMemo } from "@/lib/utils/deep-compare";
+import { logger } from "@/lib/utils/logger";
 
 interface SmartDefaultsState {
   defaults: SmartDefault[];
@@ -91,7 +92,7 @@ export function SmartDefaultsProvider({
         isLoading: false,
       }));
     } catch (error) {
-      console.error("Error refreshing defaults:", error);
+      logger.error("Error refreshing defaults:", error);
       setState((prev) => ({
         ...prev,
         error:
@@ -117,7 +118,7 @@ export function SmartDefaultsProvider({
         suggestions: activeSuggestions,
       }));
     } catch (error) {
-      console.error("Error refreshing suggestions:", error);
+      logger.error("Error refreshing suggestions:", error);
     }
   };
 

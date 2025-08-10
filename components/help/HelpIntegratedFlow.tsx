@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, memo } from "react";
 import { useHelp } from "./HelpProvider";
-import { HelpContext } from "@/lib/help/help-context-engine";
+import { HelpContext } from "@/lib/help/help-types";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 
 interface HelpIntegratedFlowProps {
@@ -25,13 +25,13 @@ const STEP_IDS = [
   "summary",
 ];
 
-export function HelpIntegratedFlow({
+const HelpIntegratedFlowComponent = ({
   children,
   currentStep,
   flowData,
   validationErrors = [],
   className = "",
-}: HelpIntegratedFlowProps) {
+}: HelpIntegratedFlowProps) => {
   const { setContext, updateFlowData, trackBehavior } = useHelp();
 
   // Update help context when step changes
@@ -58,7 +58,13 @@ export function HelpIntegratedFlow({
       formState,
       errorCount: validationErrors.length,
     });
-  }, [currentStep, validationErrors.length, setContext, trackBehavior]);
+  }, [
+    currentStep,
+    validationErrors.length,
+    flowData,
+    setContext,
+    trackBehavior,
+  ]);
 
   // Update flow data in help context
   useEffect(() => {
@@ -85,7 +91,10 @@ export function HelpIntegratedFlow({
       {children}
     </div>
   );
-}
+};
+
+export const HelpIntegratedFlow = memo(HelpIntegratedFlowComponent);
+export default HelpIntegratedFlow;
 
 /**
  * Analyze the current form state for help context
@@ -213,5 +222,3 @@ function calculateStepCompletion(stepNumber: number, stepData: any): number {
       return 0;
   }
 }
-
-export default HelpIntegratedFlow;

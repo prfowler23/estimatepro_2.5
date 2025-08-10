@@ -1,10 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import { memo } from "react";
-
-interface CriticalPathAnalysisProps {
-  criticalPath: string[];
-  criticalPathDuration: number;
-}
+import type { CriticalPathAnalysisProps } from "../types";
 
 export const CriticalPathAnalysis = memo(function CriticalPathAnalysis({
   criticalPath,

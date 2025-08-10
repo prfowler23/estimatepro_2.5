@@ -10,6 +10,7 @@ import {
   GuidedFlowData,
   TakeoffData,
   WorkArea,
+  Measurement,
 } from "@/lib/types/estimate-types";
 import { WorkflowStepManager } from "./workflow-step-manager";
 import { WorkflowValidationEngine } from "./workflow-validation-engine";
@@ -105,18 +106,16 @@ export class WorkflowProgressTracker {
   ): Promise<boolean> {
     const supabase = createClient();
 
-    return withDatabaseRetry(async () => {
+    const result = await withDatabaseRetry(async () => {
       const progress = this.calculateProgress(guidedFlowData);
 
       const { error } = await supabase
-        .from("estimate_flows")
+        .from("estimation_flows")
         .upsert({
           estimate_id: estimateId,
-          flow_data: guidedFlowData,
+          flow_data: guidedFlowData as any, // Cast to avoid Json type issues
           current_step: progress.currentStep,
-          completed_steps: progress.completedSteps,
-          completion_percentage: progress.completionPercentage,
-          updated_at: new Date().toISOString(),
+          last_modified: new Date().toISOString(),
         })
         .select();
 
@@ -126,9 +125,11 @@ export class WorkflowProgressTracker {
       }
 
       // Invalidate cache for this estimate
-      invalidateCache(`workflow-progress-${estimateId}`);
+      invalidateCache.estimate(estimateId);
       return true;
     });
+
+    return result.success && result.data === true;
   }
 
   /**
@@ -140,9 +141,9 @@ export class WorkflowProgressTracker {
   } | null> {
     const supabase = createClient();
 
-    return withDatabaseRetry(async () => {
+    const result = await withDatabaseRetry(async () => {
       const { data, error } = await supabase
-        .from("estimate_flows")
+        .from("estimation_flows")
         .select("*")
         .eq("estimate_id", estimateId)
         .single();
@@ -160,6 +161,8 @@ export class WorkflowProgressTracker {
         progress,
       };
     });
+
+    return result.success ? result.data || null : null;
   }
 
   /**
@@ -168,9 +171,9 @@ export class WorkflowProgressTracker {
   static async deleteWorkflowProgress(estimateId: string): Promise<boolean> {
     const supabase = createClient();
 
-    return withDatabaseRetry(async () => {
+    const result = await withDatabaseRetry(async () => {
       const { error } = await supabase
-        .from("estimate_flows")
+        .from("estimation_flows")
         .delete()
         .eq("estimate_id", estimateId);
 
@@ -180,64 +183,64 @@ export class WorkflowProgressTracker {
       }
 
       // Invalidate cache for this estimate
-      invalidateCache(`workflow-progress-${estimateId}`);
+      invalidateCache.estimate(estimateId);
       return true;
     });
+
+    return result.success && result.data === true;
   }
 
   /**
    * Generate default takeoff data for work areas
    */
   static generateDefaultTakeoffData(workAreas: WorkArea[]): TakeoffData {
-    const measurements = workAreas.map((area) => ({
+    const measurements: Measurement[] = workAreas.map((area) => ({
       id: `measurement-${area.id}`,
-      areaId: area.id,
-      type: "manual" as const,
-      length: area.length || 0,
-      width: area.width || 0,
-      height: area.height || 0,
-      area: area.squareFootage || 0,
-      perimeter: 2 * ((area.length || 0) + (area.width || 0)),
+      workAreaId: area.id,
+      type: "area" as const,
+      value: area.geometry.area || 0,
+      unit: "sqft",
+      accuracy: 0.85,
+      method: "manual" as const,
+      takenAt: new Date(),
       notes: `Generated for ${area.name}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     }));
 
-    const totalArea = measurements.reduce((sum, m) => sum + m.area, 0);
-    const totalPerimeter = measurements.reduce(
-      (sum, m) => sum + m.perimeter,
+    const totalArea = measurements.reduce((sum, m) => sum + m.value, 0);
+    const totalPerimeter = workAreas.reduce(
+      (sum, area) => sum + area.geometry.perimeter,
       0,
     );
 
     const summary = {
       totalArea,
       totalPerimeter,
-      totalLength: measurements.reduce((sum, m) => sum + m.length, 0),
-      totalWidth: measurements.reduce((sum, m) => sum + m.width, 0),
-      totalHeight: measurements.reduce((sum, m) => sum + m.height, 0),
-      averageHeight:
-        measurements.length > 0
-          ? measurements.reduce((sum, m) => sum + m.height, 0) /
-            measurements.length
-          : 0,
+      totalLength: 0, // Not applicable for area measurements
+      totalWidth: 0, // Not applicable for area measurements
+      totalHeight: 12 * workAreas.length, // Default 12ft per area
+      averageHeight: 12, // Default height
       complexity:
         totalArea > 5000 ? "high" : totalArea > 2000 ? "medium" : "low",
     };
 
     return {
+      id: `takeoff-${Date.now()}`,
+      workAreas,
       measurements,
-      summary,
-      aiAnalysis: {
-        confidence: 85,
-        detectedFeatures: workAreas.map((area) => area.name),
-        estimatedComplexity: summary.complexity,
-        recommendations: [
-          "Verify measurements on-site before final estimate",
-          "Consider weather conditions for outdoor work",
-        ],
+      calculations: {
+        totalArea: summary.totalArea,
+        totalPerimeter: summary.totalPerimeter,
+        complexityFactor:
+          summary.complexity === "high"
+            ? 1.5
+            : summary.complexity === "medium"
+              ? 1.2
+              : 1.0,
+        accessDifficulty: 1.0,
       },
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      accuracy: 0.85,
+      method: "automatic" as const,
+      notes: "Generated from work areas",
     };
   }
 

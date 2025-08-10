@@ -1,4 +1,5 @@
 import { VALIDATION, EQUIPMENT_TYPES } from "./constants";
+import { ServiceTypeCode } from "@/components/calculator/types";
 
 // Rounding function following business rules
 export function roundToNearest(amount: number): number {
@@ -17,10 +18,10 @@ export function roundToNearest(amount: number): number {
 // Equipment selection based on building height
 export function getEquipmentForHeight(
   heightStories: number,
-  serviceType: string,
+  serviceType: string | ServiceTypeCode,
 ): string {
   // Glass Restoration always requires scaffold
-  if (serviceType === "GR") {
+  if (serviceType === ServiceTypeCode.GLASS_RESTORATION) {
     return EQUIPMENT_TYPES.SCAFFOLD;
   }
 

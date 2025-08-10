@@ -1,6 +1,16 @@
+/**
+ * @deprecated Use UnifiedAnalyticsDashboard with mode="consolidated" instead
+ * This component will be removed in the next major version
+ */
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  Suspense,
+} from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,9 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import PerformantAnalyticsCharts, {
-  OptimizedChart,
-} from "./ChartOptimizations";
+import { Skeleton } from "@/components/ui/skeleton";
+// Lazy load ChartOptimizations for 40KB bundle reduction
+const PerformantAnalyticsCharts = lazy(() =>
+  import("./ChartOptimizations").then((module) => ({
+    default: module.default,
+  })),
+);
+const OptimizedChart = lazy(() =>
+  import("./ChartOptimizations").then((module) => ({
+    default: module.OptimizedChart,
+  })),
+);
 import { useComponentOptimization } from "@/lib/optimization/analytics-bundle-optimization";
 import {
   useRealTimeMetrics,
@@ -76,7 +95,7 @@ interface PredictionResult {
   keyInsights: string[];
   topRecommendations: string[];
   dataQuality: number;
-  nextPredictions: any[];
+  nextPredictions: Array<Record<string, unknown>>;
 }
 
 interface AnomalyDetection {
@@ -475,7 +494,11 @@ const ConsolidatedAnalyticsDashboard: React.FC = () => {
       ],
     };
 
-    return <PerformantAnalyticsCharts data={chartData} loading={isLoading} />;
+    return (
+      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+        <PerformantAnalyticsCharts data={chartData} loading={isLoading} />
+      </Suspense>
+    );
   };
 
   return (

@@ -35,29 +35,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if analysis exists and user has access
-    const { data: analysis, error: analysisError } = await supabase
-      .from("facade_analyses")
-      .select("*")
-      .eq("id", id)
-      .eq("created_by", user.id)
-      .single();
+    const service = new FacadeAnalysisService();
 
-    if (analysisError || !analysis) {
-      return NextResponse.json(
-        { error: "Facade analysis not found" },
-        { status: 404 },
-      );
+    try {
+      // Get images using service (includes access check)
+      const images = await service.getImages(id, user.id);
+      return NextResponse.json({ images });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("not found")) {
+        return NextResponse.json(
+          { error: "Facade analysis not found" },
+          { status: 404 },
+        );
+      }
+      throw error;
     }
-
-    // Get images
-    const { data: images, error: imagesError } = await supabase
-      .from("facade_analysis_images")
-      .select("*")
-      .eq("facade_analysis_id", id)
-      .order("created_at", { ascending: true });
-
-    return NextResponse.json({ images: images || [] });
   } catch (error) {
     logger.error("Error in GET /api/facade-analysis/[id]/images:", {
       error: error instanceof Error ? error.message : String(error),

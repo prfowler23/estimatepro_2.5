@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getAnimationConfig } from "./animation-utils";
 
 interface EnhancedCardProps {
   children: React.ReactNode;
@@ -10,6 +11,12 @@ interface EnhancedCardProps {
   gradient?: "primary" | "secondary" | "warm" | "cool";
   className?: string;
   animate?: boolean;
+  /** Enhanced accessibility: Add semantic role */
+  role?: "article" | "section" | "banner" | "complementary";
+  /** Enhanced accessibility: Custom ARIA label */
+  ariaLabel?: string;
+  /** Performance: Disable animations on low-end devices */
+  respectMotionPreferences?: boolean;
 }
 
 export function EnhancedCard({
@@ -18,6 +25,9 @@ export function EnhancedCard({
   gradient = "primary",
   className,
   animate = true,
+  role,
+  ariaLabel,
+  respectMotionPreferences = true,
 }: EnhancedCardProps) {
   const gradientClasses = {
     primary: "bg-gradient-primary",
@@ -51,8 +61,18 @@ export function EnhancedCard({
     ),
   };
 
+  // Performance-aware animation configuration
+  const animationConfig = respectMotionPreferences
+    ? getAnimationConfig()
+    : { prefersReducedMotion: false };
+  const shouldAnimate = animate && !animationConfig.prefersReducedMotion;
+
   const cardContent = (
-    <div className={cn("rounded-xl p-6", variantClasses[variant], className)}>
+    <div
+      className={cn("rounded-xl p-6", variantClasses[variant], className)}
+      role={role}
+      aria-label={ariaLabel}
+    >
       {variant === "glass" && (
         <div className="absolute inset-0 shimmer opacity-30" />
       )}
@@ -77,7 +97,7 @@ export function EnhancedCard({
     </div>
   );
 
-  if (!animate) return cardContent;
+  if (!shouldAnimate) return cardContent;
 
   return (
     <motion.div

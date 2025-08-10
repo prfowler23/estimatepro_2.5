@@ -1,20 +1,18 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+import { DrawingService } from "@/lib/canvas/drawing-service";
 import {
-  DrawingService,
   Shape,
   Measurement,
   Point,
-} from "@/lib/canvas/drawing-service";
-
-interface DrawingCanvasProps {
-  backgroundImage?: string;
-  onShapesChange: (shapes: Shape[], measurements: Measurement[]) => void;
-  currentTool: "select" | "rectangle" | "polygon" | "measure";
-  scale?: { pixelsPerFoot: number };
-  width?: number;
-  height?: number;
-  onScaleChange?: (scale: { pixelsPerFoot: number }) => void;
-}
+  DrawingCanvasProps,
+  MIN_SHAPE_SIZE,
+} from "./types";
 
 interface ShapeManager {
   shapes: Shape[];
@@ -53,7 +51,7 @@ export function DrawingCanvas({
       service.setScale(scale.pixelsPerFoot, 1);
       setDrawingService(service);
     }
-  }, []);
+  }, [scale.pixelsPerFoot]);
 
   // Update scale when changed
   useEffect(() => {
@@ -72,9 +70,10 @@ export function DrawingCanvas({
         })
         .catch((error) => {
           console.error("Failed to load background image:", error);
+          // TODO: Add user-facing error notification
         });
     }
-  }, [backgroundImage, drawingService]);
+  }, [backgroundImage, drawingService]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Set canvas size
   useEffect(() => {
@@ -82,7 +81,7 @@ export function DrawingCanvas({
       drawingService.setCanvasSize(width, height);
       redrawCanvas();
     }
-  }, [width, height, drawingService]);
+  }, [width, height, drawingService]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const redrawCanvas = useCallback(() => {
     if (!drawingService) return;
@@ -167,7 +166,7 @@ export function DrawingCanvas({
 
       return false;
     },
-    [drawingService],
+    [drawingService], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const isPointInShape = (point: Point, shape: Shape): boolean => {
@@ -272,6 +271,8 @@ export function DrawingCanvas({
                 setCurrentPoints([]);
               } catch (error) {
                 console.error("Error creating polygon:", error);
+                setCurrentPoints([]);
+                // TODO: Add user-facing error notification
               }
             }
           }
@@ -291,6 +292,8 @@ export function DrawingCanvas({
               setCurrentPoints([]);
             } catch (error) {
               console.error("Error creating measurement:", error);
+              setCurrentPoints([]);
+              // TODO: Add user-facing error notification
             }
           }
           break;
@@ -357,7 +360,7 @@ export function DrawingCanvas({
       const width = Math.abs(endPoint.x - currentPoints[0].x);
       const height = Math.abs(endPoint.y - currentPoints[0].y);
 
-      if (width > 10 && height > 10) {
+      if (width > MIN_SHAPE_SIZE && height > MIN_SHAPE_SIZE) {
         try {
           const shape = drawingService.drawRectangle(
             currentPoints[0],
@@ -366,6 +369,7 @@ export function DrawingCanvas({
           updateShapeManager();
         } catch (error) {
           console.error("Error creating rectangle:", error);
+          // TODO: Add user-facing error notification
         }
       }
 
@@ -394,6 +398,8 @@ export function DrawingCanvas({
           setCurrentPoints([]);
         } catch (error) {
           console.error("Error creating polygon:", error);
+          setCurrentPoints([]);
+          // TODO: Add user-facing error notification
         }
       }
     },
@@ -418,7 +424,7 @@ export function DrawingCanvas({
         }
       }
     },
-    [isDrawing, shapeManager, drawingService, updateShapeManager, redrawCanvas],
+    [shapeManager, drawingService, updateShapeManager, redrawCanvas],
   );
 
   useEffect(() => {
@@ -426,7 +432,7 @@ export function DrawingCanvas({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  const getCursorStyle = (): string => {
+  const cursorStyle = useMemo(() => {
     switch (currentTool) {
       case "select":
         return "cursor-pointer";
@@ -437,7 +443,7 @@ export function DrawingCanvas({
       default:
         return "cursor-default";
     }
-  };
+  }, [currentTool]);
 
   return (
     <div className="relative">
@@ -445,7 +451,7 @@ export function DrawingCanvas({
         ref={canvasRef}
         width={width}
         height={height}
-        className={`border border-gray-300 ${getCursorStyle()}`}
+        className={`border border-gray-300 ${cursorStyle}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

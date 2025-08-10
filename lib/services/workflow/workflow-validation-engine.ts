@@ -411,7 +411,7 @@ export class WorkflowValidationEngine {
 
     // Calculate time for each work area
     workAreas.forEach((area) => {
-      const areaMultiplier = Math.max(1, (area.squareFootage || 1000) / 1000); // Scale based on size
+      const areaMultiplier = Math.max(1, (area.geometry.area || 1000) / 1000); // Scale based on size
 
       selectedServices.forEach((service) => {
         const baseTime = serviceTimeRates[service] || 1.0;

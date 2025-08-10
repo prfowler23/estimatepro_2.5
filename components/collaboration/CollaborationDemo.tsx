@@ -49,7 +49,8 @@ export function CollaborationDemo() {
       name: "Real-Time Sync",
       icon: Zap,
       description: "Changes are synchronized instantly across all users",
-      color: "text-blue-600 bg-blue-50 border-blue-200",
+      color:
+        "text-primary-action bg-primary-action/10 border-primary-action/30",
       status: "active",
     },
     {
@@ -57,7 +58,8 @@ export function CollaborationDemo() {
       name: "Presence Awareness",
       icon: Eye,
       description: "See who's online and what they're working on",
-      color: "text-green-600 bg-green-50 border-green-200",
+      color:
+        "text-success-600 bg-success-50 border-success-200 dark:text-success-400 dark:bg-success-900/20 dark:border-success-400/30",
       status: "active",
     },
     {
@@ -65,7 +67,8 @@ export function CollaborationDemo() {
       name: "Conflict Resolution",
       icon: GitMerge,
       description: "Intelligent handling of simultaneous edits",
-      color: "text-purple-600 bg-purple-50 border-purple-200",
+      color:
+        "text-primary-action bg-primary-action/10 border-primary-action/30",
       status: "active",
     },
     {
@@ -73,7 +76,8 @@ export function CollaborationDemo() {
       name: "Role-Based Access",
       icon: Shield,
       description: "Granular permissions for different user roles",
-      color: "text-orange-600 bg-orange-50 border-orange-200",
+      color:
+        "text-warning-600 bg-warning-50 border-warning-200 dark:text-warning-400 dark:bg-warning-900/20 dark:border-warning-400/30",
       status: "active",
     },
     {
@@ -81,7 +85,8 @@ export function CollaborationDemo() {
       name: "Change History",
       icon: Clock,
       description: "Complete audit trail of all modifications",
-      color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+      color:
+        "text-primary-action bg-primary-action/10 border-primary-action/30",
       status: "active",
     },
     {
@@ -89,7 +94,8 @@ export function CollaborationDemo() {
       name: "Collaborative Comments",
       icon: MessageSquare,
       description: "Contextual discussions and feedback",
-      color: "text-pink-600 bg-pink-50 border-pink-200",
+      color:
+        "text-secondary-action bg-secondary-action/10 border-secondary-action/30",
       status: "coming-soon",
     },
   ];
@@ -103,10 +109,10 @@ export function CollaborationDemo() {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
-          <Users className="w-10 h-10 text-blue-600" />
+          <Users className="w-10 h-10 text-primary-action" />
           Multi-User Collaboration System
         </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+        <p className="text-xl text-text-secondary max-w-3xl mx-auto">
           Experience real-time collaboration with advanced conflict resolution,
           presence awareness, and intelligent permission management.
         </p>
@@ -128,10 +134,10 @@ export function CollaborationDemo() {
             <div className="grid md:grid-cols-3 gap-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Wifi className="w-5 h-5 text-green-600" />
+                  <Wifi className="w-5 h-5 text-success-600 dark:text-success-400" />
                   <h3 className="font-semibold">Real-Time Connection</h3>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-text-secondary">
                   WebSocket-based real-time communication using Supabase&apos;s
                   real-time infrastructure for instant updates.
                 </p>
@@ -139,10 +145,10 @@ export function CollaborationDemo() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
+                  <Shield className="w-5 h-5 text-primary-action" />
                   <h3 className="font-semibold">Secure Collaboration</h3>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-text-secondary">
                   Role-based permissions with field-level access control and Row
                   Level Security (RLS) policies.
                 </p>
@@ -150,10 +156,10 @@ export function CollaborationDemo() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <GitMerge className="w-5 h-5 text-purple-600" />
+                  <GitMerge className="w-5 h-5 text-primary-action" />
                   <h3 className="font-semibold">Conflict Resolution</h3>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-text-secondary">
                   Intelligent conflict detection with multiple resolution
                   strategies and merge assistance.
                 </p>
@@ -166,31 +172,31 @@ export function CollaborationDemo() {
               <h3 className="text-xl font-semibold mb-4">Key Benefits</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-success-600 dark:text-success-400 mt-0.5" />
                   <span className="text-sm">
                     Teams can work simultaneously without conflicts
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-success-600 dark:text-success-400 mt-0.5" />
                   <span className="text-sm">
                     Real-time visibility into team member activities
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-success-600 dark:text-success-400 mt-0.5" />
                   <span className="text-sm">
                     Automatic conflict detection and resolution
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-success-600 dark:text-success-400 mt-0.5" />
                   <span className="text-sm">
                     Complete audit trail of all changes
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-success-600 dark:text-success-400 mt-0.5" />
                   <span className="text-sm">
                     Mobile-optimized collaborative experience
                   </span>
@@ -204,31 +210,31 @@ export function CollaborationDemo() {
               </h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <Zap className="w-5 h-5 text-primary-action mt-0.5" />
                   <span className="text-sm">
                     Sub-second latency for real-time updates
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Settings className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <Settings className="w-5 h-5 text-primary-action mt-0.5" />
                   <span className="text-sm">
                     Optimistic updates with conflict recovery
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <Shield className="w-5 h-5 text-primary-action mt-0.5" />
                   <span className="text-sm">
                     End-to-end encryption for sensitive data
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Clock className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <Clock className="w-5 h-5 text-primary-action mt-0.5" />
                   <span className="text-sm">
                     Automatic cleanup of old sessions and data
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Users className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <Users className="w-5 h-5 text-primary-action mt-0.5" />
                   <span className="text-sm">
                     Supports unlimited concurrent users
                   </span>
@@ -263,12 +269,12 @@ export function CollaborationDemo() {
                       </Badge>
                     </div>
 
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                       {feature.description}
                     </p>
 
                     {feature.status === "active" && (
-                      <div className="flex items-center gap-2 text-xs text-green-600">
+                      <div className="flex items-center gap-2 text-xs text-success-600 dark:text-success-400">
                         <CheckCircle className="w-3 h-3" />
                         <span>Fully Implemented</span>
                       </div>
@@ -285,45 +291,45 @@ export function CollaborationDemo() {
             </h3>
             <div className="space-y-4">
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                <div className="w-8 h-8 rounded-full bg-primary-action/10 flex items-center justify-center text-primary-action font-medium">
                   1
                 </div>
                 <div>
                   <h4 className="font-medium">User Joins Session</h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-text-secondary">
                     Authentication and permission verification
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-medium">
+                <div className="w-8 h-8 rounded-full bg-success-100 dark:bg-success-900/20 flex items-center justify-center text-success-600 dark:text-success-400 font-medium">
                   2
                 </div>
                 <div>
                   <h4 className="font-medium">Real-Time Sync</h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-text-secondary">
                     Presence awareness and live data synchronization
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-medium">
+                <div className="w-8 h-8 rounded-full bg-primary-action/10 flex items-center justify-center text-primary-action font-medium">
                   3
                 </div>
                 <div>
                   <h4 className="font-medium">Conflict Detection</h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-text-secondary">
                     Automatic detection of simultaneous edits
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-medium">
+                <div className="w-8 h-8 rounded-full bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center text-warning-600 dark:text-warning-400 font-medium">
                   4
                 </div>
                 <div>
                   <h4 className="font-medium">Smart Resolution</h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-text-secondary">
                     Intelligent conflict resolution with user assistance
                   </p>
                 </div>
@@ -342,7 +348,7 @@ export function CollaborationDemo() {
                 <select
                   value={simulationMode}
                   onChange={(e) => setSimulationMode(e.target.value as any)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="px-3 py-2 border border-border-primary rounded-md text-sm"
                 >
                   <option value="single">Single User</option>
                   <option value="multi">Multi-User</option>
@@ -391,19 +397,19 @@ export function CollaborationDemo() {
                   </h3>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-primary-action rounded-full"></div>
                       <code>CollaborationProvider</code> - Context management
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-success-500 rounded-full"></div>
                       <code>CollaborativeField</code> - Real-time form fields
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-primary-action rounded-full"></div>
                       <code>CollaboratorAvatars</code> - User presence display
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-warning-500 rounded-full"></div>
                       <code>ConflictResolutionDialog</code> - Conflict UI
                     </li>
                   </ul>
@@ -415,28 +421,28 @@ export function CollaborationDemo() {
                   </h3>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-error-500 rounded-full"></div>
                       <code>RealTimeCollaborationEngine</code> - Core engine
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-warning-500 rounded-full"></div>
                       <code>Supabase Real-time</code> - WebSocket infrastructure
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-primary-action rounded-full"></div>
                       <code>PostgreSQL</code> - Data persistence
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-secondary-action rounded-full"></div>
                       <code>Row Level Security</code> - Access control
                     </li>
                   </ul>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-bg-subtle p-4 rounded-lg">
                 <h4 className="font-medium mb-2">Data Flow</h4>
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-text-secondary space-y-1">
                   <div>
                     1. User makes change → CollaborativeField captures input
                   </div>
@@ -462,7 +468,9 @@ export function CollaborationDemo() {
             <h3 className="text-xl font-semibold mb-4">Database Schema</h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium mb-3 text-blue-600">Core Tables</h4>
+                <h4 className="font-medium mb-3 text-primary-action">
+                  Core Tables
+                </h4>
                 <ul className="space-y-2 text-sm">
                   <li>
                     <code>estimate_collaborators</code> - User roles and
@@ -482,7 +490,7 @@ export function CollaborationDemo() {
               </div>
 
               <div>
-                <h4 className="font-medium mb-3 text-green-600">
+                <h4 className="font-medium mb-3 text-success-600 dark:text-success-400">
                   Security Features
                 </h4>
                 <ul className="space-y-2 text-sm">

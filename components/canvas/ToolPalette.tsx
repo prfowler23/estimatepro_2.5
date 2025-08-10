@@ -1,17 +1,16 @@
 import { Square, Hexagon, Ruler, MousePointer, Trash2 } from "lucide-react";
-
-interface ToolPaletteProps {
-  currentTool: string;
-  onToolChange: (tool: string) => void;
-  onClearAll: () => void;
-}
+import { DrawingTool, ToolPaletteProps } from "./types";
 
 export function ToolPalette({
   currentTool,
   onToolChange,
   onClearAll,
 }: ToolPaletteProps) {
-  const tools = [
+  const tools: Array<{
+    id: DrawingTool;
+    icon: typeof MousePointer;
+    label: string;
+  }> = [
     { id: "select", icon: MousePointer, label: "Select" },
     { id: "rectangle", icon: Square, label: "Rectangle" },
     { id: "polygon", icon: Hexagon, label: "Polygon" },

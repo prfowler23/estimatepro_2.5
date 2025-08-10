@@ -1,38 +1,8 @@
 import { Clock, Cloud } from "lucide-react";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
-
-interface ServiceDuration {
-  service: string;
-  serviceName?: string;
-  baseDuration: number;
-  weatherImpact: number;
-  finalDuration: number;
-  confidence: "high" | "medium" | "low";
-  dependencies: string[];
-}
-
-interface DurationBreakdownProps {
-  serviceDurations: ServiceDuration[];
-  criticalPath: string[];
-  totalBaseDuration: number;
-  totalWeatherImpact: number;
-  totalDuration: number;
-}
-
-const SERVICE_NAMES: Record<string, string> = {
-  WC: "Window Cleaning",
-  GR: "Glass Restoration",
-  BWP: "Building Wash (Pressure)",
-  BWS: "Building Wash (Soft)",
-  HBW: "High-Rise Building Wash",
-  PWF: "Pressure Wash (Flat)",
-  HFS: "Hard Floor Scrubbing",
-  PC: "Parking Cleaning",
-  PWP: "Parking Pressure Wash",
-  IW: "Interior Wall Cleaning",
-  DC: "Deck Cleaning",
-};
+import type { DurationBreakdownProps } from "../types";
+import { SERVICE_NAMES } from "../constants";
 
 export const DurationBreakdown = memo(function DurationBreakdown({
   serviceDurations,

@@ -16,13 +16,7 @@ import {
   LazyBiofilmRemovalForm,
   LazyFacadeAnalysisForm,
 } from "./lazy-forms";
-
-interface DynamicFormLoaderProps {
-  serviceType: string | null;
-  onSubmit: (result: any) => void;
-  onCancel: () => void;
-  estimateId: string;
-}
+import { ServiceTypeCode, DynamicFormLoaderProps } from "./types";
 
 export function DynamicFormLoader({
   serviceType,
@@ -46,29 +40,29 @@ export function DynamicFormLoader({
     };
 
     switch (serviceType) {
-      case "GR":
+      case ServiceTypeCode.GLASS_RESTORATION:
         return <LazyGlassRestorationForm {...commonProps} />;
-      case "WC":
+      case ServiceTypeCode.WINDOW_CLEANING:
         return <LazyWindowCleaningForm {...commonProps} />;
-      case "PW":
+      case ServiceTypeCode.PRESSURE_WASHING:
         return <LazyPressureWashingForm {...commonProps} />;
-      case "PWS":
+      case ServiceTypeCode.PRESSURE_WASH_SEAL:
         return <LazyPressureWashSealForm {...commonProps} />;
-      case "FC":
+      case ServiceTypeCode.FINAL_CLEAN:
         return <LazyFinalCleanForm {...commonProps} />;
-      case "FR":
+      case ServiceTypeCode.FRAME_RESTORATION:
         return <LazyFrameRestorationForm {...commonProps} />;
-      case "HD":
+      case ServiceTypeCode.HIGH_DUSTING:
         return <LazyHighDustingForm {...commonProps} />;
-      case "SW":
+      case ServiceTypeCode.SOFT_WASHING:
         return <LazySoftWashingForm {...commonProps} />;
-      case "PD":
+      case ServiceTypeCode.PARKING_DECK:
         return <LazyParkingDeckForm {...commonProps} />;
-      case "GRC":
+      case ServiceTypeCode.GRANITE_RECONDITIONING:
         return <LazyGraniteReconditioningForm {...commonProps} />;
-      case "BF":
+      case ServiceTypeCode.BIOFILM_REMOVAL:
         return <LazyBiofilmRemovalForm {...commonProps} />;
-      case "FACADE_ANALYSIS":
+      case ServiceTypeCode.FACADE_ANALYSIS:
         return <LazyFacadeAnalysisForm {...commonProps} />;
       default:
         return (
@@ -85,3 +79,5 @@ export function DynamicFormLoader({
     </div>
   );
 }
+
+export default DynamicFormLoader;

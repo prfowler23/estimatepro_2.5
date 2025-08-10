@@ -1,0 +1,4396 @@
+{
+  "summary": {
+    "totalFiles": 869,
+    "filesWithOptimizations": 260,
+    "totalEstimatedSaving": 31336,
+    "analyzedAt": "2025-08-10T15:44:33.327Z"
+  },
+  "libraryStats": {
+    "lucide-react": {
+      "files": 247,
+      "imports": 247,
+      "totalSaving": 29640
+    },
+    "date-fns": {
+      "files": 7,
+      "imports": 7,
+      "totalSaving": 364
+    },
+    "framer-motion": {
+      "files": 37,
+      "imports": 37,
+      "totalSaving": 1332
+    }
+  },
+  "optimizations": [
+    {
+      "library": "lucide-react",
+      "file": "app/page.tsx",
+      "imports": [
+        "import {\n  Calculator,\n  FileText,\n  BarChart3,\n  Users,\n  Shield,\n  Zap,\n  ArrowRight,\n  Building2,\n  CheckCircle,\n  Bot,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Calculator",
+        "FileText",
+        "BarChart3",
+        "Users",
+        "Shield",
+        "Zap",
+        "ArrowRight",
+        "Building2",
+        "CheckCircle",
+        "Bot",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/not-found.tsx",
+      "imports": ["import { Home, ArrowLeft } from \"lucide-react\""],
+      "members": ["Home", "ArrowLeft"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "date-fns",
+      "file": "lib/weather/enhanced-weather-service.ts",
+      "imports": [
+        "import {\n  startOfMonth,\n  endOfMonth,\n  subMonths,\n  subWeeks,\n  subDays,\n  addDays,\n  format,\n  parseISO,\n  differenceInDays,\n} from \"date-fns\""
+      ],
+      "members": [
+        "startOfMonth",
+        "endOfMonth",
+        "subMonths",
+        "subWeeks",
+        "subDays",
+        "addDays",
+        "format",
+        "parseISO",
+        "differenceInDays",
+        ""
+      ],
+      "estimatedSaving": 52,
+      "priority": "medium"
+    },
+    {
+      "library": "date-fns",
+      "file": "lib/analytics/enhanced-analytics-service.ts",
+      "imports": [
+        "import {\n  startOfMonth,\n  endOfMonth,\n  subMonths,\n  subWeeks,\n  subDays,\n  startOfYear,\n  endOfYear,\n  startOfQuarter,\n  endOfQuarter,\n  differenceInDays,\n  format,\n  parseISO,\n} from \"date-fns\""
+      ],
+      "members": [
+        "startOfMonth",
+        "endOfMonth",
+        "subMonths",
+        "subWeeks",
+        "subDays",
+        "startOfYear",
+        "endOfYear",
+        "startOfQuarter",
+        "endOfQuarter",
+        "differenceInDays",
+        "format",
+        "parseISO",
+        ""
+      ],
+      "estimatedSaving": 52,
+      "priority": "medium"
+    },
+    {
+      "library": "date-fns",
+      "file": "lib/analytics/data.ts",
+      "imports": [
+        "import {\n  startOfMonth,\n  endOfMonth,\n  subMonths,\n  format,\n  startOfYear,\n  endOfYear,\n  startOfQuarter,\n  endOfQuarter,\n} from \"date-fns\""
+      ],
+      "members": [
+        "startOfMonth",
+        "endOfMonth",
+        "subMonths",
+        "format",
+        "startOfYear",
+        "endOfYear",
+        "startOfQuarter",
+        "endOfQuarter",
+        ""
+      ],
+      "estimatedSaving": 52,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/weather/enhanced-weather-display.tsx",
+      "imports": [
+        "import {\n  Cloud,\n  CloudRain,\n  Sun,\n  Wind,\n  Thermometer,\n  Eye,\n  Droplets,\n  AlertTriangle,\n  CheckCircle,\n  Clock,\n  Calendar,\n  MapPin,\n  RefreshCw,\n  TrendingUp,\n  TrendingDown,\n  Activity,\n  Shield,\n  Zap,\n  Timer,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Cloud",
+        "CloudRain",
+        "Sun",
+        "Wind",
+        "Thermometer",
+        "Eye",
+        "Droplets",
+        "AlertTriangle",
+        "CheckCircle",
+        "Clock",
+        "Calendar",
+        "MapPin",
+        "RefreshCw",
+        "TrendingUp",
+        "TrendingDown",
+        "Activity",
+        "Shield",
+        "Zap",
+        "Timer",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/visualizer/facade-visualization.tsx",
+      "imports": [
+        "import { Building2, Maximize, Move3D } from \"lucide-react\""
+      ],
+      "members": ["Building2", "Maximize", "Move3D"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/visualizer/enhanced-building-3d.tsx",
+      "imports": [
+        "import {\n  Building,\n  Layers,\n  Ruler,\n  Camera,\n  Download,\n  Upload,\n  RotateCcw,\n  ZoomIn,\n  ZoomOut,\n  Grid3x3,\n  Lightbulb,\n  Settings,\n  Save,\n  Share2,\n  Eye,\n  MousePointer,\n  Maximize,\n  Minimize,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Building",
+        "Layers",
+        "Ruler",
+        "Camera",
+        "Download",
+        "Upload",
+        "RotateCcw",
+        "ZoomIn",
+        "ZoomOut",
+        "Grid3x3",
+        "Lightbulb",
+        "Settings",
+        "Save",
+        "Share2",
+        "Eye",
+        "MousePointer",
+        "Maximize",
+        "Minimize",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/validation/ProgressiveHintsSystem.tsx",
+      "imports": [
+        "import {\n  AlertCircle,\n  CheckCircle2,\n  Lightbulb,\n  ArrowRight,\n  X,\n  Info,\n  Star,\n  Target,\n  TrendingUp,\n  AlertTriangle,\n  HelpCircle,\n  Wand2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertCircle",
+        "CheckCircle2",
+        "Lightbulb",
+        "ArrowRight",
+        "X",
+        "Info",
+        "Star",
+        "Target",
+        "TrendingUp",
+        "AlertTriangle",
+        "HelpCircle",
+        "Wand2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/validation/ProgressiveHintsSystem.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/stat-card.tsx",
+      "imports": [
+        "import { TrendingUp, TrendingDown, Minus } from \"lucide-react\""
+      ],
+      "members": ["TrendingUp", "TrendingDown", "Minus"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/stat-card.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/standardized-notifications.tsx",
+      "imports": [
+        "import {\n  CheckCircle,\n  AlertCircle,\n  AlertTriangle,\n  Info,\n  X,\n  RefreshCw,\n  Copy,\n  ArrowRight,\n  ExternalLink,\n  MessageCircle,\n  Zap,\n  Timer,\n  WifiOff,\n  Shield,\n  Settings,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "CheckCircle",
+        "AlertCircle",
+        "AlertTriangle",
+        "Info",
+        "X",
+        "RefreshCw",
+        "Copy",
+        "ArrowRight",
+        "ExternalLink",
+        "MessageCircle",
+        "Zap",
+        "Timer",
+        "WifiOff",
+        "Shield",
+        "Settings",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/standardized-notifications.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/skeleton.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/sheet.tsx",
+      "imports": ["import { X } from \"lucide-react\""],
+      "members": ["X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/select.tsx",
+      "imports": [
+        "import { Check, ChevronDown, ChevronUp } from \"lucide-react\""
+      ],
+      "members": ["Check", "ChevronDown", "ChevronUp"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/section-header.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/screen-reader-enhancements.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/radio-group.tsx",
+      "imports": ["import { Circle } from \"lucide-react\""],
+      "members": ["Circle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/notification-demo.tsx",
+      "imports": [
+        "import {\n  Save,\n  AlertTriangle,\n  Info,\n  RefreshCw,\n  MessageCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Save",
+        "AlertTriangle",
+        "Info",
+        "RefreshCw",
+        "MessageCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile-step-navigation.tsx",
+      "imports": [
+        "import { ChevronLeft, ChevronRight, Check, Home, Save, X } from \"lucide-react\""
+      ],
+      "members": ["ChevronLeft", "ChevronRight", "Check", "Home", "Save", "X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/feature-card.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/error-alert.tsx",
+      "imports": [
+        "import {\n  AlertCircle,\n  AlertTriangle,\n  Info,\n  CheckCircle,\n  RefreshCw,\n  ArrowRight,\n  X,\n  Copy,\n  ExternalLink,\n  MessageCircle,\n  Settings,\n  Wifi,\n  WifiOff,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertCircle",
+        "AlertTriangle",
+        "Info",
+        "CheckCircle",
+        "RefreshCw",
+        "ArrowRight",
+        "X",
+        "Copy",
+        "ExternalLink",
+        "MessageCircle",
+        "Settings",
+        "Wifi",
+        "WifiOff",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/error-alert.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/enhanced-progress.tsx",
+      "imports": [
+        "import { CheckCircle, Clock, Lock, AlertCircle } from \"lucide-react\""
+      ],
+      "members": ["CheckCircle", "Clock", "Lock", "AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/enhanced-progress.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/enhanced-card.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/empty-state.tsx",
+      "imports": [
+        "import {\n  FileText,\n  Plus,\n  Search,\n  Filter,\n  Upload,\n  Users,\n  Settings,\n  Lightbulb,\n  ArrowRight,\n  ExternalLink,\n  RefreshCw,\n  Inbox,\n  Calendar,\n  BarChart3,\n  Camera,\n  Bot,\n  Zap,\n  Target,\n  BookOpen,\n  MessageCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "FileText",
+        "Plus",
+        "Search",
+        "Filter",
+        "Upload",
+        "Users",
+        "Settings",
+        "Lightbulb",
+        "ArrowRight",
+        "ExternalLink",
+        "RefreshCw",
+        "Inbox",
+        "Calendar",
+        "BarChart3",
+        "Camera",
+        "Bot",
+        "Zap",
+        "Target",
+        "BookOpen",
+        "MessageCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/empty-state.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/dropdown-menu.tsx",
+      "imports": [
+        "import { Check, ChevronRight, Circle } from \"lucide-react\""
+      ],
+      "members": ["Check", "ChevronRight", "Circle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/dialog.tsx",
+      "imports": ["import { X } from \"lucide-react\""],
+      "members": ["X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/connectivity-status.tsx",
+      "imports": [
+        "import {\n  CheckCircle,\n  XCircle,\n  AlertTriangle,\n  RefreshCw,\n  Database,\n  Zap,\n  Globe,\n  Bot,\n  Settings,\n  Wifi,\n  WifiOff,\n  Activity,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "CheckCircle",
+        "XCircle",
+        "AlertTriangle",
+        "RefreshCw",
+        "Database",
+        "Zap",
+        "Globe",
+        "Bot",
+        "Settings",
+        "Wifi",
+        "WifiOff",
+        "Activity",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/collapsible.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/checkbox.tsx",
+      "imports": ["import { Check } from \"lucide-react\""],
+      "members": ["Check"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/button.tsx",
+      "imports": [
+        "import { motion, MotionProps, AnimatePresence } from \"framer-motion\""
+      ],
+      "members": ["motion", "MotionProps", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/breadcrumb.tsx",
+      "imports": ["import { ChevronRight, Home } from \"lucide-react\""],
+      "members": ["ChevronRight", "Home"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/animation-utils.ts",
+      "imports": [
+        "import { Variants, Transition, Target, Easing } from \"framer-motion\""
+      ],
+      "members": ["Variants", "Transition", "Target", "Easing"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/analysis-loading.tsx",
+      "imports": ["import { Loader2 } from \"lucide-react\""],
+      "members": ["Loader2"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/accordion.tsx",
+      "imports": ["import { ChevronDown } from \"lucide-react\""],
+      "members": ["ChevronDown"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/SessionRecoveryModal.tsx",
+      "imports": [
+        "import {\n  Clock,\n  FileText,\n  AlertTriangle,\n  CheckCircle,\n  Trash2,\n  Download,\n  Calendar,\n  Monitor,\n  Smartphone,\n  MapPin,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Clock",
+        "FileText",
+        "AlertTriangle",
+        "CheckCircle",
+        "Trash2",
+        "Download",
+        "Calendar",
+        "Monitor",
+        "Smartphone",
+        "MapPin",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/SaveExitButton.tsx",
+      "imports": [
+        "import {\n  Save,\n  ChevronDown,\n  Clock,\n  CheckCircle,\n  AlertCircle,\n  LogOut,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Save",
+        "ChevronDown",
+        "Clock",
+        "CheckCircle",
+        "AlertCircle",
+        "LogOut",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/templates/TagInput.tsx",
+      "imports": ["import { Plus, X } from \"lucide-react\""],
+      "members": ["Plus", "X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/templates/SaveTemplateModal.tsx",
+      "imports": ["import { Save, AlertCircle } from \"lucide-react\""],
+      "members": ["Save", "AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/templates/SaveTemplateModal.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/templates/RecommendationsList.tsx",
+      "imports": ["import { Plus, X } from \"lucide-react\""],
+      "members": ["Plus", "X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/takeoff/TakeoffErrorBoundary.tsx",
+      "imports": [
+        "import { AlertTriangle, RefreshCw, Home } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "RefreshCw", "Home"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/takeoff/MeasurementTable.tsx",
+      "imports": [
+        "import { Plus, Trash2, Save, AlertCircle } from \"lucide-react\""
+      ],
+      "members": ["Plus", "Trash2", "Save", "AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/settings/settings-content.tsx",
+      "imports": [
+        "import {\n  User,\n  Settings as SettingsIcon,\n  LogOut,\n  CheckCircle,\n  XCircle,\n  Building,\n  TestTube as Flask,\n  Building2,\n  Camera,\n  ExternalLink,\n  Shield,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "User",
+        "Settings as SettingsIcon",
+        "LogOut",
+        "CheckCircle",
+        "XCircle",
+        "Building",
+        "TestTube as Flask",
+        "Building2",
+        "Camera",
+        "ExternalLink",
+        "Shield",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pwa/pwa-status.tsx",
+      "imports": [
+        "import {\n  Wifi,\n  WifiOff,\n  CloudOff,\n  CloudUpload,\n  RefreshCw,\n  Download,\n  CheckCircle,\n  AlertCircle,\n  Clock,\n  HardDrive,\n  Zap,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Wifi",
+        "WifiOff",
+        "CloudOff",
+        "CloudUpload",
+        "RefreshCw",
+        "Download",
+        "CheckCircle",
+        "AlertCircle",
+        "Clock",
+        "HardDrive",
+        "Zap",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/pwa/pwa-status.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pwa/offline-indicator.tsx",
+      "imports": [
+        "import {\n  Wifi,\n  WifiOff,\n  RotateCw as Sync,\n  CheckCircle,\n  AlertCircle,\n  Clock,\n  X,\n  Settings,\n  RefreshCw,\n  Database,\n  Cloud,\n  CloudOff,\n  Activity,\n  Zap,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Wifi",
+        "WifiOff",
+        "RotateCw as Sync",
+        "CheckCircle",
+        "AlertCircle",
+        "Clock",
+        "X",
+        "Settings",
+        "RefreshCw",
+        "Database",
+        "Cloud",
+        "CloudOff",
+        "Activity",
+        "Zap",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pwa/install-prompt.tsx",
+      "imports": [
+        "import {\n  Download,\n  X,\n  Smartphone,\n  Monitor,\n  Zap,\n  Shield,\n  Wifi,\n  Bell,\n  Star,\n  Check,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Download",
+        "X",
+        "Smartphone",
+        "Monitor",
+        "Zap",
+        "Shield",
+        "Wifi",
+        "Bell",
+        "Star",
+        "Check",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/providers/startup-validation-provider.tsx",
+      "imports": [
+        "import {\n  CheckCircle,\n  XCircle,\n  AlertTriangle,\n  RefreshCw,\n  Database,\n  Settings,\n  Zap,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "CheckCircle",
+        "XCircle",
+        "AlertTriangle",
+        "RefreshCw",
+        "Database",
+        "Settings",
+        "Zap",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pricing/WinProbabilityCalculator.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  Target,\n  DollarSign,\n  BarChart3,\n  Info,\n  AlertTriangle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "Target",
+        "DollarSign",
+        "BarChart3",
+        "Info",
+        "AlertTriangle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pricing/StrategyComparison.tsx",
+      "imports": [
+        "import {\n  CheckCircle2,\n  TrendingUp,\n  TrendingDown,\n  DollarSign,\n  Target,\n  AlertTriangle,\n  Info,\n  Star,\n  BarChart3,\n  Zap,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "CheckCircle2",
+        "TrendingUp",
+        "TrendingDown",
+        "DollarSign",
+        "Target",
+        "AlertTriangle",
+        "Info",
+        "Star",
+        "BarChart3",
+        "Zap",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pricing/RiskFactorAnalysis.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  Shield,\n  Cloud,\n  Building,\n  Clock,\n  Users,\n  FileText,\n  CheckCircle,\n  Info,\n  TrendingUp,\n  Lightbulb,\n  Eye,\n  EyeOff,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "Shield",
+        "Cloud",
+        "Building",
+        "Clock",
+        "Users",
+        "FileText",
+        "CheckCircle",
+        "Info",
+        "TrendingUp",
+        "Lightbulb",
+        "Eye",
+        "EyeOff",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pricing/ManualPriceOverride.tsx",
+      "imports": [
+        "import {\n  Edit3,\n  AlertTriangle,\n  CheckCircle,\n  TrendingUp,\n  TrendingDown,\n  DollarSign,\n  Shield,\n  Calculator,\n  Info,\n  X,\n  Save,\n  RotateCcw,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Edit3",
+        "AlertTriangle",
+        "CheckCircle",
+        "TrendingUp",
+        "TrendingDown",
+        "DollarSign",
+        "Shield",
+        "Calculator",
+        "Info",
+        "X",
+        "Save",
+        "RotateCcw",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pricing/DiscountApproval.tsx",
+      "imports": [
+        "import {\n  Shield,\n  AlertTriangle,\n  CheckCircle,\n  XCircle,\n  Clock,\n  User,\n  DollarSign,\n  FileText,\n  Send,\n  History,\n  TrendingDown,\n  Info,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Shield",
+        "AlertTriangle",
+        "CheckCircle",
+        "XCircle",
+        "Clock",
+        "User",
+        "DollarSign",
+        "FileText",
+        "Send",
+        "History",
+        "TrendingDown",
+        "Info",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/performance/performance-dashboard.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  Clock,\n  Zap,\n  Server,\n  RefreshCw,\n  Download,\n  AlertCircle,\n  CheckCircle,\n  XCircle,\n  Cpu,\n  HardDrive, // Using HardDrive as fallback for Memory icon\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "Clock",
+        "Zap",
+        "Server",
+        "RefreshCw",
+        "Download",
+        "AlertCircle",
+        "CheckCircle",
+        "XCircle",
+        "Cpu",
+        "HardDrive",
+        "// Using HardDrive as fallback for Memory icon"
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/performance/PerformanceTypeIcon.tsx",
+      "imports": [
+        "import { Server, Database, Zap, Activity, BarChart3, Eye } from \"lucide-react\""
+      ],
+      "members": ["Server", "Database", "Zap", "Activity", "BarChart3", "Eye"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/performance/PerformanceStatCard.tsx",
+      "imports": ["import { TrendingUp, TrendingDown } from \"lucide-react\""],
+      "members": ["TrendingUp", "TrendingDown"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/pdf/pdf-processor.tsx",
+      "imports": [
+        "import {\n  Upload as UploadIcon,\n  FileText as FileIcon,\n  Search as SearchIcon,\n  Download as DownloadIcon,\n  Image as ImageIcon,\n  Ruler as MeasurementIcon,\n  X as CancelIcon,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Upload as UploadIcon",
+        "FileText as FileIcon",
+        "Search as SearchIcon",
+        "Download as DownloadIcon",
+        "Image as ImageIcon",
+        "Ruler as MeasurementIcon",
+        "X as CancelIcon",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/monitoring/sentry-error-boundary.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  RefreshCw,\n  Bug,\n  ChevronDown,\n  Copy,\n  Send,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "RefreshCw",
+        "Bug",
+        "ChevronDown",
+        "Copy",
+        "Send",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/monitoring/monitoring-dashboard.tsx",
+      "imports": [
+        "import {\n  Activity,\n  AlertTriangle,\n  CheckCircle,\n  XCircle,\n  Clock,\n  Server,\n  Database,\n  Cpu,\n  MemoryStick,\n  HardDrive,\n  Network,\n  Users,\n  TrendingUp,\n  TrendingDown,\n  RefreshCw,\n  Settings,\n  Bell,\n  Eye,\n  Download,\n  Filter,\n  Calendar,\n  BarChart3,\n  LineChart,\n  PieChart,\n  AlertCircle,\n  FileDown,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Activity",
+        "AlertTriangle",
+        "CheckCircle",
+        "XCircle",
+        "Clock",
+        "Server",
+        "Database",
+        "Cpu",
+        "MemoryStick",
+        "HardDrive",
+        "Network",
+        "Users",
+        "TrendingUp",
+        "TrendingDown",
+        "RefreshCw",
+        "Settings",
+        "Bell",
+        "Eye",
+        "Download",
+        "Filter",
+        "Calendar",
+        "BarChart3",
+        "LineChart",
+        "PieChart",
+        "AlertCircle",
+        "FileDown",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/monitoring/database-performance-dashboard.tsx",
+      "imports": [
+        "import {\n  Activity,\n  Database,\n  Zap,\n  AlertTriangle,\n  CheckCircle,\n  Clock,\n  TrendingUp,\n  TrendingDown,\n  Minus,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Activity",
+        "Database",
+        "Zap",
+        "AlertTriangle",
+        "CheckCircle",
+        "Clock",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/lazy-loading/route-lazy.tsx",
+      "imports": ["import { RefreshCw } from \"lucide-react\""],
+      "members": ["RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/lazy-loading/estimation-lazy.tsx",
+      "imports": ["import { RefreshCw, Calculator } from \"lucide-react\""],
+      "members": ["RefreshCw", "Calculator"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/lazy-loading/dashboard-lazy.tsx",
+      "imports": [
+        "import { RefreshCw, Monitor, FileText, Clock } from \"lucide-react\""
+      ],
+      "members": ["RefreshCw", "Monitor", "FileText", "Clock"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/lazy-loading/analytics-lazy.tsx",
+      "imports": ["import { RefreshCw } from \"lucide-react\""],
+      "members": ["RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/layout/navigation.tsx",
+      "imports": [
+        "import { Building2, Menu, X, ChevronDown } from \"lucide-react\""
+      ],
+      "members": ["Building2", "Menu", "X", "ChevronDown"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/layout/mobile-bottom-nav.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/layout/app-header.tsx",
+      "imports": ["import { Building, Menu, X } from \"lucide-react\""],
+      "members": ["Building", "Menu", "X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/integrations/webhook-manager.tsx",
+      "imports": [
+        "import {\n  Plus,\n  Edit,\n  Trash2,\n  Play,\n  Pause,\n  Activity,\n  AlertTriangle,\n  CheckCircle,\n  XCircle,\n  Clock,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Plus",
+        "Edit",
+        "Trash2",
+        "Play",
+        "Pause",
+        "Activity",
+        "AlertTriangle",
+        "CheckCircle",
+        "XCircle",
+        "Clock",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/integrations/webhook-manager-v2.tsx",
+      "imports": [
+        "import {\n  Plus,\n  Activity,\n  RefreshCw,\n  Download,\n  Upload,\n  Filter,\n  Search,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Plus",
+        "Activity",
+        "RefreshCw",
+        "Download",
+        "Upload",
+        "Filter",
+        "Search",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/integrations/webhook-delivery-table.tsx",
+      "imports": [
+        "import {\n  CheckCircle,\n  XCircle,\n  Clock,\n  RefreshCw,\n  AlertTriangle,\n  ChevronDown,\n  ChevronUp,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "CheckCircle",
+        "XCircle",
+        "Clock",
+        "RefreshCw",
+        "AlertTriangle",
+        "ChevronDown",
+        "ChevronUp",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/integrations/webhook-card.tsx",
+      "imports": [
+        "import {\n  Play,\n  Edit,\n  Trash2,\n  MoreVertical,\n  Activity,\n  Clock,\n  CheckCircle,\n  XCircle,\n  Copy,\n  ToggleLeft,\n  ToggleRight,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Play",
+        "Edit",
+        "Trash2",
+        "MoreVertical",
+        "Activity",
+        "Clock",
+        "CheckCircle",
+        "XCircle",
+        "Copy",
+        "ToggleLeft",
+        "ToggleRight",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/help/lazy-help-components.tsx",
+      "imports": ["import { Loader2 } from \"lucide-react\""],
+      "members": ["Loader2"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/help/InteractiveTutorial.tsx",
+      "imports": [
+        "import {\n  X,\n  ArrowLeft,\n  ArrowRight,\n  Play,\n  Pause,\n  SkipForward,\n  CheckCircle,\n  Circle,\n  Target,\n  MousePointer,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "X",
+        "ArrowLeft",
+        "ArrowRight",
+        "Play",
+        "Pause",
+        "SkipForward",
+        "CheckCircle",
+        "Circle",
+        "Target",
+        "MousePointer",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/help/HelpTooltip.tsx",
+      "imports": [
+        "import {\n  HelpCircle,\n  X,\n  ThumbsUp,\n  ThumbsDown,\n  ExternalLink,\n  Info,\n  AlertCircle,\n  CheckCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "HelpCircle",
+        "X",
+        "ThumbsUp",
+        "ThumbsDown",
+        "ExternalLink",
+        "Info",
+        "AlertCircle",
+        "CheckCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/help/HelpSystemDemo.tsx",
+      "imports": [
+        "import {\n  HelpCircle,\n  BookOpen,\n  Lightbulb,\n  PlayCircle,\n  Users,\n  Settings,\n  Star,\n  Clock,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "HelpCircle",
+        "BookOpen",
+        "Lightbulb",
+        "PlayCircle",
+        "Users",
+        "Settings",
+        "Star",
+        "Clock",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/help/HelpErrorBoundary.tsx",
+      "imports": [
+        "import { AlertCircle, RefreshCw, HelpCircle } from \"lucide-react\""
+      ],
+      "members": ["AlertCircle", "RefreshCw", "HelpCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/help/ContextualHelpPanel.tsx",
+      "imports": [
+        "import {\n  HelpCircle,\n  X,\n  ChevronDown,\n  ChevronUp,\n  ThumbsUp,\n  ThumbsDown,\n  BookOpen,\n  Lightbulb,\n  AlertCircle,\n  PlayCircle,\n  Video,\n  FileText,\n  Sparkles,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "HelpCircle",
+        "X",
+        "ChevronDown",
+        "ChevronUp",
+        "ThumbsUp",
+        "ThumbsDown",
+        "BookOpen",
+        "Lightbulb",
+        "AlertCircle",
+        "PlayCircle",
+        "Video",
+        "FileText",
+        "Sparkles",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-materials-list.tsx",
+      "imports": ["import { Layers, AlertCircle } from \"lucide-react\""],
+      "members": ["Layers", "AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-image-upload.tsx",
+      "imports": [
+        "import { Upload, Link, Camera, Loader2 } from \"lucide-react\""
+      ],
+      "members": ["Upload", "Link", "Camera", "Loader2"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-image-gallery.tsx",
+      "imports": [
+        "import {\n  Camera,\n  Maximize2,\n  X,\n  ChevronLeft,\n  ChevronRight,\n  Sparkles,\n  Eye,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Camera",
+        "Maximize2",
+        "X",
+        "ChevronLeft",
+        "ChevronRight",
+        "Sparkles",
+        "Eye",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-error-boundary.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  RefreshCw,\n  Bug,\n  ExternalLink,\n  Copy,\n  CheckCircle2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "RefreshCw",
+        "Bug",
+        "ExternalLink",
+        "Copy",
+        "CheckCircle2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-analysis-form.tsx",
+      "imports": [
+        "import { Building2, MapPin, FileText, Loader2 } from \"lucide-react\""
+      ],
+      "members": ["Building2", "MapPin", "FileText", "Loader2"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-analysis-detail.tsx",
+      "imports": [
+        "import {\n  Building2,\n  Camera,\n  Sparkles,\n  FileText,\n  Download,\n  Trash2,\n  RefreshCw,\n  AlertTriangle,\n  CheckCircle2,\n  Square,\n  Maximize2,\n  Layers,\n  MapPin,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Building2",
+        "Camera",
+        "Sparkles",
+        "FileText",
+        "Download",
+        "Trash2",
+        "RefreshCw",
+        "AlertTriangle",
+        "CheckCircle2",
+        "Square",
+        "Maximize2",
+        "Layers",
+        "MapPin",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-analysis-card.tsx",
+      "imports": [
+        "import {\n  Building2,\n  Camera,\n  Sparkles,\n  ChevronRight,\n  Square,\n  Maximize2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Building2",
+        "Camera",
+        "Sparkles",
+        "ChevronRight",
+        "Square",
+        "Maximize2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/facade-analysis/facade-analysis-actions.tsx",
+      "imports": [
+        "import {\n  Sparkles,\n  Download,\n  Trash2,\n  MoreVertical,\n  RefreshCw,\n  FileText,\n  Image as ImageIcon,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Sparkles",
+        "Download",
+        "Trash2",
+        "MoreVertical",
+        "RefreshCw",
+        "FileText",
+        "Image as ImageIcon",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/expenses/VendorSelector.tsx",
+      "imports": [
+        "import {\n  Star,\n  Phone,\n  Mail,\n  CheckCircle,\n  AlertTriangle,\n  Plus,\n  Truck,\n  DollarSign,\n  Clock,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Star",
+        "Phone",
+        "Mail",
+        "CheckCircle",
+        "AlertTriangle",
+        "Plus",
+        "Truck",
+        "DollarSign",
+        "Clock",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/expenses/MarginAdjustment.tsx",
+      "imports": [
+        "import {\n  Settings,\n  Save,\n  RotateCcw,\n  TrendingUp,\n  AlertTriangle,\n  Info,\n  Target,\n  DollarSign,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Settings",
+        "Save",
+        "RotateCcw",
+        "TrendingUp",
+        "AlertTriangle",
+        "Info",
+        "Target",
+        "DollarSign",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/expenses/HistoricalComparison.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  TrendingDown,\n  Calendar,\n  Building,\n  DollarSign,\n  AlertTriangle,\n  Info,\n  Filter,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "TrendingDown",
+        "Calendar",
+        "Building",
+        "DollarSign",
+        "AlertTriangle",
+        "Info",
+        "Filter",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/expenses/CostBreakdown.tsx",
+      "imports": [
+        "import {\n  DollarSign,\n  TrendingUp,\n  PieChart,\n  BarChart3,\n  AlertTriangle,\n  Info,\n  Download,\n  Eye,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "DollarSign",
+        "TrendingUp",
+        "PieChart",
+        "BarChart3",
+        "AlertTriangle",
+        "Info",
+        "Download",
+        "Eye",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/facade-analysis-card.tsx",
+      "imports": [
+        "import {\n  Building2,\n  Upload,\n  Sparkles,\n  CheckCircle,\n  AlertCircle,\n  ArrowRight,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Building2",
+        "Upload",
+        "Sparkles",
+        "CheckCircle",
+        "AlertCircle",
+        "ArrowRight",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/services-section.tsx",
+      "imports": ["import { Plus, Trash2, Wrench } from \"lucide-react\""],
+      "members": ["Plus", "Trash2", "Wrench"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/notes-section.tsx",
+      "imports": ["import { FileText, Edit } from \"lucide-react\""],
+      "members": ["FileText", "Edit"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/estimate-summary-section.tsx",
+      "imports": ["import { DollarSign, TrendingUp } from \"lucide-react\""],
+      "members": ["DollarSign", "TrendingUp"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/estimate-list.tsx",
+      "imports": [
+        "import {\n  Search,\n  Filter,\n  SortAsc,\n  SortDesc,\n  Grid,\n  List,\n  FileText,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Search",
+        "Filter",
+        "SortAsc",
+        "SortDesc",
+        "Grid",
+        "List",
+        "FileText",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/estimate-header.tsx",
+      "imports": ["import { FileText, Edit3 } from \"lucide-react\""],
+      "members": ["FileText", "Edit3"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/estimate-editor.tsx",
+      "imports": ["import { Save } from \"lucide-react\""],
+      "members": ["Save"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/estimate-editor-optimized.tsx",
+      "imports": ["import { Save } from \"lucide-react\""],
+      "members": ["Save"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/estimate-card.tsx",
+      "imports": [
+        "import {\n  FileText,\n  User,\n  Building,\n  Calendar,\n  DollarSign,\n  Eye,\n  Edit,\n  MoreHorizontal,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "FileText",
+        "User",
+        "Building",
+        "Calendar",
+        "DollarSign",
+        "Eye",
+        "Edit",
+        "MoreHorizontal",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/customer-info-section.tsx",
+      "imports": ["import { User, Mail, Phone } from \"lucide-react\""],
+      "members": ["User", "Mail", "Phone"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimates/building-info-section.tsx",
+      "imports": ["import { Building, MapPin } from \"lucide-react\""],
+      "members": ["Building", "MapPin"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/error-handling/guided-flow-error-boundary.tsx",
+      "imports": ["import { AlertCircle, RefreshCw } from \"lucide-react\""],
+      "members": ["AlertCircle", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/error-handling/error-boundary.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  RefreshCw,\n  Home,\n  Settings,\n  Bug,\n  WifiOff,\n  Database,\n  Bot,\n  Globe,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "RefreshCw",
+        "Home",
+        "Settings",
+        "Bug",
+        "WifiOff",
+        "Database",
+        "Bot",
+        "Globe",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/error-handling/component-error-boundary.tsx",
+      "imports": ["import { AlertCircle, RefreshCw } from \"lucide-react\""],
+      "members": ["AlertCircle", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/error/SmartErrorNotification.tsx",
+      "imports": [
+        "import {\n  X,\n  AlertTriangle,\n  AlertCircle,\n  Info,\n  CheckCircle,\n  RefreshCw,\n  ChevronRight,\n  HelpCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "X",
+        "AlertTriangle",
+        "AlertCircle",
+        "Info",
+        "CheckCircle",
+        "RefreshCw",
+        "ChevronRight",
+        "HelpCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/error/ErrorRecoveryDemo.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  Wifi,\n  Shield,\n  Database,\n  Clock,\n  FileX,\n  Calculator,\n  Brain,\n  CheckCircle,\n  RefreshCw,\n  Zap,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "Wifi",
+        "Shield",
+        "Database",
+        "Clock",
+        "FileX",
+        "Calculator",
+        "Brain",
+        "CheckCircle",
+        "RefreshCw",
+        "Zap",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/error/ErrorBoundary.tsx",
+      "imports": [
+        "import { RefreshCw, AlertTriangle, Home } from \"lucide-react\""
+      ],
+      "members": ["RefreshCw", "AlertTriangle", "Home"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/error/EnhancedErrorDisplay.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  AlertCircle,\n  Info,\n  RefreshCw,\n  HelpCircle,\n  ChevronDown,\n  CheckCircle,\n  Clock,\n  Lightbulb,\n  ArrowRight,\n  ExternalLink,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "AlertCircle",
+        "Info",
+        "RefreshCw",
+        "HelpCircle",
+        "ChevronDown",
+        "CheckCircle",
+        "Clock",
+        "Lightbulb",
+        "ArrowRight",
+        "ExternalLink",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/WeatherImpactChart.tsx",
+      "imports": [
+        "import {\n  CheckCircle,\n  AlertTriangle,\n  Cloud,\n  Thermometer,\n  Wind,\n  Droplets,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "CheckCircle",
+        "AlertTriangle",
+        "Cloud",
+        "Thermometer",
+        "Wind",
+        "Droplets",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/TimelineVisualization.tsx",
+      "imports": [
+        "import {\n  Calendar,\n  AlertTriangle,\n  CheckCircle,\n  Clock,\n  Users,\n  Info,\n  ArrowRight,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Calendar",
+        "AlertTriangle",
+        "CheckCircle",
+        "Clock",
+        "Users",
+        "Info",
+        "ArrowRight",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/ManualOverride.tsx",
+      "imports": [
+        "import { Plus, X, Edit3, AlertTriangle, Clock, User } from \"lucide-react\""
+      ],
+      "members": ["Plus", "X", "Edit3", "AlertTriangle", "Clock", "User"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/DurationSummary.tsx",
+      "imports": ["import { Clock } from \"lucide-react\""],
+      "members": ["Clock"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/ChartErrorBoundary.tsx",
+      "imports": ["import { AlertTriangle, RefreshCw } from \"lucide-react\""],
+      "members": ["AlertTriangle", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/drone/error-boundary.tsx",
+      "imports": [
+        "import { AlertTriangle, RefreshCw, Home } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "RefreshCw", "Home"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/drone/drone-dashboard.tsx",
+      "imports": [
+        "import {\n  Plane,\n  MapPin,\n  Clock,\n  Battery,\n  Camera,\n  Wifi,\n  AlertTriangle,\n  CheckCircle,\n  PlayCircle,\n  Settings,\n  Download,\n  Upload,\n  Map,\n  BarChart3,\n  FileText,\n  Calendar,\n  Shield,\n  Wind,\n  Thermometer,\n  Eye,\n  Navigation,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Plane",
+        "MapPin",
+        "Clock",
+        "Battery",
+        "Camera",
+        "Wifi",
+        "AlertTriangle",
+        "CheckCircle",
+        "PlayCircle",
+        "Settings",
+        "Download",
+        "Upload",
+        "Map",
+        "BarChart3",
+        "FileText",
+        "Calendar",
+        "Shield",
+        "Wind",
+        "Thermometer",
+        "Eye",
+        "Navigation",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/FacadeAnalysisCard.tsx",
+      "imports": [
+        "import { Building2, Sparkles, ArrowRight, Camera } from \"lucide-react\""
+      ],
+      "members": ["Building2", "Sparkles", "ArrowRight", "Camera"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/dashboard/EnhancedDashboardLayout.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/EnhancedDashboardHeader.tsx",
+      "imports": ["import { Sparkles } from \"lucide-react\""],
+      "members": ["Sparkles"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/dashboard/EnhancedDashboardHeader.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/DashboardLoadingState.tsx",
+      "imports": ["import { RefreshCw } from \"lucide-react\""],
+      "members": ["RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/DashboardHeader.tsx",
+      "imports": ["import { RefreshCw } from \"lucide-react\""],
+      "members": ["RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/DashboardErrorState.tsx",
+      "imports": ["import { BarChart3, RefreshCw } from \"lucide-react\""],
+      "members": ["BarChart3", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/DashboardErrorBoundary.tsx",
+      "imports": ["import { AlertCircle, RefreshCw } from \"lucide-react\""],
+      "members": ["AlertCircle", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/DashboardEmptyState.tsx",
+      "imports": ["import { BarChart3, RefreshCw, Bot } from \"lucide-react\""],
+      "members": ["BarChart3", "RefreshCw", "Bot"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/ChartErrorBoundary.tsx",
+      "imports": ["import { AlertCircle, RefreshCw } from \"lucide-react\""],
+      "members": ["AlertCircle", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/AICreateEstimateCard.tsx",
+      "imports": [
+        "import {\n  Bot,\n  Camera,\n  Mail,\n  Mic,\n  Calculator,\n  Sparkles,\n  ArrowRight,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Bot",
+        "Camera",
+        "Mail",
+        "Mic",
+        "Calculator",
+        "Sparkles",
+        "ArrowRight",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/dashboard/AICreateEstimateCard.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/dashboard/AIBusinessInsights.tsx",
+      "imports": [
+        "import { Brain, Clock, Target, Zap, Bot } from \"lucide-react\""
+      ],
+      "members": ["Brain", "Clock", "Target", "Zap", "Bot"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/collaboration/RealTimeChangeIndicator.tsx",
+      "imports": [
+        "import {\n  Edit3,\n  Eye,\n  Clock,\n  AlertTriangle,\n  CheckCircle,\n  X,\n  Undo,\n  RotateCcw,\n  User,\n  Calendar,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Edit3",
+        "Eye",
+        "Clock",
+        "AlertTriangle",
+        "CheckCircle",
+        "X",
+        "Undo",
+        "RotateCcw",
+        "User",
+        "Calendar",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/collaboration/ConflictResolutionDialog.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  Users,\n  Clock,\n  Edit3,\n  CheckCircle,\n  X,\n  GitMerge,\n  Eye,\n  RotateCcw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "Users",
+        "Clock",
+        "Edit3",
+        "CheckCircle",
+        "X",
+        "GitMerge",
+        "Eye",
+        "RotateCcw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/collaboration/CollaboratorAvatars.tsx",
+      "imports": [
+        "import {\n  Users,\n  Eye,\n  Edit3,\n  Crown,\n  Clock,\n  MapPin,\n  UserPlus,\n  Settings,\n  LogOut,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Users",
+        "Eye",
+        "Edit3",
+        "Crown",
+        "Clock",
+        "MapPin",
+        "UserPlus",
+        "Settings",
+        "LogOut",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/collaboration/CollaborativeStepExample.tsx",
+      "imports": [
+        "import {\n  Users,\n  Eye,\n  Edit3,\n  MessageSquare,\n  Clock,\n  CheckCircle,\n  AlertTriangle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Users",
+        "Eye",
+        "Edit3",
+        "MessageSquare",
+        "Clock",
+        "CheckCircle",
+        "AlertTriangle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/collaboration/CollaborativeField.tsx",
+      "imports": [
+        "import { Edit3, Eye, Lock, AlertTriangle, Users, Clock } from \"lucide-react\""
+      ],
+      "members": ["Edit3", "Eye", "Lock", "AlertTriangle", "Users", "Clock"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/collaboration/CollaborationDemo.tsx",
+      "imports": [
+        "import {\n  Users,\n  Zap,\n  Eye,\n  Edit3,\n  MessageSquare,\n  Shield,\n  Clock,\n  GitMerge,\n  Wifi,\n  CheckCircle,\n  AlertTriangle,\n  Settings,\n  Play,\n  UserPlus,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Users",
+        "Zap",
+        "Eye",
+        "Edit3",
+        "MessageSquare",
+        "Shield",
+        "Clock",
+        "GitMerge",
+        "Wifi",
+        "CheckCircle",
+        "AlertTriangle",
+        "Settings",
+        "Play",
+        "UserPlus",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/canvas/ToolPalette.tsx",
+      "imports": [
+        "import { Square, Hexagon, Ruler, MousePointer, Trash2 } from \"lucide-react\""
+      ],
+      "members": ["Square", "Hexagon", "Ruler", "MousePointer", "Trash2"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/canvas/ScaleSetter.tsx",
+      "imports": ["import { Ruler, Check, X } from \"lucide-react\""],
+      "members": ["Ruler", "Check", "X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/canvas/AreaBuilder.tsx",
+      "imports": ["import { Save, AlertCircle } from \"lucide-react\""],
+      "members": ["Save", "AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/service-calculator.tsx",
+      "imports": [
+        "import {\n  Building2,\n  Droplets,\n  Sparkles,\n  Shield,\n  Brush,\n  FrameIcon as Frame,\n  Wind,\n  Waves,\n  Car,\n  Gem,\n  Bug,\n  Calculator,\n  CheckCircle,\n  AlertTriangle,\n  Scan,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Building2",
+        "Droplets",
+        "Sparkles",
+        "Shield",
+        "Brush",
+        "FrameIcon as Frame",
+        "Wind",
+        "Waves",
+        "Car",
+        "Gem",
+        "Bug",
+        "Calculator",
+        "CheckCircle",
+        "AlertTriangle",
+        "Scan",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/measurement-validation.tsx",
+      "imports": [
+        "import { CheckCircle, AlertCircle, AlertTriangle } from \"lucide-react\""
+      ],
+      "members": ["CheckCircle", "AlertCircle", "AlertTriangle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/auth/two-factor-setup.tsx",
+      "imports": [
+        "import {\n  Shield,\n  ShieldCheck,\n  ShieldX,\n  Smartphone,\n  Key,\n  Copy,\n  Download,\n  CheckCircle,\n  XCircle,\n  AlertTriangle,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Shield",
+        "ShieldCheck",
+        "ShieldX",
+        "Smartphone",
+        "Key",
+        "Copy",
+        "Download",
+        "CheckCircle",
+        "XCircle",
+        "AlertTriangle",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/auth/enhanced-mfa-setup.tsx",
+      "imports": [
+        "import {\n  Shield,\n  ShieldCheck,\n  ShieldX,\n  Smartphone,\n  Mail,\n  Key,\n  Copy,\n  CheckCircle,\n  XCircle,\n  AlertTriangle,\n  RefreshCw,\n  Trash2,\n  Plus,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Shield",
+        "ShieldCheck",
+        "ShieldX",
+        "Smartphone",
+        "Mail",
+        "Key",
+        "Copy",
+        "CheckCircle",
+        "XCircle",
+        "AlertTriangle",
+        "RefreshCw",
+        "Trash2",
+        "Plus",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/auth/auth-modal.tsx",
+      "imports": [
+        "import { Loader2, Mail, Lock, User, Building } from \"lucide-react\""
+      ],
+      "members": ["Loader2", "Mail", "Lock", "User", "Building"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/audit/audit-dashboard.tsx",
+      "imports": [
+        "import {\n  Shield,\n  AlertTriangle,\n  Eye,\n  Download,\n  Filter,\n  Search,\n  Calendar,\n  Users,\n  Activity,\n  FileText,\n  TrendingUp,\n  AlertCircle,\n  CheckCircle,\n  XCircle,\n  Clock,\n  Database,\n  Lock,\n  UserCheck,\n  Globe,\n  Settings,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Shield",
+        "AlertTriangle",
+        "Eye",
+        "Download",
+        "Filter",
+        "Search",
+        "Calendar",
+        "Users",
+        "Activity",
+        "FileText",
+        "TrendingUp",
+        "AlertCircle",
+        "CheckCircle",
+        "XCircle",
+        "Clock",
+        "Database",
+        "Lock",
+        "UserCheck",
+        "Globe",
+        "Settings",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/audit/audit-dashboard.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/enhanced-analytics-overview.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  TrendingDown,\n  DollarSign,\n  FileText,\n  Users,\n  Target,\n  Calendar,\n  Award,\n  ArrowUpRight,\n  ArrowDownRight,\n  Minus,\n  Download,\n  Filter,\n  ZoomIn,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "TrendingDown",
+        "DollarSign",
+        "FileText",
+        "Users",
+        "Target",
+        "Calendar",
+        "Award",
+        "ArrowUpRight",
+        "ArrowDownRight",
+        "Minus",
+        "Download",
+        "Filter",
+        "ZoomIn",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/enhanced-analytics-dashboard.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  TrendingDown,\n  DollarSign,\n  Target,\n  AlertTriangle,\n  CheckCircle,\n  Clock,\n  Users,\n  BarChart3,\n  PieChart as PieChartIcon,\n  Activity,\n  Star,\n  Zap,\n  Shield,\n  RefreshCw,\n  Download,\n  Filter,\n  Calendar,\n  Info,\n  Lightbulb,\n  ArrowUpRight,\n  ArrowDownRight,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "TrendingDown",
+        "DollarSign",
+        "Target",
+        "AlertTriangle",
+        "CheckCircle",
+        "Clock",
+        "Users",
+        "BarChart3",
+        "PieChart as PieChartIcon",
+        "Activity",
+        "Star",
+        "Zap",
+        "Shield",
+        "RefreshCw",
+        "Download",
+        "Filter",
+        "Calendar",
+        "Info",
+        "Lightbulb",
+        "ArrowUpRight",
+        "ArrowDownRight",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/analytics-overview.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  TrendingDown,\n  DollarSign,\n  FileText,\n  Users,\n  Target,\n  Calendar,\n  Award,\n  ArrowUpRight,\n  ArrowDownRight,\n  Minus,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "TrendingDown",
+        "DollarSign",
+        "FileText",
+        "Users",
+        "Target",
+        "Calendar",
+        "Award",
+        "ArrowUpRight",
+        "ArrowDownRight",
+        "Minus",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/UserPerformanceTable.tsx",
+      "imports": [
+        "import {\n  ChevronDown,\n  ChevronUp,\n  TrendingUp,\n  TrendingDown,\n  Minus,\n  User,\n  Clock,\n  Target,\n  BarChart3,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ChevronDown",
+        "ChevronUp",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "User",
+        "Clock",
+        "Target",
+        "BarChart3",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/UnifiedAnalyticsDashboard.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  TrendingDown,\n  DollarSign,\n  Target,\n  AlertTriangle,\n  CheckCircle,\n  Clock,\n  Users,\n  BarChart3,\n  PieChart as PieChartIcon,\n  Activity,\n  Star,\n  Zap,\n  Shield,\n  RefreshCw,\n  Download,\n  Filter,\n  Calendar,\n  Info,\n  Lightbulb,\n  ArrowUpRight,\n  ArrowDownRight,\n  Brain,\n  Settings,\n  Eye,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "TrendingDown",
+        "DollarSign",
+        "Target",
+        "AlertTriangle",
+        "CheckCircle",
+        "Clock",
+        "Users",
+        "BarChart3",
+        "PieChart as PieChartIcon",
+        "Activity",
+        "Star",
+        "Zap",
+        "Shield",
+        "RefreshCw",
+        "Download",
+        "Filter",
+        "Calendar",
+        "Info",
+        "Lightbulb",
+        "ArrowUpRight",
+        "ArrowDownRight",
+        "Brain",
+        "Settings",
+        "Eye",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/MetricCard.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  TrendingDown,\n  Minus,\n  Target,\n  Info,\n  LucideIcon,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "Target",
+        "Info",
+        "LucideIcon",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/InsightPanel.tsx",
+      "imports": [
+        "import {\n  Brain,\n  TrendingUp,\n  AlertTriangle,\n  Target,\n  Zap,\n  Clock,\n  Users,\n  CheckCircle,\n  XCircle,\n  ArrowRight,\n  ExternalLink,\n  Lightbulb,\n  Settings,\n  BarChart3,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Brain",
+        "TrendingUp",
+        "AlertTriangle",
+        "Target",
+        "Zap",
+        "Clock",
+        "Users",
+        "CheckCircle",
+        "XCircle",
+        "ArrowRight",
+        "ExternalLink",
+        "Lightbulb",
+        "Settings",
+        "BarChart3",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/ExportDialog.tsx",
+      "imports": [
+        "import {\n  Download,\n  FileText,\n  Table,\n  FileSpreadsheet,\n  Code,\n  Mail,\n  Calendar,\n  Settings,\n  CheckCircle,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Download",
+        "FileText",
+        "Table",
+        "FileSpreadsheet",
+        "Code",
+        "Mail",
+        "Calendar",
+        "Settings",
+        "CheckCircle",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/EnhancedAnalyticsDashboardDynamic.tsx",
+      "imports": ["import { BarChart3, RefreshCw } from \"lucide-react\""],
+      "members": ["BarChart3", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/ConsolidatedAnalyticsDashboard.tsx",
+      "imports": [
+        "import {\n  TrendingUp,\n  TrendingDown,\n  DollarSign,\n  Target,\n  AlertTriangle,\n  CheckCircle,\n  Clock,\n  Users,\n  BarChart3,\n  Activity,\n  Star,\n  Zap,\n  Shield,\n  RefreshCw,\n  Download,\n  Filter,\n  Calendar,\n  Brain,\n  Database,\n  Eye,\n  Settings,\n  Lightbulb,\n  ArrowUpRight,\n  AlertCircle,\n  CheckCircle2,\n  XCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "TrendingUp",
+        "TrendingDown",
+        "DollarSign",
+        "Target",
+        "AlertTriangle",
+        "CheckCircle",
+        "Clock",
+        "Users",
+        "BarChart3",
+        "Activity",
+        "Star",
+        "Zap",
+        "Shield",
+        "RefreshCw",
+        "Download",
+        "Filter",
+        "Calendar",
+        "Brain",
+        "Database",
+        "Eye",
+        "Settings",
+        "Lightbulb",
+        "ArrowUpRight",
+        "AlertCircle",
+        "CheckCircle2",
+        "XCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/ChartOptimizations.tsx",
+      "imports": [
+        "import {\n  BarChart3,\n  PieChart as PieChartIcon,\n  LineChart as LineChartIcon,\n  ScatterChart as ScatterChartIcon,\n  ZoomIn,\n  Download,\n  Filter,\n  RotateCcw,\n  Activity,\n  Maximize2,\n  Eye,\n  EyeOff,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "BarChart3",
+        "PieChart as PieChartIcon",
+        "LineChart as LineChartIcon",
+        "ScatterChart as ScatterChartIcon",
+        "ZoomIn",
+        "Download",
+        "Filter",
+        "RotateCcw",
+        "Activity",
+        "Maximize2",
+        "Eye",
+        "EyeOff",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/BenchmarkComparison.tsx",
+      "imports": [
+        "import {\n  Target,\n  TrendingUp,\n  TrendingDown,\n  BarChart3,\n  Award,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Target",
+        "TrendingUp",
+        "TrendingDown",
+        "BarChart3",
+        "Award",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/AnalyticsFilters.tsx",
+      "imports": [
+        "import {\n  Calendar as CalendarIcon,\n  Filter,\n  RefreshCw,\n  Users,\n  CheckCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Calendar as CalendarIcon",
+        "Filter",
+        "RefreshCw",
+        "Users",
+        "CheckCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/AnalyticsDashboard.tsx",
+      "imports": [
+        "import {\n  BarChart3,\n  TrendingUp,\n  Users,\n  Clock,\n  Target,\n  Brain,\n  Download,\n  Settings,\n  RefreshCw,\n  AlertTriangle,\n  CheckCircle,\n  Zap,\n  Eye,\n  Calendar,\n  Filter,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "BarChart3",
+        "TrendingUp",
+        "Users",
+        "Clock",
+        "Target",
+        "Brain",
+        "Download",
+        "Settings",
+        "RefreshCw",
+        "AlertTriangle",
+        "CheckCircle",
+        "Zap",
+        "Eye",
+        "Calendar",
+        "Filter",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/AlertsPanel.tsx",
+      "imports": [
+        "import {\n  AlertTriangle,\n  X,\n  Bell,\n  Clock,\n  Users,\n  TrendingDown,\n  Zap,\n  CheckCircle,\n  Eye,\n  EyeOff,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertTriangle",
+        "X",
+        "Bell",
+        "Clock",
+        "Users",
+        "TrendingDown",
+        "Zap",
+        "CheckCircle",
+        "Eye",
+        "EyeOff",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/analytics/AdvancedFilteringPersonalization.tsx",
+      "imports": [
+        "import {\n  Settings,\n  Filter,\n  Save,\n  Download,\n  Upload,\n  Reset,\n  Star,\n  StarOff,\n  Eye,\n  EyeOff,\n  Plus,\n  Trash2,\n  Edit3,\n  Copy,\n  Share,\n  Palette,\n  Grid,\n  BarChart3,\n  Bell,\n  Clock,\n  User,\n  Target,\n  Zap,\n  Lightbulb,\n  ChevronRight,\n  Check,\n  X,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Settings",
+        "Filter",
+        "Save",
+        "Download",
+        "Upload",
+        "Reset",
+        "Star",
+        "StarOff",
+        "Eye",
+        "EyeOff",
+        "Plus",
+        "Trash2",
+        "Edit3",
+        "Copy",
+        "Share",
+        "Palette",
+        "Grid",
+        "BarChart3",
+        "Bell",
+        "Clock",
+        "User",
+        "Target",
+        "Zap",
+        "Lightbulb",
+        "ChevronRight",
+        "Check",
+        "X",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/scope-details.tsx",
+      "imports": [
+        "import { AlertTriangle, Info, Package } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Info", "Package"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/photo-upload-analysis.tsx",
+      "imports": [
+        "import {\n  Upload,\n  Image,\n  FileText,\n  Video,\n  Map,\n  Loader2,\n  CheckCircle,\n  AlertTriangle,\n  X,\n  Eye,\n  BarChart3,\n  Clock,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Upload",
+        "Image",
+        "FileText",
+        "Video",
+        "Map",
+        "Loader2",
+        "CheckCircle",
+        "AlertTriangle",
+        "X",
+        "Eye",
+        "BarChart3",
+        "Clock",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/lazy-components.tsx",
+      "imports": ["import { RefreshCw } from \"lucide-react\""],
+      "members": ["RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/initial-contact.tsx",
+      "imports": [
+        "import { Mail, FileText, AlertCircle } from \"lucide-react\""
+      ],
+      "members": ["Mail", "FileText", "AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/ai-assistant.tsx",
+      "imports": ["import { Loader2, Send, Bot, User } from \"lucide-react\""],
+      "members": ["Loader2", "Send", "Bot", "User"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/ai-assistant-enhanced.tsx",
+      "imports": [
+        "import { Loader2, Send, Bot, User, Zap, StopCircle } from \"lucide-react\""
+      ],
+      "members": ["Loader2", "Send", "Bot", "User", "Zap", "StopCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/TypingIndicator.tsx",
+      "imports": ["import { Bot } from \"lucide-react\""],
+      "members": ["Bot"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ai/TypingIndicator.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/SmartField.tsx",
+      "imports": ["import { Sparkles, CheckCircle, X } from \"lucide-react\""],
+      "members": ["Sparkles", "CheckCircle", "X"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/SmartDefaultsPanel.tsx",
+      "imports": [
+        "import {\n  Sparkles,\n  CheckCircle,\n  X,\n  TrendingUp,\n  AlertTriangle,\n  DollarSign,\n  Plus,\n  Info,\n  Lightbulb,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Sparkles",
+        "CheckCircle",
+        "X",
+        "TrendingUp",
+        "AlertTriangle",
+        "DollarSign",
+        "Plus",
+        "Info",
+        "Lightbulb",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/SmartDefaultsDemo.tsx",
+      "imports": [
+        "import { Sparkles, Lightbulb, Brain, Zap } from \"lucide-react\""
+      ],
+      "members": ["Sparkles", "Lightbulb", "Brain", "Zap"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/PredictiveInput.tsx",
+      "imports": ["import { Loader2, Sparkles } from \"lucide-react\""],
+      "members": ["Loader2", "Sparkles"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/MessageStatus.tsx",
+      "imports": [
+        "import { Check, CheckCheck, Clock, AlertCircle } from \"lucide-react\""
+      ],
+      "members": ["Check", "CheckCheck", "Clock", "AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ai/MessageStatus.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIUsageDisplay.tsx",
+      "imports": [
+        "import {\n  Zap,\n  TrendingUp,\n  AlertCircle,\n  RefreshCw,\n  Calendar,\n  DollarSign,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Zap",
+        "TrendingUp",
+        "AlertCircle",
+        "RefreshCw",
+        "Calendar",
+        "DollarSign",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIMetricsDashboard.tsx",
+      "imports": [
+        "import {\n  Activity,\n  Clock,\n  AlertCircle,\n  CheckCircle,\n  TrendingUp,\n  Download,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Activity",
+        "Clock",
+        "AlertCircle",
+        "CheckCircle",
+        "TrendingUp",
+        "Download",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIInputValidator.tsx",
+      "imports": ["import { AlertCircle } from \"lucide-react\""],
+      "members": ["AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIFeatureErrorBoundary.tsx",
+      "imports": [
+        "import { AlertCircle, RefreshCw, Home, Bug } from \"lucide-react\""
+      ],
+      "members": ["AlertCircle", "RefreshCw", "Home", "Bug"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIErrorRecovery.tsx",
+      "imports": [
+        "import {\n  AlertCircle,\n  RefreshCw,\n  Wifi,\n  WifiOff,\n  Zap,\n  Clock,\n  CheckCircle,\n  XCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertCircle",
+        "RefreshCw",
+        "Wifi",
+        "WifiOff",
+        "Zap",
+        "Clock",
+        "CheckCircle",
+        "XCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIErrorBoundary.tsx",
+      "imports": [
+        "import { AlertCircle, RefreshCw, Home, MessageSquare } from \"lucide-react\""
+      ],
+      "members": ["AlertCircle", "RefreshCw", "Home", "MessageSquare"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIAssistantWithTools.tsx",
+      "imports": [
+        "import {\n  Send,\n  Bot,\n  User,\n  Wrench,\n  Camera,\n  Calculator,\n  Search,\n  Cloud,\n  FileText,\n  AlertTriangle,\n  Sparkles,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Send",
+        "Bot",
+        "User",
+        "Wrench",
+        "Camera",
+        "Calculator",
+        "Search",
+        "Cloud",
+        "FileText",
+        "AlertTriangle",
+        "Sparkles",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ai/AIAssistantWithTools.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIAssistantChatEnhanced.tsx",
+      "imports": [
+        "import {\n  Send,\n  StopCircle,\n  ArrowDown,\n  Sparkles,\n  Bot,\n  User,\n  Mic,\n  Paperclip,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Send",
+        "StopCircle",
+        "ArrowDown",
+        "Sparkles",
+        "Bot",
+        "User",
+        "Mic",
+        "Paperclip",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ai/AIAssistantChatEnhanced.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIAssistantChat.tsx",
+      "imports": ["import { Loader2, Send, StopCircle } from \"lucide-react\""],
+      "members": ["Loader2", "Send", "StopCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIAnalyticsErrorBoundary.tsx",
+      "imports": ["import { AlertCircle } from \"lucide-react\""],
+      "members": ["AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/AIAnalyticsDashboard.tsx",
+      "imports": [
+        "import {\n  Activity,\n  Users,\n  Zap,\n  AlertCircle,\n  TrendingUp,\n  TrendingDown,\n  Download,\n  RefreshCw,\n  BarChart3,\n  PieChart as PieChartIcon,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Activity",
+        "Users",
+        "Zap",
+        "AlertCircle",
+        "TrendingUp",
+        "TrendingDown",
+        "Download",
+        "RefreshCw",
+        "BarChart3",
+        "PieChart as PieChartIcon",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "date-fns",
+      "file": "components/ai/AIAnalyticsDashboard.tsx",
+      "imports": ["import { format, subDays } from \"date-fns\""],
+      "members": ["format", "subDays"],
+      "estimatedSaving": 52,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/3d-demo/ThreeDDemoPageDynamic.tsx",
+      "imports": ["import { Building, RefreshCw } from \"lucide-react\""],
+      "members": ["Building", "RefreshCw"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/test-sentry/page.tsx",
+      "imports": [
+        "import {\n  AlertCircle,\n  Bug,\n  Zap,\n  Database,\n  Shield,\n  Activity,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "AlertCircle",
+        "Bug",
+        "Zap",
+        "Database",
+        "Shield",
+        "Activity",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/onboarding/page.tsx",
+      "imports": [
+        "import {\n  ArrowRight,\n  ArrowLeft,\n  Building2,\n  User,\n  Briefcase,\n  Target,\n  CheckCircle,\n  Upload,\n  Sparkles,\n  Calculator,\n  Bot,\n  FileText,\n  Camera,\n  DollarSign,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ArrowRight",
+        "ArrowLeft",
+        "Building2",
+        "User",
+        "Briefcase",
+        "Target",
+        "CheckCircle",
+        "Upload",
+        "Sparkles",
+        "Calculator",
+        "Bot",
+        "FileText",
+        "Camera",
+        "DollarSign",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "app/onboarding/page.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/offline/page.tsx",
+      "imports": [
+        "import {\n  WifiOff,\n  CloudOff,\n  RefreshCw,\n  CheckCircle2,\n  Clock,\n  AlertCircle,\n  Zap,\n  FileText,\n  Calculator,\n  Camera,\n  Home,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "WifiOff",
+        "CloudOff",
+        "RefreshCw",
+        "CheckCircle2",
+        "Clock",
+        "AlertCircle",
+        "Zap",
+        "FileText",
+        "Calculator",
+        "Camera",
+        "Home",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "app/offline/page.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/estimates/page.tsx",
+      "imports": [
+        "import {\n  Search,\n  Plus,\n  Filter,\n  Download,\n  Eye,\n  Edit,\n  Copy,\n  Trash2,\n  Mail,\n  MoreHorizontal,\n  Calendar,\n  DollarSign,\n  FileText,\n  AlertCircle,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Search",
+        "Plus",
+        "Filter",
+        "Download",
+        "Eye",
+        "Edit",
+        "Copy",
+        "Trash2",
+        "Mail",
+        "MoreHorizontal",
+        "Calendar",
+        "DollarSign",
+        "FileText",
+        "AlertCircle",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "date-fns",
+      "file": "app/estimates/page.tsx",
+      "imports": ["import { format } from \"date-fns\""],
+      "members": ["format"],
+      "estimatedSaving": 52,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/drone-demo/page.tsx",
+      "imports": [
+        "import {\n  Plane,\n  Camera,\n  MapPin,\n  Wind,\n  Shield,\n  Calendar,\n  BarChart3,\n  Settings,\n  ArrowLeft,\n  CheckCircle,\n  AlertTriangle,\n  Wifi,\n  Battery,\n  Navigation,\n  FileText,\n  Map,\n  Eye,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Plane",
+        "Camera",
+        "MapPin",
+        "Wind",
+        "Shield",
+        "Calendar",
+        "BarChart3",
+        "Settings",
+        "ArrowLeft",
+        "CheckCircle",
+        "AlertTriangle",
+        "Wifi",
+        "Battery",
+        "Navigation",
+        "FileText",
+        "Map",
+        "Eye",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/analytics/page.tsx",
+      "imports": [
+        "import {\n  RefreshCw,\n  Download,\n  Calendar,\n  TrendingUp,\n  BarChart3,\n  AlertTriangle,\n  Filter,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "RefreshCw",
+        "Download",
+        "Calendar",
+        "TrendingUp",
+        "BarChart3",
+        "AlertTriangle",
+        "Filter",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/ai-assistant/page.tsx",
+      "imports": [
+        "import { Bot, MessageCircle, Lightbulb, Calculator } from \"lucide-react\""
+      ],
+      "members": ["Bot", "MessageCircle", "Lightbulb", "Calculator"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/toast/toast-provider.tsx",
+      "imports": [
+        "import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from \"lucide-react\""
+      ],
+      "members": ["X", "CheckCircle", "AlertCircle", "AlertTriangle", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/SwipeIndicator.tsx",
+      "imports": [
+        "import {\n  ChevronLeft,\n  ChevronRight,\n  ChevronUp,\n  ChevronDown,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ChevronLeft",
+        "ChevronRight",
+        "ChevronUp",
+        "ChevronDown",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/mobile/SwipeIndicator.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/MobileStepNavigation.tsx",
+      "imports": [
+        "import {\n  ChevronLeft,\n  ChevronRight,\n  Menu,\n  CheckCircle,\n  Lock,\n  AlertCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ChevronLeft",
+        "ChevronRight",
+        "Menu",
+        "CheckCircle",
+        "Lock",
+        "AlertCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/mobile/MobileStepNavigation.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/MobileSmartDefaultsPanel.tsx",
+      "imports": [
+        "import {\n  Sparkles,\n  ChevronDown,\n  ChevronUp,\n  CheckCircle,\n  X,\n  Lightbulb,\n  TrendingUp,\n  AlertTriangle,\n  Plus,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Sparkles",
+        "ChevronDown",
+        "ChevronUp",
+        "CheckCircle",
+        "X",
+        "Lightbulb",
+        "TrendingUp",
+        "AlertTriangle",
+        "Plus",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/MobilePhotoCapture.tsx",
+      "imports": [
+        "import {\n  Camera,\n  Upload,\n  X,\n  RotateCw,\n  Download,\n  Eye,\n  Trash2,\n  AlertCircle,\n  Flashlight,\n  FlashlightOff,\n  SwitchCamera,\n  Grid3X3,\n  Crop,\n  RefreshCw,\n  CheckCircle,\n  Timer,\n  Settings,\n  Maximize2,\n  Volume2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Camera",
+        "Upload",
+        "X",
+        "RotateCw",
+        "Download",
+        "Eye",
+        "Trash2",
+        "AlertCircle",
+        "Flashlight",
+        "FlashlightOff",
+        "SwitchCamera",
+        "Grid3X3",
+        "Crop",
+        "RefreshCw",
+        "CheckCircle",
+        "Timer",
+        "Settings",
+        "Maximize2",
+        "Volume2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/mobile/MobilePhotoCapture.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/MobileOptimizedSmartField.tsx",
+      "imports": [
+        "import { Sparkles, CheckCircle, X, ChevronDown, Info } from \"lucide-react\""
+      ],
+      "members": ["Sparkles", "CheckCircle", "X", "ChevronDown", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/loading/page-loader.tsx",
+      "imports": ["import { Building } from \"lucide-react\""],
+      "members": ["Building"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/loading/lazy-loading.tsx",
+      "imports": ["import { Loader2 } from \"lucide-react\""],
+      "members": ["Loader2"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/loading/app-loading.tsx",
+      "imports": [
+        "import {\n  Loader2,\n  CheckCircle,\n  XCircle,\n  AlertTriangle,\n  Database,\n  Globe,\n  Bot,\n  Zap,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Loader2",
+        "CheckCircle",
+        "XCircle",
+        "AlertTriangle",
+        "Database",
+        "Globe",
+        "Bot",
+        "Zap",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/layout/components/UserMenu.tsx",
+      "imports": ["import { User, Settings, LogOut } from \"lucide-react\""],
+      "members": ["User", "Settings", "LogOut"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/layout/config/navigation.config.ts",
+      "imports": [
+        "import {\n  Calculator,\n  Home,\n  FileText,\n  BarChart3,\n  Settings,\n  Bot,\n  Plus,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Calculator",
+        "Home",
+        "FileText",
+        "BarChart3",
+        "Settings",
+        "Bot",
+        "Plus",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/expenses/shared/index.tsx",
+      "imports": ["import { TrendingUp, TrendingDown } from \"lucide-react\""],
+      "members": ["TrendingUp", "TrendingDown"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/template-selector.tsx",
+      "imports": [
+        "import {\n  Search,\n  Clock,\n  AlertTriangle,\n  CheckCircle,\n  Star,\n  Filter,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Search",
+        "Clock",
+        "AlertTriangle",
+        "CheckCircle",
+        "Star",
+        "Filter",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/TemplatePreviewModal.tsx",
+      "imports": [
+        "import {\n  Clock,\n  Star,\n  TrendingUp,\n  AlertTriangle,\n  CheckCircle,\n  Users,\n  Target,\n  Zap,\n  Building,\n  DollarSign,\n  Calendar,\n  Shield,\n  Info,\n  Lightbulb,\n  BarChart3,\n  Eye,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Clock",
+        "Star",
+        "TrendingUp",
+        "AlertTriangle",
+        "CheckCircle",
+        "Users",
+        "Target",
+        "Zap",
+        "Building",
+        "DollarSign",
+        "Calendar",
+        "Shield",
+        "Info",
+        "Lightbulb",
+        "BarChart3",
+        "Eye",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/StepContentArea.tsx",
+      "imports": ["import { AlertCircle } from \"lucide-react\""],
+      "members": ["AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/RealTimeCostBreakdown.tsx",
+      "imports": [
+        "import {\n  Calculator,\n  DollarSign,\n  Clock,\n  BarChart3,\n  AlertTriangle,\n  Info,\n  ChevronDown,\n  ChevronUp,\n  TrendingUp,\n  TrendingDown,\n  RefreshCw,\n  CheckCircle,\n  AlertCircle,\n  XCircle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Calculator",
+        "DollarSign",
+        "Clock",
+        "BarChart3",
+        "AlertTriangle",
+        "Info",
+        "ChevronDown",
+        "ChevronUp",
+        "TrendingUp",
+        "TrendingDown",
+        "RefreshCw",
+        "CheckCircle",
+        "AlertCircle",
+        "XCircle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/estimation/guided-flow/RealTimeCostBreakdown.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/DesktopStepIndicator.tsx",
+      "imports": [
+        "import { CheckCircle, Lock, AlertCircle, Circle } from \"lucide-react\""
+      ],
+      "members": ["CheckCircle", "Lock", "AlertCircle", "Circle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/DesktopNavigationControls.tsx",
+      "imports": ["import { ChevronLeft, ChevronRight } from \"lucide-react\""],
+      "members": ["ChevronLeft", "ChevronRight"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/components/WeatherRiskAssessment.tsx",
+      "imports": ["import { Cloud, Info } from \"lucide-react\""],
+      "members": ["Cloud", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/components/ProjectConfidence.tsx",
+      "imports": [
+        "import { CheckCircle, Info, AlertTriangle } from \"lucide-react\""
+      ],
+      "members": ["CheckCircle", "Info", "AlertTriangle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/components/MetricsGrid.tsx",
+      "imports": [
+        "import { Calendar, TrendingUp, Cloud } from \"lucide-react\""
+      ],
+      "members": ["Calendar", "TrendingUp", "Cloud"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/components/DurationBreakdown.tsx",
+      "imports": ["import { Clock, Cloud } from \"lucide-react\""],
+      "members": ["Clock", "Cloud"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/duration/components/CriticalPathAnalysis.tsx",
+      "imports": ["import { AlertTriangle } from \"lucide-react\""],
+      "members": ["AlertTriangle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/security/CalculatorSecurityWrapper.tsx",
+      "imports": ["import { Shield } from \"lucide-react\""],
+      "members": ["Shield"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/window-cleaning-form.tsx",
+      "imports": [
+        "import { Sparkles, Calculator, Info, AlertTriangle } from \"lucide-react\""
+      ],
+      "members": ["Sparkles", "Calculator", "Info", "AlertTriangle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/soft-washing-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Waves, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Waves", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/pressure-washing-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Droplets, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Droplets", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/pressure-wash-seal-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Shield, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Shield", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/parking-deck-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Car, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Car", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/high-dusting-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Wind, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Wind", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/granite-reconditioning-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Gem, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Gem", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/glass-restoration-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Building2, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Building2", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/frame-restoration-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Frame, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Frame", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/final-clean-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Brush, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Brush", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/facade-analysis-form.tsx",
+      "imports": [
+        "import {\n  Upload,\n  Camera,\n  AlertCircle,\n  CheckCircle,\n  Loader2,\n  Building2,\n  Ruler,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Upload",
+        "Camera",
+        "AlertCircle",
+        "CheckCircle",
+        "Loader2",
+        "Building2",
+        "Ruler",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/forms/biofilm-removal-form.tsx",
+      "imports": [
+        "import { AlertTriangle, Calculator, Bug, Info } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Calculator", "Bug", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/calculator/error-boundaries/CalculatorErrorBoundary.tsx",
+      "imports": [
+        "import { AlertTriangle, RefreshCw, Calculator, FileText } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "RefreshCw", "Calculator", "FileText"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/service-suggestions/SimpleServiceSuggestions.tsx",
+      "imports": [
+        "import { Lightbulb, Sparkles, Plus, CheckCircle } from \"lucide-react\""
+      ],
+      "members": ["Lightbulb", "Sparkles", "Plus", "CheckCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/service-suggestions/ServiceSuggestionCard.tsx",
+      "imports": [
+        "import {\n  CheckCircle,\n  XCircle,\n  TrendingUp,\n  Eye,\n  Info,\n  Lightbulb,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "CheckCircle",
+        "XCircle",
+        "TrendingUp",
+        "Eye",
+        "Info",
+        "Lightbulb",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ai/service-suggestions/IntelligentServiceSuggestions.tsx",
+      "imports": [
+        "import { Lightbulb, CheckCircle, Sparkles } from \"lucide-react\""
+      ],
+      "members": ["Lightbulb", "CheckCircle", "Sparkles"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/settings/users/page.tsx",
+      "imports": [
+        "import {\n  Plus,\n  Search,\n  MoreHorizontal,\n  Edit,\n  Trash2,\n  Mail,\n  Shield,\n  User,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Plus",
+        "Search",
+        "MoreHorizontal",
+        "Edit",
+        "Trash2",
+        "Mail",
+        "Shield",
+        "User",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/estimates/templates/page.tsx",
+      "imports": [
+        "import { Search, Clock, Tag, TrendingUp, ArrowRight, Info } from \"lucide-react\""
+      ],
+      "members": ["Search", "Clock", "Tag", "TrendingUp", "ArrowRight", "Info"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "app/estimates/templates/page.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/estimates/new/page.tsx",
+      "imports": [
+        "import {\n  ArrowRight,\n  Calculator,\n  Sparkles,\n  Bot,\n  Zap,\n  FileText,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ArrowRight",
+        "Calculator",
+        "Sparkles",
+        "Bot",
+        "Zap",
+        "FileText",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/estimates/[id]/page.tsx",
+      "imports": [
+        "import {\n  ArrowLeft,\n  Download,\n  Edit,\n  Copy,\n  Mail,\n  Share2,\n  AlertTriangle,\n  RefreshCw,\n  User,\n  Building2,\n  Calculator,\n  DollarSign,\n  Calendar,\n  FileText,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ArrowLeft",
+        "Download",
+        "Edit",
+        "Copy",
+        "Mail",
+        "Share2",
+        "AlertTriangle",
+        "RefreshCw",
+        "User",
+        "Building2",
+        "Calculator",
+        "DollarSign",
+        "Calendar",
+        "FileText",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "date-fns",
+      "file": "app/estimates/[id]/page.tsx",
+      "imports": ["import { format } from \"date-fns\""],
+      "members": ["format"],
+      "estimatedSaving": 52,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/auth/signup/page.tsx",
+      "imports": [
+        "import { Eye, EyeOff, Building, Mail, Lock, User } from \"lucide-react\""
+      ],
+      "members": ["Eye", "EyeOff", "Building", "Mail", "Lock", "User"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/auth/login/page.tsx",
+      "imports": [
+        "import { Eye, EyeOff, Building, Mail, Lock, Github } from \"lucide-react\""
+      ],
+      "members": ["Eye", "EyeOff", "Building", "Mail", "Lock", "Github"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/auth/forgot-password/page.tsx",
+      "imports": [
+        "import { Building, Mail, ArrowLeft, CheckCircle } from \"lucide-react\""
+      ],
+      "members": ["Building", "Mail", "ArrowLeft", "CheckCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/auth/callback/page.tsx",
+      "imports": [
+        "import { CheckCircle, XCircle, Loader2, Building } from \"lucide-react\""
+      ],
+      "members": ["CheckCircle", "XCircle", "Loader2", "Building"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/ai-assistant/tools/page.tsx",
+      "imports": [
+        "import {\n  Wrench,\n  Camera,\n  Calculator,\n  Search,\n  Cloud,\n  FileText,\n  AlertTriangle,\n  Sparkles,\n  Bot,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Wrench",
+        "Camera",
+        "Calculator",
+        "Search",
+        "Cloud",
+        "FileText",
+        "AlertTriangle",
+        "Sparkles",
+        "Bot",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/ai-assistant/integrated/page.tsx",
+      "imports": [
+        "import {\n  Building2,\n  Calculator,\n  Camera,\n  FileText,\n  Sparkles,\n  Zap,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Building2",
+        "Calculator",
+        "Camera",
+        "FileText",
+        "Sparkles",
+        "Zap",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/ai-assistant/enhanced/page.tsx",
+      "imports": [
+        "import { Bot, Zap, MessageSquare, Settings } from \"lucide-react\""
+      ],
+      "members": ["Bot", "Zap", "MessageSquare", "Settings"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/components/PhotoTips.tsx",
+      "imports": ["import { Camera, Settings } from \"lucide-react\""],
+      "members": ["Camera", "Settings"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/mobile/components/PhotoTips.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/components/PhotoGrid.tsx",
+      "imports": [
+        "import { X, RefreshCw, CheckCircle, Crop } from \"lucide-react\""
+      ],
+      "members": ["X", "RefreshCw", "CheckCircle", "Crop"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/mobile/components/PhotoGrid.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/components/PhotoCaptureControls.tsx",
+      "imports": [
+        "import {\n  Camera,\n  Upload,\n  SwitchCamera,\n  Flashlight,\n  FlashlightOff,\n  Grid3X3,\n  Maximize2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Camera",
+        "Upload",
+        "SwitchCamera",
+        "Flashlight",
+        "FlashlightOff",
+        "Grid3X3",
+        "Maximize2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/mobile/components/PhotoCaptureControls.tsx",
+      "imports": ["import { motion } from \"framer-motion\""],
+      "members": ["motion"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/ui/mobile/components/PhotoAnalysisSummary.tsx",
+      "imports": ["import { Camera, Volume2 } from \"lucide-react\""],
+      "members": ["Camera", "Volume2"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/ui/mobile/components/PhotoAnalysisSummary.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/UnifiedPricing.tsx",
+      "imports": [
+        "import {\n  Clock,\n  Calendar,\n  DollarSign,\n  Users,\n  Briefcase,\n  Plus,\n  Trash2,\n  Calculator,\n  AlertCircle,\n  TrendingUp,\n  Percent,\n  Sparkles,\n  Package,\n  Truck,\n  Shield,\n  Wrench,\n  Info,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Clock",
+        "Calendar",
+        "DollarSign",
+        "Users",
+        "Briefcase",
+        "Plus",
+        "Trash2",
+        "Calculator",
+        "AlertCircle",
+        "TrendingUp",
+        "Percent",
+        "Sparkles",
+        "Package",
+        "Truck",
+        "Shield",
+        "Wrench",
+        "Info",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/Takeoff.tsx",
+      "imports": [
+        "import {\n  Table,\n  Plus,\n  Trash2,\n  Calculator,\n  Upload,\n  FileSpreadsheet,\n  Info,\n  AlertTriangle,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Table",
+        "Plus",
+        "Trash2",
+        "Calculator",
+        "Upload",
+        "FileSpreadsheet",
+        "Info",
+        "AlertTriangle",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/Summary.tsx",
+      "imports": [
+        "import {\n  FileText,\n  Download,\n  Send,\n  CheckCircle,\n  Eye,\n  Clock,\n  Edit,\n  Share2,\n  Sparkles,\n  DollarSign,\n  Calendar,\n  MapPin,\n  Building,\n  User,\n  Phone,\n  Mail,\n  Palette,\n  Image,\n  Settings,\n  History,\n  Bell,\n  BarChart,\n  Upload,\n  ExternalLink,\n  Printer,\n  Save,\n  Copy,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "FileText",
+        "Download",
+        "Send",
+        "CheckCircle",
+        "Eye",
+        "Clock",
+        "Edit",
+        "Share2",
+        "Sparkles",
+        "DollarSign",
+        "Calendar",
+        "MapPin",
+        "Building",
+        "User",
+        "Phone",
+        "Mail",
+        "Palette",
+        "Image",
+        "Settings",
+        "History",
+        "Bell",
+        "BarChart",
+        "Upload",
+        "ExternalLink",
+        "Printer",
+        "Save",
+        "Copy",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/ScopeDetails.tsx",
+      "imports": [
+        "import { AlertTriangle, Info, Package, Sparkles } from \"lucide-react\""
+      ],
+      "members": ["AlertTriangle", "Info", "Package", "Sparkles"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/ReviewSend.tsx",
+      "imports": [
+        "import {\n  Send,\n  Download,\n  Mail,\n  FileText,\n  User,\n  Users,\n  MapPin,\n  Calendar,\n  DollarSign,\n  Clock,\n  Ruler,\n  CheckCircle2,\n  AlertCircle,\n  Sparkles,\n  Eye,\n  Edit,\n  Share2,\n  Copy,\n  MessageSquare,\n  Plus,\n  Phone,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Send",
+        "Download",
+        "Mail",
+        "FileText",
+        "User",
+        "Users",
+        "MapPin",
+        "Calendar",
+        "DollarSign",
+        "Clock",
+        "Ruler",
+        "CheckCircle2",
+        "AlertCircle",
+        "Sparkles",
+        "Eye",
+        "Edit",
+        "Share2",
+        "Copy",
+        "MessageSquare",
+        "Plus",
+        "Phone",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "date-fns",
+      "file": "components/estimation/guided-flow/steps/ReviewSend.tsx",
+      "imports": ["import { format } from \"date-fns\""],
+      "members": ["format"],
+      "estimatedSaving": 52,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/ProjectSetup.tsx",
+      "imports": [
+        "import {\n  User,\n  Mail,\n  Phone,\n  MapPin,\n  Building,\n  FileText,\n  Sparkles,\n  CheckCircle2,\n  AlertCircle,\n  Calendar,\n  BrainCircuit,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "User",
+        "Mail",
+        "Phone",
+        "MapPin",
+        "Building",
+        "FileText",
+        "Sparkles",
+        "CheckCircle2",
+        "AlertCircle",
+        "Calendar",
+        "BrainCircuit",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/Pricing.tsx",
+      "imports": ["import { Sparkles } from \"lucide-react\""],
+      "members": ["Sparkles"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/MeasurementsWithFacade.tsx",
+      "imports": [
+        "import {\n  Ruler,\n  Camera,\n  Map,\n  Square,\n  Building,\n  Plus,\n  Trash2,\n  Calculator,\n  AlertCircle,\n  CheckCircle2,\n  Upload,\n  Layers,\n  Maximize2,\n  Building2,\n  Sparkles,\n  ArrowRight,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Ruler",
+        "Camera",
+        "Map",
+        "Square",
+        "Building",
+        "Plus",
+        "Trash2",
+        "Calculator",
+        "AlertCircle",
+        "CheckCircle2",
+        "Upload",
+        "Layers",
+        "Maximize2",
+        "Building2",
+        "Sparkles",
+        "ArrowRight",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/Measurements.tsx",
+      "imports": [
+        "import {\n  Ruler,\n  Camera,\n  Map,\n  Square,\n  Building,\n  Plus,\n  Trash2,\n  Calculator,\n  AlertCircle,\n  CheckCircle2,\n  Upload,\n  Layers,\n  Maximize2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Ruler",
+        "Camera",
+        "Map",
+        "Square",
+        "Building",
+        "Plus",
+        "Trash2",
+        "Calculator",
+        "AlertCircle",
+        "CheckCircle2",
+        "Upload",
+        "Layers",
+        "Maximize2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/InitialContact.tsx",
+      "imports": [
+        "import {\n  Mail,\n  FileText,\n  AlertCircle,\n  Phone,\n  Users,\n  MessageSquare,\n  Info,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Mail",
+        "FileText",
+        "AlertCircle",
+        "Phone",
+        "Users",
+        "MessageSquare",
+        "Info",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/FilesPhotos.tsx",
+      "imports": [
+        "import {\n  Upload,\n  Camera,\n  FileImage,\n  FileVideo,\n  Map,\n  Ruler,\n  FileText,\n  Loader2,\n  CheckCircle,\n  AlertCircle,\n  X,\n  Eye,\n  BarChart3,\n  RefreshCw,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Upload",
+        "Camera",
+        "FileImage",
+        "FileVideo",
+        "Map",
+        "Ruler",
+        "FileText",
+        "Loader2",
+        "CheckCircle",
+        "AlertCircle",
+        "X",
+        "Eye",
+        "BarChart3",
+        "RefreshCw",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/Expenses.tsx",
+      "imports": [
+        "import {\n  DollarSign,\n  Truck,\n  Package,\n  Users,\n  Calculator,\n  FileSpreadsheet,\n  TrendingUp,\n  Plus,\n  Edit,\n  Trash2,\n  Upload,\n  Download,\n  AlertTriangle,\n  CheckCircle,\n  Info,\n  Settings,\n  Eye,\n  Layers,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "DollarSign",
+        "Truck",
+        "Package",
+        "Users",
+        "Calculator",
+        "FileSpreadsheet",
+        "TrendingUp",
+        "Plus",
+        "Edit",
+        "Trash2",
+        "Upload",
+        "Download",
+        "AlertTriangle",
+        "CheckCircle",
+        "Info",
+        "Settings",
+        "Eye",
+        "Layers",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/Duration.tsx",
+      "imports": [
+        "import {\n  Calendar,\n  Cloud,\n  AlertTriangle,\n  Clock,\n  TrendingUp,\n  Download,\n  Settings,\n  CheckCircle,\n  XCircle,\n  Loader2,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Calendar",
+        "Cloud",
+        "AlertTriangle",
+        "Clock",
+        "TrendingUp",
+        "Download",
+        "Settings",
+        "CheckCircle",
+        "XCircle",
+        "Loader2",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/steps/AreaOfWork.tsx",
+      "imports": [
+        "import {\n  Map,\n  Download,\n  Upload,\n  FileImage,\n  AlertCircle,\n  Building,\n  Layers,\n  Sparkles,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Map",
+        "Download",
+        "Upload",
+        "FileImage",
+        "AlertCircle",
+        "Building",
+        "Layers",
+        "Sparkles",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/components/ProgressiveValidation.tsx",
+      "imports": [
+        "import { Eye, EyeOff, Settings, Lightbulb } from \"lucide-react\""
+      ],
+      "members": ["Eye", "EyeOff", "Settings", "Lightbulb"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "framer-motion",
+      "file": "components/estimation/guided-flow/components/ProgressiveValidation.tsx",
+      "imports": ["import { motion, AnimatePresence } from \"framer-motion\""],
+      "members": ["motion", "AnimatePresence"],
+      "estimatedSaving": 36,
+      "priority": "medium"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/components/ErrorBoundary.tsx",
+      "imports": ["import { AlertCircle } from \"lucide-react\""],
+      "members": ["AlertCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "components/estimation/guided-flow/components/AutoSaveStatusDisplay.tsx",
+      "imports": ["import { AlertCircle, CheckCircle } from \"lucide-react\""],
+      "members": ["AlertCircle", "CheckCircle"],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/estimates/new/guided/page.tsx",
+      "imports": [
+        "import {\n  ArrowLeft,\n  ArrowRight,\n  Save,\n  CheckCircle2,\n  AlertCircle,\n  X,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ArrowLeft",
+        "ArrowRight",
+        "Save",
+        "CheckCircle2",
+        "AlertCircle",
+        "X",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/estimates/new/quick/page.tsx",
+      "imports": [
+        "import {\n  Zap,\n  User,\n  Mail,\n  Phone,\n  MapPin,\n  Building,\n  Sparkles,\n  Clock,\n  DollarSign,\n  Percent,\n  Send,\n  Calculator,\n  ArrowRight,\n  CheckCircle2,\n  AlertCircle,\n  Loader2,\n  Plus,\n  Ruler,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "Zap",
+        "User",
+        "Mail",
+        "Phone",
+        "MapPin",
+        "Building",
+        "Sparkles",
+        "Clock",
+        "DollarSign",
+        "Percent",
+        "Send",
+        "Calculator",
+        "ArrowRight",
+        "CheckCircle2",
+        "AlertCircle",
+        "Loader2",
+        "Plus",
+        "Ruler",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    },
+    {
+      "library": "lucide-react",
+      "file": "app/estimates/[id]/edit/page.tsx",
+      "imports": [
+        "import {\n  ArrowLeft,\n  Save,\n  Plus,\n  Trash2,\n  Edit,\n  AlertTriangle,\n  RefreshCw,\n  User,\n  Building2,\n  Calculator,\n  DollarSign,\n} from \"lucide-react\""
+      ],
+      "members": [
+        "ArrowLeft",
+        "Save",
+        "Plus",
+        "Trash2",
+        "Edit",
+        "AlertTriangle",
+        "RefreshCw",
+        "User",
+        "Building2",
+        "Calculator",
+        "DollarSign",
+        ""
+      ],
+      "estimatedSaving": 120,
+      "priority": "high"
+    }
+  ]
+}

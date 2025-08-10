@@ -96,12 +96,14 @@ class RealTimeAnalyticsEngine {
     if (error) throw error;
 
     const activeEstimates =
-      data?.filter((e) => ["draft", "pending", "in_review"].includes(e.status))
-        .length || 0;
+      data?.filter((e: any) =>
+        ["draft", "pending", "in_review"].includes(e.status),
+      ).length || 0;
 
     const recentEstimates =
       data?.filter(
-        (e) => new Date(e.created_at) > new Date(Date.now() - 60 * 60 * 1000),
+        (e: any) =>
+          new Date(e.created_at) > new Date(Date.now() - 60 * 60 * 1000),
       ).length || 0;
 
     const trend = this.calculateTrend(recentEstimates, activeEstimates);
@@ -160,7 +162,7 @@ class RealTimeAnalyticsEngine {
     if (error) throw error;
 
     const todayRevenue =
-      data?.reduce((sum, est) => {
+      data?.reduce((sum: any, est: any) => {
         const estDate = new Date(est.created_at);
         const today = new Date();
         if (estDate.toDateString() === today.toDateString()) {
@@ -170,7 +172,7 @@ class RealTimeAnalyticsEngine {
       }, 0) || 0;
 
     const hourlyRevenue =
-      data?.reduce((sum, est) => {
+      data?.reduce((sum: any, est: any) => {
         const estDate = new Date(est.created_at);
         if (estDate > new Date(Date.now() - 60 * 60 * 1000)) {
           return sum + (est.total_amount || 0);
@@ -201,7 +203,7 @@ class RealTimeAnalyticsEngine {
 
     if (error) throw error;
 
-    const uniqueUsers = new Set(data?.map((e) => e.user_id)).size;
+    const uniqueUsers = new Set(data?.map((e: any) => e.user_id)).size;
     const totalActions = data?.length || 0;
 
     return {
@@ -338,7 +340,7 @@ class RealTimeAnalyticsEngine {
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

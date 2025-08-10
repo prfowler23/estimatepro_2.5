@@ -1,4 +1,5 @@
 import { DEFAULTS, SETUP_TIME, VALIDATION, type Location } from "./constants";
+import { ServiceTypeCode } from "@/components/calculator/types";
 
 export interface CalculationInput {
   location: Location;
@@ -168,10 +169,10 @@ export abstract class BaseCalculator<T extends CalculationInput> {
 
   protected determineEquipmentType(
     buildingHeight: number,
-    serviceType: string,
+    serviceType: string | ServiceTypeCode,
   ): string {
     // Glass Restoration always uses scaffold
-    if (serviceType === "GR") {
+    if (serviceType === ServiceTypeCode.GLASS_RESTORATION) {
       return "Scaffold";
     }
 

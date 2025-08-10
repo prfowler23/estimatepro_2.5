@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Settings,
   Save,
@@ -99,7 +99,7 @@ const MARGIN_GUIDELINES = {
   },
 };
 
-export function MarginAdjustment({
+export const MarginAdjustment = React.memo(function MarginAdjustment({
   margins,
   onUpdate,
   directCosts,
@@ -114,7 +114,7 @@ export function MarginAdjustment({
     setTempMargins(margins);
   }, [margins]);
 
-  const calculateImpact = () => {
+  const calculateImpact = useCallback(() => {
     if (!directCosts) return null;
 
     const currentTotal =
@@ -140,66 +140,72 @@ export function MarginAdjustment({
       percentChange,
       profit: newTotal - directCosts.total,
     };
-  };
+  }, [directCosts, margins, tempMargins]);
 
   const impact = calculateImpact();
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     onUpdate(tempMargins);
     setEditMode(false);
-  };
+  }, [tempMargins, onUpdate]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setTempMargins(margins);
     setEditMode(false);
-  };
+  }, [margins]);
 
-  const applyPreset = (preset: MarginPreset) => {
+  const applyPreset = useCallback((preset: MarginPreset) => {
     setTempMargins(preset.margins);
     setSelectedPreset(preset.name);
-  };
+  }, []);
 
-  const getMarginColor = (
-    category: keyof CostMargins,
-    value: number,
-  ): string => {
-    const guidelines = MARGIN_GUIDELINES[category];
-    if (value < guidelines.min) return "text-red-600";
-    if (value > guidelines.max) return "text-orange-600";
-    if (Math.abs(value - guidelines.target) <= 5) return "text-green-600";
-    return "text-blue-600";
-  };
+  const getMarginColor = useCallback(
+    (category: keyof CostMargins, value: number): string => {
+      const guidelines = MARGIN_GUIDELINES[category];
+      if (value < guidelines.min) return "text-red-600";
+      if (value > guidelines.max) return "text-orange-600";
+      if (Math.abs(value - guidelines.target) <= 5) return "text-green-600";
+      return "text-blue-600";
+    },
+    [],
+  );
 
-  const getMarginStatus = (
-    category: keyof CostMargins,
-    value: number,
-  ): string => {
-    const guidelines = MARGIN_GUIDELINES[category];
-    if (value < guidelines.min) return "Low Risk";
-    if (value > guidelines.max) return "High Margin";
-    if (Math.abs(value - guidelines.target) <= 5) return "Optimal";
-    return value > guidelines.target ? "Above Target" : "Below Target";
-  };
+  const getMarginStatus = useCallback(
+    (category: keyof CostMargins, value: number): string => {
+      const guidelines = MARGIN_GUIDELINES[category];
+      if (value < guidelines.min) return "Low Risk";
+      if (value > guidelines.max) return "High Margin";
+      if (Math.abs(value - guidelines.target) <= 5) return "Optimal";
+      return value > guidelines.target ? "Above Target" : "Below Target";
+    },
+    [],
+  );
 
-  const calculateBlendedMargin = (margins: CostMargins): number => {
-    if (!directCosts || directCosts.total === 0) {
-      return (
-        Object.values(margins).reduce((sum, margin) => sum + margin, 0) /
-        Object.keys(margins).length
-      );
-    }
+  const calculateBlendedMargin = useCallback(
+    (margins: CostMargins): number => {
+      if (!directCosts || directCosts.total === 0) {
+        return (
+          Object.values(margins).reduce((sum, margin) => sum + margin, 0) /
+          Object.keys(margins).length
+        );
+      }
 
-    const weightedMargin =
-      (margins.equipment * directCosts.equipment +
-        margins.materials * directCosts.materials +
-        margins.labor * directCosts.labor +
-        margins.other * directCosts.other) /
-      directCosts.total;
+      const weightedMargin =
+        (margins.equipment * directCosts.equipment +
+          margins.materials * directCosts.materials +
+          margins.labor * directCosts.labor +
+          margins.other * directCosts.other) /
+        directCosts.total;
 
-    return weightedMargin;
-  };
+      return weightedMargin;
+    },
+    [directCosts],
+  );
 
-  const blendedMargin = calculateBlendedMargin(tempMargins);
+  const blendedMargin = useMemo(
+    () => calculateBlendedMargin(tempMargins),
+    [calculateBlendedMargin, tempMargins],
+  );
 
   return (
     <Card className="w-full">
@@ -513,4 +519,4 @@ export function MarginAdjustment({
       </CardContent>
     </Card>
   );
-}
+});

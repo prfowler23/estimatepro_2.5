@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AnalyticsService } from "@/lib/services/analytics-service";
+import { unifiedAnalyticsService } from "@/lib/services/analytics-service-unified";
 import { getHandler, postHandler } from "@/lib/api/api-handler";
 import { z } from "zod";
 
@@ -20,11 +20,8 @@ export async function GET(request: NextRequest) {
         Object.fromEntries(searchParams),
       );
 
-      // Create analytics service with proper parameters
-      const analyticsService = new AnalyticsService(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+      // Use unified analytics service
+      const analyticsService = unifiedAnalyticsService;
 
       const analytics = await analyticsService.getAnalyticsMetrics({
         startDate: params.startDate ? new Date(params.startDate) : undefined,
@@ -53,11 +50,8 @@ export async function POST(request: NextRequest) {
     request,
     eventSchema,
     async (data, context) => {
-      // Create analytics service with proper parameters
-      const analyticsService = new AnalyticsService(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+      // Use unified analytics service
+      const analyticsService = unifiedAnalyticsService;
 
       // Use updateWorkflowStep to track the event
       const result = await analyticsService.updateWorkflowStep(

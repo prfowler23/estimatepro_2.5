@@ -1,55 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import {
-  Building,
-  Calculator,
-  FileText,
-  BarChart3,
-  Settings,
-  User,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
+import { Building, Menu, X } from "lucide-react";
+import { useNavigation } from "./hooks/useNavigation";
+import { NavItem } from "./components/NavItem";
+import { UserMenu } from "./components/UserMenu";
+import { cn } from "@/lib/utils";
 
 export function AppHeader() {
-  const { user, signOut } = useAuth();
-  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { items, isItemActive } = useNavigation();
 
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-    { name: "Calculator", href: "/calculator", icon: Calculator },
-    { name: "Estimates", href: "/estimates", icon: FileText },
-    { name: "Settings", href: "/settings", icon: Settings },
-  ];
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/auth/login");
-  };
+  const toggleMobileMenu = useCallback(() => {
+    setMobileMenuOpen((prev) => !prev);
+  }, []);
 
   return (
-    <header className="bg-background border-b border-border">
+    <header className="bg-background border-b border-border" role="banner">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Building className="h-8 w-8 text-primary" />
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2"
+            aria-label="EstimatePro Home"
+          >
+            <Building className="h-8 w-8 text-primary" aria-hidden="true" />
             <span className="text-xl font-bold">EstimatePro</span>
             <Badge variant="outline" className="hidden sm:inline-flex">
               Pro
@@ -57,65 +36,46 @@ export function AppHeader() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigation.map((item) => (
-              <Link key={item.name} href={item.href}>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Button>
-              </Link>
-            ))}
+          <nav
+            className="hidden md:flex items-center space-x-1"
+            role="navigation"
+            aria-label="Main navigation"
+          >
+            {items
+              .filter((item) => !item.primary)
+              .map((item) => (
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  isActive={isItemActive(item)}
+                  className={cn(
+                    "px-3 py-2 rounded-md text-sm font-medium",
+                    isItemActive(item)
+                      ? "bg-primary/10 text-primary"
+                      : "text-gray-700 hover:bg-gray-100",
+                  )}
+                />
+              ))}
           </nav>
 
-          {/* User Menu */}
+          {/* User Menu and Mobile Toggle */}
           <div className="flex items-center gap-2">
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline">
-                      {user.user_metadata?.full_name || user.email}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleSignOut}
-                    className="text-destructive"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link href="/auth/login">
-                <Button>Sign In</Button>
-              </Link>
-            )}
+            <UserMenu showFullName={false} />
 
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
               className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={toggleMobileMenu}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {mobileMenuOpen ? (
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               ) : (
-                <Menu className="h-4 w-4" />
+                <Menu className="h-4 w-4" aria-hidden="true" />
               )}
             </Button>
           </div>
@@ -123,20 +83,27 @@ export function AppHeader() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-2">
-            {navigation.map((item) => (
-              <Link key={item.name} href={item.href}>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Button>
-              </Link>
+          <nav
+            id="mobile-menu"
+            className="md:hidden py-4 space-y-2"
+            role="navigation"
+            aria-label="Mobile navigation"
+          >
+            {items.map((item) => (
+              <NavItem
+                key={item.id}
+                item={item}
+                isActive={isItemActive(item)}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "w-full px-3 py-2 rounded-md text-left",
+                  isItemActive(item)
+                    ? "bg-primary/10 text-primary"
+                    : "text-gray-700 hover:bg-gray-100",
+                )}
+              />
             ))}
-          </div>
+          </nav>
         )}
       </div>
     </header>

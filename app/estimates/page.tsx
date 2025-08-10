@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { useSmartNavigation } from "@/lib/optimization/route-optimization";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -86,6 +88,14 @@ function EstimatesContent() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [error, setError] = useState<string | null>(null);
 
+  const router = useRouter();
+  const { navigate: smartNavigate } = useSmartNavigation({
+    enablePrefetch: true,
+    enablePrediction: true,
+    enableMetrics: true,
+    preloadTimeout: 2000,
+  });
+
   const fetchEstimates = useCallback(async () => {
     try {
       setLoading(true);
@@ -136,7 +146,20 @@ function EstimatesContent() {
 
   useEffect(() => {
     fetchEstimates();
-  }, [statusFilter, sortBy, sortOrder, fetchEstimates]);
+
+    // Prefetch commonly accessed routes from estimates page
+    if (router.prefetch) {
+      router.prefetch("/calculator");
+      router.prefetch("/estimates/new");
+      router.prefetch("/estimates/new/guided");
+
+      // Prefetch related routes after delay
+      setTimeout(() => {
+        router.prefetch("/dashboard");
+        router.prefetch("/analytics");
+      }, 1500);
+    }
+  }, [statusFilter, sortBy, sortOrder, fetchEstimates, router]);
 
   const filteredEstimates = estimates.filter((estimate) => {
     const searchLower = searchTerm.toLowerCase();

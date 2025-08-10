@@ -36,7 +36,7 @@ import {
   RealTimePricingResult,
   ServicePricingBreakdown,
   PricingAdjustment,
-} from "@/lib/services/real-time-pricing-service";
+} from "@/lib/services/real-time-pricing-service-v2";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { CalculatorService } from "@/lib/services/calculator-service";
 

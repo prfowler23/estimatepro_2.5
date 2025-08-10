@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,7 +40,7 @@ interface ParkingDeckFormProps {
   onCancel: () => void;
 }
 
-export function ParkingDeckForm({ onSubmit, onCancel }: ParkingDeckFormProps) {
+const ParkingDeckFormBase = ({ onSubmit, onCancel }: ParkingDeckFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -524,4 +525,17 @@ export function ParkingDeckForm({ onSubmit, onCancel }: ParkingDeckFormProps) {
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const ParkingDeckForm = React.memo(
+  ParkingDeckFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+ParkingDeckForm.displayName = "ParkingDeckForm";

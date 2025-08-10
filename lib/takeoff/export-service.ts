@@ -1,6 +1,21 @@
 import { MeasurementEntry } from "@/lib/types/measurements";
+import {
+  escapeCsvCell,
+  formatCategoryName,
+  cleanExcelSheetName,
+  groupBy,
+} from "./utils";
+import { ExportError } from "./errors";
 
+/**
+ * Service for exporting takeoff measurements to various formats
+ */
 export class TakeoffExportService {
+  /**
+   * Export measurements to CSV format
+   * @param measurements - Array of measurement entries to export
+   * @returns CSV string with properly escaped cells
+   */
   exportToCSV(measurements: MeasurementEntry[]): string {
     const headers = [
       "Category",
@@ -28,14 +43,18 @@ export class TakeoffExportService {
 
     const csv = [
       headers.join(","),
-      ...rows.map((row) =>
-        row.map((cell) => this.escapeCsvCell(cell)).join(","),
-      ),
+      ...rows.map((row) => row.map((cell) => escapeCsvCell(cell)).join(",")),
     ].join("\n");
 
     return csv;
   }
 
+  /**
+   * Export measurements to Excel format with multiple sheets
+   * @param measurements - Array of measurement entries to export
+   * @returns Promise resolving to Excel file blob
+   * @throws {ExportError} If Excel generation fails
+   */
   async exportToExcel(measurements: MeasurementEntry[]): Promise<Blob> {
     try {
       // Dynamic import for exceljs to avoid bundle size issues
@@ -62,9 +81,7 @@ export class TakeoffExportService {
         { metric: "", value: "" }, // Empty row
         { metric: "Category Breakdown", value: "" },
         ...Object.entries(grouped).map(([category, entries]) => ({
-          metric: category
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, (l) => l.toUpperCase()),
+          metric: formatCategoryName(category),
           value: `${entries.reduce((sum, e) => sum + e.total, 0).toFixed(2)} sqft (${entries.length} entries)`,
         })),
       ];
@@ -86,9 +103,7 @@ export class TakeoffExportService {
       ];
 
       const detailedData = measurements.map((m) => ({
-        category: m.category
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase()),
+        category: formatCategoryName(m.category),
         description: m.description,
         location: m.location,
         width: m.width,
@@ -104,7 +119,7 @@ export class TakeoffExportService {
       // Create sheet for each category (limit to first 10 categories to avoid too many sheets)
       const categoryEntries = Object.entries(grouped).slice(0, 10);
       categoryEntries.forEach(([category, entries]) => {
-        const sheetName = this.cleanSheetName(category);
+        const sheetName = cleanExcelSheetName(category);
         const categorySheet = workbook.addWorksheet(sheetName);
 
         categorySheet.columns = [
@@ -139,32 +154,43 @@ export class TakeoffExportService {
       });
     } catch (error) {
       console.error("Error exporting to Excel:", error);
-      throw new Error(
+      throw new ExportError(
         "Failed to export to Excel. Please try CSV export instead.",
+        "excel",
+        error instanceof Error ? error.message : "Unknown error",
       );
     }
   }
 
-  exportToPDF(measurements: MeasurementEntry[]): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      try {
-        // Create HTML content for PDF
-        const htmlContent = this.generatePDFContent(measurements);
+  /**
+   * Export measurements to PDF format (currently returns HTML)
+   * @param measurements - Array of measurement entries to export
+   * @returns Promise resolving to HTML blob (PDF generation pending)
+   * @throws {ExportError} For PDF generation errors
+   */
+  async exportToPDF(measurements: MeasurementEntry[]): Promise<Blob> {
+    try {
+      // Create HTML content for PDF
+      const htmlContent = this.generatePDFContent(measurements);
 
-        // For now, return a simple text file since PDF generation requires additional libraries
-        // In production, you would use libraries like jsPDF or Puppeteer
-        const blob = new Blob([htmlContent], { type: "text/html" });
-        resolve(blob);
-      } catch (error) {
-        reject(
-          new Error(
-            "PDF export not yet implemented. Please use CSV or Excel export.",
-          ),
-        );
-      }
-    });
+      // For now, return a simple text file since PDF generation requires additional libraries
+      // In production, you would use libraries like jsPDF or Puppeteer
+      return new Blob([htmlContent], { type: "text/html" });
+    } catch (error) {
+      throw new ExportError(
+        "PDF export not yet implemented. Please use CSV or Excel export.",
+        "pdf",
+        "Feature not implemented",
+      );
+    }
   }
 
+  /**
+   * Export measurements in a format optimized for estimation software
+   * @param measurements - Array of measurement entries
+   * @param services - List of service codes to include
+   * @returns JSON string with structured estimation data
+   */
   exportForEstimation(
     measurements: MeasurementEntry[],
     services: string[],
@@ -222,31 +248,7 @@ export class TakeoffExportService {
   private groupByCategory(
     measurements: MeasurementEntry[],
   ): Record<string, MeasurementEntry[]> {
-    return measurements.reduce(
-      (acc, m) => {
-        if (!acc[m.category]) acc[m.category] = [];
-        acc[m.category].push(m);
-        return acc;
-      },
-      {} as Record<string, MeasurementEntry[]>,
-    );
-  }
-
-  private escapeCsvCell(cell: string): string {
-    // Handle CSV escaping
-    if (cell.includes(",") || cell.includes('"') || cell.includes("\n")) {
-      return `"${cell.replace(/"/g, '""')}"`;
-    }
-    return cell;
-  }
-
-  private cleanSheetName(category: string): string {
-    // Excel sheet names cannot exceed 31 characters and cannot contain certain characters
-    return category
-      .replace(/_/g, " ")
-      .replace(/[\\\/\*\?\[\]]/g, "")
-      .substring(0, 31)
-      .trim();
+    return groupBy(measurements, (m) => m.category);
   }
 
   private generatePDFContent(measurements: MeasurementEntry[]): string {
@@ -287,7 +289,7 @@ export class TakeoffExportService {
       .map(
         ([category, entries]) => `
         <div class="category">
-            <h3>${category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</h3>
+            <h3>${formatCategoryName(category)}</h3>
             <table>
                 <thead>
                     <tr>
@@ -338,7 +340,12 @@ export class TakeoffExportService {
     }, 0);
   }
 
-  // Helper method to download file
+  /**
+   * Download file to user's device
+   * @param content - File content as string or Blob
+   * @param filename - Name for the downloaded file
+   * @param mimeType - MIME type of the file
+   */
   downloadFile(
     content: string | Blob,
     filename: string,
@@ -358,7 +365,11 @@ export class TakeoffExportService {
     URL.revokeObjectURL(url);
   }
 
-  // Validation method
+  /**
+   * Validate measurements before export
+   * @param measurements - Array of measurements to validate
+   * @returns Validation result with errors array
+   */
   validateMeasurements(measurements: MeasurementEntry[]): {
     valid: boolean;
     errors: string[];

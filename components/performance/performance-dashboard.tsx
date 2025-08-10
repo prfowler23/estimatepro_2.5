@@ -6,28 +6,17 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Activity,
   AlertTriangle,
-  Database,
   Clock,
-  TrendingUp,
-  TrendingDown,
   Zap,
   Server,
-  Eye,
   RefreshCw,
   Download,
-  Settings,
-  BarChart3,
-  PieChart,
-  LineChart,
   AlertCircle,
   CheckCircle,
   XCircle,
-  Timer,
-  // Memory, - Not available in lucide-react
   Cpu,
-  HardDrive,
+  HardDrive, // Using HardDrive as fallback for Memory icon
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +31,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
+
+// Import extracted components
+import { PerformanceStatCard } from "./PerformanceStatCard";
+import { AlertSeverityBadge } from "./AlertSeverityBadge";
+import { PerformanceTypeIcon } from "./PerformanceTypeIcon";
 
 // Types
 interface PerformanceMetrics {
@@ -62,7 +56,8 @@ interface PerformanceEntry {
   timestamp: number;
   success: boolean;
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
+  userId?: string;
 }
 
 interface PerformanceAlert {
@@ -84,83 +79,7 @@ interface CacheMetrics {
   memory: number;
 }
 
-// Performance stat card component
-const PerformanceStatCard: React.FC<{
-  title: string;
-  value: string | number;
-  trend?: "up" | "down" | "stable";
-  icon: React.ReactNode;
-  color: string;
-  subtitle?: string;
-}> = ({ title, value, trend, icon, color, subtitle }) => {
-  const formatValue = (val: string | number) => {
-    if (typeof val === "number") {
-      return val.toLocaleString();
-    }
-    return val;
-  };
-
-  const getTrendIcon = () => {
-    switch (trend) {
-      case "up":
-        return <TrendingUp className="w-4 h-4 text-green-500" />;
-      case "down":
-        return <TrendingDown className="w-4 h-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold">{formatValue(value)}</p>
-            {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
-          </div>
-          <div className="flex items-center space-x-2">
-            {getTrendIcon()}
-            <div className={`${color}`}>{icon}</div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Alert severity badge component
-const AlertSeverityBadge: React.FC<{ severity: string }> = ({ severity }) => {
-  const variants = {
-    warning: "bg-yellow-100 text-yellow-800",
-    critical: "bg-red-100 text-red-800",
-  };
-
-  return (
-    <Badge
-      className={
-        variants[severity as keyof typeof variants] || variants.warning
-      }
-    >
-      {severity.toUpperCase()}
-    </Badge>
-  );
-};
-
-// Performance type icon component
-const PerformanceTypeIcon: React.FC<{ type: string }> = ({ type }) => {
-  const iconMap: Record<string, JSX.Element> = {
-    api: <Server className="w-4 h-4" />,
-    database: <Database className="w-4 h-4" />,
-    cache: <Zap className="w-4 h-4" />,
-    ai: <Activity className="w-4 h-4" />,
-    calculation: <BarChart3 className="w-4 h-4" />,
-    component: <Eye className="w-4 h-4" />,
-  };
-
-  return iconMap[type] || <Activity className="w-4 h-4" />;
-};
+// Main dashboard component
 
 export const PerformanceDashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState("1h");
@@ -550,7 +469,9 @@ export const PerformanceDashboard: React.FC = () => {
                 <span>Performance Alerts</span>
                 <Select
                   value={alertsFilter}
-                  onValueChange={setAlertsFilter as any}
+                  onValueChange={(value) =>
+                    setAlertsFilter(value as "all" | "warning" | "critical")
+                  }
                 >
                   <SelectTrigger className="w-32">
                     <SelectValue />

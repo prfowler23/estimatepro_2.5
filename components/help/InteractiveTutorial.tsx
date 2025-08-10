@@ -1,8 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import { useHelp } from "./HelpProvider";
-import { TutorialStep } from "@/lib/help/help-context-engine";
+import { TutorialStep } from "@/lib/help/help-types";
+import { helpPerformanceMonitor } from "@/lib/help/help-performance";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -24,9 +32,16 @@ interface InteractiveTutorialProps {
   className?: string;
 }
 
-export function InteractiveTutorial({
+const InteractiveTutorialComponent = ({
   className = "",
-}: InteractiveTutorialProps) {
+}: InteractiveTutorialProps) => {
+  // Track tutorial performance
+  useEffect(() => {
+    helpPerformanceMonitor.startTiming("tutorial_render");
+    return () => {
+      helpPerformanceMonitor.endTiming("tutorial_render");
+    };
+  }, []);
   const {
     state,
     nextTutorialStep,
@@ -47,61 +62,25 @@ export function InteractiveTutorial({
 
   const { activeTutorial, tutorialStep } = state;
 
-  useEffect(() => {
-    if (activeTutorial && activeTutorial.steps[tutorialStep]) {
-      const step = activeTutorial.steps[tutorialStep];
-      updateTargetElement(step);
-    }
-  }, [activeTutorial, tutorialStep]);
+  const updateOverlayPosition = useCallback(
+    (element?: HTMLElement) => {
+      const target = element || targetElement;
+      if (!target) return;
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (targetElement) {
-        updateOverlayPosition();
-      }
-    };
+      const rect = target.getBoundingClientRect();
+      const padding = 8;
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [targetElement]);
+      setOverlayPosition({
+        top: rect.top - padding,
+        left: rect.left - padding,
+        width: rect.width + padding * 2,
+        height: rect.height + padding * 2,
+      });
+    },
+    [targetElement],
+  );
 
-  if (!activeTutorial) return null;
-
-  const currentStep = activeTutorial.steps[tutorialStep];
-  const isFirstStep = tutorialStep === 0;
-  const isLastStep = tutorialStep === activeTutorial.steps.length - 1;
-  const progress = ((tutorialStep + 1) / activeTutorial.steps.length) * 100;
-
-  const updateTargetElement = (step: TutorialStep) => {
-    if (step.targetElement) {
-      const element = document.querySelector(step.targetElement) as HTMLElement;
-      if (element) {
-        setTargetElement(element);
-        updateOverlayPosition(element);
-        highlightElement(element);
-      }
-    } else {
-      setTargetElement(null);
-      setIsHighlighting(false);
-    }
-  };
-
-  const updateOverlayPosition = (element?: HTMLElement) => {
-    const target = element || targetElement;
-    if (!target) return;
-
-    const rect = target.getBoundingClientRect();
-    const padding = 8;
-
-    setOverlayPosition({
-      top: rect.top - padding,
-      left: rect.left - padding,
-      width: rect.width + padding * 2,
-      height: rect.height + padding * 2,
-    });
-  };
-
-  const highlightElement = (element: HTMLElement) => {
+  const highlightElement = useCallback((element: HTMLElement) => {
     setIsHighlighting(true);
 
     // Add highlight class
@@ -114,9 +93,56 @@ export function InteractiveTutorial({
     setTimeout(() => {
       element.classList.remove("tutorial-highlight");
     }, 2000);
-  };
+  }, []);
+
+  const updateTargetElement = useCallback(
+    (step: TutorialStep) => {
+      if (step.targetElement) {
+        const element = document.querySelector(
+          step.targetElement,
+        ) as HTMLElement;
+        if (element) {
+          setTargetElement(element);
+          updateOverlayPosition(element);
+          highlightElement(element);
+        }
+      } else {
+        setTargetElement(null);
+        setIsHighlighting(false);
+      }
+    },
+    [updateOverlayPosition, highlightElement],
+  );
+
+  useEffect(() => {
+    if (activeTutorial && activeTutorial.steps[tutorialStep]) {
+      const step = activeTutorial.steps[tutorialStep];
+      updateTargetElement(step);
+    }
+  }, [activeTutorial, tutorialStep, updateTargetElement]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (targetElement) {
+        updateOverlayPosition();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [targetElement, updateOverlayPosition]);
+
+  if (!activeTutorial) return null;
+
+  const currentStep = activeTutorial.steps[tutorialStep];
+  const isFirstStep = tutorialStep === 0;
+  const isLastStep = tutorialStep === activeTutorial.steps.length - 1;
+  const progress = ((tutorialStep + 1) / activeTutorial.steps.length) * 100;
 
   const handleNext = () => {
+    // Track step completion time
+    helpPerformanceMonitor.startTiming("tutorial_step_transition");
+
     if (currentStep.action && targetElement) {
       // Simulate or validate the required action
       validateStepAction(currentStep, targetElement);
@@ -128,6 +154,8 @@ export function InteractiveTutorial({
       stepId: currentStep.id,
       stepNumber: tutorialStep + 1,
     });
+
+    helpPerformanceMonitor.endTiming("tutorial_step_transition");
   };
 
   const handlePrevious = () => {
@@ -426,6 +454,7 @@ export function InteractiveTutorial({
       `}</style>
     </>
   );
-}
+};
 
+export const InteractiveTutorial = memo(InteractiveTutorialComponent);
 export default InteractiveTutorial;

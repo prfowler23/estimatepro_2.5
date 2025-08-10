@@ -2,9 +2,11 @@
 // Manages automatic recalculations when dependencies change
 
 import { GuidedFlowData, ServiceType } from "@/lib/types/estimate-types";
-import { RealTimePricingService } from "./real-time-pricing-service";
+import { RealTimePricingServiceV2 as RealTimePricingService } from "./real-time-pricing-service-v2";
 import { CrossStepValidationService } from "./cross-step-validation-service";
 import { CrossStepPopulationService } from "./cross-step-population-service";
+import { Logger } from "./core/logger";
+import { ServiceError } from "./core/errors";
 
 export interface DependencyRule {
   id: string;
@@ -35,7 +37,6 @@ export interface DependencyTrackingConfig {
 }
 
 export class DependencyTrackingService {
-  private static instance: DependencyTrackingService | null = null;
   private config: DependencyTrackingConfig;
   private dependencyRules: Map<string, DependencyRule[]>;
   private listeners: Map<string, ((update: DependencyUpdate) => void)[]>;
@@ -43,8 +44,13 @@ export class DependencyTrackingService {
   private lastUpdates: Map<string, Map<string, any>>;
   private pricingService: RealTimePricingService;
   private validationService: CrossStepValidationService;
+  private logger: Logger;
 
-  private constructor(config: Partial<DependencyTrackingConfig> = {}) {
+  constructor(
+    config: Partial<DependencyTrackingConfig> = {},
+    pricingService?: RealTimePricingService,
+    validationService?: CrossStepValidationService,
+  ) {
     this.config = {
       enableAutoPopulation: true,
       enableRecalculation: true,
@@ -58,21 +64,22 @@ export class DependencyTrackingService {
     this.listeners = new Map();
     this.updateTimers = new Map();
     this.lastUpdates = new Map();
-    this.pricingService = RealTimePricingService.getInstance();
-    this.validationService = CrossStepValidationService.getInstance();
+    this.pricingService = pricingService || new RealTimePricingService();
+    this.validationService =
+      validationService || new CrossStepValidationService();
+    this.logger = new Logger("DependencyTrackingService");
 
     this.initializeDependencyRules();
   }
 
+  // Backward compatibility - deprecated
   static getInstance(
     config?: Partial<DependencyTrackingConfig>,
   ): DependencyTrackingService {
-    if (!DependencyTrackingService.instance) {
-      DependencyTrackingService.instance = new DependencyTrackingService(
-        config,
-      );
-    }
-    return DependencyTrackingService.instance;
+    console.warn(
+      "DependencyTrackingService.getInstance() is deprecated. Use 'new DependencyTrackingService()' instead.",
+    );
+    return new DependencyTrackingService(config);
   }
 
   // Initialize dependency rules
@@ -367,7 +374,11 @@ export class DependencyTrackingService {
       // Notify listeners
       this.notifyListeners(estimateId, update);
     } catch (error) {
-      console.error(`Error processing ${type} dependencies:`, error);
+      this.logger.error(
+        `Error processing ${type} dependencies`,
+        error as Error,
+        { type, estimateId },
+      );
     }
   }
 
@@ -390,7 +401,10 @@ export class DependencyTrackingService {
       // Trigger pricing update with the populated data
       this.pricingService.updatePricing(updatedFlowData, estimateId);
     } catch (error) {
-      console.error("Auto-population failed:", error);
+      this.logger.error("Auto-population failed", error as Error, {
+        estimateId,
+        updates,
+      });
     }
   }
 
@@ -428,10 +442,10 @@ export class DependencyTrackingService {
   ): void {
     // This would clear dependent data
     // Implementation depends on specific requirements
-    console.log(
-      "Clear operation triggered for:",
-      rules.map((r) => r.targetSteps).flat(),
-    );
+    this.logger.info("Clear operation triggered", {
+      targetSteps: rules.map((r) => r.targetSteps).flat(),
+      estimateId,
+    });
   }
 
   // Utility methods
@@ -547,6 +561,13 @@ export class DependencyTrackingService {
     this.listeners.clear();
     this.lastUpdates.clear();
   }
+
+  // Alias for cleanup to match other services
+  dispose(): void {
+    this.cleanup();
+  }
 }
 
+// Export both class and alias for backward compatibility
+export { DependencyTrackingService as DependencyTrackingServiceV2 };
 export default DependencyTrackingService;

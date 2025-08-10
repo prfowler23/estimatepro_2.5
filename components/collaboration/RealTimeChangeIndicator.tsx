@@ -100,9 +100,9 @@ export function RealTimeChangeIndicator({
 
   const getChangeColor = (change: RealTimeChange) => {
     if (change.userId === currentUser?.userId) {
-      return "text-blue-600 bg-blue-50 border-blue-200";
+      return "text-primary-action bg-primary-action/10 border-primary-action/30";
     }
-    return "text-gray-600 bg-gray-50 border-gray-200";
+    return "text-text-secondary bg-bg-subtle border-border-secondary";
   };
 
   const formatChangeDescription = (change: RealTimeChange) => {
@@ -210,7 +210,7 @@ export function RealTimeChangeIndicator({
                         {getChangeIcon(change.changeType)}
                         <span className="font-medium">{change.userName}</span>
                       </div>
-                      <span className="text-gray-500">
+                      <span className="text-text-muted">
                         {formatTimeAgo(change.timestamp)}
                       </span>
                     </div>
@@ -238,7 +238,7 @@ export function RealTimeChangeIndicator({
             <Clock className="w-4 h-4" />
             Live Activity
             {fieldPath && (
-              <span className="text-sm text-gray-500">for {fieldPath}</span>
+              <span className="text-sm text-text-muted">for {fieldPath}</span>
             )}
           </h3>
           {position === "fixed" && (
@@ -255,7 +255,7 @@ export function RealTimeChangeIndicator({
         {/* Conflicts */}
         {fieldConflicts.length > 0 && (
           <div className="space-y-2">
-            <h4 className="font-medium text-red-600 flex items-center gap-2">
+            <h4 className="font-medium text-error-600 dark:text-error-400 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               Conflicts ({fieldConflicts.length})
             </h4>
@@ -290,18 +290,18 @@ export function RealTimeChangeIndicator({
 
         {/* Field Status */}
         {fieldPath && fieldStatus !== "available" && (
-          <div className="p-3 rounded-lg border bg-yellow-50 border-yellow-200">
+          <div className="p-3 rounded-lg border bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-400/30">
             <div className="flex items-center gap-2">
               {fieldStatus === "editing" && (
-                <Edit3 className="w-4 h-4 text-yellow-600" />
+                <Edit3 className="w-4 h-4 text-warning-600 dark:text-warning-400" />
               )}
               {fieldStatus === "locked" && (
-                <X className="w-4 h-4 text-red-600" />
+                <X className="w-4 h-4 text-error-600 dark:text-error-400" />
               )}
               <span className="font-medium">Field is {fieldStatus}</span>
             </div>
             {fieldStatus === "editing" && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-text-secondary mt-1">
                 Another user is currently editing this field
               </p>
             )}
@@ -330,7 +330,7 @@ export function RealTimeChangeIndicator({
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-text-muted">
                       {formatTimeAgo(change.timestamp)}
                     </span>
                   </div>
@@ -342,13 +342,13 @@ export function RealTimeChangeIndicator({
                   {/* Show value changes for field updates */}
                   {change.changeType === "field_update" &&
                     change.oldValue !== change.newValue && (
-                      <div className="mt-2 p-2 bg-white rounded border text-xs">
+                      <div className="mt-2 p-2 bg-bg-base rounded border border-border-primary text-xs">
                         <div className="space-y-1">
-                          <div className="text-red-600">
+                          <div className="text-error-600 dark:text-error-400">
                             <span className="font-medium">From:</span>{" "}
                             {String(change.oldValue)}
                           </div>
-                          <div className="text-green-600">
+                          <div className="text-success-600 dark:text-success-400">
                             <span className="font-medium">To:</span>{" "}
                             {String(change.newValue)}
                           </div>

@@ -23,77 +23,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface MonthlyWeatherData {
-  month: string;
-  avgTempHigh: number;
-  avgTempLow: number;
-  avgPrecipitation: number;
-  avgHumidity: number;
-  avgWindSpeed: number;
-  rainDays: number;
-  snowDays: number;
-  extremeTempDays: number;
-  workableDays: number;
-}
-
-interface HistoricalWeather {
-  fiveYearAverages: MonthlyWeatherData[];
-  bestMonths: string[];
-  worstMonths: string[];
-}
-
-interface WeatherImpactChartProps {
-  historical: HistoricalWeather;
-  services: string[];
-  location?: string;
-}
-
-interface ServiceWeatherSensitivity {
-  rain: "low" | "medium" | "high" | "critical";
-  temperature: "low" | "medium" | "high" | "critical";
-  wind: "low" | "medium" | "high" | "critical";
-  snow: "low" | "medium" | "high" | "critical";
-}
-
-// Service weather sensitivity mapping
-const SERVICE_WEATHER_SENSITIVITY: Record<string, ServiceWeatherSensitivity> = {
-  WC: { rain: "high", temperature: "medium", wind: "high", snow: "high" },
-  GR: { rain: "medium", temperature: "medium", wind: "low", snow: "medium" },
-  BWP: { rain: "medium", temperature: "low", wind: "high", snow: "high" },
-  BWS: {
-    rain: "critical",
-    temperature: "high",
-    wind: "medium",
-    snow: "critical",
-  },
-  HBW: {
-    rain: "high",
-    temperature: "medium",
-    wind: "critical",
-    snow: "critical",
-  },
-  PWF: { rain: "medium", temperature: "low", wind: "medium", snow: "high" },
-  HFS: { rain: "low", temperature: "low", wind: "low", snow: "low" },
-  PC: { rain: "low", temperature: "low", wind: "low", snow: "medium" },
-  PWP: { rain: "medium", temperature: "low", wind: "medium", snow: "high" },
-  IW: { rain: "low", temperature: "low", wind: "low", snow: "low" },
-  DC: { rain: "medium", temperature: "medium", wind: "medium", snow: "high" },
-};
-
-const SERVICE_NAMES: Record<string, string> = {
-  WC: "Window Cleaning",
-  GR: "Glass Restoration",
-  BWP: "Building Wash (Pressure)",
-  BWS: "Building Wash (Soft)",
-  HBW: "High-Rise Building Wash",
-  PWF: "Pressure Wash (Flat)",
-  HFS: "Hard Floor Scrubbing",
-  PC: "Parking Cleaning",
-  PWP: "Parking Pressure Wash",
-  IW: "Interior Wall Cleaning",
-  DC: "Deck Cleaning",
-};
+import type {
+  WeatherImpactChartProps,
+  ServiceWeatherSensitivity,
+  ChartTooltipProps,
+} from "./types";
+import {
+  SERVICE_NAMES,
+  SERVICE_WEATHER_SENSITIVITY,
+  WEATHER_SENSITIVITY_COLORS,
+  WEATHER_SENSITIVITY_BADGES,
+  CHART_CONFIG,
+} from "./constants";
+import { ChartErrorBoundary } from "./ChartErrorBoundary";
 
 export function WeatherImpactChart({
   historical,
@@ -223,58 +165,62 @@ export function WeatherImpactChart({
           <TabsContent value="workability" className="space-y-4">
             <div>
               <h4 className="font-medium mb-3">Monthly Workability Patterns</h4>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={workabilityData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar
-                    dataKey="workableDays"
-                    fill="#10b981"
-                    name="Workable Days"
-                  />
-                  <Bar dataKey="rainDays" fill="#3b82f6" name="Rain Days" />
-                  <Bar dataKey="snowDays" fill="#6366f1" name="Snow Days" />
-                  <Bar
-                    dataKey="extremeTempDays"
-                    fill="#f59e0b"
-                    name="Extreme Temp Days"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <ChartErrorBoundary fallbackTitle="Workability Chart Error">
+                <ResponsiveContainer width="100%" height={CHART_CONFIG.HEIGHT}>
+                  <BarChart data={workabilityData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar
+                      dataKey="workableDays"
+                      fill="#10b981"
+                      name="Workable Days"
+                    />
+                    <Bar dataKey="rainDays" fill="#3b82f6" name="Rain Days" />
+                    <Bar dataKey="snowDays" fill="#6366f1" name="Snow Days" />
+                    <Bar
+                      dataKey="extremeTempDays"
+                      fill="#f59e0b"
+                      name="Extreme Temp Days"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartErrorBoundary>
             </div>
           </TabsContent>
 
           <TabsContent value="temperature" className="space-y-4">
             <div>
               <h4 className="font-medium mb-3">Temperature Ranges</h4>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={temperatureData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="high"
-                    stackId="1"
-                    stroke="#ef4444"
-                    fill="#fecaca"
-                    name="High Temperature (°F)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="low"
-                    stackId="2"
-                    stroke="#3b82f6"
-                    fill="#bfdbfe"
-                    name="Low Temperature (°F)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <ChartErrorBoundary fallbackTitle="Temperature Chart Error">
+                <ResponsiveContainer width="100%" height={CHART_CONFIG.HEIGHT}>
+                  <AreaChart data={temperatureData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="high"
+                      stackId="1"
+                      stroke="#ef4444"
+                      fill="#fecaca"
+                      name="High Temperature (°F)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="low"
+                      stackId="2"
+                      stroke="#3b82f6"
+                      fill="#bfdbfe"
+                      name="Low Temperature (°F)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartErrorBoundary>
             </div>
           </TabsContent>
 
@@ -283,38 +229,40 @@ export function WeatherImpactChart({
               <h4 className="font-medium mb-3">
                 Precipitation and Wind Patterns
               </h4>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={precipitationData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="precipitation"
-                    fill="#06b6d4"
-                    name="Precipitation (in)"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="windSpeed"
-                    stroke="#f59e0b"
-                    strokeWidth={3}
-                    name="Wind Speed (mph)"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="humidity"
-                    stroke="#8b5cf6"
-                    strokeWidth={2}
-                    name="Humidity (%)"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <ChartErrorBoundary fallbackTitle="Precipitation Chart Error">
+                <ResponsiveContainer width="100%" height={CHART_CONFIG.HEIGHT}>
+                  <LineChart data={precipitationData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="precipitation"
+                      fill="#06b6d4"
+                      name="Precipitation (in)"
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="windSpeed"
+                      stroke="#f59e0b"
+                      strokeWidth={3}
+                      name="Wind Speed (mph)"
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="humidity"
+                      stroke="#8b5cf6"
+                      strokeWidth={2}
+                      name="Humidity (%)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartErrorBoundary>
             </div>
           </TabsContent>
 

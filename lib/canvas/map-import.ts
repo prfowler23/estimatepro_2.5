@@ -625,9 +625,9 @@ export class MapImportService {
       // Dynamic import for bundle optimization
       const pdfjsLib = await import("pdfjs-dist");
 
-      // Set up PDF.js worker
+      // Set up PDF.js worker (serve locally to avoid runtime CDN fetch)
       if (typeof window !== "undefined") {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
       }
 
       // Convert file to ArrayBuffer
@@ -704,9 +704,9 @@ export class MapImportService {
         import("tesseract.js"),
       ]);
 
-      // Set up PDF.js worker
+      // Set up PDF.js worker (serve locally to avoid runtime CDN fetch)
       if (typeof window !== "undefined") {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
       }
 
       // Convert file to ArrayBuffer

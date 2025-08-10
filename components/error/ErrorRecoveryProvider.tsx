@@ -14,6 +14,7 @@ import {
 } from "@/lib/error/error-recovery-engine";
 import { useHelp } from "@/components/help/HelpProvider";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
+import { errorRateLimiter } from "@/lib/utils/error-sanitization";
 
 interface ErrorRecoveryContextType {
   // Error state
@@ -35,7 +36,12 @@ interface ErrorRecoveryContextType {
 
   // Error history and patterns
   getErrorHistory: () => ErrorContext[];
-  getErrorStatistics: () => any;
+  getErrorStatistics: () => {
+    totalErrors: number;
+    errorsByType: Record<string, number>;
+    recoverySuccessRate: number;
+    averageRecoveryTime: number;
+  };
 }
 
 const ErrorRecoveryContext = createContext<ErrorRecoveryContextType | null>(
@@ -57,14 +63,17 @@ export function ErrorRecoveryProvider({
   stepId = "unknown",
   stepNumber = 0,
   userId = "anonymous",
-  flowData = {},
+  flowData = {} as GuidedFlowData,
   onErrorRecovered,
   onErrorEscalated,
 }: ErrorRecoveryProviderProps) {
   const [currentError, setCurrentError] = useState<ErrorMessage | null>(null);
   const [isRecovering, setIsRecovering] = useState(false);
   const [recoveryAttempts, setRecoveryAttempts] = useState(0);
-  const [lastActionContext, setLastActionContext] = useState<any>(null);
+  const [lastActionContext, setLastActionContext] = useState<{
+    retry: () => void;
+    context?: Partial<ErrorContext>;
+  } | null>(null);
 
   const { trackBehavior } = useHelp();
 
@@ -209,6 +218,15 @@ export function ErrorRecoveryProvider({
       );
       if (!action) return false;
 
+      // Apply rate limiting to prevent spam
+      const rateLimitKey = `recovery_${actionId}_${userId}_${stepId}`;
+      if (!errorRateLimiter.shouldAllow(rateLimitKey)) {
+        console.warn(
+          `Recovery action ${actionId} rate limited for user ${userId}`,
+        );
+        return false;
+      }
+
       try {
         setIsRecovering(true);
 
@@ -250,6 +268,15 @@ export function ErrorRecoveryProvider({
    */
   const startAutoRecovery = useCallback(async (): Promise<boolean> => {
     if (!currentError || !currentError.isRecoverable) return false;
+
+    // Apply rate limiting to auto-recovery to prevent loops
+    const autoRecoveryKey = `auto_recovery_${userId}_${stepId}`;
+    if (!errorRateLimiter.shouldAllow(autoRecoveryKey)) {
+      console.warn(
+        `Auto-recovery rate limited for user ${userId} in step ${stepId}`,
+      );
+      return false;
+    }
 
     setIsRecovering(true);
 
@@ -395,10 +422,10 @@ export function useAsyncErrorHandler() {
   const { reportError } = useErrorRecovery();
 
   const handleAsync = useCallback(
-    async (
-      operation: () => Promise<any>,
+    async <T,>(
+      operation: () => Promise<T>,
       errorContext?: Partial<ErrorContext>,
-    ): Promise<any> => {
+    ): Promise<T | null> => {
       try {
         return await operation();
       } catch (error) {

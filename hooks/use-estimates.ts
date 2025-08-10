@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import EstimateBusinessService from "@/lib/services/estimate-service";
+import { unifiedEstimateService } from "@/lib/services/estimate-service-unified";
 import type { Estimate, EstimateStatus } from "@/lib/types/estimate-types";
 
 interface UseEstimatesOptions {
@@ -43,7 +43,7 @@ export function useEstimates(
       setLoading(true);
       setError(null);
 
-      const result = await EstimateBusinessService.getAllEstimates({
+      const result = await unifiedEstimateService.getAllEstimates({
         limit,
         status,
         search,
@@ -66,7 +66,7 @@ export function useEstimates(
     async (params: any) => {
       try {
         setError(null);
-        const estimateId = await EstimateBusinessService.createEstimate(params);
+        const estimateId = await unifiedEstimateService.createEstimate(params);
         if (estimateId) {
           // Refresh estimates to include the new one
           await fetchEstimates();
@@ -87,10 +87,7 @@ export function useEstimates(
     async (id: string, params: any) => {
       try {
         setError(null);
-        const success = await EstimateBusinessService.updateEstimate(
-          id,
-          params,
-        );
+        const success = await unifiedEstimateService.updateEstimate(id, params);
         if (success) {
           // Refresh estimates to reflect changes
           await fetchEstimates();
@@ -110,7 +107,7 @@ export function useEstimates(
   const deleteEstimate = useCallback(async (id: string) => {
     try {
       setError(null);
-      const success = await EstimateBusinessService.deleteEstimate(id);
+      const success = await unifiedEstimateService.deleteEstimate(id);
       if (success) {
         // Remove from local state immediately for better UX
         setEstimates((prev) => prev.filter((estimate) => estimate.id !== id));
@@ -130,7 +127,7 @@ export function useEstimates(
     async (id: string, status: EstimateStatus) => {
       try {
         setError(null);
-        const success = await EstimateBusinessService.changeEstimateStatus(
+        const success = await unifiedEstimateService.changeEstimateStatus(
           id,
           status,
         );
@@ -159,7 +156,7 @@ export function useEstimates(
   const getEstimateById = useCallback(async (id: string) => {
     try {
       setError(null);
-      return await EstimateBusinessService.getEstimateById(id);
+      return await unifiedEstimateService.getEstimateById(id);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch estimate";

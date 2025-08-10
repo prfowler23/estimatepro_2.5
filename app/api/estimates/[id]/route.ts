@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import EstimateBusinessService from "@/lib/services/estimate-service";
+import { unifiedEstimateService } from "@/lib/services/estimate-service-unified";
 import { getUser } from "@/lib/auth/server";
 
 export async function GET(
@@ -14,7 +14,7 @@ export async function GET(
 
     // Fetch estimate using the business service
     const { id } = await params;
-    const estimate = await EstimateBusinessService.getEstimateById(id);
+    const estimate = await unifiedEstimateService.getEstimateById(id);
 
     if (!estimate) {
       return NextResponse.json(
@@ -50,7 +50,7 @@ export async function PUT(
     const { id } = await params;
 
     // Update estimate using the business service
-    const success = await EstimateBusinessService.updateEstimate(id, body);
+    const success = await unifiedEstimateService.updateEstimate(id, body);
 
     if (!success) {
       return NextResponse.json(
@@ -87,7 +87,7 @@ export async function DELETE(
 
     // Delete estimate using the business service
     const { id } = await params;
-    const success = await EstimateBusinessService.deleteEstimate(id);
+    const success = await unifiedEstimateService.deleteEstimate(id);
 
     if (!success) {
       return NextResponse.json(

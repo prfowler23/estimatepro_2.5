@@ -4,6 +4,7 @@ import React from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/utils/logger";
 
 interface Props {
   children: React.ReactNode;
@@ -25,7 +26,7 @@ export class AIAnalyticsErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error("AI Analytics error:", error, errorInfo);
+    logger.error("AI Analytics error:", error, errorInfo);
   }
 
   handleReset = () => {

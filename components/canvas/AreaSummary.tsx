@@ -1,25 +1,6 @@
-interface Shape {
-  id: string;
-  type: string;
-  area: number;
-  label?: string;
-}
+import { AreaSummaryProps } from "./types";
 
-interface Measurement {
-  id: string;
-  start: { x: number; y: number };
-  end: { x: number; y: number };
-  distance: number;
-  label?: string;
-  color: string;
-}
-
-interface AreaSummaryProps {
-  shapes: Shape[];
-  measurements: Measurement[];
-}
-
-export function AreaSummary({ shapes, measurements }: AreaSummaryProps) {
+export function AreaSummary({ shapes, scale }: AreaSummaryProps) {
   const totalArea = shapes.reduce((sum, shape) => sum + shape.area, 0);
 
   const areasByLabel = shapes.reduce(
@@ -48,18 +29,6 @@ export function AreaSummary({ shapes, measurements }: AreaSummaryProps) {
           </div>
         ))}
       </div>
-
-      {measurements.length > 0 && (
-        <div className="mt-4 pt-4 border-t">
-          <h4 className="font-medium mb-2">Measurements</h4>
-          {measurements.map((m) => (
-            <div key={m.id} className="flex justify-between text-sm">
-              <span>{m.label}:</span>
-              <span>{m.distance.toFixed(1)} ft</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

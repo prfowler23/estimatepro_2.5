@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,10 +40,10 @@ interface FrameRestorationFormProps {
   onCancel: () => void;
 }
 
-export function FrameRestorationForm({
+const FrameRestorationFormBase = ({
   onSubmit,
   onCancel,
-}: FrameRestorationFormProps) {
+}: FrameRestorationFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -420,4 +421,17 @@ export function FrameRestorationForm({
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const FrameRestorationForm = React.memo(
+  FrameRestorationFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+FrameRestorationForm.displayName = "FrameRestorationForm";

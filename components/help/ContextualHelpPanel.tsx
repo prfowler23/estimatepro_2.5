@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import { useHelp } from "./HelpProvider";
-import { HelpContent } from "@/lib/help/help-context-engine";
+import { HelpContent } from "@/lib/help/help-types";
+import { helpPerformanceMonitor } from "@/lib/help/help-performance";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,11 +35,21 @@ interface ContextualHelpPanelProps {
   compact?: boolean;
 }
 
-export function ContextualHelpPanel({
+const ContextualHelpPanelComponent = ({
   className = "",
   position = "floating",
   compact = false,
-}: ContextualHelpPanelProps) {
+}: ContextualHelpPanelProps) => {
+  // Track component render time
+  useEffect(() => {
+    helpPerformanceMonitor.startTiming("help_panel_render");
+    return () => {
+      const renderTime = helpPerformanceMonitor.endTiming("help_panel_render");
+      if (renderTime > 50) {
+        console.warn(`Help panel render took ${renderTime}ms`);
+      }
+    };
+  }, []);
   const {
     state,
     userProfile,
@@ -58,11 +69,70 @@ export function ContextualHelpPanel({
   >("help");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
+  const toggleExpanded = useCallback(
+    (itemId: string) => {
+      setExpandedItems((prev) => {
+        const newExpanded = new Set(prev);
+        if (newExpanded.has(itemId)) {
+          newExpanded.delete(itemId);
+        } else {
+          newExpanded.add(itemId);
+        }
+        return newExpanded;
+      });
+      trackBehavior("help_expand_toggle", {
+        itemId,
+        expanded: !expandedItems.has(itemId),
+      });
+    },
+    [expandedItems, trackBehavior],
+  );
+
+  const handleHelpful = useCallback(
+    (helpId: string) => {
+      markHelpful(helpId);
+    },
+    [markHelpful],
+  );
+
+  const handleNotHelpful = useCallback(
+    (helpId: string) => {
+      markNotHelpful(helpId);
+    },
+    [markNotHelpful],
+  );
+
+  const handleDismiss = useCallback(
+    (helpId: string) => {
+      dismissHelp(helpId);
+    },
+    [dismissHelp],
+  );
+
   if (!state.currentContext) return null;
 
-  const contextualHelp = getContextualHelp();
-  const smartSuggestions = getSmartSuggestions();
-  const availableTutorials = getAvailableTutorials();
+  // Track content retrieval performance
+  const contextualHelp = useMemo(() => {
+    helpPerformanceMonitor.startTiming("get_contextual_help");
+    const help = getContextualHelp();
+    helpPerformanceMonitor.endTiming("get_contextual_help");
+    return help;
+  }, [getContextualHelp]);
+
+  const smartSuggestions = useMemo(() => {
+    helpPerformanceMonitor.startTiming("get_smart_suggestions");
+    const suggestions = getSmartSuggestions();
+    helpPerformanceMonitor.endTiming("get_smart_suggestions");
+    return suggestions;
+  }, [getSmartSuggestions]);
+
+  const availableTutorials = useMemo(() => {
+    helpPerformanceMonitor.startTiming("get_available_tutorials");
+    const tutorials = getAvailableTutorials();
+    helpPerformanceMonitor.endTiming("get_available_tutorials");
+    return tutorials;
+  }, [getAvailableTutorials]);
+
   const triggeredHelp = state.triggeredHelp;
 
   const hasContent =
@@ -105,32 +175,6 @@ export function ContextualHelpPanel({
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
-  };
-
-  const toggleExpanded = (itemId: string) => {
-    const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId);
-    } else {
-      newExpanded.add(itemId);
-    }
-    setExpandedItems(newExpanded);
-    trackBehavior("help_expand_toggle", {
-      itemId,
-      expanded: !expandedItems.has(itemId),
-    });
-  };
-
-  const handleHelpful = (helpId: string) => {
-    markHelpful(helpId);
-  };
-
-  const handleNotHelpful = (helpId: string) => {
-    markNotHelpful(helpId);
-  };
-
-  const handleDismiss = (helpId: string) => {
-    dismissHelp(helpId);
   };
 
   const renderHelpItem = (helpContent: HelpContent, isTriggered = false) => {
@@ -449,6 +493,7 @@ export function ContextualHelpPanel({
       </Card>
     </div>
   );
-}
+};
 
+export const ContextualHelpPanel = memo(ContextualHelpPanelComponent);
 export default ContextualHelpPanel;

@@ -1,5 +1,34 @@
 /**
- * Supabase connection pooling and management
+ * @deprecated This module is deprecated in favor of the improved `server-pooled` module
+ *
+ * @module lib/supabase/connection-pool
+ * @description Legacy connection pooling implementation. Please migrate to the new
+ * `server-pooled` module which provides better error handling, monitoring, and health checks.
+ *
+ * Migration guide:
+ * ```typescript
+ * // Old usage:
+ * import { withConnection } from './connection-pool';
+ * const result = await withConnection(async (client) => {
+ *   return await client.from('users').select('*');
+ * });
+ *
+ * // New usage:
+ * import { withPooledClient } from './server-pooled';
+ * const result = await withPooledClient(async (client) => {
+ *   return await client.from('users').select('*');
+ * });
+ * ```
+ *
+ * Key improvements in the new module:
+ * - Proper TypeScript types with Database typing
+ * - Connection health monitoring and metrics
+ * - Better error handling with custom error classes
+ * - Automatic retry logic with exponential backoff
+ * - Connection state tracking
+ * - Graceful shutdown handling
+ *
+ * This module will be removed in the next major version.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -20,6 +49,9 @@ interface PooledConnection {
   inUse: boolean;
 }
 
+/**
+ * @deprecated Use the new connection pool from 'server-pooled' module instead
+ */
 export class SupabaseConnectionPool {
   private static instance: SupabaseConnectionPool;
   private pool: PooledConnection[] = [];
@@ -29,6 +61,13 @@ export class SupabaseConnectionPool {
   private constructor(config: ConnectionConfig) {
     this.config = config;
     this.startCleanupInterval();
+
+    // Log deprecation warning on first use
+    console.warn(
+      "[DEPRECATION] SupabaseConnectionPool from 'connection-pool.ts' is deprecated. " +
+        "Please migrate to the improved connection pool in 'server-pooled.ts'. " +
+        "See the module documentation for migration guide.",
+    );
   }
 
   static getInstance(config?: ConnectionConfig): SupabaseConnectionPool {
@@ -186,11 +225,27 @@ export class SupabaseConnectionPool {
 
 /**
  * Helper function for using connections with automatic release
+ *
+ * @deprecated Use `withPooledClient` from 'server-pooled' module instead
+ *
+ * @example Migration:
+ * ```typescript
+ * // Old:
+ * import { withConnection } from './connection-pool';
+ *
+ * // New:
+ * import { withPooledClient } from './server-pooled';
+ * ```
  */
 export async function withConnection<T>(
   operation: (client: SupabaseClient) => Promise<T>,
   config?: ConnectionConfig,
 ): Promise<T> {
+  console.warn(
+    "[DEPRECATION] withConnection() is deprecated. " +
+      "Use withPooledClient() from 'server-pooled' module instead.",
+  );
+
   const pool = SupabaseConnectionPool.getInstance(config);
   const client = await pool.getConnection();
 
@@ -203,8 +258,24 @@ export async function withConnection<T>(
 
 /**
  * Get connection pool statistics for monitoring
+ *
+ * @deprecated Use `getPoolStats` from 'server-pooled' module instead
+ *
+ * @example Migration:
+ * ```typescript
+ * // Old:
+ * import { getConnectionPoolStats } from './connection-pool';
+ *
+ * // New:
+ * import { getPoolStats } from './server-pooled';
+ * ```
  */
 export function getConnectionPoolStats() {
+  console.warn(
+    "[DEPRECATION] getConnectionPoolStats() is deprecated. " +
+      "Use getPoolStats() from 'server-pooled' module instead.",
+  );
+
   try {
     const pool = SupabaseConnectionPool.getInstance();
     return pool.getPoolStats();

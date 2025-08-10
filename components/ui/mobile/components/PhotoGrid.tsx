@@ -1,4 +1,5 @@
 import React from "react";
+import { ThumbnailImage } from "@/components/ui/optimized-image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,10 +46,17 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
             >
               <Card className="relative overflow-hidden group">
                 <div className="aspect-square relative">
-                  <img
+                  <ThumbnailImage
                     src={showFullscreen ? photo.url : photo.thumbnail}
                     alt={`Photo ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    aspectRatio="square"
+                    responsive={{
+                      mobile: "50vw",
+                      tablet: "33vw",
+                      desktop: "25vw",
+                    }}
+                    priority={index < 4}
+                    className="object-cover transition-transform group-hover:scale-105"
                   />
 
                   {photo.status === "processing" && (

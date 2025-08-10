@@ -1,0 +1,751 @@
+{
+  "timestamp": "2025-08-08T04:09:15.000Z",
+  "summary": {
+    "totalServices": 38,
+    "serviceTypes": {
+      "AI": 3,
+      "Analytics": 8,
+      "Real-Time": 6,
+      "Business Logic": 6,
+      "Domain Service": 13,
+      "Infrastructure": 2
+    },
+    "totalDependencies": 0,
+    "circularDependencies": 0,
+    "performanceIssues": 42,
+    "optimizationOpportunities": 15
+  },
+  "services": [
+    {
+      "name": "ai-conversation-service",
+      "type": "AI",
+      "complexity": 49,
+      "size": 11418,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "ai-predictive-analytics-service",
+      "type": "AI",
+      "complexity": 60,
+      "size": 35488,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 2
+    },
+    {
+      "name": "ai-service",
+      "type": "AI",
+      "complexity": 57,
+      "size": 26797,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "analytics-cache-service",
+      "type": "Analytics",
+      "complexity": 28,
+      "size": 5421,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "analytics-insights-service",
+      "type": "Analytics",
+      "complexity": 42,
+      "size": 18029,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 1
+    },
+    {
+      "name": "analytics-stats-service",
+      "type": "Analytics",
+      "complexity": 28,
+      "size": 15873,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 1
+    },
+    {
+      "name": "analytics-api-service",
+      "type": "Analytics",
+      "complexity": 24,
+      "size": 11402,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "analytics-metrics-service",
+      "type": "Analytics",
+      "complexity": 3,
+      "size": 2506,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "analytics-personalization-service",
+      "type": "Analytics",
+      "complexity": 54,
+      "size": 14635,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 1
+    },
+    {
+      "name": "analytics-service",
+      "type": "Analytics",
+      "complexity": 140,
+      "size": 46821,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 1
+    },
+    {
+      "name": "analytics-websocket-service",
+      "type": "Analytics",
+      "complexity": 24,
+      "size": 11546,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 1
+    },
+    {
+      "name": "auto-save-service",
+      "type": "Real-Time",
+      "complexity": 148,
+      "size": 35064,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "calculator-service",
+      "type": "Business Logic",
+      "complexity": 1,
+      "size": 5002,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "base-service",
+      "type": "Domain Service",
+      "complexity": 30,
+      "size": 7995,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "cross-step-population-service",
+      "type": "Domain Service",
+      "complexity": 54,
+      "size": 17706,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "cross-step-validation-service",
+      "type": "Business Logic",
+      "complexity": 48,
+      "size": 32447,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "data-quality-service",
+      "type": "Domain Service",
+      "complexity": 47,
+      "size": 23023,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 2
+    },
+    {
+      "name": "dependency-tracking-service",
+      "type": "Real-Time",
+      "complexity": 31,
+      "size": 17032,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "equipment-materials-service",
+      "type": "Domain Service",
+      "complexity": 18,
+      "size": 20735,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "error-service",
+      "type": "Domain Service",
+      "complexity": 25,
+      "size": 8451,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "estimate-crud-service",
+      "type": "Business Logic",
+      "complexity": 81,
+      "size": 20947,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "estimate-service",
+      "type": "Business Logic",
+      "complexity": 106,
+      "size": 30512,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "estimate-validation-service",
+      "type": "Business Logic",
+      "complexity": 45,
+      "size": 11177,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "external-bi-integration-service",
+      "type": "Domain Service",
+      "complexity": 128,
+      "size": 22840,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 1
+    },
+    {
+      "name": "facade-analysis-service",
+      "type": "Domain Service",
+      "complexity": 37,
+      "size": 9947,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "monitoring-service",
+      "type": "Infrastructure",
+      "complexity": 91,
+      "size": 10534,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 1
+    },
+    {
+      "name": "performance-optimization-service",
+      "type": "Infrastructure",
+      "complexity": 13,
+      "size": 7777,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "photo-service",
+      "type": "Domain Service",
+      "complexity": 114,
+      "size": 17915,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "pilot-service-client",
+      "type": "Domain Service",
+      "complexity": 0,
+      "size": 2337,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "pilot-service",
+      "type": "Domain Service",
+      "complexity": 29,
+      "size": 9294,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "real-time-pricing-service-v2",
+      "type": "Real-Time",
+      "complexity": 59,
+      "size": 24505,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "real-time-pricing-service",
+      "type": "Real-Time",
+      "complexity": 47,
+      "size": 19046,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "risk-assessment-service",
+      "type": "Domain Service",
+      "complexity": 3,
+      "size": 2245,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "session-recovery-service-client",
+      "type": "Real-Time",
+      "complexity": 34,
+      "size": 8922,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "session-recovery-service",
+      "type": "Real-Time",
+      "complexity": 71,
+      "size": 16669,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "vendor-service",
+      "type": "Domain Service",
+      "complexity": 30,
+      "size": 11805,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "webhook-service",
+      "type": "Domain Service",
+      "complexity": 146,
+      "size": 14803,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    },
+    {
+      "name": "workflow-service",
+      "type": "Business Logic",
+      "complexity": 77,
+      "size": 35478,
+      "dependencies": [],
+      "dependencyCount": 0,
+      "externalDepsCount": 0
+    }
+  ],
+  "dependencies": {
+    "ai-conversation-service": [],
+    "ai-predictive-analytics-service": [],
+    "ai-service": [],
+    "analytics-cache-service": [],
+    "analytics-insights-service": [],
+    "analytics-stats-service": [],
+    "analytics-api-service": [],
+    "analytics-metrics-service": [],
+    "analytics-personalization-service": [],
+    "analytics-service": [],
+    "analytics-websocket-service": [],
+    "auto-save-service": [],
+    "calculator-service": [],
+    "base-service": [],
+    "cross-step-population-service": [],
+    "cross-step-validation-service": [],
+    "data-quality-service": [],
+    "dependency-tracking-service": [],
+    "equipment-materials-service": [],
+    "error-service": [],
+    "estimate-crud-service": [],
+    "estimate-service": [],
+    "estimate-validation-service": [],
+    "external-bi-integration-service": [],
+    "facade-analysis-service": [],
+    "monitoring-service": [],
+    "performance-optimization-service": [],
+    "photo-service": [],
+    "pilot-service-client": [],
+    "pilot-service": [],
+    "real-time-pricing-service-v2": [],
+    "real-time-pricing-service": [],
+    "risk-assessment-service": [],
+    "session-recovery-service-client": [],
+    "session-recovery-service": [],
+    "vendor-service": [],
+    "webhook-service": [],
+    "workflow-service": []
+  },
+  "issues": {
+    "circularDependencies": [],
+    "performanceIssues": [
+      {
+        "service": "auto-save-service",
+        "issue": "High complexity",
+        "score": 148,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "webhook-service",
+        "issue": "High complexity",
+        "score": 146,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "analytics-service",
+        "issue": "High complexity",
+        "score": 140,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "external-bi-integration-service",
+        "issue": "High complexity",
+        "score": 128,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "photo-service",
+        "issue": "High complexity",
+        "score": 114,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "estimate-service",
+        "issue": "High complexity",
+        "score": 106,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "monitoring-service",
+        "issue": "High complexity",
+        "score": 91,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "estimate-crud-service",
+        "issue": "High complexity",
+        "score": 81,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "workflow-service",
+        "issue": "High complexity",
+        "score": 77,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "session-recovery-service",
+        "issue": "High complexity",
+        "score": 71,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "ai-predictive-analytics-service",
+        "issue": "High complexity",
+        "score": 60,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "real-time-pricing-service-v2",
+        "issue": "High complexity",
+        "score": 59,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "ai-service",
+        "issue": "High complexity",
+        "score": 57,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "analytics-personalization-service",
+        "issue": "High complexity",
+        "score": 54,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "cross-step-population-service",
+        "issue": "High complexity",
+        "score": 54,
+        "suggestion": "Consider breaking down into smaller services"
+      },
+      {
+        "service": "analytics-service",
+        "issue": "Large file size",
+        "score": 46821,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "ai-predictive-analytics-service",
+        "issue": "Large file size",
+        "score": 35488,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "workflow-service",
+        "issue": "Large file size",
+        "score": 35478,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "auto-save-service",
+        "issue": "Large file size",
+        "score": 35064,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "cross-step-validation-service",
+        "issue": "Large file size",
+        "score": 32447,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "estimate-service",
+        "issue": "Large file size",
+        "score": 30512,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "ai-service",
+        "issue": "Large file size",
+        "score": 26797,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "real-time-pricing-service-v2",
+        "issue": "Large file size",
+        "score": 24505,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "data-quality-service",
+        "issue": "Large file size",
+        "score": 23023,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "external-bi-integration-service",
+        "issue": "Large file size",
+        "score": 22840,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "estimate-crud-service",
+        "issue": "Large file size",
+        "score": 20947,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "equipment-materials-service",
+        "issue": "Large file size",
+        "score": 20735,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "real-time-pricing-service",
+        "issue": "Large file size",
+        "score": 19046,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "analytics-insights-service",
+        "issue": "Large file size",
+        "score": 18029,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "photo-service",
+        "issue": "Large file size",
+        "score": 17915,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "cross-step-population-service",
+        "issue": "Large file size",
+        "score": 17706,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "dependency-tracking-service",
+        "issue": "Large file size",
+        "score": 17032,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "session-recovery-service",
+        "issue": "Large file size",
+        "score": 16669,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "analytics-stats-service",
+        "issue": "Large file size",
+        "score": 15873,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "webhook-service",
+        "issue": "Large file size",
+        "score": 14803,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "analytics-personalization-service",
+        "issue": "Large file size",
+        "score": 14635,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "vendor-service",
+        "issue": "Large file size",
+        "score": 11805,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "analytics-websocket-service",
+        "issue": "Large file size",
+        "score": 11546,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "ai-conversation-service",
+        "issue": "Large file size",
+        "score": 11418,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "analytics-api-service",
+        "issue": "Large file size",
+        "score": 11402,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "estimate-validation-service",
+        "issue": "Large file size",
+        "score": 11177,
+        "suggestion": "Consider splitting into modules"
+      },
+      {
+        "service": "monitoring-service",
+        "issue": "Large file size",
+        "score": 10534,
+        "suggestion": "Consider splitting into modules"
+      }
+    ],
+    "optimizationOpportunities": [
+      {
+        "service": "ai-conversation-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "ai-predictive-analytics-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "ai-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-cache-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-insights-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-stats-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-api-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-metrics-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-personalization-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "analytics-websocket-service",
+        "opportunity": "Enhanced caching strategy",
+        "impact": "Response time improvement",
+        "effort": "Low"
+      },
+      {
+        "service": "Analytics",
+        "opportunity": "Service consolidation",
+        "impact": "Reduced complexity",
+        "effort": "High"
+      },
+      {
+        "service": "Real-Time",
+        "opportunity": "Service consolidation",
+        "impact": "Reduced complexity",
+        "effort": "High"
+      },
+      {
+        "service": "Business Logic",
+        "opportunity": "Service consolidation",
+        "impact": "Reduced complexity",
+        "effort": "High"
+      },
+      {
+        "service": "Domain Service",
+        "opportunity": "Service consolidation",
+        "impact": "Reduced complexity",
+        "effort": "High"
+      }
+    ]
+  }
+}

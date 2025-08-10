@@ -1,0 +1,165 @@
+{
+  "timestamp": "2025-08-08T15:43:03.809Z",
+  "summary": {
+    "totalServices": 68,
+    "totalApiEndpoints": 14,
+    "cachingOpportunities": 34,
+    "promptOptimizations": 85,
+    "highPriorityOptimizations": 22,
+    "averageOptimizationScore": "4.1",
+    "servicesWithoutCaching": 38,
+    "servicesWithoutErrorHandling": 13
+  },
+  "cachingStrategy": {
+    "multiLevelCaching": {
+      "l1": "In-memory cache for frequent requests (Redis)",
+      "l2": "Persistent cache for computed results (Database)",
+      "l3": "CDN cache for static AI responses"
+    },
+    "cacheKeys": {
+      "textCompletion": "hash(prompt + model + temperature + maxTokens)",
+      "imageAnalysis": "hash(imageData + analysisType + model)",
+      "embeddings": "hash(inputText + model)"
+    },
+    "ttlStrategy": {
+      "textResponses": "1-6 hours based on prompt type",
+      "imageAnalysis": "24 hours",
+      "embeddings": "7 days (stable representations)"
+    },
+    "invalidationRules": [
+      "Model version changes",
+      "Prompt template updates",
+      "User context changes"
+    ]
+  },
+  "responseTimeOptimizations": {
+    "slowServices": [
+      {
+        "file": "lib/ai/extraction.ts",
+        "currentTime": 7550,
+        "bottlenecks": [
+          "multiple-api-calls",
+          "high-token-usage",
+          "no-caching",
+          "no-retry-logic",
+          "high-complexity"
+        ],
+        "optimizations": [
+          "Implement request batching and parallel processing",
+          "Optimize prompts and implement token budgeting",
+          "Add multi-level response caching",
+          "Implement exponential backoff retry mechanism",
+          "Refactor into smaller, focused services"
+        ]
+      },
+      {
+        "file": "lib/ai/openai.ts",
+        "currentTime": 15265,
+        "bottlenecks": ["multiple-api-calls", "no-caching", "high-complexity"],
+        "optimizations": [
+          "Implement request batching and parallel processing",
+          "Add multi-level response caching",
+          "Refactor into smaller, focused services"
+        ]
+      },
+      {
+        "file": "lib/ai/photo-analysis.ts",
+        "currentTime": 9181,
+        "bottlenecks": [
+          "multiple-api-calls",
+          "high-token-usage",
+          "no-caching",
+          "no-retry-logic",
+          "high-complexity"
+        ],
+        "optimizations": [
+          "Implement request batching and parallel processing",
+          "Optimize prompts and implement token budgeting",
+          "Add multi-level response caching",
+          "Implement exponential backoff retry mechanism",
+          "Refactor into smaller, focused services"
+        ]
+      }
+    ],
+    "globalOptimizations": [
+      "Implement request batching for bulk operations",
+      "Add streaming responses for long-running tasks",
+      "Use model routing based on complexity",
+      "Implement background processing for non-urgent tasks"
+    ]
+  },
+  "promptOptimizations": {
+    "tokenReduction": {
+      "target": "20-40% token usage reduction",
+      "techniques": [
+        "Remove redundant instructions",
+        "Use specific constraints",
+        "Implement prompt templates",
+        "Add context-aware truncation"
+      ]
+    },
+    "promptCaching": {
+      "target": "System and instruction prompt caching",
+      "implementation": "Cache prompt prefixes with hash-based keys"
+    },
+    "dynamicPrompts": {
+      "target": "Context-aware prompt selection",
+      "implementation": "Route to optimized prompts based on input complexity"
+    }
+  },
+  "rateLimitingStrategy": {
+    "implementationLevels": {
+      "user": "Per-user rate limiting with generous defaults",
+      "endpoint": "Per-endpoint limits based on computational cost",
+      "global": "System-wide limits to protect infrastructure"
+    },
+    "adaptiveRateLimiting": {
+      "description": "Adjust limits based on system load and response times",
+      "implementation": "Monitor queue depth and response latency"
+    },
+    "priorityQueue": {
+      "description": "Priority-based request processing",
+      "levels": ["interactive", "batch", "background"]
+    }
+  },
+  "implementationPlan": {
+    "phase1": {
+      "name": "Immediate Optimizations (Week 1-2)",
+      "priority": "critical",
+      "tasks": [
+        "Implement Redis caching for high-frequency AI requests",
+        "Add retry logic with exponential backoff",
+        "Optimize oversized prompts (>2000 tokens)",
+        "Add basic rate limiting to protect against abuse"
+      ],
+      "estimatedImpact": "40-60% response time improvement"
+    },
+    "phase2": {
+      "name": "Advanced Caching & Optimization (Week 3-4)",
+      "priority": "high",
+      "tasks": [
+        "Implement multi-level caching strategy",
+        "Add prompt template optimization",
+        "Implement request batching for bulk operations",
+        "Add streaming responses for long-running tasks"
+      ],
+      "estimatedImpact": "30-50% additional improvement"
+    },
+    "phase3": {
+      "name": "Monitoring & Fine-tuning (Week 5-6)",
+      "priority": "medium",
+      "tasks": [
+        "Set up comprehensive performance monitoring",
+        "Implement adaptive rate limiting",
+        "Add A/B testing for prompt optimizations",
+        "Optimize model routing based on request complexity"
+      ],
+      "estimatedImpact": "10-20% additional improvement plus monitoring"
+    }
+  },
+  "estimatedImprovements": {
+    "averageResponseTime": 34,
+    "tokenUsage": 25,
+    "costSavings": 50
+  }
+}

@@ -1,8 +1,15 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import { useHelp } from "./HelpProvider";
-import { HelpContent } from "@/lib/help/help-context-engine";
+import { HelpContent } from "@/lib/help/help-types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +35,7 @@ interface HelpTooltipProps {
   helpContent?: HelpContent; // Override for custom content
 }
 
-export function HelpTooltip({
+const HelpTooltipComponent = ({
   children,
   fieldId,
   trigger = "hover",
@@ -37,7 +44,7 @@ export function HelpTooltip({
   disabled = false,
   showIcon = true,
   helpContent,
-}: HelpTooltipProps) {
+}: HelpTooltipProps) => {
   const {
     state,
     getContextualHelp,
@@ -57,6 +64,45 @@ export function HelpTooltip({
     getContextualHelp().find(
       (help) => help.context.fieldId === fieldId || help.type === "tooltip",
     );
+
+  const handleShow = useCallback(() => {
+    if (!isVisible) {
+      setIsVisible(true);
+      trackBehavior("tooltip_show", { fieldId, helpId: relevantHelp?.id });
+    }
+  }, [isVisible, fieldId, relevantHelp?.id, trackBehavior]);
+
+  const handleHide = useCallback(() => {
+    if (isVisible && trigger !== "auto") {
+      setIsVisible(false);
+      trackBehavior("tooltip_hide", { fieldId, helpId: relevantHelp?.id });
+    }
+  }, [isVisible, trigger, fieldId, relevantHelp?.id, trackBehavior]);
+
+  const handleToggle = useCallback(() => {
+    if (isVisible) {
+      handleHide();
+    } else {
+      handleShow();
+    }
+  }, [isVisible, handleHide, handleShow]);
+
+  const handleHelpful = useCallback(() => {
+    if (relevantHelp) {
+      markHelpful(relevantHelp.id);
+      trackBehavior("tooltip_helpful", { fieldId, helpId: relevantHelp.id });
+    }
+  }, [relevantHelp, fieldId, markHelpful, trackBehavior]);
+
+  const handleNotHelpful = useCallback(() => {
+    if (relevantHelp) {
+      markNotHelpful(relevantHelp.id);
+      trackBehavior("tooltip_not_helpful", {
+        fieldId,
+        helpId: relevantHelp.id,
+      });
+    }
+  }, [relevantHelp, fieldId, markNotHelpful, trackBehavior]);
 
   useEffect(() => {
     if (isVisible && position === "auto") {
@@ -107,38 +153,6 @@ export function HelpTooltip({
     }
 
     setActualPosition(optimalPosition as any);
-  };
-
-  const handleShow = () => {
-    if (!isVisible) {
-      setIsVisible(true);
-      trackBehavior("tooltip_show", { fieldId, helpId: relevantHelp.id });
-    }
-  };
-
-  const handleHide = () => {
-    if (isVisible && trigger !== "auto") {
-      setIsVisible(false);
-      trackBehavior("tooltip_hide", { fieldId, helpId: relevantHelp.id });
-    }
-  };
-
-  const handleToggle = () => {
-    if (isVisible) {
-      handleHide();
-    } else {
-      handleShow();
-    }
-  };
-
-  const handleHelpful = () => {
-    markHelpful(relevantHelp.id);
-    trackBehavior("tooltip_helpful", { fieldId, helpId: relevantHelp.id });
-  };
-
-  const handleNotHelpful = () => {
-    markNotHelpful(relevantHelp.id);
-    trackBehavior("tooltip_not_helpful", { fieldId, helpId: relevantHelp.id });
   };
 
   const getPositionClasses = () => {
@@ -306,19 +320,24 @@ export function HelpTooltip({
       )}
     </div>
   );
-}
+};
+
+export const HelpTooltip = memo(HelpTooltipComponent);
 
 // Convenience component for field-specific help
-export function FieldHelpTooltip({
+const FieldHelpTooltipComponent = ({
   children,
   fieldId,
   ...props
-}: Omit<HelpTooltipProps, "fieldId"> & { fieldId: string }) {
+}: Omit<HelpTooltipProps, "fieldId"> & { fieldId: string }) => {
   return (
     <HelpTooltip fieldId={fieldId} {...props}>
       {children}
     </HelpTooltip>
   );
-}
+};
+
+FieldHelpTooltipComponent.displayName = "FieldHelpTooltip";
+export const FieldHelpTooltip = memo(FieldHelpTooltipComponent);
 
 export default HelpTooltip;

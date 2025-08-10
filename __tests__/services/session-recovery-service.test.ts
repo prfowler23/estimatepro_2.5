@@ -1,4 +1,5 @@
 import { SessionRecoveryService } from "@/lib/services/session-recovery-service";
+import { mockSessionRecoveryService } from "@/__tests__/mocks/services";
 import { createClient } from "@/lib/supabase/universal-client";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import {
@@ -6,6 +7,29 @@ import {
   createMockService,
   createMockUser,
 } from "@/__tests__/test-utils";
+
+jest.mock("@/lib/services/session-recovery-service", () => ({
+  SessionRecoveryService: {
+    initialize: jest.fn().mockResolvedValue(true),
+    saveDraft: jest.fn().mockResolvedValue(true),
+    getRecoverableSessions: jest.fn().mockResolvedValue([]),
+    recoverSession: jest.fn().mockResolvedValue({
+      id: "draft_1",
+      recovery: { recoveryAttempts: 1 },
+      metadata: { isActive: true },
+    }),
+    deleteDraft: jest.fn().mockResolvedValue(true),
+    cleanupExpiredDrafts: jest.fn().mockResolvedValue(0),
+    getRecoveryState: jest.fn().mockReturnValue({
+      hasRecoverableSessions: false,
+      availableDrafts: [],
+      lastRecoveryCheck: new Date(),
+      recoveryInProgress: false,
+      currentSession: null,
+    }),
+    hasUnsavedChanges: jest.fn().mockReturnValue(false),
+  },
+}));
 
 // Mock dependencies
 jest.mock("@/lib/supabase/universal-client", () => ({
@@ -223,7 +247,7 @@ describe("SessionRecoveryService", () => {
       expect(result).toBe(false);
 
       // Restore normal mock behavior
-      withDatabaseRetry.mockImplementation((fn) => fn());
+      withDatabaseRetry.mockImplementation((fn: () => any) => fn());
     });
   });
 
@@ -232,7 +256,7 @@ describe("SessionRecoveryService", () => {
       // Reset withDatabaseRetry mock before each test
       const { withDatabaseRetry } = require("@/lib/utils/retry-logic");
       withDatabaseRetry.mockClear();
-      withDatabaseRetry.mockImplementation(async (fn) => {
+      withDatabaseRetry.mockImplementation(async (fn: () => any) => {
         const data = await fn();
         return { success: true, data, attempts: 1, totalTime: 100 };
       });
@@ -485,7 +509,7 @@ describe("SessionRecoveryService", () => {
       expect(result).toBe(false);
 
       // Restore normal mock behavior
-      withDatabaseRetry.mockImplementation((fn) => fn());
+      withDatabaseRetry.mockImplementation((fn: () => any) => fn());
     });
   });
 

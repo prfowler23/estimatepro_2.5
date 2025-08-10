@@ -26,6 +26,11 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import {
+  useKeyboardNavigation,
+  useAnnouncer,
+  accessibilityUtils,
+} from "./accessibility-utils";
 
 const emptyStateVariants = cva(
   "flex flex-col items-center justify-center text-center p-6 rounded-lg transition-all duration-300",
@@ -156,31 +161,106 @@ const emptyStateConfigs = {
   },
 } as const;
 
+/**
+ * Props for the EmptyState component
+ *
+ * @interface EmptyStateProps
+ * @extends React.HTMLAttributes<HTMLDivElement>
+ * @extends VariantProps<typeof emptyStateVariants>
+ */
 export interface EmptyStateProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof emptyStateVariants> {
+  /** Predefined empty state type with default icon, title, and actions */
   type?: keyof typeof emptyStateConfigs;
+  /** Custom icon component to display instead of the default */
   icon?: React.ComponentType<any>;
+  /** Custom title text to display instead of the default */
   title?: string;
+  /** Custom description text to display instead of the default */
   description?: string;
+  /** Primary call-to-action button configuration */
   primaryAction?: {
+    /** Button label text */
     label: string;
+    /** Optional icon to display in the button */
     icon?: React.ComponentType<any>;
+    /** Click handler for the button */
     onClick?: () => void;
+    /** Optional href for link buttons */
     href?: string;
   } | null;
+  /** Array of secondary action buttons */
   secondaryActions?: Array<{
+    /** Button label text */
     label: string;
+    /** Optional icon to display in the button */
     icon?: React.ComponentType<any>;
+    /** Click handler for the button */
     onClick?: () => void;
+    /** Optional href for link buttons */
     href?: string;
+    /** Visual variant of the button */
     variant?: "default" | "outline" | "ghost";
   }>;
+  /** Whether to enable entrance animations */
   animate?: boolean;
+  /** Custom illustration to display instead of the default icon */
   illustration?: React.ReactNode;
+  /** Whether to show the background container styling */
   showBackground?: boolean;
+  /** Whether to announce the empty state to screen readers */
+  announceToScreenReader?: boolean;
+  /** Custom announcement message for screen readers */
+  customAnnouncement?: string;
+  /** Whether to enable keyboard navigation between actions */
+  enableKeyboardNav?: boolean;
 }
 
+/**
+ * A versatile empty state component for displaying when content is not available
+ *
+ * This component provides:
+ * - Predefined configurations for common empty state scenarios
+ * - Customizable icons, titles, descriptions, and actions
+ * - Responsive design with mobile-optimized layouts
+ * - Accessibility support with proper ARIA attributes
+ * - Smooth entrance animations with reduced motion support
+ * - Multiple visual variants and sizing options
+ *
+ * @example
+ * ```tsx
+ * // Using predefined type
+ * <EmptyState
+ *   type="estimates"
+ *   primaryAction={{
+ *     label: "Create Estimate",
+ *     onClick: () => router.push('/estimates/new')
+ *   }}
+ * />
+ *
+ * // Custom empty state
+ * <EmptyState
+ *   icon={CustomIcon}
+ *   title="Custom Empty State"
+ *   description="This is a custom empty state with specific actions."
+ *   primaryAction={{
+ *     label: "Primary Action",
+ *     onClick: handlePrimaryAction
+ *   }}
+ *   secondaryActions={[
+ *     { label: "Secondary", onClick: handleSecondary, variant: "outline" }
+ *   ]}
+ * />
+ *
+ * // Minimal version without background
+ * <EmptyState
+ *   type="searchResults"
+ *   showBackground={false}
+ *   animate={false}
+ * />
+ * ```
+ */
 const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
   (
     {
@@ -196,11 +276,18 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
       animate = true,
       illustration,
       showBackground = true,
+      announceToScreenReader = true,
+      customAnnouncement,
+      enableKeyboardNav = true,
       children,
       ...props
     },
     ref,
   ) => {
+    // Accessibility integration
+    const { announcePolite } = useAnnouncer();
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const actionButtonRefs = React.useRef<HTMLButtonElement[]>([]);
     // Get configuration from type or use custom props
     const config = type ? emptyStateConfigs[type] : null;
     const Icon = CustomIcon || config?.icon || FileText;
@@ -217,14 +304,55 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
     const secondaryActions =
       customSecondaryActions || config?.secondaryActions || [];
 
+    // Collect all action buttons for keyboard navigation
+    const allActions = React.useMemo(() => {
+      const actions = [];
+      if (primaryAction) actions.push(primaryAction);
+      actions.push(...secondaryActions);
+      return actions;
+    }, [primaryAction, secondaryActions]);
+
+    // Keyboard navigation for action buttons
+    const { handleKeyDown } = useKeyboardNavigation({
+      elements: actionButtonRefs.current,
+      orientation: "horizontal",
+      wrap: true,
+      enableArrowKeys: enableKeyboardNav,
+    });
+
+    // Screen reader announcement on mount
+    React.useEffect(() => {
+      if (announceToScreenReader) {
+        const message =
+          customAnnouncement || `Empty state: ${title}. ${description}`;
+        announcePolite(message, 1000);
+      }
+    }, [
+      announceToScreenReader,
+      customAnnouncement,
+      title,
+      description,
+      announcePolite,
+    ]);
+
+    // Generate accessible IDs
+    const titleId = accessibilityUtils.generateId("empty-state-title");
+    const descriptionId = accessibilityUtils.generateId(
+      "empty-state-description",
+    );
+
     const content = (
       <div
-        ref={ref}
+        ref={containerRef}
         className={cn(
           emptyStateVariants({ variant: finalVariant, size }),
           !showBackground && "bg-transparent border-none p-0",
           className,
         )}
+        role="region"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        onKeyDown={enableKeyboardNav ? handleKeyDown : undefined}
         {...props}
       >
         {/* Icon or illustration */}
@@ -246,10 +374,16 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
 
         {/* Content */}
         <div className="max-w-md mx-auto">
-          <h3 className="text-lg font-semibold text-text-primary mb-2">
+          <h3
+            id={titleId}
+            className="text-lg font-semibold text-text-primary mb-2"
+          >
             {title}
           </h3>
-          <p className="text-sm text-text-secondary leading-relaxed mb-6">
+          <p
+            id={descriptionId}
+            className="text-sm text-text-secondary leading-relaxed mb-6"
+          >
             {description}
           </p>
         </div>
@@ -259,10 +393,14 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
           {/* Primary action */}
           {primaryAction && (
             <Button
+              ref={(el) => {
+                if (el) actionButtonRefs.current[0] = el;
+              }}
               onClick={primaryAction.onClick}
               className="w-full sm:w-auto"
               ripple
               haptic
+              ariaDescribedBy={`${descriptionId} primary-action-description`}
             >
               {primaryAction.icon && (
                 <primaryAction.icon className="w-4 h-4 mr-2" />
@@ -276,13 +414,18 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
             <div className="flex flex-wrap items-center justify-center gap-2">
               {secondaryActions.map((action, index) => {
                 const ActionIcon = action.icon;
+                const buttonIndex = primaryAction ? index + 1 : index;
                 return (
                   <Button
                     key={index}
+                    ref={(el) => {
+                      if (el) actionButtonRefs.current[buttonIndex] = el;
+                    }}
                     variant={action.variant || "outline"}
                     size="sm"
                     onClick={action.onClick}
                     className="text-xs"
+                    ariaDescribedBy={descriptionId}
                   >
                     {ActionIcon && <ActionIcon className="w-3 h-3 mr-1.5" />}
                     {action.label}

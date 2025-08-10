@@ -1,0 +1,452 @@
+{
+  "timestamp": "2025-08-08T12:10:16.008Z",
+  "summary": {
+    "currentSize": 5440516,
+    "totalOpportunities": 90,
+    "lazyLoadCandidates": 61,
+    "codeSplittingOpportunities": 169,
+    "importOptimizations": 259,
+    "treeshakingOpportunities": 26,
+    "duplicatePatterns": 12
+  },
+  "quickWins": [
+    {
+      "type": "lazy-loading",
+      "target": "components/analytics/ChartOptimizations.tsx",
+      "effort": "low",
+      "impact": "high",
+      "estimatedSaving": 40300,
+      "implementation": {
+        "type": "react-lazy",
+        "implementation": "const ChartOptimizations = React.lazy(() => import('./ChartOptimizations'));",
+        "wrapper": "<Suspense fallback={<Loading />}><ChartOptimizations /></Suspense>"
+      }
+    },
+    {
+      "type": "lazy-loading",
+      "target": "components/templates/SaveTemplateModal.tsx",
+      "effort": "low",
+      "impact": "high",
+      "estimatedSaving": 20811,
+      "implementation": {
+        "type": "react-lazy",
+        "implementation": "const SaveTemplateModal = React.lazy(() => import('./SaveTemplateModal'));",
+        "wrapper": "<Suspense fallback={<Loading />}><SaveTemplateModal /></Suspense>"
+      }
+    },
+    {
+      "type": "lazy-loading",
+      "target": "components/analytics/AnalyticsDashboard.tsx",
+      "effort": "low",
+      "impact": "high",
+      "estimatedSaving": 30401,
+      "implementation": {
+        "type": "react-lazy",
+        "implementation": "const AnalyticsDashboard = React.lazy(() => import('./AnalyticsDashboard'));",
+        "wrapper": "<Suspense fallback={<Loading />}><AnalyticsDashboard /></Suspense>"
+      }
+    },
+    {
+      "type": "lazy-loading",
+      "target": "components/error/ErrorRecoveryDemo.tsx",
+      "effort": "low",
+      "impact": "high",
+      "estimatedSaving": 30593,
+      "implementation": {
+        "type": "react-lazy",
+        "implementation": "const ErrorRecoveryDemo = React.lazy(() => import('./ErrorRecoveryDemo'));",
+        "wrapper": "<Suspense fallback={<Loading />}><ErrorRecoveryDemo /></Suspense>"
+      }
+    },
+    {
+      "type": "lazy-loading",
+      "target": "components/help/HelpSystemDemo.tsx",
+      "effort": "low",
+      "impact": "high",
+      "estimatedSaving": 26293,
+      "implementation": {
+        "type": "react-lazy",
+        "implementation": "const HelpSystemDemo = React.lazy(() => import('./HelpSystemDemo'));",
+        "wrapper": "<Suspense fallback={<Loading />}><HelpSystemDemo /></Suspense>"
+      }
+    },
+    {
+      "type": "import-optimization",
+      "target": "components/analytics/UnifiedAnalyticsDashboard.tsx",
+      "effort": "low",
+      "impact": "medium",
+      "optimizations": [
+        {
+          "type": "unused-import",
+          "module": "@/components/ui/select",
+          "unusedImports": [
+            "Select",
+            "SelectContent",
+            "SelectItem",
+            "SelectTrigger",
+            "SelectValue"
+          ],
+          "recommendation": "Remove unused imports",
+          "impact": 10
+        },
+        {
+          "type": "unused-import",
+          "module": "recharts",
+          "unusedImports": [
+            "LineChart",
+            "Line",
+            "AreaChart",
+            "Area",
+            "BarChart",
+            "Bar",
+            "XAxis",
+            "YAxis",
+            "CartesianGrid",
+            "RadialBarChart",
+            "RadialBar"
+          ],
+          "recommendation": "Remove unused imports",
+          "impact": 22
+        },
+        {
+          "type": "unused-import",
+          "module": "lucide-react",
+          "unusedImports": [
+            "TrendingUp",
+            "TrendingDown",
+            "Users",
+            "PieChart as PieChartIcon",
+            "Calendar",
+            "Brain",
+            "Settings",
+            "Eye"
+          ],
+          "recommendation": "Remove unused imports",
+          "impact": 16
+        },
+        {
+          "type": "unused-import",
+          "module": "@/lib/types/analytics-types",
+          "unusedImports": [
+            "AnalyticsMetric",
+            "PredictiveInsight",
+            "WorkflowBenchmark",
+            "UserWorkflowStats",
+            "TimeSeriesData"
+          ],
+          "recommendation": "Remove unused imports",
+          "impact": 10
+        }
+      ]
+    },
+    {
+      "type": "import-optimization",
+      "target": "lib/stores/estimate-store.ts",
+      "effort": "low",
+      "impact": "medium",
+      "optimizations": [
+        {
+          "type": "unused-import",
+          "module": "@/lib/utils/retry-logic",
+          "unusedImports": ["withApiRetry"],
+          "recommendation": "Remove unused imports",
+          "impact": 2
+        },
+        {
+          "type": "unused-import",
+          "module": "@/lib/types/estimate-types",
+          "unusedImports": [
+            "AIExtractedData",
+            "ServiceDependency",
+            "UploadedFile",
+            "AIAnalysisResult",
+            "WorkArea",
+            "Measurement",
+            "TakeoffData",
+            "WeatherAnalysis",
+            "EquipmentCost",
+            "MaterialCost",
+            "PricingCalculation",
+            "ManualOverride",
+            "FinalEstimate",
+            "InitialContactData",
+            "ScopeDetailsData",
+            "FilesPhotosData",
+            "AreaOfWorkData",
+            "TakeoffStepData",
+            "DurationStepData",
+            "ExpensesStepData",
+            "PricingStepData",
+            "SummaryStepData"
+          ],
+          "recommendation": "Remove unused imports",
+          "impact": 44
+        }
+      ]
+    },
+    {
+      "type": "import-optimization",
+      "target": "components/estimation/guided-flow/steps/Duration.tsx",
+      "effort": "low",
+      "impact": "medium",
+      "optimizations": [
+        {
+          "type": "unused-import",
+          "module": "@/lib/utils/logger",
+          "unusedImports": ["error as logError"],
+          "recommendation": "Remove unused imports",
+          "impact": 2
+        },
+        {
+          "type": "unused-import",
+          "module": "@/lib/types/estimate-types",
+          "unusedImports": ["WeatherAnalysis as EstimateWeatherAnalysis"],
+          "recommendation": "Remove unused imports",
+          "impact": 2
+        },
+        {
+          "type": "unused-import",
+          "module": "lucide-react",
+          "unusedImports": [
+            "Cloud",
+            "AlertTriangle",
+            "TrendingUp",
+            "Settings",
+            "CheckCircle",
+            "XCircle"
+          ],
+          "recommendation": "Remove unused imports",
+          "impact": 12
+        },
+        {
+          "type": "unused-import",
+          "module": "@/components/ui/tabs",
+          "unusedImports": ["Tabs", "TabsContent", "TabsList", "TabsTrigger"],
+          "recommendation": "Remove unused imports",
+          "impact": 8
+        },
+        {
+          "type": "unused-import",
+          "module": "@/components/ui/badge",
+          "unusedImports": ["Badge"],
+          "recommendation": "Remove unused imports",
+          "impact": 2
+        },
+        {
+          "type": "unused-import",
+          "module": "@/components/ui/alert",
+          "unusedImports": ["Alert", "AlertDescription"],
+          "recommendation": "Remove unused imports",
+          "impact": 4
+        },
+        {
+          "type": "unused-import",
+          "module": "@/components/ui/progress",
+          "unusedImports": ["Progress"],
+          "recommendation": "Remove unused imports",
+          "impact": 2
+        },
+        {
+          "type": "unused-import",
+          "module": "@/components/ui/select",
+          "unusedImports": [
+            "Select",
+            "SelectContent",
+            "SelectItem",
+            "SelectTrigger",
+            "SelectValue"
+          ],
+          "recommendation": "Remove unused imports",
+          "impact": 10
+        },
+        {
+          "type": "unused-import",
+          "module": "@/lib/types/estimate-types",
+          "unusedImports": ["DurationStepData"],
+          "recommendation": "Remove unused imports",
+          "impact": 2
+        }
+      ]
+    }
+  ],
+  "mediumEffortTasks": [
+    {
+      "type": "code-splitting",
+      "target": "/home/prfowler/Projects/estimatepro_2.5/app/analytics/page.tsx",
+      "effort": "medium",
+      "impact": "high",
+      "recommendation": "Implement route-based code splitting",
+      "implementation": {
+        "type": "next-dynamic",
+        "implementation": "const analyticsPage = dynamic(() => import('./analytics/page'), {\n  loading: () => <PageSkeleton />,\n  ssr: false\n});"
+      }
+    },
+    {
+      "type": "code-splitting",
+      "target": "/home/prfowler/Projects/estimatepro_2.5/app/auth/login/page.tsx",
+      "effort": "medium",
+      "impact": "high",
+      "recommendation": "Implement route-based code splitting",
+      "implementation": {
+        "type": "next-dynamic",
+        "implementation": "const loginPage = dynamic(() => import('./login/page'), {\n  loading: () => <PageSkeleton />,\n  ssr: false\n});"
+      }
+    },
+    {
+      "type": "code-splitting",
+      "target": "/home/prfowler/Projects/estimatepro_2.5/app/drone-demo/page.tsx",
+      "effort": "medium",
+      "impact": "high",
+      "recommendation": "Implement route-based code splitting",
+      "implementation": {
+        "type": "next-dynamic",
+        "implementation": "const drone-demoPage = dynamic(() => import('./drone-demo/page'), {\n  loading: () => <PageSkeleton />,\n  ssr: false\n});"
+      }
+    },
+    {
+      "type": "code-splitting",
+      "target": "/home/prfowler/Projects/estimatepro_2.5/app/estimates/[id]/edit/page.tsx",
+      "effort": "medium",
+      "impact": "high",
+      "recommendation": "Implement route-based code splitting",
+      "implementation": {
+        "type": "next-dynamic",
+        "implementation": "const editPage = dynamic(() => import('./edit/page'), {\n  loading: () => <PageSkeleton />,\n  ssr: false\n});"
+      }
+    },
+    {
+      "type": "code-splitting",
+      "target": "/home/prfowler/Projects/estimatepro_2.5/app/estimates/[id]/page.tsx",
+      "effort": "medium",
+      "impact": "high",
+      "recommendation": "Implement route-based code splitting",
+      "implementation": {
+        "type": "next-dynamic",
+        "implementation": "const [id]Page = dynamic(() => import('./[id]/page'), {\n  loading: () => <PageSkeleton />,\n  ssr: false\n});"
+      }
+    },
+    {
+      "type": "tree-shaking",
+      "target": "next/server",
+      "effort": "medium",
+      "impact": "medium",
+      "recommendations": ["Library appears to have good tree shaking potential"]
+    },
+    {
+      "type": "tree-shaking",
+      "target": "zod",
+      "effort": "medium",
+      "impact": "medium",
+      "recommendations": ["Library appears to have good tree shaking potential"]
+    },
+    {
+      "type": "tree-shaking",
+      "target": "react-hook-form",
+      "effort": "medium",
+      "impact": "medium",
+      "recommendations": ["Library appears to have good tree shaking potential"]
+    }
+  ],
+  "majorRefactoring": [
+    {
+      "type": "file-splitting",
+      "directory": "components",
+      "effort": "high",
+      "impact": "high",
+      "targets": [
+        "analytics/AdvancedFilteringPersonalization.tsx",
+        "estimation/guided-flow/steps/MeasurementsWithFacade.tsx",
+        "estimation/guided-flow/steps/Summary.tsx",
+        "pdf/pdf-processor.tsx",
+        "monitoring/monitoring-dashboard.tsx",
+        "estimation/guided-flow/steps/InitialContact.tsx",
+        "duration/TimelineVisualization.tsx",
+        "analytics/UnifiedAnalyticsDashboard.tsx",
+        "audit/audit-dashboard.tsx",
+        "analytics/ChartOptimizations.tsx",
+        "analytics/enhanced-analytics-dashboard.tsx",
+        "integrations/webhook-manager.tsx",
+        "ui/mobile/MobilePhotoCapture.tsx",
+        "expenses/CostBreakdown.tsx",
+        "estimation/guided-flow/steps/Expenses.tsx",
+        "pricing/DiscountApproval.tsx",
+        "estimation/guided-flow/steps/FilesPhotos.tsx",
+        "visualizer/enhanced-building-3d.tsx",
+        "pricing/RiskFactorAnalysis.tsx",
+        "validation/ProgressiveHintsSystem.tsx",
+        "drone/drone-dashboard.tsx",
+        "analytics/ConsolidatedAnalyticsDashboard.tsx",
+        "pricing/ManualPriceOverride.tsx",
+        "analytics/enhanced-analytics-overview.tsx"
+      ],
+      "totalSize": 733891
+    },
+    {
+      "type": "file-splitting",
+      "directory": "pages",
+      "effort": "high",
+      "impact": "high",
+      "targets": ["api/enhanced/route.ts"],
+      "totalSize": 38287
+    },
+    {
+      "type": "file-splitting",
+      "directory": "services",
+      "effort": "high",
+      "impact": "high",
+      "targets": [
+        "analytics-service.ts",
+        "ai-predictive-analytics-service.ts",
+        "workflow-service.ts",
+        "auto-save-service.ts",
+        "cross-step-validation-service.ts",
+        "estimate-service.ts",
+        "ai-service.ts",
+        "workflow-templates.ts"
+      ],
+      "totalSize": 267669
+    }
+  ],
+  "implementation": {
+    "phase1": {
+      "name": "Quick Wins (Week 1)",
+      "effort": "low",
+      "tasks": [
+        "Implement lazy loading for modal and dialog components",
+        "Remove unused imports from high-impact files",
+        "Optimize barrel imports for better tree shaking"
+      ],
+      "estimatedSaving": "200-400KB"
+    },
+    "phase2": {
+      "name": "Code Splitting (Week 2-3)",
+      "effort": "medium",
+      "tasks": [
+        "Implement route-based code splitting",
+        "Set up vendor chunk splitting",
+        "Add dynamic imports for large feature modules"
+      ],
+      "estimatedSaving": "500-800KB"
+    },
+    "phase3": {
+      "name": "Architecture Optimization (Week 4-5)",
+      "effort": "high",
+      "tasks": [
+        "Break down large files into smaller modules",
+        "Eliminate duplicate code patterns",
+        "Optimize tree shaking for heavy libraries"
+      ],
+      "estimatedSaving": "300-600KB"
+    }
+  },
+  "estimatedSavings": {
+    "totalSavings": 2747628.6999999997,
+    "breakdown": {
+      "lazyLoading": 798640,
+      "codeSplitting": 1443560.6999999997,
+      "importOptimization": 152500,
+      "treeshaking": 349000,
+      "duplicateElimination": 3928
+    }
+  }
+}

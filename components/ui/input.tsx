@@ -61,6 +61,14 @@ export interface InputProps
   loading?: boolean;
   clearable?: boolean;
   onClear?: () => void;
+  /** Enhanced accessibility: Custom ARIA label for screen readers */
+  ariaLabel?: string;
+  /** Enhanced accessibility: ARIA description for additional context */
+  ariaDescribedBy?: string;
+  /** Enhanced accessibility: Announce validation changes */
+  announceValidation?: boolean;
+  /** Performance: Debounce onChange events (ms) */
+  debounceMs?: number;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -85,6 +93,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       onClear,
       placeholder,
       value,
+      ariaLabel,
+      ariaDescribedBy,
+      announceValidation = false,
+      debounceMs = 0,
+      onChange,
       ...props
     },
     ref,
@@ -92,8 +105,34 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const [isFocused, setIsFocused] = React.useState(false);
     const [hasValue, setHasValue] = React.useState(Boolean(value));
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const debounceTimer = React.useRef<NodeJS.Timeout>();
+    const generatedId = React.useId();
 
     React.useImperativeHandle(ref, () => inputRef.current!);
+
+    // Enhanced debounced change handler for performance
+    const debouncedOnChange = React.useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (debounceMs > 0) {
+          clearTimeout(debounceTimer.current);
+          debounceTimer.current = setTimeout(() => {
+            onChange?.(e);
+          }, debounceMs);
+        } else {
+          onChange?.(e);
+        }
+      },
+      [onChange, debounceMs],
+    );
+
+    // Cleanup debounce timer on unmount
+    React.useEffect(() => {
+      return () => {
+        if (debounceTimer.current) {
+          clearTimeout(debounceTimer.current);
+        }
+      };
+    }, []);
 
     React.useEffect(() => {
       setHasValue(Boolean(value));
@@ -144,8 +183,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         }}
         onChange={(e) => {
           setHasValue(Boolean(e.target.value));
-          props.onChange?.(e);
+          debouncedOnChange(e);
         }}
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={computedState === "error" ? "true" : "false"}
         {...props}
       />
     );

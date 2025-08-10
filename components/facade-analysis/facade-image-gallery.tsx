@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect, useCallback } from "react";
+import { GalleryImage } from "@/components/ui/optimized-image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,23 +37,97 @@ export function FacadeImageGallery({
   const [selectedImage, setSelectedImage] =
     useState<FacadeAnalysisImage | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
   const handleImageClick = (image: FacadeAnalysisImage, index: number) => {
     setSelectedImage(image);
     setCurrentIndex(index);
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     const newIndex = (currentIndex - 1 + images.length) % images.length;
     setCurrentIndex(newIndex);
     setSelectedImage(images[newIndex]);
-  };
+  }, [currentIndex, images]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const newIndex = (currentIndex + 1) % images.length;
     setCurrentIndex(newIndex);
     setSelectedImage(images[newIndex]);
-  };
+  }, [currentIndex, images]);
+
+  // Keyboard navigation for image gallery
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!selectedImage) return;
+
+      switch (e.key) {
+        case "ArrowLeft":
+          e.preventDefault();
+          handlePrevious();
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          handleNext();
+          break;
+        case "Escape":
+          e.preventDefault();
+          setSelectedImage(null);
+          break;
+      }
+    },
+    [selectedImage, handlePrevious, handleNext],
+  );
+
+  // Grid keyboard navigation
+  const handleGridKeyDown = useCallback(
+    (e: React.KeyboardEvent, index: number) => {
+      const cols = 4; // Number of columns in the grid
+      const rows = Math.ceil(images.length / cols);
+
+      switch (e.key) {
+        case "ArrowRight":
+          e.preventDefault();
+          if (index < images.length - 1) {
+            setFocusedIndex(index + 1);
+          }
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          if (index > 0) {
+            setFocusedIndex(index - 1);
+          }
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          const nextRowIndex = index + cols;
+          if (nextRowIndex < images.length) {
+            setFocusedIndex(nextRowIndex);
+          }
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          const prevRowIndex = index - cols;
+          if (prevRowIndex >= 0) {
+            setFocusedIndex(prevRowIndex);
+          }
+          break;
+        case "Enter":
+        case " ":
+          e.preventDefault();
+          handleImageClick(images[index], index);
+          break;
+      }
+    },
+    [images],
+  );
+
+  useEffect(() => {
+    if (selectedImage) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [selectedImage, handleKeyDown]);
 
   const getImageTypeColor = (type: string) => {
     switch (type) {
@@ -113,20 +187,34 @@ export function FacadeImageGallery({
           "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
           className,
         )}
+        role="grid"
+        aria-label="Facade image gallery"
       >
         {images.map((image, index) => (
           <Card
             key={image.id}
-            className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+            className={cn(
+              "overflow-hidden cursor-pointer hover:shadow-lg transition-shadow",
+              focusedIndex === index && "ring-2 ring-primary ring-offset-2",
+            )}
             onClick={() => handleImageClick(image, index)}
+            onKeyDown={(e) => handleGridKeyDown(e, index)}
+            tabIndex={0}
+            role="gridcell"
+            aria-label={`Image ${index + 1}: ${image.image_type} view from ${image.view_angle} angle`}
+            aria-selected={currentIndex === index}
           >
             <div className="relative aspect-video bg-muted">
-              <Image
+              <GalleryImage
                 src={image.image_url}
                 alt={`${image.image_type} view - ${image.view_angle}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                aspectRatio="video"
+                responsive={{
+                  mobile: "50vw",
+                  tablet: "33vw",
+                  desktop: "25vw",
+                }}
+                priority={index < 4}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
@@ -184,20 +272,29 @@ export function FacadeImageGallery({
         open={!!selectedImage}
         onOpenChange={() => setSelectedImage(null)}
       >
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl" aria-label="Image details dialog">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>Image Details</span>
-              <div className="flex items-center gap-2">
+              <div
+                className="flex items-center gap-2"
+                role="toolbar"
+                aria-label="Image navigation"
+              >
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={handlePrevious}
                   disabled={images.length <= 1}
+                  aria-label="Previous image"
+                  title="Previous image (Left arrow)"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-muted-foreground">
+                <span
+                  className="text-sm text-muted-foreground"
+                  aria-live="polite"
+                >
                   {currentIndex + 1} / {images.length}
                 </span>
                 <Button
@@ -205,6 +302,8 @@ export function FacadeImageGallery({
                   size="icon"
                   onClick={handleNext}
                   disabled={images.length <= 1}
+                  aria-label="Next image"
+                  title="Next image (Right arrow)"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -214,12 +313,16 @@ export function FacadeImageGallery({
           {selectedImage && (
             <div className="space-y-4">
               <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                <Image
+                <GalleryImage
                   src={selectedImage.image_url}
                   alt={`${selectedImage.image_type} view - ${selectedImage.view_angle}`}
-                  fill
+                  aspectRatio="video"
+                  responsive={{
+                    mobile: "100vw",
+                    desktop: "896px",
+                  }}
+                  priority={true}
                   className="object-contain"
-                  sizes="(max-width: 896px) 100vw, 896px"
                 />
               </div>
 

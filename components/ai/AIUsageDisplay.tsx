@@ -25,6 +25,7 @@ import {
   Calendar,
   DollarSign,
 } from "lucide-react";
+import { logger } from "@/lib/utils/logger";
 
 interface UsageData {
   usage: {
@@ -79,7 +80,7 @@ export function AIUsageDisplay() {
       const data = await response.json();
       setUsageData(data);
     } catch (error) {
-      console.error("Error fetching usage:", error);
+      logger.error("Error fetching usage:", error);
     } finally {
       setLoading(false);
     }

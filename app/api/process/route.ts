@@ -23,7 +23,9 @@ const PDFProcessRequestSchema = z.object({
 
 async function processPDFHandler(
   request: NextRequest,
-  context: { params: Record<string, string> },
+  context: {
+    params?: Promise<Record<string, string>>;
+  },
 ) {
   try {
     const supabase = createClient();
@@ -325,7 +327,7 @@ export const POST = withWriteRateLimit(processPDFHandler);
 // Named exports for different operations
 export async function PUT(
   request: NextRequest,
-  context: { params: Record<string, string> },
+  context?: { params?: Promise<Record<string, string>> },
 ) {
   const url = new URL(request.url);
   const operation = url.searchParams.get("operation");

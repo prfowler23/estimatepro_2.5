@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import EstimateBusinessService from "@/lib/services/estimate-service";
+import { unifiedEstimateService } from "@/lib/services/estimate-service-unified";
 import { getHandler, postHandler } from "@/lib/api/api-handler";
 import { estimateSchema } from "@/lib/schemas/api-validation";
 import { z } from "zod";
@@ -34,7 +34,7 @@ async function handleGET(context: any) {
   const { limit, offset, status, search } = validation.data;
 
   // Fetch estimates using the business service
-  const result = await EstimateBusinessService.getAllEstimates({
+  const result = await unifiedEstimateService.getAllEstimates({
     limit,
     offset,
     status: status as any,
@@ -111,7 +111,7 @@ async function handlePOST(
   }));
 
   // Create estimate using the business service
-  const estimateId = await EstimateBusinessService.createEstimate({
+  const estimateId = await unifiedEstimateService.createEstimate({
     customerName: data.customerName,
     customerEmail: data.customerEmail,
     customerPhone: data.customerPhone,

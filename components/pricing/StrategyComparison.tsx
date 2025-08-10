@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,93 +14,78 @@ import {
   Star,
   BarChart3,
   Zap,
+  Loader2,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { withComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
+import type { StrategyComparisonProps } from "@/lib/types/pricing-types";
+import {
+  calculateExpectedValue,
+  getRiskLevelFromProbability,
+} from "@/lib/pricing/pricing-utils";
 
-interface PricingAdjustment {
-  reason: string;
-  percentage: number;
-  amount?: number;
-}
-
-interface PricingStrategy {
-  name: string;
-  price: number;
-  baseCost?: number;
-  adjustments: PricingAdjustment[];
-  pros: string[];
-  cons: string[];
-  confidence: number;
-  winProbability: number;
-  expectedValue?: number;
-  margin?: number;
-  riskLevel?: "low" | "medium" | "high";
-  recommended?: boolean;
-  description?: string;
-}
-
-interface StrategyComparisonProps {
-  strategies: PricingStrategy[];
-  currentStrategy: PricingStrategy;
-  onSelectStrategy: (strategy: PricingStrategy) => void;
-  baseCost?: number;
-  marketBenchmark?: number;
-}
-
-export function StrategyComparison({
+// Component wrapped in React.memo for performance optimization
+const StrategyComparisonComponent: React.FC<StrategyComparisonProps> = ({
   strategies,
   currentStrategy,
   onSelectStrategy,
   baseCost = 0,
   marketBenchmark,
-}: StrategyComparisonProps) {
+}) => {
   const [sortBy, setSortBy] = useState<
     "price" | "winProbability" | "expectedValue"
   >("expectedValue");
   const [showDetails, setShowDetails] = useState<string | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
-  // Calculate enhanced metrics for each strategy
-  const enhancedStrategies = strategies.map((strategy) => {
-    const calculatedBaseCost = strategy.baseCost || baseCost;
-    const margin =
-      calculatedBaseCost > 0
-        ? ((strategy.price - calculatedBaseCost) / strategy.price) * 100
-        : 0;
-    const expectedValue =
-      strategy.expectedValue || strategy.price * strategy.winProbability;
-    const riskLevel =
-      strategy.winProbability > 0.7
-        ? "low"
-        : strategy.winProbability > 0.4
-          ? "medium"
-          : "high";
+  // Memoized enhanced strategies calculation
+  const enhancedStrategies = useMemo(() => {
+    setIsCalculating(true);
+    try {
+      return strategies.map((strategy) => {
+        const calculatedBaseCost = strategy.baseCost || baseCost;
+        const margin =
+          calculatedBaseCost > 0
+            ? ((strategy.price - calculatedBaseCost) / strategy.price) * 100
+            : 0;
+        const expectedValue =
+          strategy.expectedValue ||
+          calculateExpectedValue(strategy.price, strategy.winProbability);
+        const riskLevel = getRiskLevelFromProbability(strategy.winProbability);
 
-    return {
-      ...strategy,
-      margin,
-      expectedValue,
-      riskLevel,
-      marketPosition: marketBenchmark
-        ? (strategy.price / marketBenchmark - 1) * 100
-        : 0,
-    };
-  });
-
-  // Sort strategies
-  const sortedStrategies = [...enhancedStrategies].sort((a, b) => {
-    switch (sortBy) {
-      case "price":
-        return b.price - a.price;
-      case "winProbability":
-        return b.winProbability - a.winProbability;
-      case "expectedValue":
-        return b.expectedValue - a.expectedValue;
-      default:
-        return b.expectedValue - a.expectedValue;
+        return {
+          ...strategy,
+          margin,
+          expectedValue,
+          riskLevel,
+          marketPosition: marketBenchmark
+            ? (strategy.price / marketBenchmark - 1) * 100
+            : 0,
+        };
+      });
+    } finally {
+      setIsCalculating(false);
     }
-  });
+  }, [strategies, baseCost, marketBenchmark]);
 
-  const getRiskColor = (riskLevel: string) => {
+  // Memoized sorted strategies
+  const sortedStrategies = useMemo(() => {
+    return [...enhancedStrategies].sort((a, b) => {
+      switch (sortBy) {
+        case "price":
+          return b.price - a.price;
+        case "winProbability":
+          return b.winProbability - a.winProbability;
+        case "expectedValue":
+          return b.expectedValue - a.expectedValue;
+        default:
+          return b.expectedValue - a.expectedValue;
+      }
+    });
+  }, [enhancedStrategies, sortBy]);
+
+  // Memoized color functions
+  const getRiskColor = useCallback((riskLevel: string) => {
     switch (riskLevel) {
       case "low":
         return "text-green-600 bg-green-50 border-green-200";
@@ -111,9 +96,9 @@ export function StrategyComparison({
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
     }
-  };
+  }, []);
 
-  const getStrategyIcon = (strategyName: string) => {
+  const getStrategyIcon = useCallback((strategyName: string) => {
     if (strategyName.toLowerCase().includes("competitive"))
       return <Target className="w-4 h-4" />;
     if (strategyName.toLowerCase().includes("premium"))
@@ -123,7 +108,45 @@ export function StrategyComparison({
     if (strategyName.toLowerCase().includes("penetration"))
       return <Zap className="w-4 h-4" />;
     return <BarChart3 className="w-4 h-4" />;
-  };
+  }, []);
+
+  // Memoized summary metrics
+  const summaryMetrics = useMemo(
+    () => ({
+      priceRange: {
+        min: Math.min(...strategies.map((s) => s.price)),
+        max: Math.max(...strategies.map((s) => s.price)),
+      },
+      winRateRange: {
+        min: Math.min(...strategies.map((s) => s.winProbability)) * 100,
+        max: Math.max(...strategies.map((s) => s.winProbability)) * 100,
+      },
+      bestExpectedValue: Math.max(
+        ...enhancedStrategies.map((s) => s.expectedValue),
+      ),
+      strategiesCount: strategies.length,
+    }),
+    [strategies, enhancedStrategies],
+  );
+
+  // Memoized event handlers
+  const handleSortChange = useCallback(
+    (newSort: "price" | "winProbability" | "expectedValue") => {
+      setSortBy(newSort);
+    },
+    [],
+  );
+
+  const handleToggleDetails = useCallback((strategyName: string) => {
+    setShowDetails((prev) => (prev === strategyName ? null : strategyName));
+  }, []);
+
+  const handleStrategySelect = useCallback(
+    (strategy: any) => {
+      onSelectStrategy(strategy);
+    },
+    [onSelectStrategy],
+  );
 
   return (
     <Card className="w-full">
@@ -137,21 +160,24 @@ export function StrategyComparison({
             <Button
               variant={sortBy === "expectedValue" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy("expectedValue")}
+              onClick={() => handleSortChange("expectedValue")}
+              disabled={isCalculating}
             >
               Expected Value
             </Button>
             <Button
               variant={sortBy === "winProbability" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy("winProbability")}
+              onClick={() => handleSortChange("winProbability")}
+              disabled={isCalculating}
             >
               Win Rate
             </Button>
             <Button
               variant={sortBy === "price" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy("price")}
+              onClick={() => handleSortChange("price")}
+              disabled={isCalculating}
             >
               Price
             </Button>
@@ -161,41 +187,41 @@ export function StrategyComparison({
 
       <CardContent className="space-y-4">
         {/* Summary Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Price Range</p>
-            <p className="font-bold">
-              ${Math.min(...strategies.map((s) => s.price)).toLocaleString()} -
-              ${Math.max(...strategies.map((s) => s.price)).toLocaleString()}
-            </p>
+        {isCalculating ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            <span>Calculating strategy metrics...</span>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Win Rate Range</p>
-            <p className="font-bold">
-              {(
-                Math.min(...strategies.map((s) => s.winProbability)) * 100
-              ).toFixed(1)}
-              % -
-              {(
-                Math.max(...strategies.map((s) => s.winProbability)) * 100
-              ).toFixed(1)}
-              %
-            </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Price Range</p>
+              <p className="font-bold">
+                ${summaryMetrics.priceRange.min.toLocaleString()} - $
+                {summaryMetrics.priceRange.max.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Win Rate Range</p>
+              <p className="font-bold">
+                {summaryMetrics.winRateRange.min.toFixed(1)}% -
+                {summaryMetrics.winRateRange.max.toFixed(1)}%
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Best Expected Value</p>
+              <p className="font-bold text-green-600">
+                ${summaryMetrics.bestExpectedValue.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Strategies</p>
+              <p className="font-bold">
+                {summaryMetrics.strategiesCount} options
+              </p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Best Expected Value</p>
-            <p className="font-bold text-green-600">
-              $
-              {Math.max(
-                ...enhancedStrategies.map((s) => s.expectedValue),
-              ).toLocaleString()}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Strategies</p>
-            <p className="font-bold">{strategies.length} options</p>
-          </div>
-        </div>
+        )}
 
         {/* Strategy Cards */}
         <div className="space-y-4">
@@ -211,7 +237,7 @@ export function StrategyComparison({
                     ? "border-blue-500 bg-blue-50 shadow-md"
                     : "border-gray-200 hover:border-gray-300"
                 } ${isRecommended ? "ring-2 ring-green-200" : ""}`}
-                onClick={() => onSelectStrategy(strategy as any)}
+                onClick={() => handleStrategySelect(strategy)}
               >
                 <CardContent className="p-6">
                   {/* Header */}
@@ -337,11 +363,7 @@ export function StrategyComparison({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowDetails(
-                            showDetails === strategy.name
-                              ? null
-                              : strategy.name,
-                          );
+                          handleToggleDetails(strategy.name);
                         }}
                         className="text-sm font-medium text-blue-600 hover:text-blue-800 mb-2"
                       >
@@ -427,7 +449,7 @@ export function StrategyComparison({
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onSelectStrategy(strategy as any);
+                        handleStrategySelect(strategy);
                       }}
                       className="w-full"
                       variant={isRecommended ? "default" : "outline"}
@@ -464,4 +486,21 @@ export function StrategyComparison({
       </CardContent>
     </Card>
   );
-}
+};
+
+// Export memoized component with error boundary
+export const StrategyComparison = withComponentErrorBoundary(
+  React.memo(StrategyComparisonComponent, (prevProps, nextProps) => {
+    // Custom comparison function for memo
+    return (
+      prevProps.baseCost === nextProps.baseCost &&
+      prevProps.marketBenchmark === nextProps.marketBenchmark &&
+      prevProps.currentStrategy.name === nextProps.currentStrategy.name &&
+      JSON.stringify(prevProps.strategies) ===
+        JSON.stringify(nextProps.strategies)
+    );
+  }),
+  "StrategyComparison",
+);
+
+StrategyComparison.displayName = "StrategyComparison";

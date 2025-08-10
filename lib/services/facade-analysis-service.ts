@@ -63,6 +63,93 @@ export class FacadeAnalysisService {
     return data;
   }
 
+  async updateAnalysis(
+    id: string,
+    updates: Partial<FacadeAnalysis>,
+    userId: string,
+  ): Promise<FacadeAnalysis> {
+    const supabase = createClient();
+
+    // Check if analysis exists and user has access
+    const { data: existing, error: existingError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", userId)
+      .single();
+
+    if (existingError || !existing) {
+      throw new Error("Facade analysis not found or access denied");
+    }
+
+    // Update the analysis
+    const { data, error } = await supabase
+      .from("facade_analyses")
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteAnalysis(id: string, userId: string): Promise<void> {
+    const supabase = createClient();
+
+    // Check if analysis exists and user has access
+    const { data: existing, error: existingError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", id)
+      .eq("created_by", userId)
+      .single();
+
+    if (existingError || !existing) {
+      throw new Error("Facade analysis not found or access denied");
+    }
+
+    // Delete the analysis (cascade will handle images)
+    const { error } = await supabase
+      .from("facade_analyses")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  async getImages(
+    analysisId: string,
+    userId: string,
+  ): Promise<FacadeAnalysisImage[]> {
+    const supabase = createClient();
+
+    // Check if analysis exists and user has access
+    const { data: analysis, error: analysisError } = await supabase
+      .from("facade_analyses")
+      .select("*")
+      .eq("id", analysisId)
+      .eq("created_by", userId)
+      .single();
+
+    if (analysisError || !analysis) {
+      throw new Error("Facade analysis not found or access denied");
+    }
+
+    // Get images
+    const { data, error } = await supabase
+      .from("facade_analysis_images")
+      .select("*")
+      .eq("facade_analysis_id", analysisId)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
   async analyzeImage(
     imageUrl: string,
     imageType: "aerial" | "ground" | "drone" | "satellite",

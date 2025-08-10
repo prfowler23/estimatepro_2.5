@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,10 +40,10 @@ interface BiofilmRemovalFormProps {
   onCancel: () => void;
 }
 
-export function BiofilmRemovalForm({
+const BiofilmRemovalFormBase = ({
   onSubmit,
   onCancel,
-}: BiofilmRemovalFormProps) {
+}: BiofilmRemovalFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -530,4 +531,17 @@ export function BiofilmRemovalForm({
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const BiofilmRemovalForm = React.memo(
+  BiofilmRemovalFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+BiofilmRemovalForm.displayName = "BiofilmRemovalForm";

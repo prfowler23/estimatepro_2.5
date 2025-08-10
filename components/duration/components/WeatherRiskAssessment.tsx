@@ -1,25 +1,6 @@
 import { Cloud, Info } from "lucide-react";
 import { memo } from "react";
-
-interface WeatherAnalysis {
-  location: string;
-  riskScore: number;
-  forecast: {
-    recommendations: string[];
-  };
-  serviceImpacts: Record<string, WeatherImpact>;
-}
-
-interface WeatherImpact {
-  riskLevel: "low" | "medium" | "high";
-  delayDays: number;
-  confidence: number;
-}
-
-interface WeatherRiskAssessmentProps {
-  weatherAnalysis: WeatherAnalysis;
-  weatherSensitiveServices: number;
-}
+import type { WeatherRiskAssessmentProps } from "../types";
 
 export const WeatherRiskAssessment = memo(function WeatherRiskAssessment({
   weatherAnalysis,

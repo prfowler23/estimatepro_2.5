@@ -39,6 +39,9 @@ import {
   Settings,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
+import { EnhancedCard } from "@/components/ui/enhanced-card";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -174,10 +177,12 @@ const sanitizeAndFormatJSON = (data: unknown): string => {
 // Severity badge component
 const SeverityBadge: React.FC<{ severity: string }> = ({ severity }) => {
   const variants = {
-    low: "bg-green-100 text-green-800",
-    medium: "bg-yellow-100 text-yellow-800",
-    high: "bg-orange-100 text-orange-800",
-    critical: "bg-red-100 text-red-800",
+    low: "bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400",
+    medium:
+      "bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400",
+    high: "bg-warning-200 text-warning-900 dark:bg-warning-900/30 dark:text-warning-300",
+    critical:
+      "bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-400",
   };
 
   return (
@@ -243,9 +248,13 @@ class AuditErrorBoundary extends React.Component<
 
 const DefaultErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
   <div className="p-6 text-center">
-    <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-    <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-    <p className="text-gray-600 mb-4">Unable to load the audit dashboard</p>
+    <AlertTriangle className="w-12 h-12 text-error-600 dark:text-error-400 mx-auto mb-4" />
+    <h2 className="text-xl font-semibold mb-2 text-text-primary">
+      Something went wrong
+    </h2>
+    <p className="text-text-secondary mb-4">
+      Unable to load the audit dashboard
+    </p>
     <Button onClick={() => window.location.reload()}>Reload Page</Button>
   </div>
 );
@@ -261,8 +270,9 @@ const AuditEventItem: React.FC<{
 
   return (
     <div style={style} className="px-2">
-      <div
-        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer mb-2"
+      <motion.div
+        whileHover={{ scale: 1.01 }}
+        className="flex items-center justify-between p-3 border border-border-primary rounded-lg hover:bg-bg-subtle dark:hover:bg-bg-elevated cursor-pointer mb-2 transition-all duration-200 backdrop-blur-sm bg-bg-elevated/30"
         onClick={() => data.onSelectEvent(event)}
         role="button"
         tabIndex={0}
@@ -278,7 +288,7 @@ const AuditEventItem: React.FC<{
           <EventTypeIcon eventType={event.event_type} />
           <div>
             <div className="font-medium">{event.action}</div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-text-secondary">
               {new Date(event.created_at).toLocaleString()}
             </div>
           </div>
@@ -289,7 +299,7 @@ const AuditEventItem: React.FC<{
             <Badge variant="outline">{event.compliance_tags[0]}</Badge>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -439,41 +449,64 @@ export const AuditDashboard: React.FC = () => {
     },
   });
 
-  // Statistics cards
+  // Statistics cards with trend data
   const statisticsCards = [
     {
       title: "Total Events",
       value: statisticsData?.statistics?.total_events || 0,
-      icon: <Activity className="w-5 h-5" />,
-      color: "text-blue-600",
+      icon: Activity,
+      trend: statisticsData?.statistics?.trends?.total_events || {
+        value: 0,
+        isPositive: true,
+      },
+      description: "System activity events",
     },
     {
       title: "High Risk Events",
       value: statisticsData?.statistics?.high_risk_events || 0,
-      icon: <AlertTriangle className="w-5 h-5" />,
-      color: "text-red-600",
+      icon: AlertTriangle,
+      trend: statisticsData?.statistics?.trends?.high_risk || {
+        value: 0,
+        isPositive: false,
+      },
+      description: "Critical security events",
     },
     {
       title: "Security Events",
       value: statisticsData?.statistics?.security_events || 0,
-      icon: <Shield className="w-5 h-5" />,
-      color: "text-orange-600",
+      icon: Shield,
+      trend: statisticsData?.statistics?.trends?.security || {
+        value: 0,
+        isPositive: true,
+      },
+      description: "Security-related activities",
     },
     {
       title: "Data Access Events",
       value: statisticsData?.statistics?.data_access_events || 0,
-      icon: <Database className="w-5 h-5" />,
-      color: "text-green-600",
+      icon: Database,
+      trend: statisticsData?.statistics?.trends?.data_access || {
+        value: 0,
+        isPositive: true,
+      },
+      description: "Database access logs",
     },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-6"
+    >
+      {/* Header with gradient text */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Audit Dashboard</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#6B7A89] to-[#675C5A] bg-clip-text text-transparent">
+            Audit Dashboard
+          </h1>
+          <p className="text-text-secondary mt-1">
             Monitor system activity and compliance
           </p>
         </div>
@@ -504,24 +537,23 @@ export const AuditDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards with animations */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statisticsCards.map((stat, index) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {stat.title}
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {stat.value.toLocaleString()}
-                  </p>
-                </div>
-                <div className={`${stat.color}`}>{stat.icon}</div>
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+          >
+            <StatCard
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              trend={stat.trend}
+              description={stat.description}
+            />
+          </motion.div>
         ))}
       </div>
 
@@ -661,8 +693,8 @@ export const AuditDashboard: React.FC = () => {
                 </div>
                 {isPending && (
                   <div className="col-span-full">
-                    <div className="text-sm text-blue-600 flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    <div className="text-sm text-primary-action flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-action mr-2"></div>
                       Updating filters...
                     </div>
                   </div>
@@ -690,16 +722,16 @@ export const AuditDashboard: React.FC = () => {
                   role="status"
                   aria-live="polite"
                 >
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-action mx-auto mb-4"></div>
                   Loading events...
                 </div>
               ) : eventsData?.events?.length === 0 ? (
                 <div className="text-center py-8">
-                  <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <Activity className="w-12 h-12 text-text-muted mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-text-primary mb-2">
                     No audit events found
                   </h3>
-                  <p className="text-gray-500">
+                  <p className="text-text-secondary">
                     Try adjusting your filters or check back later.
                   </p>
                 </div>
@@ -748,11 +780,11 @@ export const AuditDashboard: React.FC = () => {
                         <div className="font-medium">
                           {report.standard.toUpperCase()} Report
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-text-secondary">
                           {new Date(report.period_start).toLocaleDateString()} -{" "}
                           {new Date(report.period_end).toLocaleDateString()}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-text-secondary">
                           {report.total_events} events,{" "}
                           {report.violations_count} violations
                         </div>
@@ -761,10 +793,10 @@ export const AuditDashboard: React.FC = () => {
                         <Badge
                           className={
                             report.status === "compliant"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400"
                               : report.status === "warning"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
+                                ? "bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400"
+                                : "bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-400"
                           }
                         >
                           {report.status}
@@ -805,7 +837,7 @@ export const AuditDashboard: React.FC = () => {
                         Export Data
                       </Button>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                       Export user audit data for GDPR compliance
                     </p>
                   </div>
@@ -824,7 +856,7 @@ export const AuditDashboard: React.FC = () => {
                       <AlertTriangle className="w-4 h-4 mr-2" />
                       Scan for Suspicious Activity
                     </Button>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                       Analyze user behavior patterns for security threats
                     </p>
                   </div>
@@ -897,7 +929,7 @@ export const AuditDashboard: React.FC = () => {
 
               <div>
                 <label className="text-sm font-medium">Details</label>
-                <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-auto max-h-40">
+                <pre className="text-xs bg-bg-subtle dark:bg-bg-elevated p-2 rounded mt-1 overflow-auto max-h-40 text-text-primary">
                   {JSON.stringify(selectedEvent.details, null, 2)}
                 </pre>
               </div>
@@ -905,6 +937,6 @@ export const AuditDashboard: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </motion.div>
   );
 };

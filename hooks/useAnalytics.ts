@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { AnalyticsService } from "@/lib/services/analytics-service";
+import { unifiedAnalyticsService } from "@/lib/services/analytics-service-unified";
 import {
   AnalyticsMetric,
   AnalyticsFilter,
@@ -40,11 +40,8 @@ export function useAnalytics(
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Initialize analytics service
-  const analyticsService = new AnalyticsService(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+  // Use unified analytics service
+  const analyticsService = unifiedAnalyticsService;
 
   const refreshData = useCallback(async () => {
     setIsLoading(true);

@@ -6,18 +6,26 @@ import {
   ErrorContext,
   ErrorMessage,
 } from "@/lib/error/error-recovery-engine";
+import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { EnhancedErrorDisplay } from "./EnhancedErrorDisplay";
 import { Alert } from "@/components/ui/alert";
 import { error as logError } from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle, Home } from "lucide-react";
+import {
+  sanitizeErrorMessage,
+  sanitizeTechnicalDetails,
+  sanitizeUserMessage,
+  errorRateLimiter,
+  shouldShowTechnicalDetails,
+} from "@/lib/utils/error-sanitization";
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
   stepId?: string;
   stepNumber?: number;
   userId?: string;
-  flowData?: any;
+  flowData?: GuidedFlowData;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   isolateErrors?: boolean; // If true, errors won't bubble up to parent boundaries
@@ -40,6 +48,8 @@ export class ErrorBoundary extends Component<
   ErrorBoundaryState
 > {
   private retryTimeoutId: NodeJS.Timeout | null = null;
+  private errorHistory: Map<string, number> = new Map();
+  private lastErrorTime: number = 0;
 
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -62,6 +72,49 @@ export class ErrorBoundary extends Component<
   }
 
   async componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    const now = Date.now();
+    const errorSignature = error.message + error.stack?.substring(0, 100);
+
+    // Enhanced infinite loop detection
+    const errorCount = this.errorHistory.get(errorSignature) || 0;
+    this.errorHistory.set(errorSignature, errorCount + 1);
+
+    // Detect rapid consecutive errors (potential infinite loop)
+    const timeSinceLastError = now - this.lastErrorTime;
+    if (timeSinceLastError < 100 && errorCount > 2) {
+      console.error(
+        "Rapid error repetition detected, likely infinite loop:",
+        error,
+      );
+      this.setState({
+        recoveryAttempts: this.state.recoveryAttempts + 1,
+        errorMessage: {
+          id: "infinite-loop-detected",
+          title: "Rapid Error Loop Detected",
+          message: "Multiple identical errors occurred in rapid succession.",
+          severity: "error",
+          category: "system_error",
+          isRecoverable: false,
+          canRetry: true,
+          userFriendly:
+            "The application detected an error loop. Please refresh the page.",
+          recoveryActions: [
+            {
+              id: "refresh",
+              label: "Refresh Page",
+              description: "Reload the page to break the error loop",
+              type: "user-action",
+              priority: 1,
+              execute: () => window.location.reload(),
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    this.lastErrorTime = now;
+
     // Prevent infinite loops by limiting recovery attempts
     if (this.state.recoveryAttempts >= 3) {
       console.error(
@@ -88,8 +141,9 @@ export class ErrorBoundary extends Component<
           category: "system_error",
           isRecoverable: false,
           canRetry: true,
-          userFriendly:
+          userFriendly: sanitizeUserMessage(
             "The page encountered a rendering issue. Please refresh to continue.",
+          ),
           recoveryActions: [
             {
               id: "refresh",
@@ -105,13 +159,21 @@ export class ErrorBoundary extends Component<
       return;
     }
 
-    logError("ErrorBoundary caught an error", {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      component: "ErrorBoundary",
-      recoveryAttempt: this.state.recoveryAttempts + 1,
-    });
+    // Apply rate limiting to prevent error spam
+    const errorKey = `${error.message.substring(0, 50)}_${this.props.stepId}`;
+    if (errorRateLimiter.shouldAllow(errorKey)) {
+      logError("ErrorBoundary caught an error", {
+        error: sanitizeErrorMessage(error.message),
+        stack: shouldShowTechnicalDetails()
+          ? sanitizeTechnicalDetails(error.stack || "")
+          : "[REDACTED]",
+        componentStack: shouldShowTechnicalDetails()
+          ? sanitizeTechnicalDetails(errorInfo.componentStack)
+          : "[REDACTED]",
+        component: "ErrorBoundary",
+        recoveryAttempt: this.state.recoveryAttempts + 1,
+      });
+    }
 
     // Call custom error handler if provided (only on first attempt)
     if (this.props.onError && this.state.recoveryAttempts === 0) {
@@ -161,12 +223,16 @@ export class ErrorBoundary extends Component<
         errorMessage: {
           id: "fallback-error",
           title: "Application Error",
-          message: "The application encountered an unexpected error.",
+          message: sanitizeErrorMessage(
+            "The application encountered an unexpected error.",
+          ),
           severity: "error",
           category: "system_error",
           isRecoverable: true,
           canRetry: true,
-          userFriendly: "Something went wrong. Please try refreshing the page.",
+          userFriendly: sanitizeUserMessage(
+            "Something went wrong. Please try refreshing the page.",
+          ),
           recoveryActions: [
             {
               id: "refresh",
@@ -319,21 +385,27 @@ export class ErrorBoundary extends Component<
         (action) => action.type === "auto",
       );
 
-      // Execute auto-recovery actions in priority order
-      for (const action of autoActions) {
-        try {
-          await action.execute();
-
-          // Small delay between actions
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        } catch (actionError) {
-          logError(`Auto-recovery action ${action.id} failed`, {
-            error: actionError,
-            action: action.id,
-            component: "ErrorBoundary",
-          });
+      // Execute auto-recovery actions - optimized sequential execution
+      const executeActionsSequentially = async (
+        actions: typeof autoActions,
+      ) => {
+        for (const action of actions) {
+          try {
+            await action.execute();
+            // Small delay between actions for stability
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          } catch (actionError) {
+            logError(`Auto-recovery action ${action.id} failed`, {
+              error: actionError,
+              action: action.id,
+              component: "ErrorBoundary",
+            });
+            // Continue with next action even if one fails
+          }
         }
-      }
+      };
+
+      await executeActionsSequentially(autoActions);
 
       // Wait a moment then try to recover
       this.retryTimeoutId = setTimeout(() => {
@@ -376,6 +448,25 @@ export class ErrorBoundary extends Component<
     if (this.retryTimeoutId) {
       clearTimeout(this.retryTimeoutId);
     }
+    // Clear error history on unmount
+    this.errorHistory.clear();
+  }
+
+  /**
+   * Reset error history periodically to prevent memory leaks
+   */
+  private resetErrorHistory = () => {
+    // Keep only recent errors (last 5 minutes)
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    if (this.lastErrorTime < fiveMinutesAgo) {
+      this.errorHistory.clear();
+      this.lastErrorTime = 0;
+    }
+  };
+
+  componentDidUpdate() {
+    // Periodically clean error history
+    this.resetErrorHistory();
   }
 
   render() {
@@ -431,15 +522,16 @@ export class ErrorBoundary extends Component<
             </div>
 
             {/* Technical details for developers */}
-            {process.env.NODE_ENV === "development" && this.state.error && (
+            {shouldShowTechnicalDetails() && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                   Technical Details
                 </summary>
                 <div className="mt-2 p-3 bg-gray-100 rounded text-xs font-mono text-gray-700 whitespace-pre-wrap">
-                  {this.state.error.message}
+                  {sanitizeTechnicalDetails(this.state.error.message)}
                   {this.state.error.stack &&
-                    "\n\nStack Trace:\n" + this.state.error.stack}
+                    "\n\nStack Trace:\n" +
+                      sanitizeTechnicalDetails(this.state.error.stack)}
                 </div>
               </details>
             )}

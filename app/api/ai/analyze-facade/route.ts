@@ -38,8 +38,9 @@ export async function POST(request: NextRequest) {
       processedAt: new Date().toISOString(),
     });
   } catch (error) {
-    const { apiError } = await import("../../../../lib/utils/logger");
-    apiError(error instanceof Error ? error : new Error(String(error)), {
+    const { error: logError } = await import("../../../../lib/utils/logger");
+    logError("Facade analysis error:", {
+      error: error instanceof Error ? error.message : String(error),
       action: "analyze-facade",
       imageUrl: typeof imageUrl !== "undefined" ? imageUrl : "unknown",
       buildingType:

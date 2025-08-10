@@ -182,7 +182,7 @@ const dataGenerator = new RealTimeDataGenerator();
 // Handle WebSocket upgrade
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -269,7 +269,7 @@ export async function GET(request: NextRequest) {
 // For development/testing - simulate WebSocket behavior with Server-Sent Events
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

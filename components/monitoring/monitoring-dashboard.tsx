@@ -3,7 +3,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -30,6 +30,8 @@ import {
   LineChart,
   PieChart,
   AlertCircle,
+  FileDown,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,40 +52,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
 
-// Mock data interfaces (in production, these would come from API)
-interface SystemMetrics {
-  timestamp: number;
-  cpu: { usage: number; load: number[] };
-  memory: { used: number; total: number; percentage: number };
-  disk: { used: number; total: number; percentage: number };
-  network: { bytesIn: number; bytesOut: number; connectionsActive: number };
-  application: {
-    uptime: number;
-    responseTime: number;
-    errorRate: number;
-    activeUsers: number;
-  };
-  database: { connections: number; queryTime: number; transactionRate: number };
-}
-
-interface HealthCheck {
-  name: string;
-  status: "healthy" | "warning" | "critical";
-  lastCheck: number;
-  message?: string;
-  details?: any;
-}
-
-interface Alert {
-  id: string;
-  type: string;
-  severity: "info" | "warning" | "critical";
-  message: string;
-  timestamp: number;
-  resolved?: boolean;
-  acknowledgedBy?: string;
-}
+// Import monitoring service and hooks
+import {
+  unifiedMonitoringService,
+  useMonitoringMetrics,
+  useMonitoringAlerts,
+  type Alert as MonitoringAlert,
+  type MonitoringMetricsResponse,
+} from "@/lib/services/monitoring-service-unified";
+import type {
+  SystemMetrics,
+  HealthCheck,
+} from "@/lib/monitoring/system-monitor";
 
 // Format helpers
 const formatBytes = (bytes: number) => {
@@ -112,97 +96,16 @@ const formatNumber = (num: number) => {
   return num.toString();
 };
 
-// Mock data generator
-const generateMockData = (): {
-  metrics: SystemMetrics;
-  healthChecks: HealthCheck[];
-  alerts: Alert[];
-} => {
-  const now = Date.now();
-
-  return {
-    metrics: {
-      timestamp: now,
-      cpu: {
-        usage: Math.random() * 100,
-        load: [Math.random(), Math.random(), Math.random()],
-      },
-      memory: {
-        used: Math.random() * 8000000000,
-        total: 8000000000,
-        percentage: Math.random() * 100,
-      },
-      disk: {
-        used: Math.random() * 1000000000000,
-        total: 1000000000000,
-        percentage: Math.random() * 100,
-      },
-      network: {
-        bytesIn: Math.random() * 1000000,
-        bytesOut: Math.random() * 1000000,
-        connectionsActive: Math.floor(Math.random() * 100),
-      },
-      application: {
-        uptime: Math.random() * 86400000 * 7,
-        responseTime: Math.random() * 2000,
-        errorRate: Math.random() * 10,
-        activeUsers: Math.floor(Math.random() * 1000),
-      },
-      database: {
-        connections: Math.floor(Math.random() * 20),
-        queryTime: Math.random() * 100,
-        transactionRate: Math.random() * 1000,
-      },
-    },
-    healthChecks: [
-      {
-        name: "Database",
-        status: Math.random() > 0.1 ? "healthy" : "warning",
-        lastCheck: now - Math.random() * 300000,
-        message: "Database connection active",
-      },
-      {
-        name: "API",
-        status: Math.random() > 0.05 ? "healthy" : "critical",
-        lastCheck: now - Math.random() * 60000,
-        message: "API responding normally",
-      },
-      {
-        name: "External Services",
-        status: Math.random() > 0.2 ? "healthy" : "warning",
-        lastCheck: now - Math.random() * 120000,
-        message: "All external services operational",
-      },
-    ],
-    alerts: [
-      {
-        id: "alert_1",
-        type: "cpu-usage",
-        severity: "warning",
-        message: "CPU usage high: 85.3%",
-        timestamp: now - 300000,
-      },
-      {
-        id: "alert_2",
-        type: "response-time",
-        severity: "critical",
-        message: "Response time critical: 3500ms",
-        timestamp: now - 600000,
-        resolved: true,
-      },
-    ],
-  };
-};
-
 // Metric card component
-const MetricCard: React.FC<{
+const MetricCard = memo<{
   title: string;
   value: string;
   icon: React.ReactNode;
   trend?: "up" | "down" | "stable";
   status?: "healthy" | "warning" | "critical";
   subtitle?: string;
-}> = ({ title, value, icon, trend, status, subtitle }) => {
+  loading?: boolean;
+}>(({ title, value, icon, trend, status, subtitle, loading }) => {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "healthy":
@@ -227,6 +130,20 @@ const MetricCard: React.FC<{
     }
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -241,19 +158,23 @@ const MetricCard: React.FC<{
             )}
           </div>
           <div className="flex flex-col items-end space-y-1">
-            <div className="p-2 bg-blue-100 rounded-lg">{icon}</div>
+            <div className="p-2 bg-blue-100 rounded-lg" aria-hidden="true">
+              {icon}
+            </div>
             {getTrendIcon(trend)}
           </div>
         </div>
       </CardContent>
     </Card>
   );
-};
+});
+MetricCard.displayName = "MetricCard";
 
 // Health status component
-const HealthStatus: React.FC<{ healthChecks: HealthCheck[] }> = ({
-  healthChecks,
-}) => {
+const HealthStatus = memo<{
+  healthChecks: HealthCheck[];
+  loading?: boolean;
+}>(({ healthChecks, loading }) => {
   const overallStatus = useMemo(() => {
     const criticalCount = healthChecks.filter(
       (check) => check.status === "critical",
@@ -293,26 +214,49 @@ const HealthStatus: React.FC<{ healthChecks: HealthCheck[] }> = ({
     }
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Activity className="w-5 h-5 mr-2" />
           System Health
-          <Badge className={`ml-2 ${getStatusColor(overallStatus)}`}>
+          <Badge
+            className={`ml-2 ${getStatusColor(overallStatus)}`}
+            aria-label={`Overall system status: ${overallStatus}`}
+          >
             {overallStatus.toUpperCase()}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-3" role="list" aria-label="Health checks">
           {healthChecks.map((check) => (
             <div
               key={check.name}
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              role="listitem"
             >
               <div className="flex items-center space-x-3">
-                {getStatusIcon(check.status)}
+                <span aria-label={`${check.name} status: ${check.status}`}>
+                  {getStatusIcon(check.status)}
+                </span>
                 <div>
                   <p className="font-medium">{check.name}</p>
                   <p className="text-sm text-gray-600">{check.message}</p>
@@ -332,20 +276,66 @@ const HealthStatus: React.FC<{ healthChecks: HealthCheck[] }> = ({
       </CardContent>
     </Card>
   );
-};
+});
+HealthStatus.displayName = "HealthStatus";
 
 // Alerts component
-const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
+const AlertsPanel = memo<{
+  initialAlerts?: MonitoringAlert[];
+  loading?: boolean;
+}>(({ initialAlerts = [], loading: initialLoading = false }) => {
   const [filter, setFilter] = useState<"all" | "critical" | "warning" | "info">(
     "all",
   );
+  const { toast } = useToast();
 
-  const filteredAlerts = useMemo(() => {
-    return alerts.filter((alert) => {
-      if (filter === "all") return true;
-      return alert.severity === filter;
+  const { alerts, loading, error, acknowledgeAlert, resolveAlert } =
+    useMonitoringAlerts({
+      severity: filter,
+      limit: 50,
+      refreshInterval: 30000, // Refresh every 30 seconds
     });
-  }, [alerts, filter]);
+
+  const displayAlerts = alerts.length > 0 ? alerts : initialAlerts;
+  const isLoading = loading || initialLoading;
+
+  const handleAcknowledge = useCallback(
+    async (alertId: string) => {
+      try {
+        await acknowledgeAlert(alertId);
+        toast({
+          title: "Alert acknowledged",
+          description: "The alert has been marked as acknowledged.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to acknowledge alert. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [acknowledgeAlert, toast],
+  );
+
+  const handleResolve = useCallback(
+    async (alertId: string) => {
+      try {
+        await resolveAlert(alertId);
+        toast({
+          title: "Alert resolved",
+          description: "The alert has been marked as resolved.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to resolve alert. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [resolveAlert, toast],
+  );
 
   const getAlertIcon = (severity: string) => {
     switch (severity) {
@@ -373,6 +363,21 @@ const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
     }
   };
 
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load alerts. Please try refreshing the page.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -380,12 +385,18 @@ const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
           <CardTitle className="flex items-center">
             <Bell className="w-5 h-5 mr-2" />
             Recent Alerts
+            {isLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
           </CardTitle>
           <Select
             value={filter}
-            onValueChange={(value: any) => setFilter(value)}
+            onValueChange={(value: "all" | "critical" | "warning" | "info") =>
+              setFilter(value)
+            }
           >
-            <SelectTrigger className="w-32">
+            <SelectTrigger
+              className="w-32"
+              aria-label="Filter alerts by severity"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -398,21 +409,30 @@ const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {filteredAlerts.length === 0 ? (
+        <div className="space-y-3" role="list" aria-label="System alerts">
+          {isLoading && displayAlerts.length === 0 ? (
+            <>
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </>
+          ) : displayAlerts.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No alerts to display</p>
             </div>
           ) : (
-            filteredAlerts.map((alert) => (
+            displayAlerts.map((alert) => (
               <div
                 key={alert.id}
                 className={`p-4 rounded-lg border ${getAlertColor(alert.severity)}`}
+                role="listitem"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
-                    {getAlertIcon(alert.severity)}
+                    <span aria-label={`Alert severity: ${alert.severity}`}>
+                      {getAlertIcon(alert.severity)}
+                    </span>
                     <div>
                       <p className="font-medium">{alert.message}</p>
                       <p className="text-sm opacity-75">{alert.type}</p>
@@ -422,10 +442,31 @@ const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
                     <p className="text-sm font-medium">
                       {formatDuration(Date.now() - alert.timestamp)} ago
                     </p>
-                    {alert.resolved && (
+                    {alert.resolved ? (
                       <Badge className="mt-1 bg-green-100 text-green-800">
                         Resolved
                       </Badge>
+                    ) : (
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAcknowledge(alert.id)}
+                          aria-label={`Acknowledge alert: ${alert.message}`}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Ack
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResolve(alert.id)}
+                          aria-label={`Resolve alert: ${alert.message}`}
+                        >
+                          <XCircle className="w-3 h-3 mr-1" />
+                          Resolve
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -436,21 +477,45 @@ const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
       </CardContent>
     </Card>
   );
-};
+});
+AlertsPanel.displayName = "AlertsPanel";
 
 // Resource usage component
-const ResourceUsage: React.FC<{ metrics: SystemMetrics }> = ({ metrics }) => {
-  const getUsageColor = (percentage: number) => {
+const ResourceUsage = memo<{
+  metrics: SystemMetrics;
+  loading?: boolean;
+}>(({ metrics, loading }) => {
+  const getUsageColor = useCallback((percentage: number) => {
     if (percentage >= 90) return "text-red-600";
     if (percentage >= 70) return "text-yellow-600";
     return "text-green-600";
-  };
+  }, []);
 
-  const getProgressColor = (percentage: number) => {
+  const getProgressColor = useCallback((percentage: number) => {
     if (percentage >= 90) return "bg-red-500";
     if (percentage >= 70) return "bg-yellow-500";
     return "bg-green-500";
-  };
+  }, []);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-2 w-full" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -469,18 +534,17 @@ const ResourceUsage: React.FC<{ metrics: SystemMetrics }> = ({ metrics }) => {
                 <Cpu className="w-4 h-4" />
                 <span className="font-medium">CPU</span>
               </div>
-              <span className={`font-bold ${getUsageColor(metrics.cpu.usage)}`}>
+              <span
+                className={`font-bold ${getUsageColor(metrics.cpu.usage)}`}
+                aria-label={`CPU usage: ${metrics.cpu.usage.toFixed(1)} percent`}
+              >
                 {metrics.cpu.usage.toFixed(1)}%
               </span>
             </div>
             <Progress
               value={metrics.cpu.usage}
               className="h-2"
-              style={
-                {
-                  "--progress-background": getProgressColor(metrics.cpu.usage),
-                } as any
-              }
+              aria-label="CPU usage progress"
             />
             <p className="text-sm text-gray-600 mt-1">
               Load: {metrics.cpu.load.map((l) => l.toFixed(2)).join(", ")}
@@ -496,6 +560,7 @@ const ResourceUsage: React.FC<{ metrics: SystemMetrics }> = ({ metrics }) => {
               </div>
               <span
                 className={`font-bold ${getUsageColor(metrics.memory.percentage)}`}
+                aria-label={`Memory usage: ${metrics.memory.percentage.toFixed(1)} percent`}
               >
                 {metrics.memory.percentage.toFixed(1)}%
               </span>
@@ -503,13 +568,7 @@ const ResourceUsage: React.FC<{ metrics: SystemMetrics }> = ({ metrics }) => {
             <Progress
               value={metrics.memory.percentage}
               className="h-2"
-              style={
-                {
-                  "--progress-background": getProgressColor(
-                    metrics.memory.percentage,
-                  ),
-                } as any
-              }
+              aria-label="Memory usage progress"
             />
             <p className="text-sm text-gray-600 mt-1">
               {formatBytes(metrics.memory.used)} /{" "}
@@ -526,6 +585,7 @@ const ResourceUsage: React.FC<{ metrics: SystemMetrics }> = ({ metrics }) => {
               </div>
               <span
                 className={`font-bold ${getUsageColor(metrics.disk.percentage)}`}
+                aria-label={`Disk usage: ${metrics.disk.percentage.toFixed(1)} percent`}
               >
                 {metrics.disk.percentage.toFixed(1)}%
               </span>
@@ -533,13 +593,7 @@ const ResourceUsage: React.FC<{ metrics: SystemMetrics }> = ({ metrics }) => {
             <Progress
               value={metrics.disk.percentage}
               className="h-2"
-              style={
-                {
-                  "--progress-background": getProgressColor(
-                    metrics.disk.percentage,
-                  ),
-                } as any
-              }
+              aria-label="Disk usage progress"
             />
             <p className="text-sm text-gray-600 mt-1">
               {formatBytes(metrics.disk.used)} /{" "}
@@ -577,35 +631,109 @@ const ResourceUsage: React.FC<{ metrics: SystemMetrics }> = ({ metrics }) => {
       </CardContent>
     </Card>
   );
-};
+});
+ResourceUsage.displayName = "ResourceUsage";
 
 // Main dashboard component
 export const MonitoringDashboard: React.FC = () => {
-  const [data, setData] = useState(generateMockData());
-  const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(30); // seconds
+  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
+  const { toast } = useToast();
 
-  // Auto-refresh functionality
-  useEffect(() => {
-    if (!autoRefresh) return;
+  // Fetch metrics data
+  const {
+    data: metricsData,
+    loading: metricsLoading,
+    error: metricsError,
+    refetch: refetchMetrics,
+  } = useMonitoringMetrics({
+    hours: 24,
+    include: ["current", "history", "health", "performance", "stats"],
+    refreshInterval: autoRefresh ? refreshInterval : undefined,
+  });
 
-    const interval = setInterval(() => {
-      setData(generateMockData());
-    }, refreshInterval * 1000);
+  const metrics = metricsData?.current;
+  const healthChecks = metricsData?.health?.checks || [];
+  const stats = metricsData?.stats;
 
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval]);
+  const handleRefresh = useCallback(async () => {
+    try {
+      await refetchMetrics();
+      toast({
+        title: "Dashboard refreshed",
+        description: "All metrics have been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh failed",
+        description: "Failed to refresh dashboard. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [refetchMetrics, toast]);
 
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setData(generateMockData());
-    setIsLoading(false);
+  const handleExport = useCallback(
+    async (format: "json" | "csv") => {
+      try {
+        const blob = await unifiedMonitoringService.exportMetrics(format, {
+          startDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          endDate: new Date(),
+        });
+
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `metrics-${Date.now()}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "Export successful",
+          description: `Metrics exported as ${format.toUpperCase()} file.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Export failed",
+          description: "Failed to export metrics. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast],
+  );
+
+  // Error state
+  if (metricsError) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load monitoring data. Please check your connection and
+              try again.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
+
+  // Create default metrics if no data available
+  const defaultMetrics: SystemMetrics = {
+    timestamp: Date.now(),
+    cpu: { usage: 0, load: [0, 0, 0] },
+    memory: { used: 0, total: 1, percentage: 0 },
+    disk: { used: 0, total: 1, percentage: 0 },
+    network: { bytesIn: 0, bytesOut: 0, connectionsActive: 0 },
+    application: { uptime: 0, responseTime: 0, errorRate: 0, activeUsers: 0 },
+    database: { connections: 0, queryTime: 0, transactionRate: 0 },
   };
 
-  const { metrics, healthChecks, alerts } = data;
+  const displayMetrics = metrics || defaultMetrics;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -622,25 +750,34 @@ export const MonitoringDashboard: React.FC = () => {
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <RefreshCw
-                className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-              />
+              {metricsLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
               <span className="text-sm text-gray-600">
                 Last updated: {new Date().toLocaleTimeString()}
               </span>
             </div>
             <Button
               onClick={handleRefresh}
-              disabled={isLoading}
+              disabled={metricsLoading}
               variant="outline"
               size="sm"
+              aria-label="Refresh dashboard"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${metricsLoading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label="Dashboard settings"
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
                 </Button>
@@ -651,8 +788,14 @@ export const MonitoringDashboard: React.FC = () => {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Auto Refresh</label>
+                    <label
+                      htmlFor="auto-refresh"
+                      className="text-sm font-medium"
+                    >
+                      Auto Refresh
+                    </label>
                     <Button
+                      id="auto-refresh"
                       variant={autoRefresh ? "default" : "outline"}
                       size="sm"
                       onClick={() => setAutoRefresh(!autoRefresh)}
@@ -661,8 +804,11 @@ export const MonitoringDashboard: React.FC = () => {
                     </Button>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">
-                      Refresh Interval (seconds)
+                    <label
+                      htmlFor="refresh-interval"
+                      className="text-sm font-medium"
+                    >
+                      Refresh Interval
                     </label>
                     <Select
                       value={refreshInterval.toString()}
@@ -670,16 +816,40 @@ export const MonitoringDashboard: React.FC = () => {
                         setRefreshInterval(parseInt(value))
                       }
                     >
-                      <SelectTrigger className="w-full mt-2">
+                      <SelectTrigger
+                        id="refresh-interval"
+                        className="w-full mt-2"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="10">10 seconds</SelectItem>
-                        <SelectItem value="30">30 seconds</SelectItem>
-                        <SelectItem value="60">1 minute</SelectItem>
-                        <SelectItem value="300">5 minutes</SelectItem>
+                        <SelectItem value="10000">10 seconds</SelectItem>
+                        <SelectItem value="30000">30 seconds</SelectItem>
+                        <SelectItem value="60000">1 minute</SelectItem>
+                        <SelectItem value="300000">5 minutes</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="pt-4 border-t">
+                    <p className="text-sm font-medium mb-2">Export Data</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport("json")}
+                      >
+                        <FileDown className="w-4 h-4 mr-2" />
+                        Export JSON
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport("csv")}
+                      >
+                        <FileDown className="w-4 h-4 mr-2" />
+                        Export CSV
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </DialogContent>
@@ -691,39 +861,45 @@ export const MonitoringDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
             title="System Uptime"
-            value={formatDuration(metrics.application.uptime)}
+            value={formatDuration(
+              stats?.uptime || displayMetrics.application.uptime,
+            )}
             icon={<Clock className="w-6 h-6 text-blue-600" />}
             status="healthy"
+            loading={metricsLoading}
           />
           <MetricCard
             title="Response Time"
-            value={`${metrics.application.responseTime.toFixed(0)}ms`}
+            value={`${displayMetrics.application.responseTime.toFixed(0)}ms`}
             icon={<Activity className="w-6 h-6 text-green-600" />}
             status={
-              metrics.application.responseTime > 2000
+              displayMetrics.application.responseTime > 2000
                 ? "critical"
-                : metrics.application.responseTime > 1000
+                : displayMetrics.application.responseTime > 1000
                   ? "warning"
                   : "healthy"
             }
+            loading={metricsLoading}
           />
           <MetricCard
             title="Active Users"
-            value={formatNumber(metrics.application.activeUsers)}
+            value={formatNumber(displayMetrics.application.activeUsers)}
             icon={<Users className="w-6 h-6 text-purple-600" />}
             trend="up"
+            loading={metricsLoading}
           />
           <MetricCard
             title="Error Rate"
-            value={`${metrics.application.errorRate.toFixed(1)}%`}
+            value={`${displayMetrics.application.errorRate.toFixed(1)}%`}
             icon={<AlertTriangle className="w-6 h-6 text-red-600" />}
             status={
-              metrics.application.errorRate > 5
+              displayMetrics.application.errorRate > 5
                 ? "critical"
-                : metrics.application.errorRate > 2
+                : displayMetrics.application.errorRate > 2
                   ? "warning"
                   : "healthy"
             }
+            loading={metricsLoading}
           />
         </div>
 
@@ -739,17 +915,26 @@ export const MonitoringDashboard: React.FC = () => {
           <TabsContent value="overview">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <HealthStatus healthChecks={healthChecks} />
+                <HealthStatus
+                  healthChecks={healthChecks}
+                  loading={metricsLoading}
+                />
               </div>
               <div>
-                <ResourceUsage metrics={metrics} />
+                <ResourceUsage
+                  metrics={displayMetrics}
+                  loading={metricsLoading}
+                />
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="resources">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ResourceUsage metrics={metrics} />
+              <ResourceUsage
+                metrics={displayMetrics}
+                loading={metricsLoading}
+              />
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -758,37 +943,46 @@ export const MonitoringDashboard: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        Active Connections
-                      </span>
-                      <span className="font-bold">
-                        {metrics.database.connections}
-                      </span>
+                  {metricsLoading ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-8 w-full" />
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Query Time</span>
-                      <span className="font-bold">
-                        {metrics.database.queryTime.toFixed(1)}ms
-                      </span>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          Active Connections
+                        </span>
+                        <span className="font-bold">
+                          {displayMetrics.database.connections}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Query Time</span>
+                        <span className="font-bold">
+                          {displayMetrics.database.queryTime.toFixed(1)}ms
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          Transaction Rate
+                        </span>
+                        <span className="font-bold">
+                          {displayMetrics.database.transactionRate.toFixed(0)}
+                          /sec
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        Transaction Rate
-                      </span>
-                      <span className="font-bold">
-                        {metrics.database.transactionRate.toFixed(0)}/sec
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
           <TabsContent value="alerts">
-            <AlertsPanel alerts={alerts} />
+            <AlertsPanel loading={metricsLoading} />
           </TabsContent>
 
           <TabsContent value="analytics">

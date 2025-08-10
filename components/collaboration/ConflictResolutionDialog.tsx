@@ -85,10 +85,10 @@ export function ConflictResolutionDialog({
         {/* Original Value */}
         <div>
           <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-            <RotateCcw className="w-4 h-4 text-gray-500" />
+            <RotateCcw className="w-4 h-4 text-text-muted" />
             Original Value
           </h4>
-          <div className="p-3 bg-gray-50 rounded border">
+          <div className="p-3 bg-bg-subtle rounded border border-border-primary">
             <pre className="text-sm whitespace-pre-wrap">
               {String(originalVal)}
             </pre>
@@ -98,7 +98,7 @@ export function ConflictResolutionDialog({
         {/* Local Changes */}
         <div>
           <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-            <Edit3 className="w-4 h-4 text-blue-600" />
+            <Edit3 className="w-4 h-4 text-primary-action" />
             Your Changes
             {localUser && (
               <Badge variant="outline" className="text-xs">
@@ -106,13 +106,13 @@ export function ConflictResolutionDialog({
               </Badge>
             )}
           </h4>
-          <div className="p-3 bg-blue-50 rounded border border-blue-200">
+          <div className="p-3 bg-primary-action/10 rounded border border-primary-action/30">
             <pre className="text-sm whitespace-pre-wrap">
               {String(localVal)}
             </pre>
           </div>
           {localChange && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-text-muted mt-1">
               Modified {new Date(localChange.timestamp).toLocaleString()}
             </div>
           )}
@@ -121,7 +121,7 @@ export function ConflictResolutionDialog({
         {/* Incoming Changes */}
         <div>
           <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-            <Users className="w-4 h-4 text-green-600" />
+            <Users className="w-4 h-4 text-success-600 dark:text-success-400" />
             Incoming Changes
             {incomingUser && (
               <Badge variant="outline" className="text-xs">
@@ -129,12 +129,12 @@ export function ConflictResolutionDialog({
               </Badge>
             )}
           </h4>
-          <div className="p-3 bg-green-50 rounded border border-green-200">
+          <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded border border-success-200 dark:border-success-400/30">
             <pre className="text-sm whitespace-pre-wrap">
               {String(incomingVal)}
             </pre>
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-text-muted mt-1">
             Modified {new Date(incomingChange.timestamp).toLocaleString()}
           </div>
         </div>
@@ -150,24 +150,24 @@ export function ConflictResolutionDialog({
         className="space-y-4"
       >
         {/* Keep Local */}
-        <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50">
+        <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-primary-action/10">
           <RadioGroupItem value="keep_local" id="keep_local" className="mt-1" />
           <div className="flex-1">
             <Label htmlFor="keep_local" className="font-medium cursor-pointer">
               Keep Your Changes
             </Label>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Discard the incoming changes and keep your version. This will
               overwrite the other user&apos;s work.
             </p>
-            <div className="mt-2 p-2 bg-blue-100 rounded text-xs">
+            <div className="mt-2 p-2 bg-primary-action/20 rounded text-xs">
               <strong>Result:</strong> {String(localChange?.newValue || "")}
             </div>
           </div>
         </div>
 
         {/* Accept Incoming */}
-        <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-green-50">
+        <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-success-50 dark:hover:bg-success-900/20">
           <RadioGroupItem
             value="accept_incoming"
             id="accept_incoming"
@@ -180,23 +180,23 @@ export function ConflictResolutionDialog({
             >
               Accept Incoming Changes
             </Label>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Use the other user&apos;s changes and discard your modifications.
             </p>
-            <div className="mt-2 p-2 bg-green-100 rounded text-xs">
+            <div className="mt-2 p-2 bg-success-100 dark:bg-success-900/30 rounded text-xs">
               <strong>Result:</strong> {String(incomingChange?.newValue || "")}
             </div>
           </div>
         </div>
 
         {/* Manual Merge */}
-        <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-purple-50">
+        <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-primary-action/10">
           <RadioGroupItem value="merge" id="merge" className="mt-1" />
           <div className="flex-1">
             <Label htmlFor="merge" className="font-medium cursor-pointer">
               Create Manual Merge
             </Label>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Combine both changes manually by editing the content below.
             </p>
 
@@ -240,16 +240,16 @@ export function ConflictResolutionDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-bg-base/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="p-6 border-b">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-xl font-bold text-red-600 flex items-center gap-2">
+              <h2 className="text-xl font-bold text-error-600 dark:text-error-400 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5" />
                 Conflict Resolution Required
               </h2>
-              <p className="text-gray-600 mt-1">
+              <p className="text-text-secondary mt-1">
                 Conflicting changes detected in field:{" "}
                 <code className="bg-gray-100 px-1 rounded">
                   {conflict.fieldPath}
@@ -288,7 +288,7 @@ export function ConflictResolutionDialog({
         {/* Action Buttons */}
         <div className="p-6 border-t bg-gray-50">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-text-secondary">
               <Clock className="w-4 h-4 inline mr-1" />
               Conflict detected at{" "}
               {new Date(conflict.conflictTime).toLocaleString()}

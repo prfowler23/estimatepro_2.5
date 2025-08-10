@@ -11,6 +11,11 @@ import {
   useFocusManager,
   AccessibilityAnnouncer,
 } from "./focus-management";
+import {
+  useAnnouncer,
+  useReducedMotion,
+  accessibilityUtils,
+} from "./accessibility-utils";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-all duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed select-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
@@ -62,9 +67,17 @@ export interface ButtonProps
   // Enhanced accessibility props
   ariaLabel?: string;
   ariaDescribedBy?: string;
+  ariaExpanded?: boolean;
+  ariaPressed?: boolean;
   focusId?: string;
   focusPriority?: number;
   announceChanges?: boolean;
+  /** Custom announcement message for state changes */
+  customAnnouncement?: string;
+  /** Whether button represents a toggle state */
+  toggle?: boolean;
+  /** Current toggle state (when toggle=true) */
+  pressed?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -84,9 +97,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // Enhanced accessibility props
       ariaLabel,
       ariaDescribedBy,
+      ariaExpanded,
+      ariaPressed,
       focusId,
       focusPriority = 0,
       announceChanges = false,
+      customAnnouncement,
+      toggle = false,
+      pressed = false,
       ...props
     },
     ref,
@@ -97,8 +115,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const rippleIdRef = React.useRef(0);
 
-    // Enhanced focus management integration
+    // Enhanced accessibility integration
     const { announceToScreenReader } = useFocusManager();
+    const { announceSuccess, announceError, announcePolite } = useAnnouncer();
+    const prefersReducedMotion = useReducedMotion();
     const generatedId = React.useId();
     const focusRef = useFocusable(
       focusId || `button-${generatedId}`,
@@ -119,18 +139,40 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       [focusRef, ref],
     );
 
-    // State change announcements
+    // Enhanced state change announcements
     const [previousLoading, setPreviousLoading] = React.useState(loading);
+    const [previousPressed, setPreviousPressed] = React.useState(pressed);
+
     React.useEffect(() => {
       if (announceChanges && previousLoading !== loading) {
+        const message =
+          customAnnouncement ||
+          (loading ? "Button is loading" : "Button loading complete");
+
         if (loading) {
-          announceToScreenReader("Button is loading");
+          announcePolite(message);
         } else if (previousLoading) {
-          announceToScreenReader("Button loading complete");
+          announceSuccess(message);
         }
         setPreviousLoading(loading);
       }
-    }, [loading, previousLoading, announceToScreenReader, announceChanges]);
+    }, [
+      loading,
+      previousLoading,
+      announceChanges,
+      customAnnouncement,
+      announcePolite,
+      announceSuccess,
+    ]);
+
+    // Toggle state announcements
+    React.useEffect(() => {
+      if (announceChanges && toggle && previousPressed !== pressed) {
+        const message = pressed ? "Activated" : "Deactivated";
+        announcePolite(message);
+        setPreviousPressed(pressed);
+      }
+    }, [pressed, previousPressed, toggle, announceChanges, announcePolite]);
 
     const handleClick = React.useCallback(
       (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -173,17 +215,32 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       };
     }, [rippleArray]);
 
-    const defaultMotionProps: MotionProps = {
-      whileHover: disabled || loading ? {} : { scale: 1.02 },
-      whileTap: disabled || loading ? {} : { scale: 0.98 },
-      transition: {
-        type: "spring",
-        stiffness: 500,
-        damping: 30,
-        mass: 0.5,
-      },
-      ...motionProps,
-    };
+    const defaultMotionProps: MotionProps = React.useMemo(() => {
+      const baseProps = {
+        whileHover: disabled || loading ? {} : { scale: 1.02 },
+        whileTap: disabled || loading ? {} : { scale: 0.98 },
+        transition: {
+          type: "spring" as const,
+          stiffness: 500,
+          damping: 30,
+          mass: 0.5,
+          duration: prefersReducedMotion ? 0 : 0.15,
+        },
+        ...motionProps,
+      };
+
+      // Disable scale animations for reduced motion preferences
+      if (prefersReducedMotion) {
+        return {
+          ...baseProps,
+          whileHover: disabled || loading ? {} : { opacity: 0.9 },
+          whileTap: disabled || loading ? {} : { opacity: 0.8 },
+          transition: { duration: 0.1 },
+        };
+      }
+
+      return baseProps;
+    }, [disabled, loading, motionProps, prefersReducedMotion]);
 
     const Comp = asChild ? Slot : motion.button;
 
@@ -223,9 +280,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           ref={mergedRef}
           disabled={disabled || loading}
           onClick={handleClick}
-          aria-label={ariaLabel}
-          aria-describedby={ariaDescribedBy}
+          {...accessibilityUtils.createAriaAttributes({
+            label: ariaLabel,
+            describedBy: ariaDescribedBy,
+            expanded: ariaExpanded,
+            pressed: toggle ? pressed : ariaPressed,
+            disabled: disabled || loading,
+          })}
           aria-busy={loading}
+          role={toggle ? "button" : undefined}
           {...defaultMotionProps}
           {...props}
         >

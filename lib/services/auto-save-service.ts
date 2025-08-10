@@ -6,6 +6,10 @@ import { withDatabaseRetry } from "@/lib/utils/retry-logic";
 import { GuidedFlowData, ServiceType } from "@/lib/types/estimate-types";
 import { getUser } from "@/lib/auth/server";
 import { offlineUtils } from "@/lib/pwa/offline-manager";
+import { createLogger } from "./core/logger";
+import { DatabaseError, AuthError } from "./core/errors";
+
+const logger = createLogger("AutoSaveService");
 
 export interface AutoSaveState {
   lastSaved: Date;
@@ -161,7 +165,7 @@ export class AutoSaveService {
         );
       }
     } catch (error) {
-      console.error("Auto-save failed:", error);
+      logger.error("Auto-save failed", error, { estimateId });
       this.updateSaveState(estimateId, {
         saveError: error instanceof Error ? error.message : "Unknown error",
       });
@@ -291,16 +295,18 @@ export class AutoSaveService {
         }
       }
     } catch (conflictError) {
-      console.warn(
-        "Conflict detection failed, proceeding with save:",
-        conflictError,
-      );
+      logger.warn("Conflict detection failed, proceeding with save", {
+        error: conflictError,
+        estimateId,
+      });
       // Continue with save even if conflict detection fails
     }
 
     // PHASE 3 FIX: Check if we're offline and queue for later sync
     if (!navigator.onLine) {
-      console.log("Device offline, queuing estimate save for later sync");
+      logger.info("Device offline, queuing estimate save for later sync", {
+        estimateId,
+      });
 
       // Queue the save for offline sync
       offlineUtils.queueEstimateSave(estimateId, {
@@ -372,10 +378,10 @@ export class AutoSaveService {
               .single();
 
             if (estimateError) {
-              console.warn(
-                "Could not create estimate record, using temp ID:",
-                estimateError,
-              );
+              logger.warn("Could not create estimate record, using temp ID", {
+                error: estimateError,
+                estimateId,
+              });
               // Fallback: use a generated UUID
               actualEstimateId = crypto.randomUUID();
             } else {
@@ -383,10 +389,10 @@ export class AutoSaveService {
             }
           }
         } catch (error) {
-          console.warn(
-            "Error handling temp estimate ID, generating UUID:",
+          logger.warn("Error handling temp estimate ID, generating UUID", {
             error,
-          );
+            estimateId,
+          });
           // Fallback: generate a UUID
           actualEstimateId = crypto.randomUUID();
         }
@@ -401,16 +407,20 @@ export class AutoSaveService {
           } = await supabase.auth.getSession();
           effectiveUserId = session?.user?.id || undefined;
         } catch (authErr) {
-          console.warn(
-            "Unable to retrieve auth session while saving:",
-            authErr,
-          );
+          logger.warn("Unable to retrieve auth session while saving", {
+            error: authErr,
+            estimateId,
+          });
         }
       }
 
       if (!effectiveUserId) {
-        console.error(
-          "Auto-save aborted – no authenticated user found, cannot satisfy RLS policy.",
+        logger.error(
+          "Auto-save aborted – no authenticated user found, cannot satisfy RLS policy",
+          undefined,
+          {
+            estimateId,
+          },
         );
         throw new Error("Not authenticated: user ID missing");
       }
@@ -429,10 +439,10 @@ export class AutoSaveService {
 
         if (estimateLookupErr && estimateLookupErr.code !== "PGRST116") {
           // PGRST116 = no rows returned; any other error we surface for visibility
-          console.warn(
-            "Unexpected error looking up estimate:",
-            estimateLookupErr,
-          );
+          logger.warn("Unexpected error looking up estimate", {
+            error: estimateLookupErr,
+            estimateId,
+          });
         }
 
         if (!existingEstimate) {
@@ -456,9 +466,12 @@ export class AutoSaveService {
             .insert(insertPayload);
 
           if (createEstimateErr) {
-            console.error(
-              "Failed to create placeholder estimate, auto-save will abort:",
+            logger.error(
+              "Failed to create placeholder estimate, auto-save will abort",
               createEstimateErr,
+              {
+                estimateId,
+              },
             );
             throw createEstimateErr;
           }
@@ -506,15 +519,19 @@ export class AutoSaveService {
         .upsert(upsertData);
 
       if (saveError) {
-        console.error("Auto-save error details:", saveError);
+        logger.error("Auto-save error details", saveError, { estimateId });
 
         // Handle specific error cases
         if (
           saveError.message.includes("does not exist") ||
           saveError.code === "PGRST106"
         ) {
-          console.warn(
-            "Database table missing. Auto-save disabled until tables are created.",
+          logger.warn(
+            "Database table missing. Auto-save disabled until tables are created",
+            {
+              error: saveError,
+              estimateId,
+            },
           );
           return false;
         }
@@ -523,8 +540,12 @@ export class AutoSaveService {
           saveError.message.includes("column") &&
           saveError.message.includes("does not exist")
         ) {
-          console.warn(
-            "Database schema mismatch. Auto-save disabled until schema is updated.",
+          logger.warn(
+            "Database schema mismatch. Auto-save disabled until schema is updated",
+            {
+              error: saveError,
+              estimateId,
+            },
           );
           return false;
         }
@@ -533,17 +554,22 @@ export class AutoSaveService {
           saveError.message.includes("invalid input syntax for type uuid") ||
           saveError.code === "22P02"
         ) {
-          console.warn(
-            "UUID type mismatch in database. Auto-save disabled until schema is corrected.",
+          logger.warn(
+            "UUID type mismatch in database. Auto-save disabled until schema is corrected",
+            {
+              error: saveError,
+              estimateId,
+            },
           );
           return false;
         }
 
         // For other errors, also don't throw - just log and continue
-        console.warn(
-          "Auto-save failed, but continuing application:",
-          saveError.message,
-        );
+        logger.warn("Auto-save failed, but continuing application", {
+          error: saveError,
+          message: saveError.message,
+          estimateId,
+        });
         return false;
       }
 
@@ -559,10 +585,10 @@ export class AutoSaveService {
             userId,
           );
         } catch (versionError) {
-          console.warn(
-            "Version control disabled - table may not exist:",
-            versionError,
-          );
+          logger.warn("Version control disabled - table may not exist", {
+            error: versionError,
+            estimateId,
+          });
           // Continue without version control
         }
       }
@@ -603,9 +629,12 @@ export class AutoSaveService {
 
       return false;
     } catch (error) {
-      console.warn(
-        "Conflict detection failed - continuing without conflict check:",
-        error,
+      logger.warn(
+        "Conflict detection failed - continuing without conflict check",
+        {
+          error,
+          estimateId,
+        },
       );
       return false; // No conflict if we can't check
     }
@@ -660,7 +689,7 @@ export class AutoSaveService {
         return false;
       }
     } catch (error) {
-      console.error("Conflict resolution failed:", error);
+      logger.error("Conflict resolution failed", error, { estimateId });
       return false;
     }
   }
@@ -788,7 +817,9 @@ export class AutoSaveService {
           error.message.includes("does not exist") ||
           error.code === "PGRST106"
         ) {
-          console.warn("Version control table missing - skipping version save");
+          logger.warn("Version control table missing - skipping version save", {
+            estimateId,
+          });
           return;
         }
         throw error;
@@ -798,7 +829,10 @@ export class AutoSaveService {
       try {
         await this.cleanupOldVersions(estimateId);
       } catch (cleanupError) {
-        console.warn("Version cleanup failed:", cleanupError);
+        logger.warn("Version cleanup failed", {
+          error: cleanupError,
+          estimateId,
+        });
         // Continue - cleanup failure is not critical
       }
     });
@@ -1090,13 +1124,17 @@ export class AutoSaveService {
             .delete()
             .eq("estimate_id", estimateId);
 
-          if (error) console.warn("Failed to clear conflict record:", error);
+          if (error)
+            logger.warn("Failed to clear conflict record", {
+              error,
+              estimateId,
+            });
         });
       }
 
       return success;
     } catch (error) {
-      console.error("Manual conflict resolution failed:", error);
+      logger.error("Manual conflict resolution failed", error, { estimateId });
       return false;
     }
   }

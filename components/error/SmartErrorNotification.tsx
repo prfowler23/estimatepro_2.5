@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
   ErrorMessage,
@@ -47,6 +47,22 @@ export function SmartErrorNotification({
   const [autoHideTimer, setAutoHideTimer] = useState<NodeJS.Timeout | null>(
     null,
   );
+  const portalRef = useRef<HTMLElement | null>(null);
+
+  // Initialize portal container once
+  useEffect(() => {
+    if (typeof window !== "undefined" && !portalRef.current) {
+      let container = document.getElementById("notification-portal");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "notification-portal";
+        container.style.cssText =
+          "position:fixed;top:0;left:0;pointer-events:none;z-index:9999;";
+        document.body.appendChild(container);
+      }
+      portalRef.current = container;
+    }
+  }, []);
 
   // Auto-hide functionality
   useEffect(() => {
@@ -98,7 +114,7 @@ export function SmartErrorNotification({
     }
   };
 
-  const getSeverityConfig = () => {
+  const config = useMemo(() => {
     switch (errorMessage.severity) {
       case "error":
         return {
@@ -133,7 +149,7 @@ export function SmartErrorNotification({
           badgeColor: "bg-gray-100 text-gray-800",
         };
     }
-  };
+  }, [errorMessage.severity]);
 
   const getPositionClasses = () => {
     switch (position) {
@@ -150,9 +166,14 @@ export function SmartErrorNotification({
     }
   };
 
-  const config = getSeverityConfig();
-  const primaryAction = errorMessage.recoveryActions[0];
-  const hasMultipleActions = errorMessage.recoveryActions.length > 1;
+  const primaryAction = useMemo(
+    () => errorMessage.recoveryActions[0],
+    [errorMessage.recoveryActions],
+  );
+  const hasMultipleActions = useMemo(
+    () => errorMessage.recoveryActions.length > 1,
+    [errorMessage.recoveryActions.length],
+  );
 
   if (!isVisible) return null;
 
@@ -342,31 +363,41 @@ export function SmartErrorNotification({
     </div>
   );
 
-  // Render in portal if we're in the browser
-  if (typeof window !== "undefined") {
-    return createPortal(notification, document.body);
+  // Render in portal if we're in the browser and have a container
+  if (typeof window !== "undefined" && portalRef.current) {
+    return createPortal(notification, portalRef.current);
   }
 
-  return notification;
+  // Fallback for SSR or when container isn't ready
+  return null;
 }
 
-// CSS for auto-hide animation
-const styles = `
-  @keyframes shrink {
-    from { width: 100%; }
-    to { width: 0%; }
-  }
-`;
+// CSS for auto-hide animation - using CSS-in-JS style object
+const injectStylesOnce = (() => {
+  let injected = false;
+  return () => {
+    if (
+      typeof window !== "undefined" &&
+      !injected &&
+      !document.getElementById("smart-error-notification-styles")
+    ) {
+      const styleSheet = document.createElement("style");
+      styleSheet.id = "smart-error-notification-styles";
+      styleSheet.textContent = `
+        @keyframes shrink {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `;
+      document.head.appendChild(styleSheet);
+      injected = true;
+    }
+  };
+})();
 
-// Inject styles if not already present
-if (
-  typeof window !== "undefined" &&
-  !document.getElementById("smart-error-notification-styles")
-) {
-  const styleSheet = document.createElement("style");
-  styleSheet.id = "smart-error-notification-styles";
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
+// Inject styles only once
+if (typeof window !== "undefined") {
+  injectStylesOnce();
 }
 
 export default SmartErrorNotification;

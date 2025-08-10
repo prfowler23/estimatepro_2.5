@@ -7,10 +7,12 @@ import {
   rateLimitConfigs,
 } from "@/lib/utils/rate-limiter";
 
-// Type for route handlers
+// Type for route handlers compatible with Next.js 15
 type RouteHandler = (
   request: NextRequest,
-  context?: { params?: any },
+  context: {
+    params?: Promise<Record<string, string>>;
+  },
 ) => Promise<NextResponse> | NextResponse;
 
 /**
@@ -20,7 +22,12 @@ export function withRouteRateLimit(
   handler: RouteHandler,
   type: "api" | "ai" | "auth" | "upload" | "email" | "write" = "api",
 ) {
-  return async (request: NextRequest, context?: { params?: any }) => {
+  return async (
+    request: NextRequest,
+    context: {
+      params?: Promise<Record<string, string>>;
+    },
+  ) => {
     let rateLimitConfig;
 
     switch (type) {
@@ -55,7 +62,12 @@ export function withRouteRateLimit(
  * Auto-detect route type based on URL path and apply appropriate rate limiting
  */
 export function withAutoRateLimit(handler: RouteHandler) {
-  return async (request: NextRequest, context?: { params?: any }) => {
+  return async (
+    request: NextRequest,
+    context: {
+      params?: Promise<Record<string, string>>;
+    },
+  ) => {
     const { pathname } = new URL(request.url);
 
     let type: "api" | "ai" | "auth" | "upload" | "email" | "write" = "api";
@@ -100,7 +112,12 @@ export function withCustomRateLimit(
 
   const rateLimitWrapper = withRateLimit(rateLimitConfig);
 
-  return async (request: NextRequest, context?: { params?: any }) => {
+  return async (
+    request: NextRequest,
+    context: {
+      params?: Promise<Record<string, string>>;
+    },
+  ) => {
     return rateLimitWrapper(request, async (req) => {
       return handler(req, context);
     });

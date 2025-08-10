@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, Sparkles, Plus, CheckCircle } from "lucide-react";
 import { ServiceType } from "@/lib/types/estimate-types";
+import { logger } from "@/lib/utils/logger";
 
 interface SimpleServiceSuggestionsProps {
   projectDescription: string;
@@ -58,7 +59,7 @@ export function SimpleServiceSuggestions({
 
       setSuggestions(filteredSuggestions);
     } catch (error) {
-      console.error("Failed to generate simple service suggestions:", error);
+      logger.error("Failed to generate simple service suggestions:", error);
     } finally {
       setIsLoading(false);
     }

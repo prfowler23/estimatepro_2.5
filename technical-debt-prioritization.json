@@ -1,0 +1,300 @@
+{
+  "timestamp": "2025-08-08T16:44:33.314Z",
+  "totalDebtItems": 2,
+  "prioritizationMatrix": {
+    "matrix": {
+      "critical": [],
+      "high": [],
+      "medium": [],
+      "low": [
+        {
+          "id": "tech_typescript_modernization",
+          "category": "maintainability",
+          "title": "TypeScript modernization needed",
+          "description": "2 TypeScript issues need addressing",
+          "impact": 2.15,
+          "effort": 4,
+          "source": "migration_readiness_assessment",
+          "affectedFiles": [],
+          "metrics": {
+            "issues": 2
+          },
+          "priorityScore": 0.36,
+          "categoryWeight": 0.2
+        },
+        {
+          "id": "infra_modernization",
+          "category": "scalability",
+          "title": "Infrastructure modernization required",
+          "description": "3 infrastructure issues",
+          "impact": 2.85,
+          "effort": 4.75,
+          "source": "migration_readiness_assessment",
+          "affectedFiles": [],
+          "metrics": {
+            "issues": 3
+          },
+          "priorityScore": 0.21,
+          "categoryWeight": 0.1
+        }
+      ]
+    },
+    "categoryBreakdown": {
+      "architecture": {
+        "total": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "performance": {
+        "total": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "maintainability": {
+        "total": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1
+      },
+      "security": {
+        "total": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "scalability": {
+        "total": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1
+      }
+    },
+    "totalItems": 2,
+    "prioritizedItems": [
+      {
+        "id": "tech_typescript_modernization",
+        "category": "maintainability",
+        "title": "TypeScript modernization needed",
+        "description": "2 TypeScript issues need addressing",
+        "impact": 2.15,
+        "effort": 4,
+        "source": "migration_readiness_assessment",
+        "affectedFiles": [],
+        "metrics": {
+          "issues": 2
+        },
+        "priorityScore": 0.36,
+        "categoryWeight": 0.2
+      },
+      {
+        "id": "infra_modernization",
+        "category": "scalability",
+        "title": "Infrastructure modernization required",
+        "description": "3 infrastructure issues",
+        "impact": 2.85,
+        "effort": 4.75,
+        "source": "migration_readiness_assessment",
+        "affectedFiles": [],
+        "metrics": {
+          "issues": 3
+        },
+        "priorityScore": 0.21,
+        "categoryWeight": 0.1
+      }
+    ]
+  },
+  "implementationPlan": {
+    "phases": [
+      {
+        "name": "Critical Debt Resolution (Weeks 1-4)",
+        "priority": "critical",
+        "items": [],
+        "estimatedWeeks": 4,
+        "parallelizable": false,
+        "description": "Address critical technical debt items that pose immediate risks",
+        "effort": 0
+      },
+      {
+        "name": "High Priority Optimizations (Weeks 5-8)",
+        "priority": "high",
+        "items": [],
+        "estimatedWeeks": 4,
+        "parallelizable": true,
+        "description": "Implement high-impact performance and architecture improvements",
+        "effort": 0
+      },
+      {
+        "name": "Medium Priority Enhancements (Weeks 9-12)",
+        "priority": "medium",
+        "items": [],
+        "estimatedWeeks": 4,
+        "parallelizable": true,
+        "description": "Address maintainability and scalability improvements",
+        "effort": 0
+      },
+      {
+        "name": "Low Priority Cleanup (Weeks 13-16)",
+        "priority": "low",
+        "items": [
+          {
+            "id": "tech_typescript_modernization",
+            "category": "maintainability",
+            "title": "TypeScript modernization needed",
+            "description": "2 TypeScript issues need addressing",
+            "impact": 2.15,
+            "effort": 4,
+            "source": "migration_readiness_assessment",
+            "affectedFiles": [],
+            "metrics": {
+              "issues": 2
+            },
+            "priorityScore": 0.36,
+            "categoryWeight": 0.2
+          },
+          {
+            "id": "infra_modernization",
+            "category": "scalability",
+            "title": "Infrastructure modernization required",
+            "description": "3 infrastructure issues",
+            "impact": 2.85,
+            "effort": 4.75,
+            "source": "migration_readiness_assessment",
+            "affectedFiles": [],
+            "metrics": {
+              "issues": 3
+            },
+            "priorityScore": 0.21,
+            "categoryWeight": 0.1
+          }
+        ],
+        "estimatedWeeks": 4,
+        "parallelizable": true,
+        "description": "Complete remaining technical debt items as capacity allows",
+        "effort": 8.75
+      }
+    ],
+    "totalEffort": 8.75,
+    "estimatedDuration": "16 weeks",
+    "resourceRequirements": {
+      "teamSize": 1,
+      "skillRequirements": {
+        "frontend": 0,
+        "backend": 0,
+        "database": 0,
+        "infrastructure": 1,
+        "architecture": 0.5
+      },
+      "estimatedCost": {
+        "development": "$50,000 - $85,000",
+        "infrastructure": "$300 - $800/month",
+        "tooling": "$200 - $500/month"
+      },
+      "timeline": "16 weeks with dedicated team",
+      "rampUpTime": "2 weeks for team onboarding"
+    },
+    "recommendations": {
+      "immediate": [],
+      "strategic": [],
+      "preventive": [
+        {
+          "title": "Establish Technical Debt Monitoring",
+          "description": "Implement automated technical debt detection and reporting",
+          "rationale": "Prevent debt accumulation through continuous monitoring",
+          "effort": 2,
+          "timeline": "2-3 weeks"
+        },
+        {
+          "title": "Code Quality Gates",
+          "description": "Implement quality gates in CI/CD pipeline to prevent debt introduction",
+          "rationale": "Proactive debt prevention is more cost-effective than reactive resolution",
+          "effort": 3,
+          "timeline": "2-4 weeks"
+        }
+      ]
+    },
+    "riskAssessment": {
+      "technical": [
+        {
+          "risk": "Service refactoring breaking existing functionality",
+          "probability": "medium",
+          "impact": "high",
+          "mitigation": "Comprehensive testing and gradual rollout with feature flags"
+        },
+        {
+          "risk": "Database optimization causing performance degradation",
+          "probability": "low",
+          "impact": "high",
+          "mitigation": "Implement during maintenance windows with rollback plans"
+        },
+        {
+          "risk": "Bundle optimization breaking build pipeline",
+          "probability": "medium",
+          "impact": "medium",
+          "mitigation": "Incremental changes with automated testing"
+        }
+      ],
+      "business": [
+        {
+          "risk": "Resource allocation conflicts with feature development",
+          "probability": "high",
+          "impact": "medium",
+          "mitigation": "Dedicated technical debt team with clear priorities"
+        },
+        {
+          "risk": "Extended timeline due to discovery of additional debt",
+          "probability": "medium",
+          "impact": "low",
+          "mitigation": "Buffer time included in estimates and phased approach"
+        }
+      ],
+      "operational": [
+        {
+          "risk": "Team burnout from debt remediation focus",
+          "probability": "low",
+          "impact": "medium",
+          "mitigation": "Balance debt work with feature development and celebrate wins"
+        }
+      ]
+    }
+  },
+  "codebaseAnalysis": {
+    "fileCount": 908,
+    "debtPatterns": {
+      "duplicateCode": 0,
+      "complexFunctions": 283,
+      "longParameterLists": 0,
+      "largeClasses": 109,
+      "godObjects": 137,
+      "deadCode": 0,
+      "todoComments": 30,
+      "magicNumbers": 12117,
+      "deepNesting": 15484,
+      "longMethods": 1429
+    },
+    "typeScriptIssues": {
+      "anyTypes": 1244,
+      "noImplicitAny": 0,
+      "strictNullChecks": 0,
+      "unusedVariables": 3935
+    },
+    "importIssues": {
+      "circularImports": 0,
+      "unusedImports": 106,
+      "relativeImports": 368,
+      "dynamicImports": 190
+    }
+  },
+  "metadata": {
+    "generatedBy": "EstimatePro Technical Debt Analyzer",
+    "version": "1.0",
+    "analysisScope": "Complete codebase and previous assessments",
+    "methodology": "Impact-Effort prioritization with category weighting"
+  }
+}

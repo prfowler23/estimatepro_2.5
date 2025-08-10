@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,47 +26,25 @@ import {
   X,
   Save,
   RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { withComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
+import { validatePriceOverride } from "@/lib/validation/pricing-validation";
+import {
+  calculateDiscountPercentage,
+  calculateMargin,
+  getRiskLevelFromProbability,
+} from "@/lib/pricing/pricing-utils";
+import type {
+  ManualPriceOverrideProps,
+  PriceValidation,
+  ReasonCategory,
+  PriceOverrideData,
+} from "@/lib/types/pricing-types";
 
-interface PriceValidation {
-  isValid: boolean;
-  warnings: string[];
-  requiresApproval: boolean;
-  approvalLevel?: "manager" | "director" | "vp";
-}
-
-interface ManualPriceOverrideProps {
-  currentPrice: number;
-  baseCost?: number;
-  marketMedian?: number;
-  competitorPrices?: number[];
-  minPrice?: number;
-  maxPrice?: number;
-  customerBudget?: number;
-  onOverride: (overrideData: {
-    price: number;
-    reason: string;
-    category: string;
-    impact: {
-      amount: number;
-      percentage: number;
-      marginImpact: number;
-    };
-    validation: PriceValidation;
-  }) => void;
-  onCancel?: () => void;
-}
-
-interface ReasonCategory {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  reasons: string[];
-  color: string;
-}
-
-export function ManualPriceOverride({
+// Component wrapped in React.memo for performance optimization
+const ManualPriceOverrideComponent: React.FC<ManualPriceOverrideProps> = ({
   currentPrice,
   baseCost = 0,
   marketMedian,
@@ -76,176 +54,156 @@ export function ManualPriceOverride({
   customerBudget,
   onOverride,
   onCancel,
-}: ManualPriceOverrideProps) {
+}) => {
   const [showOverride, setShowOverride] = useState(false);
   const [newPrice, setNewPrice] = useState(currentPrice.toString());
   const [reason, setReason] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedReason, setSelectedReason] = useState("");
   const [activeTab, setActiveTab] = useState("override");
+  const [isValidating, setIsValidating] = useState(false);
   const [validation, setValidation] = useState<PriceValidation>({
     isValid: true,
     warnings: [],
     requiresApproval: false,
   });
 
-  const reasonCategories: ReasonCategory[] = [
-    {
-      id: "competitive",
-      name: "Competitive",
-      icon: <TrendingDown className="w-4 h-4" />,
-      color: "bg-red-50 text-red-700 border-red-200",
-      reasons: [
-        "Match competitor pricing",
-        "Aggressive market positioning",
-        "Prevent customer loss to competitor",
-        "Competitive bidding requirement",
-        "Market penetration strategy",
-      ],
-    },
-    {
-      id: "relationship",
-      name: "Customer Relationship",
-      icon: <CheckCircle className="w-4 h-4" />,
-      color: "bg-blue-50 text-blue-700 border-blue-200",
-      reasons: [
-        "Long-term client relationship",
-        "Strategic account acquisition",
-        "Customer loyalty program",
-        "Preferred vendor status",
-        "Multi-year contract commitment",
-      ],
-    },
-    {
-      id: "business",
-      name: "Business Strategy",
-      icon: <TrendingUp className="w-4 h-4" />,
-      color: "bg-green-50 text-green-700 border-green-200",
-      reasons: [
-        "Volume discount for multiple buildings",
-        "Package deal with future work",
-        "Portfolio expansion opportunity",
-        "Market entry pricing",
-        "Capacity utilization during slow period",
-      ],
-    },
-    {
-      id: "operational",
-      name: "Operational",
-      icon: <Calculator className="w-4 h-4" />,
-      color: "bg-purple-50 text-purple-700 border-purple-200",
-      reasons: [
-        "Customer budget constraints",
-        "Scope reduction to meet budget",
-        "Payment terms improvement",
-        "Material cost savings identified",
-        "Efficiency gains from equipment/process",
-      ],
-    },
-  ];
+  // Memoized reason categories to prevent recreation on every render
+  const reasonCategories: ReasonCategory[] = useMemo(
+    () => [
+      {
+        id: "competitive",
+        name: "Competitive",
+        icon: <TrendingDown className="w-4 h-4" />,
+        color: "bg-red-50 text-red-700 border-red-200",
+        reasons: [
+          "Match competitor pricing",
+          "Aggressive market positioning",
+          "Prevent customer loss to competitor",
+          "Competitive bidding requirement",
+          "Market penetration strategy",
+        ],
+      },
+      {
+        id: "relationship",
+        name: "Customer Relationship",
+        icon: <CheckCircle className="w-4 h-4" />,
+        color: "bg-blue-50 text-blue-700 border-blue-200",
+        reasons: [
+          "Long-term client relationship",
+          "Strategic account acquisition",
+          "Customer loyalty program",
+          "Preferred vendor status",
+          "Multi-year contract commitment",
+        ],
+      },
+      {
+        id: "business",
+        name: "Business Strategy",
+        icon: <TrendingUp className="w-4 h-4" />,
+        color: "bg-green-50 text-green-700 border-green-200",
+        reasons: [
+          "Volume discount for multiple buildings",
+          "Package deal with future work",
+          "Portfolio expansion opportunity",
+          "Market entry pricing",
+          "Capacity utilization during slow period",
+        ],
+      },
+      {
+        id: "operational",
+        name: "Operational",
+        icon: <Calculator className="w-4 h-4" />,
+        color: "bg-purple-50 text-purple-700 border-purple-200",
+        reasons: [
+          "Customer budget constraints",
+          "Scope reduction to meet budget",
+          "Payment terms improvement",
+          "Material cost savings identified",
+          "Efficiency gains from equipment/process",
+        ],
+      },
+    ],
+    [],
+  );
 
-  const calculatedPrice = parseFloat(newPrice) || 0;
-  const priceChange = calculatedPrice - currentPrice;
-  const percentageChange =
-    currentPrice > 0 ? (priceChange / currentPrice) * 100 : 0;
-  const marginImpact =
-    baseCost > 0 ? ((calculatedPrice - baseCost) / calculatedPrice) * 100 : 0;
+  // Memoized calculations
+  const calculatedPrice = useMemo(() => parseFloat(newPrice) || 0, [newPrice]);
+  const priceChange = useMemo(
+    () => calculatedPrice - currentPrice,
+    [calculatedPrice, currentPrice],
+  );
+  const percentageChange = useMemo(
+    () => calculateDiscountPercentage(currentPrice, calculatedPrice),
+    [currentPrice, calculatedPrice],
+  );
+  const marginImpact = useMemo(
+    () => (baseCost > 0 ? calculateMargin(calculatedPrice, baseCost) : 0),
+    [calculatedPrice, baseCost],
+  );
 
-  // Price validation
+  // Price validation with loading state
   useEffect(() => {
-    validatePrice(calculatedPrice);
-  }, [calculatedPrice, currentPrice, baseCost, marketMedian]);
+    const validateAsync = async () => {
+      setIsValidating(true);
+      try {
+        // Simulate async validation (could be API call in real scenario)
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const validatePrice = (price: number) => {
-    const warnings: string[] = [];
-    let requiresApproval = false;
-    let approvalLevel: "manager" | "director" | "vp" | undefined;
-
-    // Discount-based warnings
-    const discountPercent = Math.abs(percentageChange);
-    if (price < currentPrice) {
-      if (discountPercent > 30) {
-        warnings.push("Extreme discount may not be profitable");
-        requiresApproval = true;
-        approvalLevel = "vp";
-      } else if (discountPercent > 20) {
-        warnings.push("Large discount requires executive approval");
-        requiresApproval = true;
-        approvalLevel = "director";
-      } else if (discountPercent > 10) {
-        warnings.push("Significant discount requires management approval");
-        requiresApproval = true;
-        approvalLevel = "manager";
+        const validationResult = validatePriceOverride(
+          calculatedPrice,
+          currentPrice,
+          baseCost,
+          marketMedian,
+          competitorPrices,
+          minPrice,
+          maxPrice,
+          customerBudget,
+        );
+        setValidation(validationResult);
+      } finally {
+        setIsValidating(false);
       }
-    }
+    };
 
-    // Margin-based warnings
-    if (baseCost > 0) {
-      if (price <= baseCost) {
-        warnings.push("Price is at or below cost - no profit margin");
-      } else if (marginImpact < 10) {
-        warnings.push("Very low profit margin - high risk");
-      } else if (marginImpact < 20) {
-        warnings.push("Below recommended minimum margin");
-      }
+    if (calculatedPrice > 0) {
+      validateAsync();
     }
+  }, [
+    calculatedPrice,
+    currentPrice,
+    baseCost,
+    marketMedian,
+    competitorPrices,
+    minPrice,
+    maxPrice,
+    customerBudget,
+  ]);
 
-    // Market position warnings
-    if (marketMedian && price < marketMedian * 0.8) {
-      warnings.push("Significantly below market median");
-    }
-
-    // Competitor comparison
-    if (competitorPrices.length > 0) {
-      const minCompetitor = Math.min(...competitorPrices);
-      if (price < minCompetitor * 0.9) {
-        warnings.push("Below lowest known competitor price");
-      }
-    }
-
-    // Price range validation
-    if (minPrice && price < minPrice) {
-      warnings.push(
-        `Below minimum allowed price of $${minPrice.toLocaleString()}`,
-      );
-    }
-    if (maxPrice && price > maxPrice) {
-      warnings.push(
-        `Above maximum allowed price of $${maxPrice.toLocaleString()}`,
-      );
-    }
-
-    // Customer budget comparison
-    if (customerBudget && price > customerBudget * 1.1) {
-      warnings.push("Significantly above customer budget");
-    }
-
-    setValidation({
-      isValid:
-        warnings.length === 0 || (warnings.length > 0 && price > baseCost),
-      warnings,
-      requiresApproval,
-      approvalLevel,
-    });
-  };
-
-  const getChangeColor = () => {
+  // Memoized color functions
+  const getChangeColor = useCallback(() => {
     if (priceChange > 0) return "text-green-600 bg-green-50";
     if (priceChange < 0) return "text-red-600 bg-red-50";
     return "text-gray-600 bg-gray-50";
-  };
+  }, [priceChange]);
 
-  const getRiskLevel = (): { level: string; color: string } => {
-    if (Math.abs(percentageChange) < 5)
-      return { level: "Low", color: "text-green-600 bg-green-50" };
-    if (Math.abs(percentageChange) < 15)
-      return { level: "Medium", color: "text-yellow-600 bg-yellow-50" };
-    if (Math.abs(percentageChange) < 25)
-      return { level: "High", color: "text-orange-600 bg-orange-50" };
-    return { level: "Critical", color: "text-red-600 bg-red-50" };
-  };
+  const riskLevel = useMemo(() => {
+    // Calculate win probability based on price change
+    const winProbability = Math.max(0, 1 - Math.abs(percentageChange) / 100);
+    const level = getRiskLevelFromProbability(winProbability);
 
-  const handleSubmit = () => {
+    const colorMap = {
+      low: { level: "Low", color: "text-green-600 bg-green-50" },
+      medium: { level: "Medium", color: "text-yellow-600 bg-yellow-50" },
+      high: { level: "High", color: "text-orange-600 bg-orange-50" },
+      critical: { level: "Critical", color: "text-red-600 bg-red-50" },
+    };
+
+    return colorMap[level];
+  }, [percentageChange]);
+
+  // Memoized event handlers
+  const handleSubmit = useCallback(() => {
     if (!validation.isValid || !selectedReason || calculatedPrice <= 0) {
       return;
     }
@@ -256,7 +214,7 @@ export function ManualPriceOverride({
       ? `${selectedReason}: ${reason}`
       : selectedReason;
 
-    onOverride({
+    const overrideData: PriceOverrideData = {
       price: calculatedPrice,
       reason: finalReason,
       category,
@@ -266,26 +224,37 @@ export function ManualPriceOverride({
         marginImpact,
       },
       validation,
-    });
-  };
+    };
 
-  const handleCancel = () => {
+    onOverride(overrideData);
+  }, [
+    validation,
+    selectedReason,
+    calculatedPrice,
+    reasonCategories,
+    selectedCategory,
+    reason,
+    priceChange,
+    percentageChange,
+    marginImpact,
+    onOverride,
+  ]);
+
+  const handleCancel = useCallback(() => {
     setShowOverride(false);
     setNewPrice(currentPrice.toString());
     setReason("");
     setSelectedCategory("");
     setSelectedReason("");
     onCancel?.();
-  };
+  }, [currentPrice, onCancel]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setNewPrice(currentPrice.toString());
     setReason("");
     setSelectedCategory("");
     setSelectedReason("");
-  };
-
-  const riskLevel = getRiskLevel();
+  }, [currentPrice]);
 
   if (!showOverride) {
     return (
@@ -358,7 +327,11 @@ export function ManualPriceOverride({
                       className="pl-8 text-xl font-bold"
                       step="100"
                       min="0"
+                      disabled={isValidating}
                     />
+                    {isValidating && (
+                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -465,7 +438,7 @@ export function ManualPriceOverride({
             </div>
 
             {/* Validation Warnings */}
-            {validation.warnings.length > 0 && (
+            {!isValidating && validation.warnings.length > 0 && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
@@ -479,7 +452,7 @@ export function ManualPriceOverride({
             )}
 
             {/* Approval Required Notice */}
-            {validation.requiresApproval && (
+            {!isValidating && validation.requiresApproval && (
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
@@ -497,7 +470,8 @@ export function ManualPriceOverride({
                   !validation.isValid ||
                   !selectedReason ||
                   calculatedPrice <= 0 ||
-                  (selectedReason === "Other" && !reason.trim())
+                  (selectedReason === "Other" && !reason.trim()) ||
+                  isValidating
                 }
                 className="flex-1"
               >
@@ -708,4 +682,24 @@ export function ManualPriceOverride({
       </CardContent>
     </Card>
   );
-}
+};
+
+// Export memoized component with error boundary
+export const ManualPriceOverride = withComponentErrorBoundary(
+  React.memo(ManualPriceOverrideComponent, (prevProps, nextProps) => {
+    // Custom comparison function for memo
+    return (
+      prevProps.currentPrice === nextProps.currentPrice &&
+      prevProps.baseCost === nextProps.baseCost &&
+      prevProps.marketMedian === nextProps.marketMedian &&
+      prevProps.minPrice === nextProps.minPrice &&
+      prevProps.maxPrice === nextProps.maxPrice &&
+      prevProps.customerBudget === nextProps.customerBudget &&
+      JSON.stringify(prevProps.competitorPrices) ===
+        JSON.stringify(nextProps.competitorPrices)
+    );
+  }),
+  "ManualPriceOverride",
+);
+
+ManualPriceOverride.displayName = "ManualPriceOverride";

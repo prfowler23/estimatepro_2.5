@@ -1,23 +1,13 @@
 import { CheckCircle, Info, AlertTriangle } from "lucide-react";
 import { memo } from "react";
-
-interface ProjectConfidenceProps {
-  confidence: number;
-  highConfidenceServices: number;
-  lowConfidenceServices: number;
-}
+import type { ProjectConfidenceProps } from "../types";
+import { getConfidenceColor } from "../constants";
 
 export const ProjectConfidence = memo(function ProjectConfidence({
   confidence,
   highConfidenceServices,
   lowConfidenceServices,
 }: ProjectConfidenceProps) {
-  const getConfidenceColor = (conf: number): string => {
-    if (conf >= 80) return "text-green-600";
-    if (conf >= 60) return "text-yellow-600";
-    return "text-red-600";
-  };
-
   return (
     <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-4 text-center border">
       <div className="flex items-center justify-center gap-2 mb-2">

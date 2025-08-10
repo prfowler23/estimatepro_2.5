@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const service = new FacadeAnalysisService();
 
-    // Get facade analysis by ID
+    // Get facade analysis by ID - check if it exists and get data
     const { data: analysis, error: analysisError } = await supabase
       .from("facade_analyses")
       .select("*")
@@ -41,11 +41,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Get associated images
-    const { data: images, error: imagesError } = await supabase
-      .from("facade_analysis_images")
-      .select("*")
-      .eq("facade_analysis_id", id);
+    // Get associated images using service
+    const images = await service.getImages(id, user.id);
 
     // Calculate measurements
     const measurements = await service.calculateMeasurements(analysis);
@@ -82,32 +79,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // Validate request body
     const validatedData = updateFacadeAnalysisSchema.parse(body);
 
-    // Check if analysis exists and user has access
-    const { data: existing, error: existingError } = await supabase
-      .from("facade_analyses")
-      .select("*")
-      .eq("id", id)
-      .eq("created_by", user.id)
-      .single();
+    const service = new FacadeAnalysisService();
 
-    if (existingError || !existing) {
-      return NextResponse.json(
-        { error: "Facade analysis not found" },
-        { status: 404 },
-      );
-    }
-
-    // Update the analysis
-    const { data: updatedAnalysis, error: updateError } = await supabase
-      .from("facade_analyses")
-      .update(validatedData)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (updateError) {
-      throw updateError;
-    }
+    // Update the analysis using service
+    const updatedAnalysis = await service.updateAnalysis(
+      id,
+      validatedData,
+      user.id,
+    );
 
     return NextResponse.json({ analysis: updatedAnalysis });
   } catch (error) {
@@ -139,30 +118,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if analysis exists and user has access
-    const { data: existing, error: existingError } = await supabase
-      .from("facade_analyses")
-      .select("*")
-      .eq("id", id)
-      .eq("created_by", user.id)
-      .single();
+    const service = new FacadeAnalysisService();
 
-    if (existingError || !existing) {
-      return NextResponse.json(
-        { error: "Facade analysis not found" },
-        { status: 404 },
-      );
-    }
-
-    // Delete the analysis (cascade will handle images)
-    const { error: deleteError } = await supabase
-      .from("facade_analyses")
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) {
-      throw deleteError;
-    }
+    // Delete the analysis using service
+    await service.deleteAnalysis(id, user.id);
 
     return NextResponse.json({
       message: "Facade analysis deleted successfully",

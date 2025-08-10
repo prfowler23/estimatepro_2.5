@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,10 +40,10 @@ interface GraniteReconditioningFormProps {
   onCancel: () => void;
 }
 
-export function GraniteReconditioningForm({
+const GraniteReconditioningFormBase = ({
   onSubmit,
   onCancel,
-}: GraniteReconditioningFormProps) {
+}: GraniteReconditioningFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -514,4 +515,17 @@ export function GraniteReconditioningForm({
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const GraniteReconditioningForm = React.memo(
+  GraniteReconditioningFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+GraniteReconditioningForm.displayName = "GraniteReconditioningForm";

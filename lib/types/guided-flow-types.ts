@@ -1,8 +1,15 @@
-// Type definitions for guided flow data structures
+/**
+ * Type definitions for guided flow data structures
+ * Used in multi-step estimation workflows
+ */
 
 import type { ServiceType } from "./estimate-types";
 
 // Step-specific data types
+
+/**
+ * Initial contact information collected at workflow start
+ */
 export interface InitialContactData {
   contactDate: string;
   contactMethod: string;
@@ -13,6 +20,10 @@ export interface InitialContactData {
   companyName?: string;
 }
 
+/**
+ * Files and photos uploaded during the workflow
+ * Includes AI analysis results if available
+ */
 export interface FilesPhotosData {
   uploadedFiles: Array<{
     id: string;
@@ -30,6 +41,10 @@ export interface FilesPhotosData {
   };
 }
 
+/**
+ * Work area definitions and measurements
+ * Links areas to specific services
+ */
 export interface AreaOfWorkData {
   workAreas: Array<{
     id: string;
@@ -43,6 +58,10 @@ export interface AreaOfWorkData {
   buildingHeight?: number;
 }
 
+/**
+ * Detailed takeoff measurements and data
+ * Can be imported from various sources
+ */
 export interface TakeoffStepData {
   measurements: {
     [key: string]: {
@@ -109,7 +128,23 @@ export interface PricingData {
   };
 }
 
-// Combined guided flow data
+/**
+ * Additional workflow data that can be dynamically added
+ */
+export interface AdditionalWorkflowData {
+  customFields?: Record<string, unknown>;
+  integrationData?: Record<string, unknown>;
+  userDefinedSteps?: Array<{
+    id: string;
+    name: string;
+    data: Record<string, unknown>;
+    completed: boolean;
+  }>;
+}
+
+/**
+ * Combined guided flow data with type safety
+ */
 export interface GuidedFlowData {
   initialContact?: InitialContactData;
   filesPhotos?: FilesPhotosData;
@@ -119,5 +154,5 @@ export interface GuidedFlowData {
   duration?: DurationData;
   expenses?: ExpensesData;
   pricing?: PricingData;
-  [key: string]: any; // Allow for additional fields
+  additional?: AdditionalWorkflowData;
 }

@@ -1,10 +1,14 @@
 // PDF Processing Service with Image Extraction and OCR
 // Handles PDF text extraction, image extraction, and measurement detection
+// Enhanced with streaming, worker pools, and caching for optimal performance
 
 // Dynamic imports to avoid loading PDF.js during build/module init
 import pdf2pic from "pdf2pic";
 import { withRetry } from "@/lib/utils/retry-logic";
 import { isNotNull, safeString, safeNumber } from "@/lib/utils/null-safety";
+import { StreamProcessor, MemoryAwareBuffer } from "./utils/stream-processor";
+import { OCRWorkerPool, getGlobalOCRPool } from "./utils/ocr-worker-pool";
+import { PDFCacheManager, PDFResultCache } from "./utils/pdf-cache";
 
 // Lazy load PDF.js to avoid build-time issues
 async function getPDFLib() {
@@ -150,10 +154,19 @@ const MEASUREMENT_PATTERNS = [
 
 export class PDFProcessor {
   private ocrWorker: any | null = null; // Will be Tesseract.Worker when loaded
+  private ocrWorkerPool: OCRWorkerPool | null = null;
   private pdf2picConverter: any;
+  private streamProcessor: StreamProcessor;
+  private cacheManager: PDFCacheManager;
+  private useWorkerPool: boolean;
+  private isProcessing: boolean = false;
+  private abortController: AbortController | null = null;
 
-  constructor() {
+  constructor(options: { useWorkerPool?: boolean; chunkSize?: number } = {}) {
     this.initializeConverter();
+    this.useWorkerPool = options.useWorkerPool ?? true;
+    this.streamProcessor = new StreamProcessor(options.chunkSize);
+    this.cacheManager = PDFCacheManager.getInstance();
   }
 
   private initializeConverter() {
@@ -188,7 +201,7 @@ export class PDFProcessor {
     await this.ocrWorker.setParameters(parameters);
   }
 
-  // Process PDF from buffer
+  // Process PDF from buffer with streaming and caching
   public async processPDF(
     pdfBuffer: ArrayBuffer,
     options: {
@@ -196,6 +209,9 @@ export class PDFProcessor {
       performOCR?: boolean;
       detectMeasurements?: boolean;
       ocrConfig?: Partial<OCRConfig>;
+      useCache?: boolean;
+      onProgress?: (current: number, total: number) => void;
+      signal?: AbortSignal;
     } = {},
   ): Promise<PDFProcessingResult> {
     const {
@@ -203,9 +219,41 @@ export class PDFProcessor {
       performOCR = true,
       detectMeasurements = true,
       ocrConfig = {},
+      useCache = true,
+      onProgress,
+      signal,
     } = options;
 
+    // Check if already processing
+    if (this.isProcessing) {
+      throw new Error("PDF processor is already processing a document");
+    }
+
+    this.isProcessing = true;
+    this.abortController = new AbortController();
+
+    // Link external abort signal if provided
+    if (signal) {
+      signal.addEventListener("abort", () => {
+        this.abortController?.abort();
+      });
+    }
+
     try {
+      // Check cache first
+      if (useCache) {
+        const fileHash = await PDFCacheManager.calculateFileHash(pdfBuffer);
+        const cached = this.cacheManager
+          .getResultCache()
+          .getCachedResult(fileHash, {
+            extractImages,
+            performOCR,
+            detectMeasurements,
+          });
+        if (cached) {
+          return cached;
+        }
+      }
       // Load PDF document using lazy-loaded PDF.js
       const pdfjsLib = await getPDFLib();
       const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
@@ -215,57 +263,119 @@ export class PDFProcessor {
       const images: PDFImageData[] = [];
       const measurements: PDFMeasurement[] = [];
 
-      // Process each page
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
+      // Check for abort signal
+      if (this.abortController?.signal.aborted) {
+        throw new Error("Processing was cancelled");
+      }
 
-        // Extract text content
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
-        allText += pageText + "\n";
+      // Determine if we should use streaming for large PDFs
+      const shouldStream = pdf.numPages > 20;
 
-        // Extract images if requested
-        if (extractImages) {
-          const pageImages = await this.extractImagesFromPage(page, pageNum);
-          images.push(...pageImages);
+      if (shouldStream) {
+        // Process large PDFs in chunks
+        const results = await this.processWithStreaming(
+          pdf,
+          { extractImages, performOCR, detectMeasurements, ocrConfig },
+          onProgress,
+        );
 
-          // Perform OCR on images if requested
-          if (performOCR && pageImages.length > 0) {
-            await this.performOCROnImages(pageImages, {
-              ...DEFAULT_OCR_CONFIG,
-              ...ocrConfig,
-            });
+        // Aggregate streaming results
+        allText = results.text;
+        images.push(...results.images);
+        measurements.push(...results.measurements);
+      } else {
+        // Process small PDFs normally
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          // Check for abort signal
+          if (this.abortController?.signal.aborted) {
+            throw new Error("Processing was cancelled");
           }
-        }
 
-        // Detect measurements if requested
-        if (detectMeasurements) {
-          const pageMeasurements = this.detectMeasurements(pageText, pageNum);
-          measurements.push(...pageMeasurements);
+          const page = await pdf.getPage(pageNum);
 
-          // Also check OCR text from images
-          for (const image of images.filter(
-            (img) => img.pageNumber === pageNum && img.extractedText,
-          )) {
-            const imageMeasurements = this.detectMeasurements(
-              image.extractedText!,
-              pageNum,
-            );
-            measurements.push(...imageMeasurements);
+          // Extract text content
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: PDFTextItem) => item.str)
+            .join(" ");
+          allText += pageText + "\n";
+
+          // Extract images if requested
+          if (extractImages) {
+            const pageImages = await this.extractImagesFromPage(page, pageNum);
+            images.push(...pageImages);
+
+            // Perform OCR on images if requested
+            if (performOCR && pageImages.length > 0) {
+              if (this.useWorkerPool) {
+                await this.performOCRWithPool(pageImages, {
+                  ...DEFAULT_OCR_CONFIG,
+                  ...ocrConfig,
+                });
+              } else {
+                await this.performOCROnImages(pageImages, {
+                  ...DEFAULT_OCR_CONFIG,
+                  ...ocrConfig,
+                });
+              }
+            }
+          }
+
+          // Detect measurements if requested
+          if (detectMeasurements) {
+            const pageMeasurements = this.detectMeasurements(pageText, pageNum);
+            measurements.push(...pageMeasurements);
+
+            // Also check OCR text from images
+            for (const image of images.filter(
+              (img) => img.pageNumber === pageNum && img.extractedText,
+            )) {
+              const imageMeasurements = this.detectMeasurements(
+                image.extractedText!,
+                pageNum,
+              );
+              measurements.push(...imageMeasurements);
+            }
+          }
+
+          if (onProgress) {
+            onProgress(pageNum, pdf.numPages);
           }
         }
       }
 
-      return {
+      const result: PDFProcessingResult = {
         success: true,
         text: allText.trim(),
         images,
         measurements: this.deduplicateMeasurements(measurements),
         metadata,
       };
+
+      // Cache the result
+      if (useCache) {
+        const fileHash = await PDFCacheManager.calculateFileHash(pdfBuffer);
+        this.cacheManager.getResultCache().cacheResult(fileHash, result, {
+          extractImages,
+          performOCR,
+          detectMeasurements,
+        });
+      }
+
+      return result;
     } catch (error) {
+      // Check if processing was aborted
+      if (error instanceof Error && error.name === "AbortError") {
+        return {
+          success: false,
+          text: "",
+          images: [],
+          measurements: [],
+          metadata: { pageCount: 0 },
+          error: "Processing was cancelled",
+        };
+      }
+
       return {
         success: false,
         text: "",
@@ -274,6 +384,9 @@ export class PDFProcessor {
         metadata: { pageCount: 0 },
         error: error instanceof Error ? error.message : "PDF processing failed",
       };
+    } finally {
+      this.isProcessing = false;
+      this.abortController = null;
     }
   }
 
@@ -316,7 +429,7 @@ export class PDFProcessor {
     return result.success ? result.data : [];
   }
 
-  // Perform OCR on extracted images
+  // Perform OCR on extracted images with proper cleanup
   private async performOCROnImages(
     images: PDFImageData[],
     config: OCRConfig,
@@ -325,53 +438,94 @@ export class PDFProcessor {
       await this.initializeOCR(config);
     }
 
-    for (const image of images) {
-      try {
-        // Convert image data to canvas for OCR
-        const canvas = await this.imageDataToCanvas(image);
+    const canvases: HTMLCanvasElement[] = [];
 
-        if (this.ocrWorker) {
-          const result = await this.ocrWorker.recognize(canvas);
-          image.extractedText = result.data.text;
-          image.confidence = result.data.confidence;
+    try {
+      for (const image of images) {
+        let canvas: HTMLCanvasElement | null = null;
+        try {
+          // Convert image data to canvas for OCR
+          canvas = await this.imageDataToCanvas(image);
+          canvases.push(canvas);
+
+          if (this.ocrWorker) {
+            const result = await this.ocrWorker.recognize(canvas);
+            image.extractedText = result.data.text;
+            image.confidence = result.data.confidence;
+          }
+        } catch (error) {
+          console.warn(`OCR failed for image ${image.imageIndex}:`, error);
+          image.extractedText = "";
+          image.confidence = 0;
         }
-      } catch (error) {
-        console.warn(`OCR failed for image ${image.imageIndex}:`, error);
-        image.extractedText = "";
-        image.confidence = 0;
+      }
+    } finally {
+      // Clean up all canvases
+      for (const canvas of canvases) {
+        this.disposeCanvas(canvas);
       }
     }
   }
 
-  // Convert image data to canvas
+  // Convert image data to canvas with proper cleanup
   private async imageDataToCanvas(
     image: PDFImageData,
   ): Promise<HTMLCanvasElement> {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
+    let canvas: HTMLCanvasElement | null = null;
+    let ctx: CanvasRenderingContext2D | null = null;
 
-    canvas.width = image.width;
-    canvas.height = image.height;
+    try {
+      canvas = document.createElement("canvas");
+      ctx = canvas.getContext("2d", {
+        willReadFrequently: true,
+        desynchronized: true,
+      });
 
-    // Create ImageData from raw pixel data
-    const imageData = ctx.createImageData(image.width, image.height);
-
-    // Handle different image formats
-    if (image.format === "rgb") {
-      // RGB format: convert to RGBA
-      for (let i = 0, j = 0; i < image.data.length; i += 3, j += 4) {
-        imageData.data[j] = image.data[i]; // R
-        imageData.data[j + 1] = image.data[i + 1]; // G
-        imageData.data[j + 2] = image.data[i + 2]; // B
-        imageData.data[j + 3] = 255; // A
+      if (!ctx) {
+        throw new Error("Failed to get 2D context");
       }
-    } else {
-      // Assume RGBA format
-      imageData.data.set(image.data);
-    }
 
-    ctx.putImageData(imageData, 0, 0);
-    return canvas;
+      canvas.width = image.width;
+      canvas.height = image.height;
+
+      // Create ImageData from raw pixel data
+      const imageData = ctx.createImageData(image.width, image.height);
+
+      // Handle different image formats
+      if (image.format === "rgb") {
+        // RGB format: convert to RGBA
+        for (let i = 0, j = 0; i < image.data.length; i += 3, j += 4) {
+          imageData.data[j] = image.data[i]; // R
+          imageData.data[j + 1] = image.data[i + 1]; // G
+          imageData.data[j + 2] = image.data[i + 2]; // B
+          imageData.data[j + 3] = 255; // A
+        }
+      } else {
+        // Assume RGBA format
+        imageData.data.set(image.data);
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      return canvas;
+    } catch (error) {
+      // Clean up on error
+      if (canvas) {
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+      throw error;
+    }
+  }
+
+  // Dispose of canvas element properly
+  private disposeCanvas(canvas: HTMLCanvasElement): void {
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    canvas.width = 0;
+    canvas.height = 0;
+    canvas.remove();
   }
 
   // Detect image format from data
@@ -527,7 +681,7 @@ export class PDFProcessor {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item: any) => item.str)
+          .map((item: PDFTextItem) => item.str)
           .join(" ");
         extractedText += `--- Page ${pageNum} ---\n${pageText}\n\n`;
       }
@@ -577,7 +731,7 @@ export class PDFProcessor {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item: any) => item.str)
+          .map((item: PDFTextItem) => item.str)
           .join(" ");
 
         let match;
@@ -610,11 +764,164 @@ export class PDFProcessor {
     }
   }
 
+  // Process PDF with streaming for large documents
+  private async processWithStreaming(
+    pdf: any,
+    options: {
+      extractImages: boolean;
+      performOCR: boolean;
+      detectMeasurements: boolean;
+      ocrConfig: Partial<OCRConfig>;
+    },
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<{
+    text: string;
+    images: PDFImageData[];
+    measurements: PDFMeasurement[];
+  }> {
+    const allText: string[] = [];
+    const allImages: PDFImageData[] = [];
+    const allMeasurements: PDFMeasurement[] = [];
+
+    // Process pages in chunks
+    const processor = async (startPage: number, endPage: number) => {
+      let chunkText = "";
+      const chunkImages: PDFImageData[] = [];
+      const chunkMeasurements: PDFMeasurement[] = [];
+
+      for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+
+        // Extract text
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: PDFTextItem) => item.str)
+          .join(" ");
+        chunkText += pageText + "\n";
+
+        // Extract images if requested
+        if (options.extractImages) {
+          const pageImages = await this.extractImagesFromPage(page, pageNum);
+          chunkImages.push(...pageImages);
+
+          // Perform OCR if requested
+          if (options.performOCR && pageImages.length > 0) {
+            if (this.useWorkerPool) {
+              await this.performOCRWithPool(pageImages, {
+                ...DEFAULT_OCR_CONFIG,
+                ...options.ocrConfig,
+              });
+            } else {
+              await this.performOCROnImages(pageImages, {
+                ...DEFAULT_OCR_CONFIG,
+                ...options.ocrConfig,
+              });
+            }
+          }
+        }
+
+        // Detect measurements if requested
+        if (options.detectMeasurements) {
+          const pageMeasurements = this.detectMeasurements(pageText, pageNum);
+          chunkMeasurements.push(...pageMeasurements);
+
+          // Also check OCR text from images
+          for (const image of chunkImages.filter(
+            (img) => img.pageNumber === pageNum && img.extractedText,
+          )) {
+            const imageMeasurements = this.detectMeasurements(
+              image.extractedText!,
+              pageNum,
+            );
+            chunkMeasurements.push(...imageMeasurements);
+          }
+        }
+      }
+
+      return {
+        text: chunkText,
+        images: chunkImages,
+        measurements: chunkMeasurements,
+      };
+    };
+
+    // Process chunks with streaming
+    const chunks = await this.streamProcessor.processInChunks(
+      pdf.numPages,
+      processor,
+      {
+        onProgress,
+        onChunkComplete: (result, chunkIndex) => {
+          allText.push(result.text);
+          allImages.push(...result.images);
+          allMeasurements.push(...result.measurements);
+        },
+      },
+    );
+
+    return {
+      text: allText.join(""),
+      images: allImages,
+      measurements: allMeasurements,
+    };
+  }
+
+  // Perform OCR using worker pool for better performance with cleanup
+  private async performOCRWithPool(
+    images: PDFImageData[],
+    config: OCRConfig,
+  ): Promise<void> {
+    if (!this.ocrWorkerPool) {
+      this.ocrWorkerPool = getGlobalOCRPool(4, config);
+      await this.ocrWorkerPool.initialize();
+    }
+
+    try {
+      const results = await this.ocrWorkerPool.processImages(images);
+
+      // Update images with OCR results
+      for (const image of images) {
+        const result = results.get(image.imageIndex);
+        if (result) {
+          image.extractedText = result.text;
+          image.confidence = result.confidence;
+        }
+      }
+    } catch (error) {
+      console.error("OCR pool processing failed:", error);
+      // Fallback to sequential processing if pool fails
+      await this.performOCROnImages(images, config);
+    }
+  }
+
   // Cleanup resources
   public async cleanup(): Promise<void> {
+    // Abort any ongoing processing
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+
     if (this.ocrWorker) {
       await this.ocrWorker.terminate();
       this.ocrWorker = null;
+    }
+
+    if (this.ocrWorkerPool) {
+      await this.ocrWorkerPool.terminate();
+      this.ocrWorkerPool = null;
+    }
+
+    // Abort any ongoing streaming operations
+    this.streamProcessor.abort();
+
+    this.isProcessing = false;
+  }
+
+  // Abort current processing
+  public abort(): void {
+    if (this.abortController) {
+      this.abortController.abort();
     }
   }
 }

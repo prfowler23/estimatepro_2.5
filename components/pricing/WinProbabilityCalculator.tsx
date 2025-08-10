@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -21,33 +21,21 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  generateProbabilityCurve,
+  calculateProbabilityAtPrice,
+  calculatePriceSensitivity,
+  getPriceSensitivityLevel,
+  getPricingRecommendation,
+} from "@/lib/pricing/pricing-utils";
+import type {
+  WinProbabilityProps,
+  PriceSensitivityLevel,
+  PricePoint,
+} from "@/lib/types/pricing-types";
 
-interface PricePoint {
-  price: number;
-  probability: number;
-}
-
-interface WinProbabilityProps {
-  currentPrice: number;
-  winProbability: number;
-  pricePoints: PricePoint[];
-  optimalPrice: number;
-  competitorPrices?: number[];
-  marketMedian?: number;
-  onPriceChange: (
-    price: number,
-    probability: number,
-    expectedValue: number,
-  ) => void;
-}
-
-interface PriceSensitivityLevel {
-  level: "low" | "medium" | "high";
-  description: string;
-  color: string;
-}
-
-export function WinProbabilityCalculator({
+// Component wrapped in React.memo for performance optimization
+const WinProbabilityCalculatorComponent = ({
   currentPrice,
   winProbability,
   pricePoints,
@@ -55,67 +43,77 @@ export function WinProbabilityCalculator({
   competitorPrices = [],
   marketMedian,
   onPriceChange,
-}: WinProbabilityProps) {
+}: WinProbabilityProps) => {
   const [selectedPrice, setSelectedPrice] = useState(currentPrice);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Generate smooth curve data
-  const curveData = generateProbabilityCurve(pricePoints);
-
-  // Calculate current metrics
-  const currentProbability = calculateProbabilityAtPrice(
-    selectedPrice,
-    pricePoints,
+  // Memoized calculations for performance
+  const curveData = useMemo(
+    () => generateProbabilityCurve(pricePoints),
+    [pricePoints],
   );
-  const expectedValue = selectedPrice * currentProbability;
-  const optimalExpectedValue =
-    optimalPrice * calculateProbabilityAtPrice(optimalPrice, pricePoints);
 
-  // Price sensitivity analysis
-  const sensitivity = calculatePriceSensitivity(pricePoints);
-  const sensitivityLevel = getPriceSensitivityLevel(sensitivity);
+  // Memoized metrics calculations
+  const currentProbability = useMemo(
+    () => calculateProbabilityAtPrice(selectedPrice, pricePoints),
+    [selectedPrice, pricePoints],
+  );
 
-  // Price range for slider
-  const minPrice = Math.min(...pricePoints.map((p) => p.price)) * 0.7;
-  const maxPrice = Math.max(...pricePoints.map((p) => p.price)) * 1.3;
+  const expectedValue = useMemo(
+    () => selectedPrice * currentProbability,
+    [selectedPrice, currentProbability],
+  );
 
-  const handlePriceAdjustment = (newPrice: number) => {
-    setSelectedPrice(newPrice);
-    const probability = calculateProbabilityAtPrice(newPrice, pricePoints);
-    const expValue = newPrice * probability;
-    onPriceChange(newPrice, probability, expValue);
-  };
+  const optimalExpectedValue = useMemo(
+    () => optimalPrice * calculateProbabilityAtPrice(optimalPrice, pricePoints),
+    [optimalPrice, pricePoints],
+  );
 
-  const getRecommendation = (): {
-    type: "increase" | "decrease" | "optimal";
-    message: string;
-    color: string;
-  } => {
-    const tolerance = 0.05;
+  // Memoized price sensitivity analysis
+  const sensitivity = useMemo(
+    () => calculatePriceSensitivity(pricePoints),
+    [pricePoints],
+  );
 
-    if (selectedPrice < optimalPrice * (1 - tolerance)) {
-      return {
-        type: "increase",
-        message:
-          "Consider increasing price - you may be leaving money on the table",
-        color: "text-orange-600",
-      };
-    } else if (selectedPrice > optimalPrice * (1 + tolerance)) {
-      return {
-        type: "decrease",
-        message: "Consider reducing price to improve win probability",
-        color: "text-red-600",
-      };
-    } else {
-      return {
-        type: "optimal",
-        message: "Price is well-optimized for expected value",
-        color: "text-green-600",
-      };
-    }
-  };
+  const sensitivityLevel = useMemo(
+    () => getPriceSensitivityLevel(sensitivity),
+    [sensitivity],
+  );
 
-  const recommendation = getRecommendation();
+  // Memoized price range calculations
+  const { minPrice, maxPrice } = useMemo(() => {
+    if (pricePoints.length === 0) return { minPrice: 0, maxPrice: 100000 };
+    const prices = pricePoints.map((p) => p.price);
+    return {
+      minPrice: Math.min(...prices) * 0.7,
+      maxPrice: Math.max(...prices) * 1.3,
+    };
+  }, [pricePoints]);
+
+  // Memoized callback for price adjustment
+  const handlePriceAdjustment = useCallback(
+    (newPrice: number) => {
+      setSelectedPrice(newPrice);
+      const probability = calculateProbabilityAtPrice(newPrice, pricePoints);
+      const expValue = newPrice * probability;
+      onPriceChange(newPrice, probability, expValue);
+    },
+    [pricePoints, onPriceChange],
+  );
+
+  // Memoized recommendation calculation
+  const recommendation = useMemo(() => {
+    const rec = getPricingRecommendation(selectedPrice, optimalPrice);
+    const colorMap = {
+      increase: "text-orange-600",
+      decrease: "text-red-600",
+      optimal: "text-green-600",
+    };
+    return {
+      ...rec,
+      color: colorMap[rec.type],
+    };
+  }, [selectedPrice, optimalPrice]);
 
   return (
     <Card className="w-full">
@@ -429,107 +427,24 @@ export function WinProbabilityCalculator({
       </CardContent>
     </Card>
   );
-}
+};
 
-function generateProbabilityCurve(
-  pricePoints: PricePoint[],
-): Array<{ price: number; probability: number }> {
-  if (pricePoints.length === 0) return [];
-
-  const sortedPoints = [...pricePoints].sort((a, b) => a.price - b.price);
-  const minPrice = sortedPoints[0].price * 0.7;
-  const maxPrice = sortedPoints[sortedPoints.length - 1].price * 1.3;
-  const steps = 100;
-
-  const result = [];
-
-  for (let i = 0; i <= steps; i++) {
-    const price = minPrice + (maxPrice - minPrice) * (i / steps);
-    const probability = calculateProbabilityAtPrice(price, sortedPoints);
-    result.push({ price: Math.round(price), probability });
-  }
-
-  return result;
-}
-
-function calculateProbabilityAtPrice(
-  price: number,
-  pricePoints: PricePoint[],
-): number {
-  if (pricePoints.length === 0) return 0.5;
-
-  const sortedPoints = [...pricePoints].sort((a, b) => a.price - b.price);
-
-  // If price is outside range, extrapolate
-  if (price <= sortedPoints[0].price) {
-    return sortedPoints[0].probability;
-  }
-  if (price >= sortedPoints[sortedPoints.length - 1].price) {
-    return sortedPoints[sortedPoints.length - 1].probability;
-  }
-
-  // Find surrounding points and interpolate
-  for (let i = 0; i < sortedPoints.length - 1; i++) {
-    const lower = sortedPoints[i];
-    const upper = sortedPoints[i + 1];
-
-    if (price >= lower.price && price <= upper.price) {
-      // Linear interpolation
-      const ratio = (price - lower.price) / (upper.price - lower.price);
-      return (
-        lower.probability + (upper.probability - lower.probability) * ratio
-      );
-    }
-  }
-
-  return 0.5; // Fallback
-}
-
-function calculatePriceSensitivity(pricePoints: PricePoint[]): number {
-  if (pricePoints.length < 2) return 0.5;
-
-  const sortedPoints = [...pricePoints].sort((a, b) => a.price - b.price);
-  let totalSensitivity = 0;
-  let count = 0;
-
-  for (let i = 0; i < sortedPoints.length - 1; i++) {
-    const priceDiff = sortedPoints[i + 1].price - sortedPoints[i].price;
-    const probDiff = Math.abs(
-      sortedPoints[i + 1].probability - sortedPoints[i].probability,
+// Export memoized component for performance
+export const WinProbabilityCalculator = React.memo(
+  WinProbabilityCalculatorComponent,
+  (prevProps, nextProps) => {
+    // Custom comparison function for memo
+    return (
+      prevProps.currentPrice === nextProps.currentPrice &&
+      prevProps.winProbability === nextProps.winProbability &&
+      prevProps.optimalPrice === nextProps.optimalPrice &&
+      prevProps.marketMedian === nextProps.marketMedian &&
+      JSON.stringify(prevProps.pricePoints) ===
+        JSON.stringify(nextProps.pricePoints) &&
+      JSON.stringify(prevProps.competitorPrices) ===
+        JSON.stringify(nextProps.competitorPrices)
     );
+  },
+);
 
-    if (priceDiff > 0) {
-      // Calculate percentage change in probability per percentage change in price
-      const priceChange = priceDiff / sortedPoints[i].price;
-      const sensitivity = probDiff / priceChange;
-      totalSensitivity += sensitivity;
-      count++;
-    }
-  }
-
-  return count > 0 ? totalSensitivity / count : 0.5;
-}
-
-function getPriceSensitivityLevel(sensitivity: number): PriceSensitivityLevel {
-  if (sensitivity < 0.3) {
-    return {
-      level: "low",
-      description:
-        "Customer is less sensitive to price changes - focus on value",
-      color: "text-green-600",
-    };
-  } else if (sensitivity < 0.7) {
-    return {
-      level: "medium",
-      description: "Moderate price sensitivity - balance price and value",
-      color: "text-yellow-600",
-    };
-  } else {
-    return {
-      level: "high",
-      description:
-        "High price sensitivity - small changes significantly impact win rate",
-      color: "text-red-600",
-    };
-  }
-}
+WinProbabilityCalculator.displayName = "WinProbabilityCalculator";

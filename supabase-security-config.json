@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-08-09T20:15:30.460Z",
+  "project_url": "https://guitrdsoydjpenqmomlb.supabase.co",
+  "security_features": {
+    "leaked_password_protection": {
+      "status": "needs_manual_setup",
+      "description": "Enable in Dashboard > Auth > Settings"
+    },
+    "mfa_totp": {
+      "status": "needs_manual_setup",
+      "description": "Enable in Dashboard > Auth > Settings > MFA"
+    },
+    "password_policy": {
+      "minLength": 12,
+      "requireLowercase": true,
+      "requireUppercase": true,
+      "requireNumbers": true,
+      "requireSymbols": true
+    },
+    "migration_required": "20250202000000_auth_security_enhancements"
+  },
+  "dashboard_url": "https://supabase.com/dashboard/project/guitrdsoydjpenqmomlb.supabase.co/project/",
+  "next_steps": [
+    "Apply migration: npx supabase db push",
+    "Enable leaked password protection in dashboard",
+    "Enable MFA options in dashboard",
+    "Test security features",
+    "Run supabase advisor again"
+  ]
+}

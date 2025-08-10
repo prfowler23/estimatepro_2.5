@@ -227,6 +227,9 @@ export function MobileStepNavigation({
     steps.length,
     onBack,
     onNext,
+    handleBack,
+    handleNext,
+    handleStepNavigation,
     onStepChange,
     triggerHaptic,
   ]);

@@ -293,3 +293,51 @@ export function groupCategoriesByType(
 
   return groups;
 }
+
+// Type guards for runtime validation
+export function isMeasurementEntry(obj: unknown): obj is MeasurementEntry {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "id" in obj &&
+    "category" in obj &&
+    "description" in obj &&
+    "width" in obj &&
+    "height" in obj &&
+    "quantity" in obj &&
+    "unit" in obj &&
+    "total" in obj &&
+    typeof (obj as MeasurementEntry).id === "string" &&
+    typeof (obj as MeasurementEntry).width === "number" &&
+    typeof (obj as MeasurementEntry).height === "number" &&
+    typeof (obj as MeasurementEntry).quantity === "number" &&
+    typeof (obj as MeasurementEntry).total === "number" &&
+    ["ft", "sqft", "lf", "ea"].includes((obj as MeasurementEntry).unit)
+  );
+}
+
+export function isMeasurementCategory(
+  obj: unknown,
+): obj is MeasurementCategory {
+  const validCategories = [
+    "glass_windows",
+    "glass_doors",
+    "glass_storefront",
+    "facade_brick",
+    "facade_concrete",
+    "facade_metal",
+    "facade_stone",
+    "flat_surface",
+    "parking_spaces",
+    "parking_deck",
+    "retaining_wall",
+    "inner_wall",
+    "ceiling",
+    "footprint",
+  ];
+
+  return (
+    typeof obj === "string" &&
+    validCategories.includes(obj as MeasurementCategory)
+  );
+}

@@ -22,6 +22,8 @@ jest.mock("@/components/ui/focus-management", () => ({
   useFocusable: () => React.useRef(null),
 }));
 
+// Note: use-toast hook is at @/components/ui/use-toast, not @/hooks/use-toast
+
 // Create a custom render function that includes all providers
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -96,20 +96,20 @@ export function CollaborativeStepExample({
     <div className="space-y-6">
       {/* Collaboration Status Header */}
       {isConnected && (
-        <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="p-4 bg-gradient-to-r from-primary-action/10 to-primary-action/20 border-primary-action/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                <span className="font-medium text-blue-900">
+                <div className="w-3 h-3 bg-success-500 rounded-full animate-pulse" />
+                <span className="font-medium text-primary-action">
                   Live Collaboration
                 </span>
               </div>
 
               {stepViewers.length > 1 && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm text-blue-700">
+                  <Users className="w-4 h-4 text-primary-action" />
+                  <span className="text-sm text-primary-action">
                     {stepViewers.length} user{stepViewers.length > 1 ? "s" : ""}{" "}
                     on this step
                   </span>
@@ -138,15 +138,15 @@ export function CollaborativeStepExample({
 
           {/* Recent Activity Summary */}
           {stepChanges.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-blue-200">
-              <div className="flex items-center gap-2 text-sm text-blue-700">
+            <div className="mt-3 pt-3 border-t border-primary-action/30">
+              <div className="flex items-center gap-2 text-sm text-primary-action">
                 <Clock className="w-3 h-3" />
                 <span>
                   Last updated by {stepChanges[0].userName} -{" "}
                   {stepChanges[0].fieldPath}
                 </span>
                 {stepChanges.length > 1 && (
-                  <span className="text-blue-500">
+                  <span className="text-primary-action">
                     (+{stepChanges.length - 1} more changes)
                   </span>
                 )}
@@ -278,34 +278,34 @@ export function CollaborativeStepExample({
 
           {/* Collaboration Features Demo */}
           {isConnected && (
-            <Card className="p-4 bg-gray-50 border-gray-200">
+            <Card className="p-4 bg-bg-subtle border-border-secondary">
               <h4 className="font-medium mb-3">Collaboration Features</h4>
               <div className="grid md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-success-600 dark:text-success-400" />
                   <span>Real-time sync enabled</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-600" />
+                  <Users className="w-4 h-4 text-primary-action" />
                   <span>
                     {activeUsers.length} active user
                     {activeUsers.length > 1 ? "s" : ""}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-purple-600" />
+                  <Eye className="w-4 h-4 text-primary-action" />
                   <span>Field-level tracking</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-orange-600" />
+                  <MessageSquare className="w-4 h-4 text-warning-600 dark:text-warning-400" />
                   <span>Conflict resolution</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-600" />
+                  <Clock className="w-4 h-4 text-text-secondary" />
                   <span>Change history</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                  <AlertTriangle className="w-4 h-4 text-warning-600 dark:text-warning-400" />
                   <span>Smart validation</span>
                 </div>
               </div>
@@ -335,16 +335,16 @@ export function CollaborativeStepExample({
             {stepChanges.map((change, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
+                className="flex items-center justify-between p-2 bg-bg-subtle rounded text-sm"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <div className="w-2 h-2 bg-primary-action rounded-full" />
                   <span className="font-medium">{change.userName}</span>
-                  <span className="text-gray-600">
+                  <span className="text-text-secondary">
                     updated {change.fieldPath}
                   </span>
                 </div>
-                <span className="text-gray-500 text-xs">
+                <span className="text-text-muted text-xs">
                   {new Date(change.timestamp).toLocaleTimeString()}
                 </span>
               </div>

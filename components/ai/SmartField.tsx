@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, memo, useCallback } from "react";
+import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { PredictiveInput } from "./PredictiveInput";
 import { useSmartDefaults } from "./SmartDefaultsProvider";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { SmartDefault } from "@/lib/ai/smart-defaults-engine";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { Sparkles, CheckCircle, X } from "lucide-react";
 import { deepEqual } from "@/lib/utils/deep-compare";
+import { logger } from "@/lib/utils/logger";
 
 type FieldType =
   | "text"
@@ -77,9 +78,13 @@ function SmartFieldComponent<T extends FieldType = "text">({
     null,
   );
 
-  // Find relevant smart default for this field
-  const relevantDefault = state.defaults.find(
-    (d) => d.field === field || d.field.endsWith(`.${field}`),
+  // Memoize the relevant smart default lookup
+  const relevantDefault = useMemo(
+    () =>
+      state.defaults.find(
+        (d) => d.field === field || d.field.endsWith(`.${field}`),
+      ),
+    [state.defaults, field],
   );
 
   useEffect(() => {
@@ -102,44 +107,59 @@ function SmartFieldComponent<T extends FieldType = "text">({
     setShowSmartDefault(false);
   }, []);
 
-  const getConfidenceColor = (confidence: number) => {
+  // Memoize confidence color calculation
+  const getConfidenceColor = useCallback((confidence: number): string => {
     if (confidence >= 0.8) return "border-green-200 bg-green-50";
     if (confidence >= 0.6) return "border-yellow-200 bg-yellow-50";
     return "border-blue-200 bg-blue-50";
-  };
+  }, []);
 
-  const renderInput = () => {
-    const inputId = `smart-field-${field}`;
-    const commonProps = {
+  // Memoize input ID to avoid recreating on every render
+  const inputId = useMemo(() => `smart-field-${field}`, [field]);
+
+  // Memoize common props to avoid recreating object on every render
+  const commonProps = useMemo(
+    () => ({
       id: inputId,
       value: value || "",
-      onChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-      ) => {
-        try {
-          onChange(e.target.value as FieldValue<T>);
-        } catch (error) {
-          console.warn("SmartField onChange error:", error);
-          // Silently ignore onChange errors to prevent crashes
-        }
-      },
       placeholder,
       disabled,
       required,
       className: showSmartDefault ? "border-blue-300" : "",
       "aria-required": required,
-      "aria-invalid": false, // Could be enhanced with validation state
+      "aria-invalid": false,
       "aria-describedby": description ? `${inputId}-description` : undefined,
-    };
+    }),
+    [
+      inputId,
+      value,
+      placeholder,
+      disabled,
+      required,
+      showSmartDefault,
+      description,
+    ],
+  );
 
+  // Memoize onChange handler
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      try {
+        const newValue =
+          type === "number" ? Number(e.target.value) : e.target.value;
+        onChange(newValue as FieldValue<T>);
+      } catch (error) {
+        logger.warn("SmartField onChange error:", error);
+      }
+    },
+    [onChange, type],
+  );
+
+  const renderInput = useCallback(() => {
     switch (type) {
       case "textarea":
         return (
-          <Textarea
-            {...commonProps}
-            onChange={(e) => onChange(e.target.value as FieldValue<T>)}
-            rows={3}
-          />
+          <Textarea {...commonProps} onChange={handleInputChange} rows={3} />
         );
 
       case "select":
@@ -172,7 +192,7 @@ function SmartFieldComponent<T extends FieldType = "text">({
               try {
                 onChange(newValue as FieldValue<T>);
               } catch (error) {
-                console.warn("SmartField Select onChange error:", error);
+                logger.warn("SmartField Select onChange error:", error);
                 // Silently ignore onChange errors to prevent crashes
               }
             }}
@@ -225,29 +245,28 @@ function SmartFieldComponent<T extends FieldType = "text">({
           );
         } else {
           return (
-            <Input
-              {...commonProps}
-              type={type}
-              onChange={(e) =>
-                onChange(
-                  (type === "number"
-                    ? Number(e.target.value)
-                    : e.target.value) as FieldValue<T>,
-                )
-              }
-            />
+            <Input {...commonProps} type={type} onChange={handleInputChange} />
           );
         }
 
       default:
-        return (
-          <Input
-            {...commonProps}
-            onChange={(e) => onChange(e.target.value as FieldValue<T>)}
-          />
-        );
+        return <Input {...commonProps} onChange={handleInputChange} />;
     }
-  };
+  }, [
+    type,
+    commonProps,
+    handleInputChange,
+    options,
+    onChange,
+    field,
+    enablePredictions,
+    value,
+    placeholder,
+    showSmartDefault,
+    flowData,
+    currentStep,
+    disabled,
+  ]);
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -371,20 +390,26 @@ function areFlowDataEqual(prev: GuidedFlowData, next: GuidedFlowData): boolean {
 export const SmartField = memo(
   SmartFieldComponent,
   (prevProps: SmartFieldProps<any>, nextProps: SmartFieldProps<any>) => {
-    return (
-      prevProps.value === nextProps.value &&
-      prevProps.field === nextProps.field &&
-      areFlowDataEqual(prevProps.flowData, nextProps.flowData) &&
-      prevProps.currentStep === nextProps.currentStep &&
-      prevProps.disabled === nextProps.disabled &&
-      prevProps.type === nextProps.type &&
-      prevProps.placeholder === nextProps.placeholder &&
-      prevProps.required === nextProps.required &&
-      prevProps.enablePredictions === nextProps.enablePredictions &&
-      prevProps.enableSmartDefaults === nextProps.enableSmartDefaults
-      // Removed onChange comparison since it's unstable
-    );
+    // Quick checks for primitive values first
+    if (
+      prevProps.value !== nextProps.value ||
+      prevProps.field !== nextProps.field ||
+      prevProps.currentStep !== nextProps.currentStep ||
+      prevProps.disabled !== nextProps.disabled ||
+      prevProps.type !== nextProps.type ||
+      prevProps.placeholder !== nextProps.placeholder ||
+      prevProps.required !== nextProps.required ||
+      prevProps.enablePredictions !== nextProps.enablePredictions ||
+      prevProps.enableSmartDefaults !== nextProps.enableSmartDefaults ||
+      prevProps.label !== nextProps.label ||
+      prevProps.description !== nextProps.description
+    ) {
+      return false;
+    }
+
+    // Deep check for complex objects only if other checks pass
+    return areFlowDataEqual(prevProps.flowData, nextProps.flowData);
   },
-);
+) as <T extends FieldType = "text">(props: SmartFieldProps<T>) => JSX.Element;
 
 export default SmartField;

@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,33 +29,23 @@ import {
   Download as DownloadIcon,
   Image as ImageIcon,
   Ruler as MeasurementIcon,
+  X as CancelIcon,
 } from "lucide-react";
 import { ComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
+import type {
+  PDFProcessingOptions,
+  PDFProcessingResult,
+  PDFMetadata,
+  PDFMeasurement,
+  PDFImageData,
+  PDFSearchMatch,
+  MeasurementType,
+} from "@/lib/pdf/types";
 
-interface PDFProcessingOptions {
-  extractImages: boolean;
-  performOCR: boolean;
-  detectMeasurements: boolean;
-  ocrLanguage: string;
-  convertToImages: boolean;
-  imageFormat: "png" | "jpeg";
-  imageDensity: number;
-}
-
-interface PDFProcessingResult {
-  success: boolean;
+// Use shared types from lib/pdf/types.ts
+interface PDFComponentProcessingResult extends PDFProcessingResult {
   filename: string;
   fileSize: number;
-  metadata: {
-    pageCount: number;
-    title?: string;
-    author?: string;
-    subject?: string;
-    creator?: string;
-    producer?: string;
-    creationDate?: string;
-    modificationDate?: string;
-  };
   extractedText: string;
   textLength: number;
   imagesFound: number;
@@ -71,14 +61,6 @@ interface PDFProcessingResult {
   }>;
   pageImages: string[];
   measurementsFound: number;
-  measurements: Array<{
-    type: "dimension" | "area" | "scale";
-    value: number;
-    unit: string;
-    confidence: number;
-    pageNumber: number;
-    rawText: string;
-  }>;
   buildingAnalysis: {
     length?: number;
     width?: number;
@@ -102,14 +84,28 @@ interface PDFProcessingResult {
   };
 }
 
+interface PDFSearchResults {
+  success: boolean;
+  totalMatches: number;
+  matches: PDFSearchMatch[];
+}
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 function PDFProcessorComponent() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<PDFProcessingResult | null>(null);
+  const [result, setResult] = useState<PDFComponentProcessingResult | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<PDFSearchResults | null>(
+    null,
+  );
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [options, setOptions] = useState<PDFProcessingOptions>({
     extractImages: true,
@@ -124,14 +120,29 @@ function PDFProcessorComponent() {
   const handleFileUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFile = event.target.files?.[0];
-      if (selectedFile && selectedFile.type === "application/pdf") {
-        setFile(selectedFile);
-        setResult(null);
-        setError(null);
-        setSearchResults(null);
-      } else {
-        setError("Please select a valid PDF file");
+
+      if (!selectedFile) {
+        return;
       }
+
+      // Validate file type
+      if (selectedFile.type !== "application/pdf") {
+        setError("Please select a valid PDF file");
+        return;
+      }
+
+      // Validate file size
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        setError(
+          `File size exceeds maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`,
+        );
+        return;
+      }
+
+      setFile(selectedFile);
+      setResult(null);
+      setError(null);
+      setSearchResults(null);
     },
     [],
   );
@@ -139,9 +150,17 @@ function PDFProcessorComponent() {
   const processPDF = async () => {
     if (!file) return;
 
+    // Cancel any existing processing
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     setIsProcessing(true);
     setProgress(0);
     setError(null);
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
 
     try {
       const formData = new FormData();
@@ -149,16 +168,19 @@ function PDFProcessorComponent() {
       formData.append("options", JSON.stringify(options));
 
       // Simulate progress
-      const progressInterval = setInterval(() => {
+      progressIntervalRef.current = setInterval(() => {
         setProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
       const response = await fetch("/api/pdf/process", {
         method: "POST",
         body: formData,
+        signal: abortControllerRef.current.signal,
       });
 
-      clearInterval(progressInterval);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
       setProgress(100);
 
       if (!response.ok) {
@@ -169,21 +191,40 @@ function PDFProcessorComponent() {
       const result = await response.json();
       setResult(result);
     } catch (error) {
-      console.error("PDF processing error:", error);
-      setError(error instanceof Error ? error.message : "Processing failed");
+      if (error instanceof Error && error.name === "AbortError") {
+        setError("Processing cancelled");
+      } else {
+        console.error("PDF processing error:", error);
+        setError(error instanceof Error ? error.message : "Processing failed");
+      }
     } finally {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
       setIsProcessing(false);
       setTimeout(() => setProgress(0), 1000);
+    }
+  };
+
+  const cancelProcessing = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
   const searchInPDF = async () => {
     if (!file || !searchTerm.trim()) return;
 
+    // Validate search term length
+    if (searchTerm.length > 100) {
+      setError("Search term is too long (max 100 characters)");
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("searchTerm", searchTerm);
+      formData.append("searchTerm", searchTerm.trim());
       formData.append("useRegex", "false");
 
       const response = await fetch("/api/pdf/process?operation=search", {
@@ -192,14 +233,15 @@ function PDFProcessorComponent() {
       });
 
       if (!response.ok) {
-        throw new Error("Search failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Search failed");
       }
 
       const searchResult = await response.json();
       setSearchResults(searchResult);
     } catch (error) {
       console.error("Search error:", error);
-      setError("Search failed");
+      setError(error instanceof Error ? error.message : "Search failed");
     }
   };
 
@@ -235,7 +277,7 @@ function PDFProcessorComponent() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const getMeasurementTypeColor = (type: string) => {
+  const getMeasurementTypeColor = (type: MeasurementType) => {
     switch (type) {
       case "dimension":
         return "bg-blue-100 text-blue-800";
@@ -247,6 +289,20 @@ function PDFProcessorComponent() {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Cancel any ongoing requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      // Clear any running intervals
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -280,7 +336,7 @@ function PDFProcessorComponent() {
                 <FileIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-lg font-medium">Choose PDF file</p>
                 <p className="text-sm text-muted-foreground">
-                  Maximum size: 10MB
+                  Maximum size: {MAX_FILE_SIZE / (1024 * 1024)}MB
                 </p>
               </label>
             </div>
@@ -296,13 +352,24 @@ function PDFProcessorComponent() {
                     </p>
                   </div>
                 </div>
-                <Button
-                  onClick={processPDF}
-                  disabled={isProcessing}
-                  className="flex items-center gap-2"
-                >
-                  {isProcessing ? "Processing..." : "Process PDF"}
-                </Button>
+                {isProcessing ? (
+                  <Button
+                    onClick={cancelProcessing}
+                    variant="destructive"
+                    className="flex items-center gap-2"
+                  >
+                    <CancelIcon className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={processPDF}
+                    disabled={isProcessing}
+                    className="flex items-center gap-2"
+                  >
+                    Process PDF
+                  </Button>
+                )}
               </div>
             )}
 
@@ -829,7 +896,7 @@ function PDFProcessorComponent() {
                         <Separator />
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           {searchResults.matches.map(
-                            (match: any, index: number) => (
+                            (match: PDFSearchMatch, index: number) => (
                               <Card key={index}>
                                 <CardContent className="p-3">
                                   <div className="flex items-center justify-between mb-2">

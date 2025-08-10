@@ -51,13 +51,15 @@ export class CalculatorErrorBoundary extends Component<Props, State> {
       errorInfo: errorInfo.componentStack,
     });
 
-    // Log error to monitoring service
-    console.error("Calculator Error:", {
-      calculatorType: this.props.calculatorType,
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      retryCount: this.state.retryCount,
+    // Use proper logging service instead of console
+    import("@/lib/utils/calculator-logger").then(({ calculatorLogger }) => {
+      calculatorLogger.error("Calculator component error", {
+        calculatorType: this.props.calculatorType,
+        error: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+        retryCount: this.state.retryCount,
+      });
     });
   }
 

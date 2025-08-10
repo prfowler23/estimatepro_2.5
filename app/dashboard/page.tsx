@@ -14,6 +14,7 @@ import { DashboardErrorBoundary } from "@/components/dashboard/DashboardErrorBou
 import { ChartErrorBoundary } from "@/components/dashboard/ChartErrorBoundary";
 import { ConnectivityStatus } from "@/components/ui/connectivity-status";
 import { useAppNavigation } from "@/hooks/useNavigationState";
+import { useSmartNavigation } from "@/lib/optimization/route-optimization";
 import { useAuth } from "@/contexts/auth-context";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { useRouter } from "next/navigation";
@@ -44,17 +45,32 @@ export default function Dashboard() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
 
+  // Use smart navigation for predictive prefetching
+  const { navigate: smartNavigate } = useSmartNavigation({
+    enablePrefetch: true,
+    enablePrediction: true,
+    enableMetrics: true,
+    preloadTimeout: 1500, // Shorter timeout for dashboard
+  });
+
   // Use React Query hook for analytics data
   const { data, loading, error, refetch, isFetching } = useAnalyticsData();
 
   useEffect(() => {
     setIsClient(true);
 
-    // Prefetch common navigation routes
+    // Prefetch critical routes immediately
     if (router.prefetch) {
       router.prefetch("/estimates/new/guided");
       router.prefetch("/calculator");
       router.prefetch("/ai-assistant");
+
+      // Prefetch high-value routes after a short delay
+      setTimeout(() => {
+        router.prefetch("/estimates");
+        router.prefetch("/analytics");
+        router.prefetch("/settings");
+      }, 2000);
     }
   }, [router]);
 
@@ -62,14 +78,20 @@ export default function Dashboard() {
     async (path: string) => {
       try {
         if (isClient) {
-          await navigateTo(path);
+          // Use smart navigation for performance tracking and prediction
+          smartNavigate(path);
         }
       } catch (error) {
         console.error("Navigation error:", error);
-        // navigateTo already has proper error handling
+        // Fallback to regular navigation
+        try {
+          await navigateTo(path);
+        } catch (fallbackError) {
+          console.error("Fallback navigation error:", fallbackError);
+        }
       }
     },
-    [isClient, navigateTo],
+    [isClient, smartNavigate, navigateTo],
   );
 
   const isEmpty = useMemo(

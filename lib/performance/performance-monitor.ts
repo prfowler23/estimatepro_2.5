@@ -1,19 +1,50 @@
 // Performance Monitoring System
-// Comprehensive performanceApi tracking, metrics collection, and optimization
+// Comprehensive performance tracking, metrics collection, and optimization
 
-// Use built-in performance if available (Node.js), otherwise fall back to browser performance
-const performanceApi = (() => {
-  if (typeof performance !== "undefined") {
-    return performance;
+// Performance API polyfill with proper typing
+interface PerformanceAPI {
+  now(): number;
+  mark(name: string): void;
+  measure(name: string, startMark?: string, endMark?: string): void;
+  getEntriesByName(name: string): any[];
+  clearMarks(name?: string): void;
+  clearMeasures(name?: string): void;
+}
+
+// Use built-in performance if available, otherwise fall back to polyfill
+const perfApi: PerformanceAPI = (() => {
+  if (typeof performance !== "undefined" && performance.now) {
+    return performance as PerformanceAPI;
   }
-  // Fallback for environments without performanceApi API
+  // Polyfill for environments without Performance API
+  const marks = new Map<string, number>();
+  const measures = new Map<
+    string,
+    { start: number; end: number; duration: number }
+  >();
+
   return {
     now: () => Date.now(),
-    mark: () => {},
-    measure: () => {},
-    getEntriesByName: () => [],
-    clearMarks: () => {},
-    clearMeasures: () => {},
+    mark: (name: string) => {
+      marks.set(name, Date.now());
+    },
+    measure: (name: string, startMark?: string, endMark?: string) => {
+      const start = startMark ? marks.get(startMark) || Date.now() : Date.now();
+      const end = endMark ? marks.get(endMark) || Date.now() : Date.now();
+      measures.set(name, { start, end, duration: end - start });
+    },
+    getEntriesByName: (name: string) => {
+      const measure = measures.get(name);
+      return measure ? [measure] : [];
+    },
+    clearMarks: (name?: string) => {
+      if (name) marks.delete(name);
+      else marks.clear();
+    },
+    clearMeasures: (name?: string) => {
+      if (name) measures.delete(name);
+      else measures.clear();
+    },
   };
 })();
 
@@ -161,6 +192,7 @@ export class PerformanceMonitor {
 
     if (this.config.enabled) {
       this.startMetricsCollection();
+      this.setupCleanupHandlers();
     }
   }
 
@@ -259,7 +291,7 @@ export class PerformanceMonitor {
     const alert: PerformanceAlert = {
       id: `${metric}-${type}-${Date.now()}`,
       type,
-      message: `${metric} performanceApi ${type}: ${value.toFixed(2)}ms exceeds ${threshold}ms threshold`,
+      message: `${metric} performance ${type}: ${value.toFixed(2)}ms exceeds ${threshold}ms threshold`,
       metric,
       value,
       threshold,
@@ -276,13 +308,14 @@ export class PerformanceMonitor {
     console.warn(`Performance Alert: ${alert.message}`);
   }
 
-  // Start performanceApi timing
+  // Start performance timing
   startTimer(name: string): void {
     if (!this.config.enabled) return;
-    this.timers.set(name, performanceApi.now());
+    this.timers.set(name, perfApi.now());
+    perfApi.mark(`${name}-start`);
   }
 
-  // End performanceApi timing and record entry
+  // End performance timing and record entry
   endTimer(
     name: string,
     type: PerformanceEntry["type"],
@@ -299,7 +332,9 @@ export class PerformanceMonitor {
       return 0;
     }
 
-    const duration = performanceApi.now() - startTime;
+    const duration = perfApi.now() - startTime;
+    perfApi.mark(`${name}-end`);
+    perfApi.measure(name, `${name}-start`, `${name}-end`);
     this.timers.delete(name);
 
     const entry: PerformanceEntry = {
@@ -317,7 +352,7 @@ export class PerformanceMonitor {
     return duration;
   }
 
-  // Record performanceApi entry directly
+  // Record performance entry directly
   recordEntry(entry: PerformanceEntry): void {
     if (!this.config.enabled) return;
     this.addEntry(entry);
@@ -394,12 +429,12 @@ export class PerformanceMonitor {
     }
   }
 
-  // Get performanceApi metrics
+  // Get performance metrics
   getMetrics(): PerformanceMetrics {
     return { ...this.metrics };
   }
 
-  // Get performanceApi entries
+  // Get performance entries
   getEntries(filter?: {
     type?: PerformanceEntry["type"];
     userId?: string;
@@ -427,7 +462,7 @@ export class PerformanceMonitor {
     return entries;
   }
 
-  // Get performanceApi alerts
+  // Get performance alerts
   getAlerts(resolved: boolean = false): PerformanceAlert[] {
     return this.alerts.filter((alert) => alert.resolved === resolved);
   }
@@ -440,13 +475,13 @@ export class PerformanceMonitor {
     }
   }
 
-  // Subscribe to performanceApi alerts
+  // Subscribe to performance alerts
   subscribe(callback: (alert: PerformanceAlert) => void): () => void {
     this.subscribers.add(callback);
     return () => this.subscribers.delete(callback);
   }
 
-  // Get performanceApi report
+  // Get performance report
   getReport(timeRange: { start: number; end: number }): {
     summary: PerformanceMetrics;
     entries: PerformanceEntry[];
@@ -567,11 +602,13 @@ export class PerformanceMonitor {
     });
   }
 
-  // Clear performanceApi data
+  // Clear performance data
   clear(): void {
     this.entries = [];
     this.alerts = [];
     this.timers.clear();
+    perfApi.clearMarks();
+    perfApi.clearMeasures();
     this.metrics = this.initializeMetrics();
   }
 
@@ -580,6 +617,40 @@ export class PerformanceMonitor {
     if (this.metricsInterval) {
       clearInterval(this.metricsInterval);
       this.metricsInterval = undefined;
+    }
+    this.clear();
+  }
+
+  // Cleanup on process exit
+  private setupCleanupHandlers(): void {
+    if (typeof process !== "undefined") {
+      const cleanup = () => {
+        this.stop();
+        // Save any pending metrics
+        if (this.config.enableReporting) {
+          this.flushMetrics();
+        }
+      };
+
+      process.on("exit", cleanup);
+      process.on("SIGINT", cleanup);
+      process.on("SIGTERM", cleanup);
+      process.on("uncaughtException", (error) => {
+        console.error("Uncaught exception in performance monitor:", error);
+        cleanup();
+      });
+    }
+  }
+
+  private flushMetrics(): void {
+    // Implement metric flushing logic here
+    const report = this.getReport({
+      start: Date.now() - this.config.metricsInterval,
+      end: Date.now(),
+    });
+    // Could send to external monitoring service
+    if (this.config.enableReporting) {
+      console.log("Performance metrics flushed:", report.summary);
     }
   }
 }
@@ -640,7 +711,7 @@ export const performanceMiddleware = (
   response: any, // Use any to avoid Response type issues
   next: () => void,
 ) => {
-  const startTime = performanceApi.now();
+  const startTime = perfApi.now();
   const url = new URL(request.url || "").pathname;
 
   performanceMonitor.startTimer(`api-${url}`);
@@ -648,7 +719,7 @@ export const performanceMiddleware = (
   // Use a different approach for response completion tracking
   const originalEnd = response.end;
   response.end = function (chunk: any, encoding: any) {
-    const duration = performanceApi.now() - startTime;
+    const duration = perfApi.now() - startTime;
     const success = response.statusCode < 400;
 
     performanceMonitor.recordEntry({
@@ -669,6 +740,15 @@ export const performanceMiddleware = (
   };
 
   next();
+};
+
+// Export all types for better module integration
+export type {
+  PerformanceMetrics,
+  PerformanceEntry,
+  PerformanceThreshold,
+  PerformanceAlert,
+  PerformanceConfig,
 };
 
 export default performanceMonitor;

@@ -4,10 +4,11 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import {
-  RealTimePricingService,
+  unifiedRealTimePricingService,
+  UnifiedRealTimePricingService,
   RealTimePricingResult,
   RealTimePricingConfig,
-} from "@/lib/services/real-time-pricing-service";
+} from "@/lib/services/real-time-pricing-service-unified";
 import {
   CrossStepValidationService,
   CrossStepValidationResult,
@@ -50,7 +51,7 @@ export interface UseRealTimePricingReturn {
   recalculate: (flowData: GuidedFlowData) => Promise<void>;
 
   // Service instances (for advanced usage)
-  pricingService: RealTimePricingService;
+  pricingService: UnifiedRealTimePricingService;
   validationService: CrossStepValidationService;
 }
 
@@ -75,9 +76,7 @@ export function useRealTimePricing({
   const [validationError, setValidationError] = useState<Error | null>(null);
 
   // Service instances
-  const pricingService = useRef(
-    RealTimePricingService.getInstance(pricingConfig),
-  );
+  const pricingService = useRef(unifiedRealTimePricingService);
   const validationService = useRef(
     CrossStepValidationService.getInstance(validationConfig),
   );

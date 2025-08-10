@@ -25,7 +25,17 @@ export interface ValidationContext {
   previousEstimates?: any;
 }
 
+/**
+ * Service for validating takeoff measurements and requirements
+ */
 export class TakeoffValidationService {
+  /**
+   * Validate measurements against service requirements and quality standards
+   * @param measurements - Array of measurements to validate
+   * @param services - Service codes to validate against
+   * @param context - Optional validation context with external data
+   * @returns Validation result with errors, warnings, and suggestions
+   */
   validateMeasurements(
     measurements: MeasurementEntry[],
     services: string[],
@@ -496,21 +506,16 @@ export class TakeoffValidationService {
     measurements: MeasurementEntry[],
   ): MeasurementEntry[] {
     const duplicates: MeasurementEntry[] = [];
+    const seen = new Map<string, MeasurementEntry>();
 
-    for (let i = 0; i < measurements.length; i++) {
-      for (let j = i + 1; j < measurements.length; j++) {
-        const m1 = measurements[i];
-        const m2 = measurements[j];
+    for (const m of measurements) {
+      // Create a unique key based on properties that identify duplicates
+      const key = `${m.category}-${m.description}-${m.location}-${m.width.toFixed(1)}-${m.height.toFixed(1)}`;
 
-        if (
-          m1.category === m2.category &&
-          m1.description === m2.description &&
-          m1.location === m2.location &&
-          Math.abs(m1.width - m2.width) < 0.1 &&
-          Math.abs(m1.height - m2.height) < 0.1
-        ) {
-          duplicates.push(m2);
-        }
+      if (seen.has(key)) {
+        duplicates.push(m);
+      } else {
+        seen.set(key, m);
       }
     }
 
@@ -521,19 +526,31 @@ export class TakeoffValidationService {
     measurements: MeasurementEntry[],
   ): MeasurementEntry[] {
     const similar: MeasurementEntry[] = [];
+    const categoryGroups = new Map<string, MeasurementEntry[]>();
 
-    for (let i = 0; i < measurements.length; i++) {
-      for (let j = i + 1; j < measurements.length; j++) {
-        const m1 = measurements[i];
-        const m2 = measurements[j];
+    // Group by category for faster comparison
+    for (const m of measurements) {
+      const existing = categoryGroups.get(m.category) || [];
+      existing.push(m);
+      categoryGroups.set(m.category, existing);
+    }
 
-        if (
-          m1.category === m2.category &&
-          Math.abs(m1.width - m2.width) < 1 &&
-          Math.abs(m1.height - m2.height) < 1 &&
-          Math.abs(m1.total - m2.total) < 5
-        ) {
-          similar.push(m2);
+    // Only compare within same category
+    for (const [category, items] of categoryGroups) {
+      if (items.length < 2) continue;
+
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const m1 = items[i];
+          const m2 = items[j];
+
+          if (
+            Math.abs(m1.width - m2.width) < 1 &&
+            Math.abs(m1.height - m2.height) < 1 &&
+            Math.abs(m1.total - m2.total) < 5
+          ) {
+            similar.push(m2);
+          }
         }
       }
     }
@@ -727,18 +744,34 @@ export class TakeoffValidationService {
   }
 
   private getServiceCategoryMapping(): Record<string, MeasurementCategory[]> {
-    return {
-      WC: ["glass_windows", "glass_doors", "glass_storefront"],
-      GR: ["glass_windows", "glass_doors", "glass_storefront"],
-      BWP: ["facade_brick", "facade_concrete", "facade_metal", "facade_stone"],
-      BWS: ["facade_brick", "facade_concrete", "facade_metal", "facade_stone"],
-      HBW: ["facade_concrete", "facade_metal", "facade_stone"],
-      PWF: ["flat_surface"],
-      HFS: ["flat_surface"],
-      PC: ["parking_spaces", "parking_deck"],
-      PWP: ["parking_deck", "parking_spaces"],
-      IW: ["inner_wall"],
-      DC: ["ceiling"],
-    };
+    // Use a static map for better performance
+    if (!this.serviceCategoryMap) {
+      this.serviceCategoryMap = {
+        WC: ["glass_windows", "glass_doors", "glass_storefront"],
+        GR: ["glass_windows", "glass_doors", "glass_storefront"],
+        BWP: [
+          "facade_brick",
+          "facade_concrete",
+          "facade_metal",
+          "facade_stone",
+        ],
+        BWS: [
+          "facade_brick",
+          "facade_concrete",
+          "facade_metal",
+          "facade_stone",
+        ],
+        HBW: ["facade_concrete", "facade_metal", "facade_stone"],
+        PWF: ["flat_surface"],
+        HFS: ["flat_surface"],
+        PC: ["parking_spaces", "parking_deck"],
+        PWP: ["parking_deck", "parking_spaces"],
+        IW: ["inner_wall"],
+        DC: ["ceiling"],
+      };
+    }
+    return this.serviceCategoryMap;
   }
+
+  private serviceCategoryMap?: Record<string, MeasurementCategory[]>;
 }

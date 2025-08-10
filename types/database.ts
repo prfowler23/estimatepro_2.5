@@ -4,22 +4,38 @@ import type { Database as SupabaseDatabase, Json } from "./supabase";
 export type Database = SupabaseDatabase;
 export type { Json };
 
-// Additional helper types for common database operations
+/**
+ * Helper type to extract row types from database tables
+ * @template T - The table name
+ */
 export type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
+/**
+ * Helper type to extract insert types from database tables
+ * @template T - The table name
+ */
 export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Insert"];
+/**
+ * Helper type to extract update types from database tables
+ * @template T - The table name
+ */
 export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Update"];
+/**
+ * Helper type to extract enum types from the database
+ * @template T - The enum name
+ */
 export type Enums<T extends keyof Database["public"]["Enums"]> =
   Database["public"]["Enums"][T];
 
 // Specific table types for common usage
 export type Profile = Tables<"profiles">;
 export type Customer = Tables<"customers">;
-export type Estimate = Tables<"estimates">;
+export type EstimateRow = Tables<"estimates">;
 export type EstimateService = Tables<"estimate_services">;
 export type EstimationFlow = Tables<"estimation_flows">;
+export type EstimateFlow = EstimationFlow; // Alias for backward compatibility
 export type ServiceRate = Tables<"service_rates">;
 export type AnalyticsEvent = Tables<"analytics_events">;
 export type WorkflowAnalytics = Tables<"workflow_analytics">;

@@ -27,55 +27,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-interface ServiceDuration {
-  service: string;
-  serviceName?: string;
-  baseDuration: number;
-  weatherImpact: number;
-  finalDuration: number;
-  confidence: "high" | "medium" | "low";
-  dependencies: string[];
-  isOverridden?: boolean;
-  overrideReason?: string;
-  originalDuration?: number;
-  overrideBy?: string;
-  overrideDate?: Date;
-}
-
-interface ManualOverrideProps {
-  serviceDurations: ServiceDuration[];
-  onOverride: (service: string, newDuration: number, reason: string) => void;
-  onRemoveOverride?: (service: string) => void;
-  allowRemoval?: boolean;
-}
-
-const SERVICE_NAMES: Record<string, string> = {
-  WC: "Window Cleaning",
-  GR: "Glass Restoration",
-  BWP: "Building Wash (Pressure)",
-  BWS: "Building Wash (Soft)",
-  HBW: "High-Rise Building Wash",
-  PWF: "Pressure Wash (Flat)",
-  HFS: "Hard Floor Scrubbing",
-  PC: "Parking Cleaning",
-  PWP: "Parking Pressure Wash",
-  IW: "Interior Wall Cleaning",
-  DC: "Deck Cleaning",
-};
-
-const OVERRIDE_REASONS = [
-  "Client request for extended timeline",
-  "Additional work discovered",
-  "Equipment/crew availability constraints",
-  "Site access limitations",
-  "Weather contingency adjustment",
-  "Quality assurance requirements",
-  "Coordination with other trades",
-  "Safety considerations",
-  "Custom work requirements",
-  "Other (specify below)",
-];
+import type { ManualOverrideProps } from "./types";
+import {
+  SERVICE_NAMES,
+  OVERRIDE_REASONS,
+  DURATION_LIMITS,
+  formatDurationChange,
+} from "./constants";
 
 // Validation schema for duration override form
 const durationOverrideSchema = z
@@ -86,12 +44,12 @@ const durationOverrideSchema = z
       .min(1, "Duration is required")
       .refine((val) => {
         const num = parseFloat(val);
-        return !isNaN(num) && num > 0;
-      }, "Duration must be greater than 0")
+        return !isNaN(num) && num >= DURATION_LIMITS.MIN;
+      }, `Duration must be at least ${DURATION_LIMITS.MIN} days`)
       .refine((val) => {
         const num = parseFloat(val);
-        return !isNaN(num) && num <= 365;
-      }, "Duration cannot exceed 365 days"),
+        return !isNaN(num) && num <= DURATION_LIMITS.MAX;
+      }, `Duration cannot exceed ${DURATION_LIMITS.MAX} days`),
     reason: z.string().min(1, "Please provide a reason for the override"),
     customReason: z.string().optional(),
   })
@@ -149,16 +107,6 @@ export function ManualOverride({
   const getSelectedServiceData = () => {
     const selectedService = form.watch("service");
     return serviceDurations.find((sd) => sd.service === selectedService);
-  };
-
-  const formatDurationChange = (original: number, newDur: number): string => {
-    const diff = newDur - original;
-    if (diff > 0) {
-      return `+${diff.toFixed(1)} days longer`;
-    } else if (diff < 0) {
-      return `${Math.abs(diff).toFixed(1)} days shorter`;
-    }
-    return "No change";
   };
 
   // Filter out already overridden services from dropdown (unless allowing re-override)
@@ -250,8 +198,8 @@ export function ManualOverride({
                           <Input
                             type="number"
                             step="0.5"
-                            min="0.5"
-                            max="365"
+                            min={DURATION_LIMITS.MIN}
+                            max={DURATION_LIMITS.MAX}
                             placeholder="Enter new duration"
                             {...field}
                           />

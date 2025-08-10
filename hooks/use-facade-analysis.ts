@@ -7,7 +7,7 @@ import {
   UpdateFacadeAnalysisInput,
 } from "@/lib/types/facade-analysis-types";
 import { facadeAnalysisService } from "@/lib/services/facade-analysis-service";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 interface FacadeAnalysisWithImages {
   analysis: FacadeAnalysis;

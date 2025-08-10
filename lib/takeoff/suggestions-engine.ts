@@ -28,7 +28,17 @@ export interface Template {
   };
 }
 
+/**
+ * Engine for generating intelligent measurement suggestions
+ */
 export class TakeoffSuggestionsEngine {
+  /**
+   * Generate suggestions based on building type and selected services
+   * @param buildingType - Type of building (office, retail, etc)
+   * @param services - Selected service codes
+   * @param existingMeasurements - Current measurements
+   * @returns Prioritized list of suggestions
+   */
   getSuggestionsForBuildingType(
     buildingType: string,
     services: string[],
@@ -457,7 +467,12 @@ export class TakeoffSuggestionsEngine {
     }
   }
 
-  // Get suggestions based on photo analysis results
+  /**
+   * Generate suggestions based on photo analysis results
+   * @param photoAnalysis - AI photo analysis results
+   * @param existingMeasurements - Current measurements
+   * @returns List of suggestions based on detected features
+   */
   getPhotoAnalysisSuggestions(
     photoAnalysis: any,
     existingMeasurements: MeasurementEntry[],

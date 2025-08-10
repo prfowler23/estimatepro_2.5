@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,51 +17,31 @@ import {
   Lightbulb,
   Eye,
   EyeOff,
+  Loader2,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { withComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
+import type { RiskFactorProps } from "@/lib/types/pricing-types";
+import {
+  calculateRiskScore,
+  getRiskLevelFromScore,
+} from "@/lib/pricing/pricing-utils";
 
-interface RiskFactor {
-  id: string;
-  category:
-    | "weather"
-    | "access"
-    | "complexity"
-    | "client"
-    | "timeline"
-    | "safety"
-    | "regulatory";
-  title: string;
-  description: string;
-  impact: number; // Percentage impact on price
-  probability: number; // 0-100 probability of occurrence
-  severity: "low" | "medium" | "high" | "critical";
-  mitigation: string;
-  factors?: string[];
-  costImpact?: number; // Dollar amount
-  timeImpact?: number; // Days
-  insuranceRequired?: boolean;
-  contractClauses?: string[];
-}
-
-interface RiskFactorProps {
-  riskFactors: RiskFactor[];
-  totalImpact: number;
-  projectValue: number;
-  onMitigationUpdate?: (riskId: string, mitigation: string) => void;
-}
-
-export function RiskFactorAnalysis({
+// Component wrapped in React.memo for performance optimization
+const RiskFactorAnalysisComponent: React.FC<RiskFactorProps> = ({
   riskFactors,
   totalImpact,
   projectValue,
   onMitigationUpdate,
-}: RiskFactorProps) {
+}) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedRisk, setExpandedRisk] = useState<string | null>(null);
   const [showMitigated, setShowMitigated] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
 
-  const getRiskColor = (severity: string): string => {
+  // Memoized color functions
+  const getRiskColor = useCallback((severity: string): string => {
     switch (severity) {
       case "low":
         return "text-green-600 bg-green-50 border-green-200";
@@ -74,9 +54,9 @@ export function RiskFactorAnalysis({
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
     }
-  };
+  }, []);
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = useCallback((category: string) => {
     switch (category) {
       case "weather":
         return <Cloud className="w-4 h-4" />;
@@ -95,21 +75,23 @@ export function RiskFactorAnalysis({
       default:
         return <AlertTriangle className="w-4 h-4" />;
     }
-  };
+  }, []);
 
-  const calculateRiskScore = (impact: number, probability: number): number => {
-    return (impact * probability) / 100;
-  };
+  // Memoized calculations
+  const totalRiskScore = useMemo(() => {
+    setIsCalculating(true);
+    try {
+      return riskFactors.reduce(
+        (total, factor) =>
+          total + calculateRiskScore(factor.impact, factor.probability),
+        0,
+      );
+    } finally {
+      setIsCalculating(false);
+    }
+  }, [riskFactors]);
 
-  const getTotalRiskScore = (): number => {
-    return riskFactors.reduce(
-      (total, factor) =>
-        total + calculateRiskScore(factor.impact, factor.probability),
-      0,
-    );
-  };
-
-  const getHighestRisks = (): RiskFactor[] => {
+  const highestRisks = useMemo(() => {
     return [...riskFactors]
       .sort(
         (a, b) =>
@@ -117,9 +99,9 @@ export function RiskFactorAnalysis({
           calculateRiskScore(a.impact, a.probability),
       )
       .slice(0, 3);
-  };
+  }, [riskFactors]);
 
-  const groupRisksByCategory = () => {
+  const groupedRisks = useMemo(() => {
     return riskFactors.reduce(
       (groups, factor) => {
         const category = factor.category;
@@ -129,44 +111,26 @@ export function RiskFactorAnalysis({
         groups[category].push(factor);
         return groups;
       },
-      {} as Record<string, RiskFactor[]>,
+      {} as Record<string, any[]>,
     );
-  };
+  }, [riskFactors]);
 
-  const getRiskLevel = (
-    totalScore: number,
-  ): { level: string; color: string; description: string } => {
-    if (totalScore < 10)
-      return {
-        level: "Low",
-        color: "text-green-600 bg-green-50",
-        description: "Minimal impact on project execution and pricing",
-      };
-    if (totalScore < 25)
-      return {
-        level: "Medium",
-        color: "text-yellow-600 bg-yellow-50",
-        description: "Moderate risks that require active management",
-      };
-    if (totalScore < 50)
-      return {
-        level: "High",
-        color: "text-orange-600 bg-orange-50",
-        description:
-          "Significant risks requiring careful planning and contingencies",
-      };
-    return {
-      level: "Critical",
-      color: "text-red-600 bg-red-50",
-      description:
-        "Major risks that may require project restructuring or decline",
-    };
-  };
+  const riskAssessment = useMemo(() => {
+    return getRiskLevelFromScore(totalRiskScore);
+  }, [totalRiskScore]);
 
-  const totalRiskScore = getTotalRiskScore();
-  const riskAssessment = getRiskLevel(totalRiskScore);
-  const highestRisks = getHighestRisks();
-  const groupedRisks = groupRisksByCategory();
+  // Memoized event handlers
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, []);
+
+  const handleExpandRisk = useCallback((riskId: string) => {
+    setExpandedRisk((prev) => (prev === riskId ? null : riskId));
+  }, []);
+
+  const handleToggleMitigation = useCallback(() => {
+    setShowMitigated((prev) => !prev);
+  }, []);
 
   return (
     <Card className="w-full">
@@ -178,7 +142,11 @@ export function RiskFactorAnalysis({
       </CardHeader>
 
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="factors">Risk Factors</TabsTrigger>
@@ -188,134 +156,154 @@ export function RiskFactorAnalysis({
 
           <TabsContent value="overview" className="space-y-6">
             {/* Overall Risk Assessment */}
-            <Card className={`${riskAssessment.color} border`}>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">
-                      Overall Risk Level
-                    </h3>
-                    <p className="text-sm opacity-80 mt-1">
-                      {riskAssessment.description}
-                    </p>
-                  </div>
-                  <Badge
-                    className={`${riskAssessment.color} border-current text-lg px-3 py-1`}
-                  >
-                    {riskAssessment.level}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold">
-                      {totalRiskScore.toFixed(1)}
-                    </p>
-                    <p className="text-sm opacity-75">Risk Score</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold">
-                      +{totalImpact.toFixed(1)}%
-                    </p>
-                    <p className="text-sm opacity-75">Price Impact</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold">
-                      ${((projectValue * totalImpact) / 100).toLocaleString()}
-                    </p>
-                    <p className="text-sm opacity-75">Cost Impact</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold">{riskFactors.length}</p>
-                    <p className="text-sm opacity-75">Risk Factors</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Top Risk Factors */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Highest Impact Risks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {highestRisks.map((factor, index) => (
-                    <div
-                      key={factor.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-xs">
-                          #{index + 1}
-                        </Badge>
-                        {getCategoryIcon(factor.category)}
-                        <div>
-                          <p className="font-medium">{factor.title}</p>
-                          <p className="text-sm text-gray-600 capitalize">
-                            {factor.category}
-                          </p>
-                        </div>
+            {isCalculating ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                <span>Calculating risk metrics...</span>
+              </div>
+            ) : (
+              <>
+                {/* Overall Risk Assessment */}
+                <Card className={`${riskAssessment.color} border`}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          Overall Risk Level
+                        </h3>
+                        <p className="text-sm opacity-80 mt-1">
+                          {riskAssessment.description}
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold">
-                          +{factor.impact.toFixed(1)}%
+                      <Badge
+                        className={`${riskAssessment.color} border-current text-lg px-3 py-1`}
+                      >
+                        {riskAssessment.level}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">
+                          {totalRiskScore.toFixed(1)}
                         </p>
-                        <p className="text-sm text-gray-600">
-                          {factor.probability}% chance
+                        <p className="text-sm opacity-75">Risk Score</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">
+                          +{totalImpact.toFixed(1)}%
                         </p>
+                        <p className="text-sm opacity-75">Price Impact</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">
+                          $
+                          {(
+                            (projectValue * totalImpact) /
+                            100
+                          ).toLocaleString()}
+                        </p>
+                        <p className="text-sm opacity-75">Cost Impact</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">
+                          {riskFactors.length}
+                        </p>
+                        <p className="text-sm opacity-75">Risk Factors</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            {/* Risk Distribution by Category */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Risk Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(groupedRisks).map(([category, factors]) => {
-                    const categoryImpact = factors.reduce(
-                      (sum, f) => sum + f.impact,
-                      0,
-                    );
-                    const categoryScore = factors.reduce(
-                      (sum, f) =>
-                        sum + calculateRiskScore(f.impact, f.probability),
-                      0,
-                    );
-
-                    return (
-                      <div key={category} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            {getCategoryIcon(category)}
-                            <span className="font-medium capitalize">
-                              {category}
-                            </span>
+                {/* Top Risk Factors */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      Highest Impact Risks
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {highestRisks.map((factor, index) => (
+                        <div
+                          key={factor.id}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
                             <Badge variant="outline" className="text-xs">
-                              {factors.length} factor
-                              {factors.length !== 1 ? "s" : ""}
+                              #{index + 1}
                             </Badge>
+                            {getCategoryIcon(factor.category)}
+                            <div>
+                              <p className="font-medium">{factor.title}</p>
+                              <p className="text-sm text-gray-600 capitalize">
+                                {factor.category}
+                              </p>
+                            </div>
                           </div>
-                          <span className="font-medium">
-                            +{categoryImpact.toFixed(1)}%
-                          </span>
+                          <div className="text-right">
+                            <p className="font-bold">
+                              +{factor.impact.toFixed(1)}%
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {factor.probability}% chance
+                            </p>
+                          </div>
                         </div>
-                        <Progress
-                          value={(categoryScore / totalRiskScore) * 100}
-                          className="h-2"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Risk Distribution by Category */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Risk Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {Object.entries(groupedRisks).map(
+                        ([category, factors]) => {
+                          const categoryImpact = factors.reduce(
+                            (sum, f) => sum + f.impact,
+                            0,
+                          );
+                          const categoryScore = factors.reduce(
+                            (sum, f) =>
+                              sum + calculateRiskScore(f.impact, f.probability),
+                            0,
+                          );
+
+                          return (
+                            <div key={category} className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  {getCategoryIcon(category)}
+                                  <span className="font-medium capitalize">
+                                    {category}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {factors.length} factor
+                                    {factors.length !== 1 ? "s" : ""}
+                                  </Badge>
+                                </div>
+                                <span className="font-medium">
+                                  +{categoryImpact.toFixed(1)}%
+                                </span>
+                              </div>
+                              <Progress
+                                value={(categoryScore / totalRiskScore) * 100}
+                                className="h-2"
+                              />
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="factors" className="space-y-4">
@@ -324,7 +312,7 @@ export function RiskFactorAnalysis({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowMitigated(!showMitigated)}
+                onClick={handleToggleMitigation}
               >
                 {showMitigated ? (
                   <EyeOff className="w-4 h-4 mr-2" />
@@ -378,11 +366,7 @@ export function RiskFactorAnalysis({
                   {factor.factors && factor.factors.length > 0 && (
                     <div className="mb-3">
                       <button
-                        onClick={() =>
-                          setExpandedRisk(
-                            expandedRisk === factor.id ? null : factor.id,
-                          )
-                        }
+                        onClick={() => handleExpandRisk(factor.id)}
                         className="text-sm font-medium text-blue-600 hover:text-blue-800"
                       >
                         {expandedRisk === factor.id ? "Hide" : "Show"}{" "}
@@ -666,4 +650,20 @@ export function RiskFactorAnalysis({
       </CardContent>
     </Card>
   );
-}
+};
+
+// Export memoized component with error boundary
+export const RiskFactorAnalysis = withComponentErrorBoundary(
+  React.memo(RiskFactorAnalysisComponent, (prevProps, nextProps) => {
+    // Custom comparison function for memo
+    return (
+      prevProps.totalImpact === nextProps.totalImpact &&
+      prevProps.projectValue === nextProps.projectValue &&
+      JSON.stringify(prevProps.riskFactors) ===
+        JSON.stringify(nextProps.riskFactors)
+    );
+  }),
+  "RiskFactorAnalysis",
+);
+
+RiskFactorAnalysis.displayName = "RiskFactorAnalysis";

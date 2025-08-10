@@ -9,7 +9,7 @@ import {
 
 async function syncHandler(
   request: NextRequest,
-  context: { params: Record<string, string> },
+  context: { params?: Promise<Record<string, string>> },
 ) {
   try {
     const { searchParams } = new URL(request.url);

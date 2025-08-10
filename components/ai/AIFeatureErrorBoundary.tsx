@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, RefreshCw, Home, Bug } from "lucide-react";
 import { AIErrorRecovery } from "./AIErrorRecovery";
-import { useRouter } from "next/navigation";
 import { AI_CONSTANTS } from "@/lib/types/ai-types";
+import { logger } from "@/lib/utils/logger";
 
 interface AIFeatureErrorBoundaryState {
   hasError: boolean;
@@ -76,7 +76,7 @@ export class AIFeatureErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error to monitoring service
-    console.error("AI Feature Error:", error, errorInfo);
+    logger.error("AI Feature Error:", error, errorInfo);
 
     // Call parent error handler if provided
     if (this.props.onError) {
@@ -98,7 +98,7 @@ export class AIFeatureErrorBoundary extends React.Component<
   handleRetry = () => {
     // If we've retried too many times, show a different message
     if (this.state.retryCount >= AI_CONSTANTS.MAX_RETRIES) {
-      console.warn("Max retries reached for AI feature");
+      logger.warn("Max retries reached for AI feature");
       return;
     }
 

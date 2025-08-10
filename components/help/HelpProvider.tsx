@@ -6,15 +6,23 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
+  useMemo,
 } from "react";
+import { HelpContextEngine } from "@/lib/help/help-context-engine";
 import {
-  HelpContextEngine,
   HelpContent,
-  type HelpContext,
+  HelpContext,
   UserExperience,
   InteractiveTutorial,
-} from "@/lib/help/help-context-engine";
+} from "@/lib/help/help-types";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
+import { debounce } from "@/lib/utils";
+import { HelpSessionStorage } from "@/lib/help/help-session-storage";
+
+// Configuration constants
+const HESITATION_TIMEOUT_MS = 30000; // 30 seconds
+const DEBOUNCE_DELAY_MS = 500; // 500ms for debounced actions
 
 interface HelpState {
   currentContext: HelpContext | null;
@@ -104,10 +112,12 @@ export function HelpProvider({
     initialFlowData,
   );
 
-  // Initialize help system
+  // Initialize help system and session storage
   useEffect(() => {
     HelpContextEngine.initialize();
-  }, []);
+    HelpSessionStorage.initialize(userId, userProfile);
+    HelpSessionStorage.migrate();
+  }, [userId, userProfile]);
 
   // Update available help when context changes
   useEffect(() => {
@@ -141,7 +151,7 @@ export function HelpProvider({
       lastActivity = Date.now();
       clearTimeout(hesitationTimer);
 
-      // Set hesitation timer (30 seconds of inactivity)
+      // Set hesitation timer
       hesitationTimer = setTimeout(() => {
         if (state.currentContext) {
           trackBehavior("hesitation", {
@@ -149,7 +159,7 @@ export function HelpProvider({
             context: state.currentContext,
           });
         }
-      }, 30000);
+      }, HESITATION_TIMEOUT_MS);
     };
 
     // Track various user activities
@@ -164,7 +174,7 @@ export function HelpProvider({
         document.removeEventListener(event, trackActivity, true);
       });
     };
-  }, [state.currentContext]);
+  }, [state.currentContext, trackBehavior]);
 
   const setContext = (context: HelpContext) => {
     setState((prev) => ({
@@ -246,6 +256,7 @@ export function HelpProvider({
       trackBehavior("tutorial_complete", {
         tutorialId: state.activeTutorial.id,
       });
+      HelpSessionStorage.completeTutorial(state.activeTutorial.id);
       exitTutorial();
     }
   };
@@ -272,51 +283,73 @@ export function HelpProvider({
     }
   };
 
-  const trackBehavior = (
-    action: string,
-    data?: Record<string, string | number | boolean>,
-  ) => {
-    const behavior = {
-      action,
-      timestamp: Date.now(),
-      data,
-    };
+  const trackBehaviorImmediate = useCallback(
+    (action: string, data?: Record<string, string | number | boolean>) => {
+      const behavior = {
+        action,
+        timestamp: Date.now(),
+        data,
+      };
 
-    if (state.currentContext) {
-      HelpContextEngine.trackUserBehavior(
-        userId,
-        state.currentContext,
-        behavior,
-      );
-    }
+      if (state.currentContext) {
+        HelpContextEngine.trackUserBehavior(
+          userId,
+          state.currentContext,
+          behavior,
+        );
+      }
 
-    // Update local state for specific behaviors
-    if (action === "error") {
-      setState((prev) => ({
-        ...prev,
-        userBehavior: {
-          ...prev.userBehavior,
-          errorCount: prev.userBehavior.errorCount + 1,
-        },
-      }));
-    }
+      // Update local state for specific behaviors
+      if (action === "error") {
+        setState((prev) => ({
+          ...prev,
+          userBehavior: {
+            ...prev.userBehavior,
+            errorCount: prev.userBehavior.errorCount + 1,
+          },
+        }));
+      }
 
-    if (action === "hesitation") {
-      setState((prev) => ({
-        ...prev,
-        userBehavior: {
-          ...prev.userBehavior,
-          hesitationIndicators: [
-            ...prev.userBehavior.hesitationIndicators,
-            data,
-          ],
-        },
-      }));
-    }
-  };
+      if (action === "hesitation") {
+        setState((prev) => ({
+          ...prev,
+          userBehavior: {
+            ...prev.userBehavior,
+            hesitationIndicators: [
+              ...prev.userBehavior.hesitationIndicators,
+              data,
+            ],
+          },
+        }));
+
+        // Track hesitation in session storage
+        if (state.currentContext?.stepId) {
+          HelpSessionStorage.trackHesitation(state.currentContext.stepId);
+        }
+      }
+
+      // Track errors in session storage
+      if (
+        action === "error" &&
+        data &&
+        typeof data === "object" &&
+        "message" in data
+      ) {
+        HelpSessionStorage.trackError(data.message as string);
+      }
+    },
+    [state.currentContext, userId],
+  );
+
+  // Debounced version for non-critical tracking
+  const trackBehavior = useMemo(
+    () => debounce(trackBehaviorImmediate, DEBOUNCE_DELAY_MS),
+    [trackBehaviorImmediate],
+  );
 
   const markHelpful = async (helpId: string) => {
     trackBehavior("help_helpful", { helpId });
+    HelpSessionStorage.rateHelp(helpId, true);
 
     // Update help analytics if we have a workflow ID
     if (state.workflowId) {
@@ -339,13 +372,17 @@ export function HelpProvider({
           }),
         });
       } catch (error) {
-        console.warn("Failed to record help analytics:", error);
+        // Silently fail in production, log in development
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to record help analytics:", error);
+        }
       }
     }
   };
 
   const markNotHelpful = async (helpId: string) => {
     trackBehavior("help_not_helpful", { helpId });
+    HelpSessionStorage.rateHelp(helpId, false);
 
     // Update help analytics if we have a workflow ID
     if (state.workflowId) {
@@ -368,7 +405,10 @@ export function HelpProvider({
           }),
         });
       } catch (error) {
-        console.warn("Failed to record help analytics:", error);
+        // Silently fail in production, log in development
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to record help analytics:", error);
+        }
       }
     }
   };
@@ -379,6 +419,7 @@ export function HelpProvider({
       triggeredHelp: prev.triggeredHelp.filter((h) => h.id !== helpId),
     }));
     trackBehavior("help_dismiss", { helpId });
+    HelpSessionStorage.dismissHelp(helpId);
 
     // Update help analytics if we have a workflow ID
     if (state.workflowId) {
@@ -401,7 +442,10 @@ export function HelpProvider({
           }),
         });
       } catch (error) {
-        console.warn("Failed to record help analytics:", error);
+        // Silently fail in production, log in development
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to record help analytics:", error);
+        }
       }
     }
   };
@@ -409,11 +453,14 @@ export function HelpProvider({
   const getContextualHelp = (): HelpContent[] => {
     if (!state.currentContext) return [];
 
-    return HelpContextEngine.getContextualHelp(
+    const help = HelpContextEngine.getContextualHelp(
       state.currentContext,
       userProfile,
       flowData,
     );
+
+    // Filter out dismissed help
+    return help.filter((h) => !HelpSessionStorage.wasHelpDismissed(h.id));
   };
 
   const getSmartSuggestions = (): HelpContent[] => {
@@ -429,9 +476,16 @@ export function HelpProvider({
   const getAvailableTutorials = (): InteractiveTutorial[] => {
     if (!state.currentContext) return [];
 
-    return HelpContextEngine.getAvailableTutorials(
+    const tutorials = HelpContextEngine.getAvailableTutorials(
       state.currentContext,
       userProfile,
+    );
+
+    // Filter out completed tutorials unless in developer mode
+    return tutorials.filter(
+      (t) =>
+        process.env.NODE_ENV === "development" ||
+        !HelpSessionStorage.wasTutorialCompleted(t.id),
     );
   };
 

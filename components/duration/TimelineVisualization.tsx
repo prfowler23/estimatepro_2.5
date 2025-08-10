@@ -34,26 +34,17 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-
-interface TimelineEntry {
-  service: string;
-  serviceName: string;
-  startDate: Date;
-  endDate: Date;
-  duration: number;
-  dependencies: string[];
-  weatherRisk: "low" | "medium" | "high";
-  isOnCriticalPath: boolean;
-  crewSize?: number;
-  status?: "scheduled" | "in_progress" | "completed" | "delayed";
-  confidence?: "high" | "medium" | "low";
-}
-
-interface TimelineVisualizationProps {
-  timeline: TimelineEntry[];
-  onAdjust?: (service: string, newStart: Date) => void;
-  showDetails?: boolean;
-}
+import type {
+  TimelineEntry,
+  TimelineVisualizationProps,
+  AdjustmentFormData,
+} from "./types";
+import {
+  SERVICE_COLORS,
+  STATUS_COLORS,
+  CHART_CONFIG,
+  DURATION_LIMITS,
+} from "./constants";
 
 export function TimelineVisualization({
   timeline,
@@ -63,26 +54,14 @@ export function TimelineVisualization({
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"timeline" | "details">("timeline");
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
-  const [adjustmentForm, setAdjustmentForm] = useState({
+  const [adjustmentForm, setAdjustmentForm] = useState<AdjustmentFormData>({
     startDate: "",
     duration: "",
     reason: "",
-    adjustmentType: "delay" as "delay" | "advance" | "extend" | "reduce",
+    adjustmentType: "delay",
   });
 
-  if (!timeline || timeline.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center text-muted-foreground">
-          <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>No timeline data available</p>
-          <p className="text-sm">
-            Add services and set a start date to view the project timeline
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const isEmpty = !timeline || timeline.length === 0;
 
   // Memoize timeline bounds calculation with safety checks
   const timelineBounds = useMemo(() => {
@@ -118,18 +97,11 @@ export function TimelineVisualization({
     return { validEntries, startDate, endDate, totalDays };
   }, [timeline]);
 
-  if (!timelineBounds) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center text-muted-foreground">
-          <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Invalid timeline data</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const { validEntries, startDate, endDate, totalDays } = timelineBounds;
+  const hasValidBounds = Boolean(timelineBounds);
+  const startDate = timelineBounds?.startDate ?? new Date();
+  const endDate = timelineBounds?.endDate ?? new Date();
+  const totalDays = timelineBounds?.totalDays ?? 1;
+  const validEntries = timelineBounds?.validEntries ?? [];
 
   const handleOpenAdjustmentDialog = (serviceEntry: TimelineEntry) => {
     setSelectedService(serviceEntry.service);
@@ -165,8 +137,14 @@ export function TimelineVisualization({
       }
 
       const newDuration = parseInt(durationValue, 10);
-      if (isNaN(newDuration) || newDuration < 1 || newDuration > 365) {
-        console.error("Duration must be between 1 and 365 days");
+      if (
+        isNaN(newDuration) ||
+        newDuration < DURATION_LIMITS.MIN ||
+        newDuration > DURATION_LIMITS.MAX
+      ) {
+        console.error(
+          `Duration must be between ${DURATION_LIMITS.MIN} and ${DURATION_LIMITS.MAX} days`,
+        );
         return;
       }
 
@@ -200,27 +178,13 @@ export function TimelineVisualization({
     weatherRisk: string,
     status?: string,
   ) => {
-    const baseColors: Record<string, string> = {
-      WC: "bg-blue-500",
-      GR: "bg-green-500",
-      BWP: "bg-purple-500",
-      BWS: "bg-indigo-500",
-      HBW: "bg-red-500",
-      PWF: "bg-cyan-500",
-      HFS: "bg-teal-500",
-      PC: "bg-orange-500",
-      PWP: "bg-yellow-500",
-      IW: "bg-pink-500",
-      DC: "bg-gray-500",
-    };
-
-    let baseColor = baseColors[service] || "bg-gray-500";
+    let baseColor = SERVICE_COLORS[service] || "bg-gray-500";
 
     // Adjust for status
     if (status === "completed") {
       baseColor = baseColor.replace("500", "600");
     } else if (status === "delayed") {
-      baseColor = "bg-red-400";
+      baseColor = STATUS_COLORS.delayed;
     } else if (status === "in_progress") {
       baseColor = baseColor.replace("500", "400");
     }
@@ -264,7 +228,10 @@ export function TimelineVisualization({
 
   // Memoize week markers generation
   const weekMarkers = useMemo(() => {
-    const markerInterval = Math.max(1, Math.floor(totalDays / 10));
+    const markerInterval = Math.max(
+      1,
+      Math.floor(totalDays / CHART_CONFIG.MARKER_INTERVAL_DIVISOR),
+    );
     const markers: Array<{
       date: Date;
       position: number;
@@ -350,7 +317,24 @@ export function TimelineVisualization({
         </CardHeader>
 
         <CardContent>
-          {viewMode === "timeline" ? (
+          {isEmpty ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No timeline data available</p>
+                <p className="text-sm">
+                  Add services and set a start date to view the project timeline
+                </p>
+              </CardContent>
+            </Card>
+          ) : !hasValidBounds ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Invalid timeline data</p>
+              </CardContent>
+            </Card>
+          ) : viewMode === "timeline" ? (
             <div className="space-y-4">
               {/* Timeline header with dates */}
               <div className="relative h-8 mb-4 border-b border-gray-200">
@@ -822,7 +806,7 @@ export function TimelineVisualization({
                             <Input
                               id="duration"
                               type="number"
-                              min="1"
+                              min={DURATION_LIMITS.MIN.toString()}
                               value={adjustmentForm.duration}
                               onChange={(e) =>
                                 setAdjustmentForm((prev) => ({

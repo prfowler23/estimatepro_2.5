@@ -1,6 +1,12 @@
-// Comprehensive type definitions for EstimatePro
+/**
+ * Comprehensive type definitions for EstimatePro
+ * Core business logic types for estimates and services
+ */
 
-// Service calculation types
+/**
+ * Result of service calculation including costs, labor, and equipment
+ * Used throughout the application for pricing calculations
+ */
 export interface ServiceCalculationResult {
   area: number;
   basePrice: number;
@@ -92,7 +98,10 @@ export interface BuildingData {
   features?: string[];
 }
 
-// AI extraction types
+/**
+ * AI-extracted data from documents, photos, or user input
+ * Used to pre-populate estimation forms and workflows
+ */
 export interface AIExtractedData {
   customer: {
     name: string;

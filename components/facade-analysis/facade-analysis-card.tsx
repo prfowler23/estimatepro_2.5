@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +24,8 @@ interface FacadeAnalysisCardProps {
   className?: string;
 }
 
-export function FacadeAnalysisCard({
+// Memoize the component to prevent unnecessary re-renders
+export const FacadeAnalysisCard = memo(function FacadeAnalysisCard({
   analysis,
   imageCount = 0,
   onClick,
@@ -164,4 +166,4 @@ export function FacadeAnalysisCard({
       </CardContent>
     </Card>
   );
-}
+});

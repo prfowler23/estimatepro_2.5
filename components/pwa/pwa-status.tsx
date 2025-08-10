@@ -49,60 +49,84 @@ export function PWAStatus({
   const [showOfflineAlert, setShowOfflineAlert] = useState(false);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let isMounted = true;
+
     // Subscribe to offline status changes
     const unsubscribe = offlineManager.subscribe((status) => {
+      if (!isMounted) return;
       setOfflineStatus(status);
 
       // Show offline alert when going offline
       if (!status.isOnline && showOfflineAlert === false) {
         setShowOfflineAlert(true);
-        setTimeout(() => setShowOfflineAlert(false), 5000);
+        timeoutId = setTimeout(() => {
+          if (isMounted) setShowOfflineAlert(false);
+        }, 5000);
       }
     });
 
     // Update PWA status periodically
     const interval = setInterval(async () => {
+      if (!isMounted) return;
       setPwaStatus(pwaService.getStatus());
 
       // Update cache stats
       if (showDetails) {
-        const stats = await pwaService.getCacheStats();
-        setCacheStats(stats);
+        try {
+          const stats = await pwaService.getCacheStats();
+          if (isMounted) setCacheStats(stats);
+        } catch (error) {
+          console.error("Failed to get cache stats:", error);
+        }
       }
     }, 5000);
 
     // Initial cache stats
     if (showDetails) {
-      pwaService.getCacheStats().then(setCacheStats);
+      pwaService
+        .getCacheStats()
+        .then((stats) => {
+          if (isMounted) setCacheStats(stats);
+        })
+        .catch(console.error);
     }
 
     return () => {
-      unsubscribe();
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (unsubscribe && typeof unsubscribe === "function") {
+        unsubscribe();
+      }
       clearInterval(interval);
     };
-  }, [showDetails]);
+  }, [showDetails, showOfflineAlert]);
 
   const handleSync = async () => {
     setIsSyncing(true);
     setSyncProgress(0);
+    let progressInterval: NodeJS.Timeout | null = null;
+    let finalTimeout: NodeJS.Timeout | null = null;
 
     try {
       // Simulate progress
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setSyncProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
       await offlineManager.sync();
 
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setSyncProgress(100);
 
-      setTimeout(() => {
+      finalTimeout = setTimeout(() => {
         setIsSyncing(false);
         setSyncProgress(0);
       }, 1000);
     } catch (error) {
       console.error("Sync failed:", error);
+      if (progressInterval) clearInterval(progressInterval);
+      if (finalTimeout) clearTimeout(finalTimeout);
       setIsSyncing(false);
       setSyncProgress(0);
     }
@@ -381,7 +405,11 @@ export function PWAStatus({
 }
 
 // Minimal offline indicator for navigation bars
-export function OfflineIndicator({ className = "" }: { className?: string }) {
+export function MinimalOfflineIndicator({
+  className = "",
+}: {
+  className?: string;
+}) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {

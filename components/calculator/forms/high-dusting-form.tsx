@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,7 +40,7 @@ interface HighDustingFormProps {
   onCancel: () => void;
 }
 
-export function HighDustingForm({ onSubmit, onCancel }: HighDustingFormProps) {
+const HighDustingFormBase = ({ onSubmit, onCancel }: HighDustingFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -493,4 +494,17 @@ export function HighDustingForm({ onSubmit, onCancel }: HighDustingFormProps) {
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const HighDustingForm = React.memo(
+  HighDustingFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+HighDustingForm.displayName = "HighDustingForm";

@@ -166,7 +166,7 @@ export function StandardizedNotification({
 
       return () => clearTimeout(timer);
     }
-  }, [notification.duration]);
+  }, [notification.duration, handleDismiss]);
 
   // Announce notification to screen readers
   useEffect(() => {

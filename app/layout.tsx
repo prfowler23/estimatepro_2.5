@@ -4,15 +4,30 @@ import "./globals.css";
 import { Navigation } from "@/components/layout/navigation";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import EnterpriseEstimationBackground from "@/components/enterprise-estimation-background";
-import { OptimizedAppProviders } from "@/components/providers/optimized-app-providers";
+import { UnifiedAppProviders } from "@/components/providers/unified-app-providers";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { OfflineIndicator } from "@/components/pwa/offline-indicator";
 import { ErrorBoundary } from "@/components/error-handling/error-boundary";
 import { ClientOnly } from "@/components/ui/client-only";
 import { ClientErrorHandler } from "./error-handler";
-import { PWAInitializer } from "@/components/pwa/pwa-initializer";
-import { WebVitalsReporter } from "@/components/performance/web-vitals-reporter";
-import { RoutePreloader } from "@/components/optimization/RoutePreloader";
+// Lazy load non-critical components for bundle optimization
+import { lazy, Suspense } from "react";
+
+const PWAInitializer = lazy(() =>
+  import("@/components/pwa/pwa-initializer").then((m) => ({
+    default: m.PWAInitializer,
+  })),
+);
+const WebVitalsReporter = lazy(() =>
+  import("@/components/performance/web-vitals-reporter").then((m) => ({
+    default: m.WebVitalsReporter,
+  })),
+);
+const RoutePreloader = lazy(() =>
+  import("@/components/optimization/RoutePreloader").then((m) => ({
+    default: m.RoutePreloader,
+  })),
+);
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -40,10 +55,10 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2563eb" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="EstimatePro" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/icon-192x192.svg" />
         <script src="/sw-register.js" defer></script>
 
         {/* Enhanced Accessibility Meta Tags */}
@@ -64,10 +79,16 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ClientErrorHandler />
-        <PWAInitializer />
-        <WebVitalsReporter />
-        <RoutePreloader />
-        <OptimizedAppProviders>
+        <Suspense fallback={null}>
+          <PWAInitializer />
+        </Suspense>
+        <Suspense fallback={null}>
+          <WebVitalsReporter />
+        </Suspense>
+        <Suspense fallback={null}>
+          <RoutePreloader />
+        </Suspense>
+        <UnifiedAppProviders>
           <EnterpriseEstimationBackground>
             <ErrorBoundary>
               <Navigation />
@@ -88,7 +109,7 @@ export default function RootLayout({
               <OfflineIndicator />
             </ClientOnly>
           </EnterpriseEstimationBackground>
-        </OptimizedAppProviders>
+        </UnifiedAppProviders>
       </body>
     </html>
   );

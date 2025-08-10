@@ -1,0 +1,99 @@
+{
+  "deployment": {
+    "timestamp": "2025-08-09T23:14:14.932Z",
+    "duration": "5s",
+    "status": "SUCCESS"
+  },
+  "results": {
+    "indexesCreated": 16,
+    "indexesFailed": 0,
+    "totalTime": "4s"
+  },
+  "baseline": {
+    "timestamp": "2025-08-09T23:14:10.558Z",
+    "limited": true
+  },
+  "created": [
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 375,
+      "timestamp": "2025-08-09T23:14:10.935Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 293,
+      "timestamp": "2025-08-09T23:14:11.228Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 328,
+      "timestamp": "2025-08-09T23:14:11.556Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 170,
+      "timestamp": "2025-08-09T23:14:11.727Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 275,
+      "timestamp": "2025-08-09T23:14:12.002Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 371,
+      "timestamp": "2025-08-09T23:14:12.373Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 254,
+      "timestamp": "2025-08-09T23:14:12.627Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 258,
+      "timestamp": "2025-08-09T23:14:12.885Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 271,
+      "timestamp": "2025-08-09T23:14:13.156Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 340,
+      "timestamp": "2025-08-09T23:14:13.496Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 145,
+      "timestamp": "2025-08-09T23:14:13.641Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 214,
+      "timestamp": "2025-08-09T23:14:13.855Z"
+    },
+    {
+      "statement": "CONCURRENTLY",
+      "executionTime": 254,
+      "timestamp": "2025-08-09T23:14:14.110Z"
+    },
+    {
+      "statement": "ANALYZE estimate_services",
+      "executionTime": 140,
+      "timestamp": "2025-08-09T23:14:14.250Z"
+    },
+    {
+      "statement": "ANALYZE profiles",
+      "executionTime": 297,
+      "timestamp": "2025-08-09T23:14:14.547Z"
+    },
+    {
+      "statement": "ANALYZE analytics_events",
+      "executionTime": 384,
+      "timestamp": "2025-08-09T23:14:14.931Z"
+    }
+  ],
+  "failed": []
+}

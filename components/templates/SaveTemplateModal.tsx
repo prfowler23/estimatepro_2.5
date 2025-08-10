@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,9 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -33,12 +32,30 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, X, Plus, AlertCircle } from "lucide-react";
+import { Save, AlertCircle } from "lucide-react";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { WorkflowTemplate } from "@/lib/services/workflow-templates";
 import { toast } from "@/components/ui/use-toast";
+import TagInput from "./TagInput";
+import RecommendationsList from "./RecommendationsList";
+
+// Input sanitization utility
+const sanitizeInput = (input: string): string => {
+  // Remove potentially dangerous HTML tags and script content
+  return input
+    .replace(/<script[^>]*>.*?<\/script>/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+};
+
+// Template categories and complexity levels
+type TemplateCategory =
+  | "commercial"
+  | "residential"
+  | "industrial"
+  | "specialty";
+type TemplateComplexity = "simple" | "moderate" | "complex";
 
 // Validation schema for template form
 const templateFormSchema = z.object({
@@ -50,10 +67,12 @@ const templateFormSchema = z.object({
     .regex(
       /^[a-zA-Z0-9\s\-_()]+$/,
       "Template name can only contain letters, numbers, spaces, hyphens, underscores, and parentheses",
-    ),
+    )
+    .transform((val) => val.trim()),
   description: z
     .string()
     .max(500, "Description must be less than 500 characters")
+    .transform((val) => val?.trim() || "")
     .optional(),
   category: z.enum(["commercial", "residential", "industrial", "specialty"], {
     required_error: "Please select a category",
@@ -61,9 +80,12 @@ const templateFormSchema = z.object({
   complexity: z.enum(["simple", "moderate", "complex"], {
     required_error: "Please select a complexity level",
   }),
-  tags: z.array(z.string()).max(10, "Maximum 10 tags allowed").optional(),
+  tags: z
+    .array(z.string().trim().min(1, "Tag cannot be empty"))
+    .max(10, "Maximum 10 tags allowed")
+    .optional(),
   recommendations: z
-    .array(z.string())
+    .array(z.string().trim().min(1, "Recommendation cannot be empty"))
     .max(20, "Maximum 20 recommendations allowed")
     .optional(),
 });
@@ -84,8 +106,6 @@ export default function SaveTemplateModal({
   onSave,
 }: SaveTemplateModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [tagInput, setTagInput] = useState("");
-  const [recommendationInput, setRecommendationInput] = useState("");
 
   // Form setup for validation
   const form = useForm<TemplateFormData>({
@@ -100,68 +120,55 @@ export default function SaveTemplateModal({
     },
   });
 
-  // Extract services from flow data
-  const requiredServices = flowData.scopeDetails?.selectedServices || [];
-  const estimatedDuration = flowData.duration?.estimatedDuration || 0;
+  // Extract services from flow data with memoization
+  const requiredServices = useMemo(
+    () => flowData.scopeDetails?.selectedServices || [],
+    [flowData.scopeDetails?.selectedServices],
+  );
+  const estimatedDuration = useMemo(
+    () => flowData.duration?.estimatedDuration || 0,
+    [flowData.duration?.estimatedDuration],
+  );
 
-  const handleAddTag = () => {
-    const currentTags = form.getValues("tags") || [];
-    if (tagInput.trim() && !currentTags.includes(tagInput.trim())) {
-      const newTags = [...currentTags, tagInput.trim().toLowerCase()];
+  const handleTagsChange = useCallback(
+    (newTags: string[]) => {
       form.setValue("tags", newTags);
-      setTagInput("");
-    }
-  };
+    },
+    [form],
+  );
 
-  const handleRemoveTag = (tag: string) => {
-    const currentTags = form.getValues("tags") || [];
-    form.setValue(
-      "tags",
-      currentTags.filter((t) => t !== tag),
-    );
-  };
-
-  const handleAddRecommendation = () => {
-    const currentRecommendations = form.getValues("recommendations") || [];
-    if (recommendationInput.trim()) {
-      const newRecommendations = [
-        ...currentRecommendations,
-        recommendationInput.trim(),
-      ];
+  const handleRecommendationsChange = useCallback(
+    (newRecommendations: string[]) => {
       form.setValue("recommendations", newRecommendations);
-      setRecommendationInput("");
-    }
-  };
-
-  const handleRemoveRecommendation = (index: number) => {
-    const currentRecommendations = form.getValues("recommendations") || [];
-    form.setValue(
-      "recommendations",
-      currentRecommendations.filter((_, i) => i !== index),
-    );
-  };
+    },
+    [form],
+  );
 
   const onSubmit = async (data: TemplateFormData) => {
     setIsLoading(true);
     try {
-      const template: Partial<WorkflowTemplate> = {
-        name: data.name,
-        description:
-          data.description || `Custom template based on ${data.name}`,
-        category: data.category as any,
-        tags: data.tags || [],
+      // Sanitize all text inputs before creating template
+      const sanitizedTemplate: Partial<WorkflowTemplate> = {
+        name: sanitizeInput(data.name),
+        description: data.description
+          ? sanitizeInput(data.description)
+          : `Custom template based on ${sanitizeInput(data.name)}`,
+        category: data.category,
+        tags: (data.tags || []).map((tag) => sanitizeInput(tag)),
         estimatedDuration: estimatedDuration * 60, // Convert hours to minutes
-        complexity: data.complexity as any,
+        complexity: data.complexity,
         requiredServices,
         optionalServices: [],
         defaultData: flowData,
         conditionalRules: [],
-        recommendations: data.recommendations || [],
+        recommendations: (data.recommendations || []).map((rec) =>
+          sanitizeInput(rec),
+        ),
         riskFactors: [],
         icon: getIconForCategory(data.category),
       };
 
-      await onSave(template);
+      await onSave(sanitizedTemplate);
 
       toast({
         title: "Template saved",
@@ -314,82 +321,18 @@ export default function SaveTemplateModal({
                 </div>
 
                 {/* Tags */}
-                <div className="space-y-2">
-                  <Label>Tags</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={(e) =>
-                        e.key === "Enter" &&
-                        (e.preventDefault(), handleAddTag())
-                      }
-                      placeholder="Add tag..."
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleAddTag}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {(form.watch("tags") || []).map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => handleRemoveTag(tag)}
-                      >
-                        {tag}
-                        <X className="h-3 w-3 ml-1" />
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+                <TagInput
+                  tags={form.watch("tags") || []}
+                  onTagsChange={handleTagsChange}
+                  disabled={isLoading}
+                />
 
                 {/* Recommendations */}
-                <div className="space-y-2">
-                  <Label>Best Practices & Recommendations</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={recommendationInput}
-                      onChange={(e) => setRecommendationInput(e.target.value)}
-                      onKeyPress={(e) =>
-                        e.key === "Enter" &&
-                        (e.preventDefault(), handleAddRecommendation())
-                      }
-                      placeholder="Add recommendation..."
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleAddRecommendation}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <ul className="space-y-1 mt-2">
-                    {(form.watch("recommendations") || []).map((rec, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-2 text-sm text-muted-foreground"
-                      >
-                        <span className="text-primary">•</span>
-                        <span className="flex-1">{rec}</span>
-                        <button
-                          onClick={() => handleRemoveRecommendation(idx)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <RecommendationsList
+                  recommendations={form.watch("recommendations") || []}
+                  onRecommendationsChange={handleRecommendationsChange}
+                  disabled={isLoading}
+                />
 
                 {/* Info Alert */}
                 <Alert>

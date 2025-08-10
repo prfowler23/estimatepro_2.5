@@ -30,10 +30,6 @@ EstimatePro is a comprehensive Next.js 15 application for building services cont
 
 ### MCP Servers
 
-
-
-
-
 **supabase**: Supabase database operations
 
 - Branch management (create, list, delete, merge, reset, rebase)
@@ -424,6 +420,31 @@ bash scripts/production-verify.sh
 **State Management**: Zustand (global state), React Query (server state), React Context (auth/theme), Service Layer (business logic)
 
 **Data Flow**: Components → Hooks → Stores → API Routes → Services → Supabase → Database
+
+### Type System Organization
+
+**Two-Directory Structure**:
+
+- `/types/` - Database-centric types (Supabase generated, database models)
+- `/lib/types/` - Application domain types (business logic, features)
+
+**Type Name Resolution** (Resolved naming conflicts):
+
+- `EstimateRow` - Database record from Supabase (previously conflicted as `Estimate`)
+- `EstimateDocument` - UI/Legacy model for display (previously conflicted as `Estimate`)
+- `EstimateStoreState` - Store state for estimation workflow (previously conflicted as `Estimate`)
+
+**Type Aliases** (for clarity):
+
+- `DatabaseEstimate` → `EstimateRow`
+- `UIEstimate` → `EstimateDocument`
+- `StoreEstimate` → `EstimateStoreState`
+
+**Import Guidelines**:
+
+- Use `@/types/supabase` for database types only
+- Use `@/lib/types` for all application domain types
+- Centralized exports via `/lib/types/index.ts`
 
 ### Security & Validation
 

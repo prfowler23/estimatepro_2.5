@@ -1,14 +1,41 @@
-// Null safety utilities for TypeScript
+/**
+ * Null safety utilities for TypeScript
+ * Provides comprehensive type-safe utilities for handling null/undefined values
+ */
 
-// Type guards
-export function isNotNull<T>(value: T | null | undefined): value is T {
+// Enhanced type guards with better type inference
+export function isNotNull<T>(
+  value: T | null | undefined,
+): value is NonNullable<T> {
   return value !== null && value !== undefined;
 }
 
-export function isNull<T>(
+/**
+ * Type guard that specifically checks for null values only
+ */
+export function isNotUndefined<T>(value: T | undefined): value is T {
+  return value !== undefined;
+}
+
+/**
+ * Type guard that specifically checks for undefined values only
+ */
+export function isNotNullish<T>(value: T | null | undefined): value is T {
+  return value != null; // Handles both null and undefined
+}
+
+export function isNullish<T>(
   value: T | null | undefined,
 ): value is null | undefined {
-  return value === null || value === undefined;
+  return value == null; // Handles both null and undefined
+}
+
+export function isNull<T>(value: T | null): value is null {
+  return value === null;
+}
+
+export function isUndefined<T>(value: T | undefined): value is undefined {
+  return value === undefined;
 }
 
 export function isString(value: unknown): value is string {
@@ -23,19 +50,50 @@ export function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
 }
 
-export function isArray<T>(value: unknown): value is T[] {
+export function isArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
+}
+
+export function isArrayOf<T>(
+  value: unknown,
+  itemGuard: (item: unknown) => item is T,
+): value is T[] {
+  return Array.isArray(value) && value.every(itemGuard);
+}
+
+export function isNonEmptyArray(
+  value: unknown,
+): value is [unknown, ...unknown[]] {
+  return Array.isArray(value) && value.length > 0;
 }
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+export function isPlainObject(
+  value: unknown,
+): value is Record<string, unknown> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.prototype.toString.call(value) === "[object Object]"
+  );
+}
+
+export function hasProperty<K extends PropertyKey>(
+  obj: object,
+  prop: K,
+): obj is Record<K, unknown> {
+  return prop in obj;
+}
+
 export function isFunction(value: unknown): value is Function {
   return typeof value === "function";
 }
 
-// Safe property access
+// Enhanced safe property access with better type safety
 export function safeGet<T, K extends keyof T>(
   obj: T | null | undefined,
   key: K,
@@ -43,50 +101,77 @@ export function safeGet<T, K extends keyof T>(
   return obj?.[key];
 }
 
-export function safeGetDeep<T>(
-  obj: T | null | undefined,
-  path: string,
-): unknown {
-  if (!obj || typeof obj !== "object") return undefined;
-
-  const keys = path.split(".");
-  let current: any = obj;
+export function safeGetNested<T>(
+  obj: unknown,
+  ...keys: PropertyKey[]
+): T | undefined {
+  let current = obj;
 
   for (const key of keys) {
-    if (current === null || current === undefined) return undefined;
-    current = current[key];
+    if (!isObject(current) && !Array.isArray(current)) {
+      return undefined;
+    }
+    current = (current as any)[key];
   }
 
-  return current;
+  return current as T | undefined;
+}
+
+export function safeGetDeep<T = unknown>(
+  obj: unknown,
+  path: string,
+): T | undefined {
+  if (!isObject(obj) && !Array.isArray(obj)) return undefined;
+
+  const keys = path.split(".");
+  let current: unknown = obj;
+
+  for (const key of keys) {
+    if (!isObject(current) && !Array.isArray(current)) {
+      return undefined;
+    }
+    current = (current as any)[key];
+  }
+
+  return current as T | undefined;
 }
 
 // Safe array operations
 export function safeMap<T, U>(
-  array: T[] | null | undefined,
-  mapper: (item: T, index: number) => U,
+  array: readonly T[] | null | undefined,
+  mapper: (item: T, index: number, array: readonly T[]) => U,
 ): U[] {
-  if (!array || !Array.isArray(array)) return [];
+  if (!isArray(array)) return [];
   return array.map(mapper);
 }
 
 export function safeFilter<T>(
-  array: T[] | null | undefined,
-  predicate: (item: T, index: number) => boolean,
+  array: readonly T[] | null | undefined,
+  predicate: (item: T, index: number, array: readonly T[]) => boolean,
 ): T[] {
-  if (!array || !Array.isArray(array)) return [];
+  if (!isArray(array)) return [];
   return array.filter(predicate);
 }
 
+export function safeFilterNonNullish<T>(
+  array: readonly (T | null | undefined)[] | null | undefined,
+): T[] {
+  if (!isArray(array)) return [];
+  return array.filter(isNotNull);
+}
+
 export function safeFind<T>(
-  array: T[] | null | undefined,
-  predicate: (item: T, index: number) => boolean,
+  array: readonly T[] | null | undefined,
+  predicate: (item: T, index: number, array: readonly T[]) => boolean,
 ): T | undefined {
-  if (!array || !Array.isArray(array)) return undefined;
+  if (!isArray(array)) return undefined;
   return array.find(predicate);
 }
 
-export function safeLength(array: unknown[] | null | undefined): number {
-  if (!array || !Array.isArray(array)) return 0;
+export function safeLength(
+  array: ArrayLike<unknown> | null | undefined,
+): number {
+  if (!array || typeof array.length !== "number") return 0;
   return array.length;
 }
 
@@ -248,24 +333,55 @@ export async function safeAsyncWithError<T>(
   }
 }
 
-// Validation utilities
-export function required<T>(value: T | null | undefined, fieldName: string): T {
-  if (value === null || value === undefined) {
-    throw new Error(`${fieldName} is required`);
+// Enhanced validation utilities with better error handling
+export class ValidationError extends Error {
+  constructor(
+    message: string,
+    public readonly field?: string,
+    public readonly code?: string,
+  ) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+export function required<T>(
+  value: T | null | undefined,
+  fieldName: string,
+): NonNullable<T> {
+  if (value == null) {
+    throw new ValidationError(
+      `${fieldName} is required`,
+      fieldName,
+      "REQUIRED",
+    );
   }
   return value;
 }
 
 export function validate<T>(
   value: T | null | undefined,
-  validator: (value: T) => boolean,
+  validator: (value: NonNullable<T>) => boolean,
   errorMessage: string,
-): T {
-  if (value === null || value === undefined) {
-    throw new Error(errorMessage);
+  fieldName?: string,
+): NonNullable<T> {
+  if (value == null) {
+    throw new ValidationError(errorMessage, fieldName, "NULL_VALUE");
   }
   if (!validator(value)) {
-    throw new Error(errorMessage);
+    throw new ValidationError(errorMessage, fieldName, "VALIDATION_FAILED");
+  }
+  return value;
+}
+
+export function validateType<T>(
+  value: unknown,
+  typeGuard: (val: unknown) => val is T,
+  errorMessage: string,
+  fieldName?: string,
+): T {
+  if (!typeGuard(value)) {
+    throw new ValidationError(errorMessage, fieldName, "TYPE_MISMATCH");
   }
   return value;
 }
@@ -278,8 +394,10 @@ export function withDefault<T>(
   return value ?? defaultValue;
 }
 
-export function withDefaultArray<T>(value: T[] | null | undefined): T[] {
-  return value ?? [];
+export function withDefaultArray<T>(
+  value: readonly T[] | null | undefined,
+): T[] {
+  return value ? [...value] : [];
 }
 
 export function withDefaultObject<T extends Record<string, unknown>>(
@@ -308,27 +426,37 @@ export function useSafeState<T>(
 ): [T, (value: T | null | undefined) => void] {
   // Dynamic import to avoid server-side issues
   if (typeof window === "undefined") {
-    throw new Error("useSafeState can only be used in client-side components");
+    throw new ValidationError(
+      "useSafeState can only be used in client-side components",
+      "useSafeState",
+      "SSR_NOT_ALLOWED",
+    );
   }
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const React = require("react");
-  const [state, setState] = React.useState(initialValue ?? defaultValue);
+  const [state, setState] = React.useState(
+    withDefault(initialValue, defaultValue),
+  );
 
   const setSafeState = (value: T | null | undefined) => {
-    setState(value ?? defaultValue);
+    setState(withDefault(value, defaultValue));
   };
 
   return [state, setSafeState];
 }
 
-// Assertion utilities
+// Enhanced assertion utilities with better error types
 export function assertExists<T>(
   value: T | null | undefined,
   message?: string,
-): asserts value is T {
-  if (value === null || value === undefined) {
-    throw new Error(message || "Value must exist");
+): asserts value is NonNullable<T> {
+  if (value == null) {
+    throw new ValidationError(
+      message || "Value must exist",
+      undefined,
+      "ASSERTION_FAILED",
+    );
   }
 }
 
@@ -338,16 +466,38 @@ export function assertType<T>(
   message?: string,
 ): asserts value is T {
   if (!typeGuard(value)) {
-    throw new Error(message || "Value must be of correct type");
+    throw new ValidationError(
+      message || "Value must be of correct type",
+      undefined,
+      "TYPE_ASSERTION_FAILED",
+    );
   }
 }
 
-// Chain safe operations
+export function assertNever(value: never, message?: string): never {
+  throw new ValidationError(
+    message || `Unexpected value: ${JSON.stringify(value)}`,
+    undefined,
+    "EXHAUSTIVENESS_CHECK_FAILED",
+  );
+}
+
+// Enhanced chain safe operations with better type safety
 export class SafeChain<T> {
   constructor(private value: T | null | undefined) {}
 
-  map<U>(mapper: (value: T) => U): SafeChain<U> {
-    if (this.value === null || this.value === undefined) {
+  /**
+   * Create a new SafeChain instance
+   */
+  static of<T>(value: T | null | undefined): SafeChain<T> {
+    return new SafeChain(value);
+  }
+
+  /**
+   * Transform the value if it exists, otherwise return a chain with null
+   */
+  map<U>(mapper: (value: NonNullable<T>) => U): SafeChain<U> {
+    if (this.value == null) {
       return new SafeChain<U>(null);
     }
     try {
@@ -357,8 +507,11 @@ export class SafeChain<T> {
     }
   }
 
-  filter(predicate: (value: T) => boolean): SafeChain<T> {
-    if (this.value === null || this.value === undefined) {
+  /**
+   * Filter the value based on a predicate
+   */
+  filter(predicate: (value: NonNullable<T>) => boolean): SafeChain<T> {
+    if (this.value == null) {
       return this;
     }
     try {
@@ -368,38 +521,124 @@ export class SafeChain<T> {
     }
   }
 
+  /**
+   * Get the value or null
+   */
   get(): T | null {
     return this.value ?? null;
   }
 
-  getOrDefault(defaultValue: T): T {
+  /**
+   * Get the value or return a default
+   */
+  getOrDefault<U>(defaultValue: U): NonNullable<T> | U {
     return this.value ?? defaultValue;
   }
 
-  getOrThrow(message?: string): T {
-    if (this.value === null || this.value === undefined) {
-      throw new Error(message || "Value is null or undefined");
+  /**
+   * Get the value or throw an error
+   */
+  getOrThrow(message?: string): NonNullable<T> {
+    if (this.value == null) {
+      throw new ValidationError(
+        message || "Value is null or undefined",
+        undefined,
+        "SAFE_CHAIN_NULL",
+      );
     }
     return this.value;
   }
+
+  /**
+   * Execute a side effect if the value exists
+   */
+  tap(sideEffect: (value: NonNullable<T>) => void): SafeChain<T> {
+    if (this.value != null) {
+      try {
+        sideEffect(this.value);
+      } catch {
+        // Ignore side effect errors
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Flatten nested SafeChains
+   */
+  flatten<U>(this: SafeChain<SafeChain<U>>): SafeChain<U> {
+    return this.value instanceof SafeChain
+      ? this.value
+      : new SafeChain<U>(null);
+  }
 }
 
+/**
+ * Create a new SafeChain instance
+ */
 export function chain<T>(value: T | null | undefined): SafeChain<T> {
-  return new SafeChain(value);
+  return SafeChain.of(value);
 }
 
+// Utility object for easier imports
 const nullSafetyUtils = {
+  // Type guards
   isNotNull,
+  isNotUndefined,
+  isNotNullish,
+  isNullish,
   isNull,
+  isUndefined,
+  isString,
+  isNumber,
+  isBoolean,
+  isArray,
+  isArrayOf,
+  isNonEmptyArray,
+  isObject,
+  isPlainObject,
+  isFunction,
+  hasProperty,
+
+  // Safe accessors
   safeGet,
+  safeGetNested,
+  safeGetDeep,
+
+  // Safe array operations
+  safeMap,
+  safeFilter,
+  safeFilterNonNullish,
+  safeFind,
+  safeLength,
+
+  // Safe primitive operations
   safeString,
   safeNumber,
-  safeArray: withDefaultArray,
-  safeObject: withDefaultObject,
-  chain,
+  safeInteger,
+
+  // Default value utilities
+  withDefault,
+  withDefaultArray,
+  withDefaultObject,
+  withDefaultString,
+  withDefaultNumber,
+  withDefaultBoolean,
+
+  // Validation
   required,
   validate,
-  withDefault,
-};
+  validateType,
+  assertExists,
+  assertType,
+  assertNever,
+
+  // Chaining
+  chain,
+  SafeChain,
+
+  // Error types
+  ValidationError,
+} as const;
 
 export default nullSafetyUtils;

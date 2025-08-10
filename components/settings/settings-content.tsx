@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase/client";
-import { TwoFactorSetup } from "@/components/auth/two-factor-setup";
+import { EnhancedMFASetup } from "@/components/auth/enhanced-mfa-setup";
+import { BackupCodes } from "@/components/auth/backup-codes";
 
 interface UserProfile {
   id: string;
@@ -442,20 +443,33 @@ export function SettingsContent() {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Security Settings
-              </CardTitle>
-              <CardDescription>
-                Manage your account security and two-factor authentication
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TwoFactorSetup />
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="mfa" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="mfa">Multi-Factor Auth</TabsTrigger>
+              <TabsTrigger value="backup">Backup Codes</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="mfa" className="space-y-6">
+              <EnhancedMFASetup />
+            </TabsContent>
+
+            <TabsContent value="backup" className="space-y-6">
+              <BackupCodes
+                onCodesGenerated={() => {
+                  setMessage({
+                    type: "success",
+                    text: "Backup codes generated! Make sure to save them securely.",
+                  });
+                }}
+                onCodesDownloaded={() => {
+                  setMessage({
+                    type: "success",
+                    text: "Backup codes downloaded successfully.",
+                  });
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="account" className="space-y-6">

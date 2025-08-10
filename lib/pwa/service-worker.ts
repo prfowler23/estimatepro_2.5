@@ -7,10 +7,28 @@
 declare const self: ServiceWorkerGlobalScope;
 
 // Cache names with versioning
-const CACHE_NAME = "estimatepro-v1";
-const STATIC_CACHE_NAME = "estimatepro-static-v1";
-const DYNAMIC_CACHE_NAME = "estimatepro-dynamic-v1";
-const DATA_CACHE_NAME = "estimatepro-data-v1";
+const CACHE_VERSION = "v1";
+const CACHE_NAME = `estimatepro-${CACHE_VERSION}`;
+const STATIC_CACHE_NAME = `estimatepro-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE_NAME = `estimatepro-dynamic-${CACHE_VERSION}`;
+const DATA_CACHE_NAME = `estimatepro-data-${CACHE_VERSION}`;
+
+// Cache configuration
+const CACHE_CONFIG = {
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxEntries: 100,
+  networkTimeout: 5000, // 5 seconds
+  retryAttempts: 3,
+  retryDelay: 1000, // 1 second
+};
+
+// Error tracking
+const errorMetrics = {
+  fetchErrors: 0,
+  cacheErrors: 0,
+  syncErrors: 0,
+  total: 0,
+};
 
 // Static assets to cache (minimal list for reliability)
 const STATIC_ASSETS = ["/", "/manifest.json"];
@@ -37,7 +55,7 @@ const isDevelopment =
   self.location.hostname === "127.0.0.1" ||
   self.location.hostname.includes("localhost");
 
-// Install event - cache static assets
+// Install event - cache static assets with error handling
 self.addEventListener("install", (event: ExtendableEvent) => {
   console.log("Service Worker: Installing");
 
@@ -45,13 +63,33 @@ self.addEventListener("install", (event: ExtendableEvent) => {
     Promise.all([
       caches.open(STATIC_CACHE_NAME).then((cache) => {
         console.log("Service Worker: Caching static assets");
-        return cache.addAll(STATIC_ASSETS);
+        return cache.addAll(STATIC_ASSETS).catch((error) => {
+          console.error("Service Worker: Failed to cache static assets", error);
+          errorMetrics.cacheErrors++;
+          errorMetrics.total++;
+          // Continue installation even if some assets fail to cache
+          return Promise.resolve();
+        });
       }),
       caches.open(DATA_CACHE_NAME).then((cache) => {
         console.log("Service Worker: Preparing data cache");
-        return cache.put("/api/offline-data", new Response("{}"));
+        return cache
+          .put("/api/offline-data", new Response("{}"))
+          .catch((error) => {
+            console.error(
+              "Service Worker: Failed to prepare data cache",
+              error,
+            );
+            errorMetrics.cacheErrors++;
+            errorMetrics.total++;
+            return Promise.resolve();
+          });
       }),
-    ]),
+    ]).catch((error) => {
+      console.error("Service Worker: Installation failed", error);
+      // Re-throw to prevent faulty service worker from being installed
+      throw error;
+    }),
   );
 
   // Force activation
@@ -227,97 +265,165 @@ function isPageRequest(url: URL): boolean {
 }
 
 async function handleStaticAsset(request: Request): Promise<Response> {
-  const cache = await caches.open(STATIC_CACHE_NAME);
-
-  // Skip caching for unsupported URL schemes
-  const url = new URL(request.url);
-  if (!url.protocol.startsWith("http")) {
-    console.log("Service Worker: Skipping unsupported scheme:", url.protocol);
-    try {
-      return await fetch(request);
-    } catch (error) {
-      return new Response("Asset not available", { status: 503 });
-    }
-  }
-
-  const cachedResponse = await cache.match(request);
-
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-
   try {
-    const response = await fetch(request);
+    const cache = await caches.open(STATIC_CACHE_NAME);
+
+    // Skip caching for unsupported URL schemes
+    const url = new URL(request.url);
+    if (!url.protocol.startsWith("http")) {
+      console.log("Service Worker: Skipping unsupported scheme:", url.protocol);
+      return await fetchWithRetry(request);
+    }
+
+    const cachedResponse = await cache.match(request);
+
+    if (cachedResponse) {
+      // Return cached response and update cache in background
+      fetchWithRetry(request)
+        .then((response) => {
+          if (response.ok) {
+            cache.put(request, response.clone());
+          }
+        })
+        .catch(() => {}); // Silently fail background update
+
+      return cachedResponse;
+    }
+
+    // Try network with timeout
+    const response = await fetchWithTimeout(
+      request,
+      CACHE_CONFIG.networkTimeout,
+    );
+
     if (response.ok) {
       // Only cache successful responses
-      cache.put(request, response.clone());
+      await cache.put(request, response.clone()).catch((error) => {
+        console.warn("Service Worker: Cache write failed", error);
+        errorMetrics.cacheErrors++;
+      });
     }
+
     return response;
   } catch (error) {
-    console.error("Service Worker: Failed to fetch static asset", error);
+    console.error("Service Worker: Failed to handle static asset", error);
+    errorMetrics.fetchErrors++;
+    errorMetrics.total++;
+
+    // Try to find any cached version as fallback
+    try {
+      const cache = await caches.open(STATIC_CACHE_NAME);
+      const cachedResponse = await cache.match(request, { ignoreVary: true });
+      if (cachedResponse) {
+        console.log("Service Worker: Using stale cached response");
+        return cachedResponse;
+      }
+    } catch (cacheError) {
+      console.error("Service Worker: Cache fallback failed", cacheError);
+    }
 
     // In development, don't return 503 for static assets
     if (isDevelopment) {
-      // Just let it fail naturally without service worker intervention
       throw error;
     }
 
-    return new Response("Asset not available offline", { status: 503 });
+    return new Response("Asset not available offline", {
+      status: 503,
+      headers: { "X-SW-Error": "Network and cache failed" },
+    });
   }
 }
 
 async function handleAPIRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
-  const cache = await caches.open(DATA_CACHE_NAME);
 
-  // Check if this is a cacheable API
-  const isCacheable = CACHEABLE_APIS.some((api) =>
-    url.pathname.startsWith(api),
-  );
+  try {
+    const cache = await caches.open(DATA_CACHE_NAME);
 
-  if (isCacheable) {
-    // Try network first, fallback to cache
-    try {
-      const response = await fetch(request);
-      if (response.ok) {
-        cache.put(request, response.clone());
+    // Check if this is a cacheable API
+    const isCacheable = CACHEABLE_APIS.some((api) =>
+      url.pathname.startsWith(api),
+    );
+
+    if (isCacheable) {
+      // Try network first with timeout, fallback to cache
+      try {
+        const response = await fetchWithTimeout(
+          request,
+          CACHE_CONFIG.networkTimeout,
+        );
+
+        if (response.ok) {
+          // Update cache asynchronously
+          cache.put(request, response.clone()).catch((error) => {
+            console.warn("Service Worker: API cache update failed", error);
+            errorMetrics.cacheErrors++;
+          });
+        } else if (response.status >= 500) {
+          // For server errors, try cache
+          const cachedResponse = await cache.match(request);
+          if (cachedResponse) {
+            console.log("Service Worker: Using cache due to server error");
+            return cachedResponse;
+          }
+        }
+
+        return response;
+      } catch (networkError) {
+        console.log("Service Worker: Network failed, trying cache for API");
+        errorMetrics.fetchErrors++;
+
+        const cachedResponse = await cache.match(request);
+        if (cachedResponse) {
+          // Add header to indicate stale response
+          const headers = new Headers(cachedResponse.headers);
+          headers.set("X-SW-Cache", "stale");
+
+          return new Response(cachedResponse.body, {
+            status: cachedResponse.status,
+            statusText: cachedResponse.statusText,
+            headers,
+          });
+        }
+
+        // Return offline response for cacheable APIs
+        return new Response(
+          JSON.stringify({
+            error: "Data not available offline",
+            offline: true,
+            timestamp: Date.now(),
+          }),
+          {
+            status: 503,
+            headers: {
+              "Content-Type": "application/json",
+              "X-SW-Error": "Network failed, no cache available",
+            },
+          },
+        );
       }
-      return response;
-    } catch (error) {
-      console.log("Service Worker: Network failed, trying cache for API");
-      const cachedResponse = await cache.match(request);
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+    } else {
+      // For non-cacheable APIs, try network with retry
+      return await fetchWithRetry(request);
+    }
+  } catch (error) {
+    console.error("Service Worker: API request handling failed", error);
+    errorMetrics.total++;
 
-      // Return offline response for cacheable APIs
-      return new Response(
-        JSON.stringify({
-          error: "Data not available offline",
-          offline: true,
-        }),
-        {
-          status: 503,
-          headers: { "Content-Type": "application/json" },
+    return new Response(
+      JSON.stringify({
+        error: "Service worker error",
+        offline: !navigator.onLine,
+        details: error instanceof Error ? error.message : "Unknown error",
+      }),
+      {
+        status: 503,
+        headers: {
+          "Content-Type": "application/json",
+          "X-SW-Error": "Request handling failed",
         },
-      );
-    }
-  } else {
-    // For non-cacheable APIs, try network only
-    try {
-      return await fetch(request);
-    } catch (error) {
-      return new Response(
-        JSON.stringify({
-          error: "Network error",
-          offline: true,
-        }),
-        {
-          status: 503,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
+      },
+    );
   }
 }
 
@@ -382,7 +488,59 @@ async function handleDefaultRequest(request: Request): Promise<Response> {
   }
 }
 
-// Background sync functions
+// Helper functions for error handling
+async function fetchWithTimeout(
+  request: Request,
+  timeout: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(request, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if ((error as Error).name === "AbortError") {
+      throw new Error("Request timeout");
+    }
+    throw error;
+  }
+}
+
+async function fetchWithRetry(
+  request: Request,
+  attempts: number = CACHE_CONFIG.retryAttempts,
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const response = await fetchWithTimeout(
+        request,
+        CACHE_CONFIG.networkTimeout,
+      );
+      return response;
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`Service Worker: Fetch attempt ${i + 1} failed`, error);
+
+      if (i < attempts - 1) {
+        // Exponential backoff with jitter
+        const delay =
+          CACHE_CONFIG.retryDelay *
+          Math.pow(2, i) *
+          (0.5 + Math.random() * 0.5);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError || new Error("Fetch failed after retries");
+}
+
+// Enhanced background sync functions with error recovery
 async function syncEstimates(): Promise<void> {
   console.log("Service Worker: Syncing estimates");
 
@@ -392,25 +550,55 @@ async function syncEstimates(): Promise<void> {
 
     if (pendingEstimates) {
       const estimates = await pendingEstimates.json();
+      const results = { success: 0, failed: 0 };
 
-      for (const estimate of estimates) {
-        try {
-          const response = await fetch("/api/estimates", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(estimate),
-          });
+      // Process in parallel with limited concurrency
+      const batchSize = 5;
+      for (let i = 0; i < estimates.length; i += batchSize) {
+        const batch = estimates.slice(i, i + batchSize);
+        const batchResults = await Promise.allSettled(
+          batch.map(async (estimate: any) => {
+            try {
+              const response = await fetchWithRetry(
+                new Request("/api/estimates", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(estimate),
+                }),
+                2, // Fewer retries for sync
+              );
 
-          if (response.ok) {
-            console.log("Service Worker: Estimate synced successfully");
-          }
-        } catch (error) {
-          console.error("Service Worker: Failed to sync estimate", error);
-        }
+              if (response.ok) {
+                results.success++;
+                return true;
+              } else {
+                results.failed++;
+                return false;
+              }
+            } catch (error) {
+              console.error("Service Worker: Failed to sync estimate", error);
+              errorMetrics.syncErrors++;
+              results.failed++;
+              return false;
+            }
+          }),
+        );
+      }
+
+      console.log(
+        `Service Worker: Sync complete - Success: ${results.success}, Failed: ${results.failed}`,
+      );
+
+      // Clear successfully synced estimates
+      if (results.success > 0 && results.failed === 0) {
+        await cache.delete("/api/pending-estimates");
       }
     }
   } catch (error) {
     console.error("Service Worker: Estimate sync failed", error);
+    errorMetrics.syncErrors++;
+    errorMetrics.total++;
+    throw error; // Re-throw to trigger retry
   }
 }
 
@@ -567,6 +755,65 @@ async function getCacheStatus(): Promise<any> {
 
   return status;
 }
+
+// Error reporting function
+function reportError(error: Error, context: string): void {
+  console.error(`Service Worker Error [${context}]:`, error);
+  errorMetrics.total++;
+
+  // Send error metrics to server when online
+  if (navigator.onLine && errorMetrics.total % 10 === 0) {
+    fetch("/api/sw-metrics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...errorMetrics,
+        timestamp: Date.now(),
+        userAgent: self.navigator.userAgent,
+      }),
+    }).catch(() => {}); // Silently fail metrics reporting
+  }
+}
+
+// Periodic cache cleanup
+setInterval(
+  () => {
+    if (!navigator.onLine) return;
+
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map(async (cacheName) => {
+            const cache = await caches.open(cacheName);
+            const requests = await cache.keys();
+
+            // Remove old entries
+            const now = Date.now();
+            for (const request of requests) {
+              const response = await cache.match(request);
+              if (response) {
+                const dateHeader = response.headers.get("date");
+                if (dateHeader) {
+                  const age = now - new Date(dateHeader).getTime();
+                  if (age > CACHE_CONFIG.maxAge) {
+                    await cache.delete(request);
+                    console.log(
+                      `Service Worker: Removed stale cache entry: ${request.url}`,
+                    );
+                  }
+                }
+              }
+            }
+          }),
+        );
+      })
+      .catch((error) => {
+        console.error("Service Worker: Cache cleanup failed", error);
+      });
+  },
+  60 * 60 * 1000,
+); // Run every hour
 
 // Export for TypeScript
 export {};

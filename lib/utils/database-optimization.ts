@@ -1,5 +1,8 @@
 import { supabase } from "@/lib/supabase/client";
-import { EstimateService, Estimate } from "@/lib/stores/estimate-store";
+import {
+  EstimateService,
+  EstimateStoreState,
+} from "@/lib/stores/estimate-store";
 import { ServiceCalculationResult } from "@/lib/types/estimate-types";
 import {
   estimatesCache,
@@ -129,17 +132,16 @@ export const loadEstimateWithServices = cached(
     return {
       ...data,
       services: estimateServices,
+      total_amount:
+        (data as any).total_amount || (data as any).total_price || 0,
+      status: data.status || "draft",
+      created_at: data.created_at || new Date().toISOString(),
     };
   });
 });
 
 // Load multiple estimates with services efficiently (with caching)
-export const loadEstimatesWithServices = cached(
-  estimatesCache,
-  (limit: number, offset: number, userId?: string) =>
-    getCacheKey.estimatesList(limit, offset, userId),
-  5 * 60 * 1000, // 5 minutes TTL
-)(async function _loadEstimatesWithServices(
+export async function loadEstimatesWithServices(
   limit: number = 10,
   offset: number = 0,
   userId?: string,
@@ -152,7 +154,7 @@ export const loadEstimatesWithServices = cached(
         .select(
           `
         id,
-        estimate_number,
+        quote_number,
         customer_name,
         customer_email,
         company_name,
@@ -184,7 +186,7 @@ export const loadEstimatesWithServices = cached(
       return data;
     },
   );
-});
+}
 
 // Get estimate counts and totals efficiently
 export async function getEstimateStats(userId?: string) {
@@ -206,17 +208,17 @@ export async function getEstimateStats(userId?: string) {
   const stats = data.reduce(
     (acc, estimate) => {
       acc.total += 1;
-      acc.totalValue += estimate.total_price;
+      acc.totalValue += (estimate as any).total_price || 0;
 
       // Handle potential null status
-      if (estimate.status) {
-        acc.byStatus[estimate.status] =
-          (acc.byStatus[estimate.status] || 0) + 1;
+      if ((estimate as any).status) {
+        acc.byStatus[(estimate as any).status] =
+          (acc.byStatus[(estimate as any).status] || 0) + 1;
       }
 
       // Monthly stats
-      if (estimate.created_at) {
-        const month = new Date(estimate.created_at)
+      if ((estimate as any).created_at) {
+        const month = new Date((estimate as any).created_at)
           .toISOString()
           .substring(0, 7);
         acc.byMonth[month] = (acc.byMonth[month] || 0) + 1;
@@ -252,7 +254,7 @@ export async function searchEstimates(
       company_name,
       building_name,
       building_address,
-      total_price,
+      total_amount,
       status,
       created_at
     `,
@@ -283,7 +285,7 @@ export async function searchEstimates(
 
 // Batch update estimates efficiently
 export async function batchUpdateEstimates(
-  updates: Array<{ id: string; data: Partial<Estimate> }>,
+  updates: Array<{ id: string; data: Partial<EstimateStoreState> }>,
 ) {
   const operations = updates.map(({ id, data }) =>
     supabase.from("estimates").update(data).eq("id", id),
@@ -311,7 +313,7 @@ export async function getRecentEstimates(limit: number = 5, userId?: string) {
       estimate_number,
       customer_name,
       building_name,
-      total_price,
+      total_amount,
       status,
       created_at
     `,

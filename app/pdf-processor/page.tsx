@@ -2,14 +2,14 @@
 // Standalone page for PDF processing and analysis
 
 import { Suspense } from "react";
-import { PDFProcessor } from "@/components/pdf/pdf-processor";
+import { LazyPDFProcessor } from "@/components/lazy-loading/dashboard-lazy";
 import { PageLoader } from "@/components/ui/loading/page-loader";
 
 export default function PDFProcessorPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Suspense fallback={<PageLoader />}>
-        <PDFProcessor />
+        <LazyPDFProcessor />
       </Suspense>
     </div>
   );

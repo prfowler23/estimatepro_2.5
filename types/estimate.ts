@@ -1,3 +1,7 @@
+/**
+ * Individual line item in an estimate
+ * Represents a single service or product with pricing
+ */
 export interface EstimateItem {
   id: string;
   description: string;
@@ -9,7 +13,12 @@ export interface EstimateItem {
   total: number;
 }
 
-export interface Estimate {
+/**
+ * Complete estimate document for client presentation
+ * Contains all project details, pricing, and terms
+ * @deprecated Use EstimateRow for database operations, this is for UI/legacy support
+ */
+export interface EstimateDocument {
   id: string;
   estimateNumber: string;
   status: "draft" | "sent" | "accepted" | "rejected" | "expired";

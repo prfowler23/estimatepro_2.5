@@ -1,0 +1,240 @@
+
+> estimatepro@0.1.0 prebuild
+> node scripts/copy-pdf-worker.js
+
+Copied pdf.worker.min.js to public/
+
+> estimatepro@0.1.0 build
+> next build
+
+ ⚠ Warning: Found multiple lockfiles. Selecting /home/prfowler/package-lock.json.
+   Consider removing the lockfiles at:
+   * /home/prfowler/Projects/estimatepro_2.5/package-lock.json
+
+   ▲ Next.js 15.4.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (108kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Compiled with warnings in 50s
+
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/index.js
+
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./app/estimates/[id]/edit/page.tsx
+131:6  Warning: React Hook useEffect has a missing dependency: 'fetchEstimate'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+236:6  Warning: React Hook useEffect has missing dependencies: 'calculateTotalPrice' and 'estimate'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/estimates/[id]/page.tsx
+139:6  Warning: React Hook useEffect has a missing dependency: 'fetchEstimate'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/onboarding/page.tsx
+82:6  Warning: React Hook useEffect has a missing dependency: 'checkOnboardingStatus'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/ai/AIErrorBoundary.tsx
+312:10  Warning: Component definition is missing display name  react/display-name
+
+./components/ai/AIFeatureErrorBoundary.tsx
+201:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/ai/AIMetricsDashboard.tsx
+70:6  Warning: React Hook useEffect has a missing dependency: 'fetchMetrics'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/ai/AIUsageDisplay.tsx
+91:6  Warning: React Hook useEffect has a missing dependency: 'fetchUsage'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+161:22  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+188:22  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+330:16  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/ai/SmartDefaultsProvider.tsx
+168:6  Warning: React Hook useEffect has missing dependencies: 'refreshDefaults' and 'refreshSuggestions'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/ai/photo-upload-analysis.tsx
+286:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/ai/service-suggestions/IntelligentServiceSuggestions.tsx
+91:6  Warning: React Hook useCallback has a missing dependency: 'flowData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/ai/service-suggestions/SimpleServiceSuggestions.tsx
+45:6  Warning: React Hook useEffect has a missing dependency: 'generateSimpleSuggestions'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/auth/enhanced-mfa-setup.tsx
+428:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/auth/two-factor-setup.tsx
+72:6  Warning: React Hook useEffect has a missing dependency: 'loadTwoFactorStatus'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+397:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/calculator/forms/facade-analysis-form.tsx
+278:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/calculator/utils/form-memoization.tsx
+35:10  Warning: React Hook useMemo has a missing dependency: 'calculator'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/collaboration/CollaborativeField.tsx
+93:6  Warning: React Hook useEffect has missing dependencies: 'lastBroadcastValue' and 'localValue'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/collaboration/RealTimeChangeIndicator.tsx
+84:6  Warning: React Hook useEffect has missing dependencies: 'animatingChanges' and 'relevantChanges'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/duration/TimelineVisualization.tsx
+101:9  Warning: The 'startDate' logical expression could make the dependencies of useCallback Hook (at line 213) change on every render. To fix this, wrap the initialization of 'startDate' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+101:9  Warning: The 'startDate' logical expression could make the dependencies of useMemo Hook (at line 256) change on every render. To fix this, wrap the initialization of 'startDate' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./components/error/ErrorRecoveryProvider.tsx
+166:5  Warning: React Hook useCallback has missing dependencies: 'shouldAttemptAutoRecovery' and 'startAutoRecovery'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+263:5  Warning: React Hook useCallback has a missing dependency: 'userId'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+324:6  Warning: React Hook useCallback has a missing dependency: 'userId'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/error/SmartErrorNotification.tsx
+80:6  Warning: React Hook useEffect has a missing dependency: 'handleDismiss'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/error-handling/base-error-boundary.tsx
+301:10  Warning: Component definition is missing display name  react/display-name
+
+./components/estimation/guided-flow/RealTimeCostBreakdown.tsx
+125:6  Warning: React Hook useEffect has missing dependencies: 'onPricingUpdate' and 'pricingResult?.totalCost'. Either include them or remove the dependency array. If 'onPricingUpdate' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/TemplatePreviewModal.tsx
+90:6  Warning: React Hook useEffect has a missing dependency: 'loadTemplateData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/components/ErrorBoundary.tsx
+91:10  Warning: Component definition is missing display name  react/display-name
+
+./components/estimation/guided-flow/steps/Duration.tsx
+204:6  Warning: React Hook useEffect has a missing dependency: 'calculateDurations'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/steps/Expenses.tsx
+171:6  Warning: React Hook useEffect has a missing dependency: 'calculateInitialCosts'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/steps/FilesPhotos.tsx
+646:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/estimation/guided-flow/steps/Measurements.tsx
+187:6  Warning: React Hook useEffect has missing dependencies: 'flowData.scopeDetails?.selectedServices' and 'updateFlowData'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+300:6  Warning: React Hook useEffect has a missing dependency: 'validateCurrentStep'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+312:27  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/estimation/guided-flow/steps/MeasurementsWithFacade.tsx
+294:6  Warning: React Hook useEffect has missing dependencies: 'flowData.scopeDetails?.selectedServices' and 'updateFlowData'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+432:6  Warning: React Hook useEffect has a missing dependency: 'validateCurrentStep'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+444:27  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/estimation/guided-flow/steps/Pricing.tsx
+57:6  Warning: React Hook useEffect has a missing dependency: 'calculateOptimalPricing'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/steps/ProjectSetup.tsx
+143:35  Warning: React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/steps/ScopeDetails.tsx
+76:6  Warning: React Hook useEffect has a missing dependency: 'validateServices'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/steps/Summary.tsx
+109:6  Warning: React Hook useEffect has a missing dependency: 'consolidateData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+646:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/estimation/guided-flow/steps/Takeoff.tsx
+132:9  Warning: The 'selectedServices' logical expression could make the dependencies of useEffect Hook (at line 220) change on every render. To fix this, wrap the initialization of 'selectedServices' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+133:9  Warning: The 'photoAnalysis' logical expression could make the dependencies of useEffect Hook (at line 170) change on every render. To fix this, wrap the initialization of 'photoAnalysis' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+133:9  Warning: The 'photoAnalysis' logical expression could make the dependencies of useEffect Hook (at line 220) change on every render. To fix this, wrap the initialization of 'photoAnalysis' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+134:9  Warning: The 'areaMeasurements' logical expression could make the dependencies of useEffect Hook (at line 190) change on every render. To fix this, wrap the initialization of 'areaMeasurements' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+134:9  Warning: The 'areaMeasurements' logical expression could make the dependencies of useEffect Hook (at line 220) change on every render. To fix this, wrap the initialization of 'areaMeasurements' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/steps/UnifiedPricing.tsx
+176:6  Warning: React Hook useEffect has a missing dependency: 'updateFlowData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+240:6  Warning: React Hook useEffect has a missing dependency: 'validateCurrentStep'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/estimation/guided-flow/template-selector.tsx
+110:6  Warning: React Hook useEffect has missing dependencies: 'existingData' and 'services'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+110:21  Warning: React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked.  react-hooks/exhaustive-deps
+
+./components/expenses/HistoricalComparison.tsx
+126:6  Warning: React Hook useEffect has a missing dependency: 'loadHistoricalData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+318:20  Error: React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+344:26  Error: React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+348:27  Error: React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+355:5  Warning: React Hook useMemo has a missing dependency: 'historicalData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+358:28  Error: React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+366:27  Error: React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+375:29  Error: React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+386:26  Error: React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+
+./components/expenses/VendorSelector.tsx
+75:9  Warning: The 'vendorService' object construction makes the dependencies of useCallback Hook (at line 105) change on every render. Move it inside the useCallback callback. Alternatively, wrap the initialization of 'vendorService' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+79:6  Warning: React Hook useEffect has a missing dependency: 'loadVendors'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/help/ContextualHelpPanel.tsx
+115:26  Error: React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+122:28  Error: React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+129:30  Error: React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+
+./components/integrations/webhook-form.tsx
+199:43  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/pdf/pdf-processor.tsx
+790:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/providers/startup-validation-provider.tsx
+322:22  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/pwa/pwa-status.tsx
+186:22  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+189:22  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+190:22  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/ui/SessionRecoveryModal.tsx
+283:22  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+283:34  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./components/ui/accessibility-utils.tsx
+335:5  Warning: React Hook React.useCallback has a missing dependency: 'elements.length'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+658:8  Warning: React Hook React.useMemo has a missing dependency: 'generateIds'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/ui/empty-state.tsx
+304:11  Warning: The 'secondaryActions' logical expression could make the dependencies of useMemo Hook (at line 313) change on every render. To fix this, wrap the initialization of 'secondaryActions' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./components/ui/focus-management.tsx
+371:61  Warning: React Hook useEffect has a spread element in its dependency array. This means we can't statically verify whether you've passed the correct dependencies.  react-hooks/exhaustive-deps
+
+./components/ui/toast/toast-provider.tsx
+122:6  Warning: React Hook useCallback has a missing dependency: 'removeToast'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/visualizer/enhanced-building-3d.tsx
+139:6  Warning: React Hook useEffect has missing dependencies: 'buildingData?.buildingType', 'dimensions.depth', 'dimensions.height', 'dimensions.width', 'updateAnalysis', and 'viewingOptions'. Either include them or remove the dependency array. Mutable values like 'canvasRef.current' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+166:6  Warning: React Hook useEffect has a missing dependency: 'updateAnalysis'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/weather/enhanced-weather-display.tsx
+185:6  Warning: React Hook useEffect has a missing dependency: 'fetchWeatherData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+185:17  Warning: React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked.  react-hooks/exhaustive-deps
+
+./lib/optimization/analytics-bundle-optimization.ts
+274:6  Warning: React Hook React.useEffect has a missing dependency: 'performanceMonitor'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+329:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/optimization/bundle-optimization-strategy.ts
+579:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/optimization/comprehensive-caching-strategy.ts
+786:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/optimization/database-query-optimization.ts
+957:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/optimization/state-management-optimization.ts
+741:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/utils/image-optimization.ts
+312:6  Warning: React Hook useEffect has a missing dependency: 'options'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+312:13  Warning: React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

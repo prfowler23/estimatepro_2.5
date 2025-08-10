@@ -212,6 +212,13 @@ export const userAction = (action: string, data?: any) => {
   logger.info(`[USER_ACTION] ${action}`, data);
 };
 
+// Development-only debug logging
+export const devLog = (message: string, data?: any): void => {
+  if (process.env.NODE_ENV === "development") {
+    logger.debug(`[DEV] ${message}`, data);
+  }
+};
+
 // Helper function to replace console.log in existing code
 export function replaceConsoleLog(): void {
   if (process.env.NODE_ENV === "production") {

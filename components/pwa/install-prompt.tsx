@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { pwaStorageHelpers } from "@/lib/utils/pwa-storage";
 
 // Install prompt interface
 interface BeforeInstallPromptEvent extends Event {
@@ -48,6 +49,8 @@ export const InstallPrompt: React.FC = () => {
   const [installSupported, setInstallSupported] = useState(false);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
     // Check if PWA is already installed
     const isStandalone = window.matchMedia(
       "(display-mode: standalone)",
@@ -67,8 +70,8 @@ export const InstallPrompt: React.FC = () => {
       setIsInstallable(true);
 
       // Show prompt after a delay if not dismissed
-      setTimeout(() => {
-        if (!isInstalled && !localStorage.getItem("pwa-install-dismissed")) {
+      timeoutId = setTimeout(() => {
+        if (!isInstalled && !pwaStorageHelpers.isInstallDismissed()) {
           setShowPrompt(true);
         }
       }, 10000); // Show after 10 seconds
@@ -79,13 +82,14 @@ export const InstallPrompt: React.FC = () => {
       setIsInstalled(true);
       setIsInstallable(false);
       setShowPrompt(false);
-      localStorage.setItem("pwa-installed", "true");
+      pwaStorageHelpers.setInstallDate();
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
+      if (timeoutId) clearTimeout(timeoutId);
       window.removeEventListener(
         "beforeinstallprompt",
         handleBeforeInstallPrompt,
@@ -118,7 +122,7 @@ export const InstallPrompt: React.FC = () => {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem("pwa-install-dismissed", "true");
+    pwaStorageHelpers.setInstallDismissed(true);
   };
 
   const handleShowDetails = () => {

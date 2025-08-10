@@ -15,7 +15,7 @@ import { withAIRateLimit } from "../../../../lib/middleware/rate-limit-middlewar
 
 async function handlePOST(
   request: NextRequest,
-  context: { params: Record<string, string> },
+  context: { params?: Promise<Record<string, string>> },
 ) {
   try {
     const body: AutoEstimateRequest = await request.json();
@@ -117,7 +117,7 @@ async function handlePOST(
 
 async function handleGET(
   request: NextRequest,
-  context: { params: Record<string, string> },
+  context: { params?: Promise<Record<string, string>> },
 ) {
   return NextResponse.json({
     message: "Auto-estimate generation endpoint",

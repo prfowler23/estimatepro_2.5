@@ -87,11 +87,13 @@ export function CollaboratorAvatars({
   const getRoleIcon = (role: CollaboratorPresence["role"]) => {
     switch (role) {
       case "owner":
-        return <Crown className="w-3 h-3 text-yellow-600" />;
+        return (
+          <Crown className="w-3 h-3 text-warning-600 dark:text-warning-400" />
+        );
       case "editor":
-        return <Edit3 className="w-3 h-3 text-blue-600" />;
+        return <Edit3 className="w-3 h-3 text-primary-action" />;
       case "viewer":
-        return <Eye className="w-3 h-3 text-gray-600" />;
+        return <Eye className="w-3 h-3 text-text-secondary" />;
       default:
         return null;
     }
@@ -110,13 +112,13 @@ export function CollaboratorAvatars({
   const getActivityColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-500";
+        return "bg-success-500";
       case "recent":
-        return "bg-yellow-500";
+        return "bg-warning-500";
       case "away":
-        return "bg-gray-400";
+        return "bg-text-muted";
       default:
-        return "bg-gray-400";
+        return "bg-text-muted";
     }
   };
 
@@ -134,7 +136,7 @@ export function CollaboratorAvatars({
                   <TooltipTrigger>
                     <div className="relative">
                       <Avatar
-                        className={`w-6 h-6 border-2 ${isCurrentUser ? "border-blue-500" : "border-white"}`}
+                        className={`w-6 h-6 border-2 ${isCurrentUser ? "border-primary-action" : "border-bg-base"}`}
                       >
                         <AvatarImage src={user.avatar} alt={user.userName} />
                         <AvatarFallback className="text-xs">
@@ -142,14 +144,14 @@ export function CollaboratorAvatars({
                         </AvatarFallback>
                       </Avatar>
                       <div
-                        className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white ${getActivityColor(activityStatus)}`}
+                        className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-bg-base ${getActivityColor(activityStatus)}`}
                       />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side={position}>
                     <div className="text-center">
                       <div className="font-medium">{user.userName}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-text-muted">
                         {user.userEmail}
                       </div>
                       <div className="flex items-center justify-center gap-1 mt-1">
@@ -168,7 +170,7 @@ export function CollaboratorAvatars({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <div className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-600">
+                <div className="w-6 h-6 rounded-full bg-bg-subtle border-2 border-bg-base flex items-center justify-center text-xs font-medium text-text-secondary">
                   +{hiddenUsers.length}
                 </div>
               </TooltipTrigger>
@@ -201,14 +203,14 @@ export function CollaboratorAvatars({
                     placeholder="Email address"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-border-primary rounded-md text-sm"
                   />
                   <select
                     value={inviteRole}
                     onChange={(e) =>
                       setInviteRole(e.target.value as "editor" | "viewer")
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-border-primary rounded-md text-sm"
                   >
                     <option value="editor">
                       Editor - Can edit and comment
@@ -248,7 +250,7 @@ export function CollaboratorAvatars({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-gray-600" />
+            <Users className="w-4 h-4 text-text-secondary" />
             <h3 className="font-medium">
               Collaborators ({activeUsers.length})
             </h3>
@@ -288,7 +290,7 @@ export function CollaboratorAvatars({
                       </AvatarFallback>
                     </Avatar>
                     <div
-                      className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${getActivityColor(activityStatus)}`}
+                      className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-base ${getActivityColor(activityStatus)}`}
                     />
                   </div>
 
@@ -297,12 +299,12 @@ export function CollaboratorAvatars({
                       <span className="font-medium truncate">
                         {user.userName}
                         {isCurrentUser && (
-                          <span className="text-gray-500"> (you)</span>
+                          <span className="text-text-muted"> (you)</span>
                         )}
                       </span>
                       {getRoleIcon(user.role)}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="text-xs text-text-muted truncate">
                       {user.userEmail}
                     </div>
 
@@ -323,7 +325,7 @@ export function CollaboratorAvatars({
                       )}
 
                       {activityStatus === "active" && (
-                        <Badge className="text-xs bg-green-100 text-green-800">
+                        <Badge className="text-xs bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400">
                           Online
                         </Badge>
                       )}
@@ -343,7 +345,7 @@ export function CollaboratorAvatars({
                         <div className="text-sm font-medium">
                           {user.userName}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-text-muted">
                           Role: {user.role}
                         </div>
                         <div className="border-t pt-2">
@@ -351,7 +353,7 @@ export function CollaboratorAvatars({
                             variant="ghost"
                             size="sm"
                             onClick={() => removeCollaborator(user.userId)}
-                            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="w-full justify-start text-error-600 dark:text-error-400 hover:text-error-700 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20"
                           >
                             <LogOut className="w-4 h-4 mr-2" />
                             Remove Access
@@ -377,7 +379,7 @@ export function CollaboratorAvatars({
                   placeholder="Enter email address"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border-primary rounded-md"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleInviteCollaborator();
@@ -389,7 +391,7 @@ export function CollaboratorAvatars({
                   onChange={(e) =>
                     setInviteRole(e.target.value as "editor" | "viewer")
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border-primary rounded-md"
                 >
                   <option value="editor">Editor - Can edit and comment</option>
                   <option value="viewer">Viewer - Can view and comment</option>

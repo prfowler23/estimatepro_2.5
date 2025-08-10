@@ -37,6 +37,8 @@ import {
   type FlightObjective,
 } from "@/lib/drone/drone-service";
 import { config } from "@/lib/config";
+import { DRONE_CONSTANTS } from "./constants";
+import { logBusinessError } from "@/lib/services/error-service";
 
 interface DroneDashboardProps {
   projectId?: string;
@@ -46,8 +48,11 @@ interface DroneDashboardProps {
 }
 
 export function DroneDashboard({
-  projectId = "default-project",
-  location = { latitude: 40.7128, longitude: -74.006 }, // NYC default
+  projectId = DRONE_CONSTANTS.DEFAULT_PROJECT_ID,
+  location = {
+    latitude: DRONE_CONSTANTS.DEFAULT_LOCATION.latitude,
+    longitude: DRONE_CONSTANTS.DEFAULT_LOCATION.longitude,
+  },
   onFlightPlanCreated,
   onAnalysisComplete,
 }: DroneDashboardProps) {
@@ -61,13 +66,9 @@ export function DroneDashboard({
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
 
   // Weather simulation
-  const [weatherConditions, setWeatherConditions] = useState({
-    windSpeed: 8,
-    visibility: 9500,
-    temperature: 72,
-    precipitation: 0,
-    cloudCeiling: 5000,
-  });
+  const [weatherConditions, setWeatherConditions] = useState(
+    DRONE_CONSTANTS.DEFAULT_WEATHER_CONDITIONS,
+  );
 
   useEffect(() => {
     if (isEnabled) {
@@ -89,13 +90,17 @@ export function DroneDashboard({
         objectives,
         location,
         droneId: selectedDrone.id,
-        pilotId: "pilot-001",
+        pilotId: DRONE_CONSTANTS.DEFAULT_PILOT_ID,
       });
 
       setFlightPlans([...flightPlans, flightPlan]);
       onFlightPlanCreated?.(flightPlan);
     } catch (error) {
-      console.error("Failed to create flight plan:", error);
+      logBusinessError(error, {
+        component: "DroneDashboard",
+        action: "createQuickFlightPlan",
+        metadata: { projectId, objectives, droneId: selectedDrone.id },
+      });
     } finally {
       setIsCreatingPlan(false);
     }
@@ -115,7 +120,11 @@ export function DroneDashboard({
         ),
       );
     } catch (error) {
-      console.error("Failed to execute flight plan:", error);
+      logBusinessError(error, {
+        component: "DroneDashboard",
+        action: "executeFlightPlan",
+        metadata: { flightPlanId },
+      });
     }
   };
 
@@ -291,18 +300,7 @@ export function DroneDashboard({
                 <Button
                   onClick={() =>
                     createQuickFlightPlan([
-                      {
-                        id: "roof-inspection",
-                        type: "roof_inspection",
-                        priority: "high",
-                        description: "Comprehensive roof condition assessment",
-                        expectedOutcome: "Detailed roof inspection report",
-                        captureRequirements: {
-                          photoCount: 20,
-                          resolutionRequired: "4K",
-                          angles: ["overhead", "oblique"],
-                        },
-                      },
+                      DRONE_CONSTANTS.FLIGHT_OBJECTIVES.ROOF_INSPECTION,
                     ])
                   }
                   disabled={!suitability.suitable || isCreatingPlan}
@@ -315,19 +313,7 @@ export function DroneDashboard({
                 <Button
                   onClick={() =>
                     createQuickFlightPlan([
-                      {
-                        id: "facade-analysis",
-                        type: "facade_analysis",
-                        priority: "medium",
-                        description: "Building facade condition analysis",
-                        expectedOutcome:
-                          "Facade cleaning and repair assessment",
-                        captureRequirements: {
-                          photoCount: 30,
-                          resolutionRequired: "4K",
-                          angles: ["front", "side", "oblique"],
-                        },
-                      },
+                      DRONE_CONSTANTS.FLIGHT_OBJECTIVES.FACADE_ANALYSIS,
                     ])
                   }
                   disabled={!suitability.suitable || isCreatingPlan}
@@ -341,18 +327,7 @@ export function DroneDashboard({
                 <Button
                   onClick={() =>
                     createQuickFlightPlan([
-                      {
-                        id: "area-survey",
-                        type: "area_survey",
-                        priority: "medium",
-                        description: "Comprehensive site survey",
-                        expectedOutcome: "Site map and area measurements",
-                        captureRequirements: {
-                          photoCount: 40,
-                          resolutionRequired: "4K",
-                          angles: ["overhead"],
-                        },
-                      },
+                      DRONE_CONSTANTS.FLIGHT_OBJECTIVES.AREA_SURVEY,
                     ])
                   }
                   disabled={!suitability.suitable || isCreatingPlan}
@@ -366,18 +341,7 @@ export function DroneDashboard({
                 <Button
                   onClick={() =>
                     createQuickFlightPlan([
-                      {
-                        id: "3d-mapping",
-                        type: "3d_mapping",
-                        priority: "low",
-                        description: "3D building model generation",
-                        expectedOutcome: "Detailed 3D building model",
-                        captureRequirements: {
-                          photoCount: 60,
-                          resolutionRequired: "6K",
-                          angles: ["overhead", "oblique", "side"],
-                        },
-                      },
+                      DRONE_CONSTANTS.FLIGHT_OBJECTIVES.MAPPING_3D,
                     ])
                   }
                   disabled={!suitability.suitable || isCreatingPlan}
@@ -399,28 +363,30 @@ export function DroneDashboard({
             <CardContent>
               {flightResults.length > 0 ? (
                 <div className="space-y-3">
-                  {flightResults.slice(-3).map((result) => (
-                    <div
-                      key={result.flightId}
-                      className="flex items-center justify-between p-3 border rounded"
-                    >
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-success-600" />
-                        <div>
-                          <p className="font-medium">
-                            Flight {result.flightId}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {result.photosCapture} photos •{" "}
-                            {result.actualDuration.toFixed(1)} min
-                          </p>
+                  {flightResults
+                    .slice(-DRONE_CONSTANTS.RECENT_ACTIVITY_LIMIT)
+                    .map((result) => (
+                      <div
+                        key={result.flightId}
+                        className="flex items-center justify-between p-3 border rounded"
+                      >
+                        <div className="flex items-center gap-3">
+                          <CheckCircle className="w-5 h-5 text-success-600" />
+                          <div>
+                            <p className="font-medium">
+                              Flight {result.flightId}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {result.photosCapture} photos •{" "}
+                              {result.actualDuration.toFixed(1)} min
+                            </p>
+                          </div>
                         </div>
+                        <Badge className="bg-success-600 text-white">
+                          Completed
+                        </Badge>
                       </div>
-                      <Badge className="bg-success-600 text-white">
-                        Completed
-                      </Badge>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +26,10 @@ import {
   History,
   TrendingDown,
   Info,
+  Loader2,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { withComponentErrorBoundary } from "@/components/error-handling/component-error-boundary";
 
 interface ApprovalHistory {
   id: string;
@@ -73,7 +75,8 @@ interface ApprovalLevel {
   icon: React.ReactNode;
 }
 
-export function DiscountApproval({
+// Component wrapped in React.memo for performance optimization
+const DiscountApprovalComponent: React.FC<DiscountApprovalProps> = ({
   basePrice,
   requestedPrice,
   discountPercentage,
@@ -86,7 +89,7 @@ export function DiscountApproval({
   onApprove,
   onReject,
   onRequestHigherApproval,
-}: DiscountApprovalProps) {
+}) => {
   const [approvalNotes, setApprovalNotes] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [approvalLevel, setApprovalLevel] = useState<
@@ -96,37 +99,42 @@ export function DiscountApproval({
   const [customCondition, setCustomCondition] = useState("");
   const [activeTab, setActiveTab] = useState("request");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
 
-  const approvers: Record<string, ApprovalLevel> = {
-    manager: {
-      name: "Sales Manager",
-      title: "Regional Sales Manager",
-      limit: 10,
-      color: "bg-blue-50 text-blue-700 border-blue-200",
-      icon: <User className="w-4 h-4" />,
-    },
-    director: {
-      name: "Sales Director",
-      title: "Director of Sales",
-      limit: 20,
-      color: "bg-purple-50 text-purple-700 border-purple-200",
-      icon: <Shield className="w-4 h-4" />,
-    },
-    vp: {
-      name: "VP of Sales",
-      title: "Vice President of Sales",
-      limit: 30,
-      color: "bg-orange-50 text-orange-700 border-orange-200",
-      icon: <TrendingDown className="w-4 h-4" />,
-    },
-    ceo: {
-      name: "CEO",
-      title: "Chief Executive Officer",
-      limit: 100,
-      color: "bg-red-50 text-red-700 border-red-200",
-      icon: <AlertTriangle className="w-4 h-4" />,
-    },
-  };
+  // Memoized approvers configuration to prevent recreation
+  const approvers: Record<string, ApprovalLevel> = useMemo(
+    () => ({
+      manager: {
+        name: "Sales Manager",
+        title: "Regional Sales Manager",
+        limit: 10,
+        color: "bg-blue-50 text-blue-700 border-blue-200",
+        icon: <User className="w-4 h-4" />,
+      },
+      director: {
+        name: "Sales Director",
+        title: "Director of Sales",
+        limit: 20,
+        color: "bg-purple-50 text-purple-700 border-purple-200",
+        icon: <Shield className="w-4 h-4" />,
+      },
+      vp: {
+        name: "VP of Sales",
+        title: "Vice President of Sales",
+        limit: 30,
+        color: "bg-orange-50 text-orange-700 border-orange-200",
+        icon: <TrendingDown className="w-4 h-4" />,
+      },
+      ceo: {
+        name: "CEO",
+        title: "Chief Executive Officer",
+        limit: 100,
+        color: "bg-red-50 text-red-700 border-red-200",
+        icon: <AlertTriangle className="w-4 h-4" />,
+      },
+    }),
+    [],
+  );
 
   const standardConditions = [
     "Payment in full within 15 days",
@@ -152,7 +160,27 @@ export function DiscountApproval({
     }
   }, [discountPercentage]);
 
-  const getRiskLevel = (): {
+  // Memoized calculations
+  const calculatedImpact = useMemo(() => {
+    setIsCalculating(true);
+    try {
+      const discountAmount = basePrice - requestedPrice;
+      const marginImpact = projectMargin
+        ? (discountAmount / projectMargin) * 100
+        : 0;
+      const revenueImpact = (discountAmount / basePrice) * 100;
+
+      return {
+        discountAmount,
+        marginImpact,
+        revenueImpact,
+      };
+    } finally {
+      setIsCalculating(false);
+    }
+  }, [basePrice, requestedPrice, projectMargin]);
+
+  const getRiskLevel = useMemo((): {
     level: string;
     color: string;
     description: string;
@@ -180,9 +208,10 @@ export function DiscountApproval({
       color: "text-red-600 bg-red-50",
       description: "Major impact, exceptional circumstances only",
     };
-  };
+  }, [discountPercentage]);
 
-  const getUrgencyColor = (urgency: string) => {
+  // Memoized color function
+  const getUrgencyColor = useCallback((urgency: string) => {
     switch (urgency) {
       case "high":
         return "text-red-600 bg-red-50 border-red-200";
@@ -193,31 +222,18 @@ export function DiscountApproval({
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
     }
-  };
+  }, []);
 
-  const calculateImpact = () => {
-    const discountAmount = basePrice - requestedPrice;
-    const marginImpact = projectMargin
-      ? (discountAmount / projectMargin) * 100
-      : 0;
-    const revenueImpact = (discountAmount / basePrice) * 100;
-
-    return {
-      discountAmount,
-      marginImpact,
-      revenueImpact,
-    };
-  };
-
-  const handleConditionToggle = (condition: string) => {
+  // Memoized event handlers
+  const handleConditionToggle = useCallback((condition: string) => {
     setSelectedConditions((prev) =>
       prev.includes(condition)
         ? prev.filter((c) => c !== condition)
         : [...prev, condition],
     );
-  };
+  }, []);
 
-  const handleApprove = () => {
+  const handleApprove = useCallback(() => {
     const conditions = [...selectedConditions];
     if (customCondition.trim()) {
       conditions.push(customCondition.trim());
@@ -228,18 +244,25 @@ export function DiscountApproval({
       conditions,
       approver: approvers[approvalLevel].name,
     });
-  };
+  }, [
+    selectedConditions,
+    customCondition,
+    approvalNotes,
+    approvers,
+    approvalLevel,
+    onApprove,
+  ]);
 
-  const handleReject = () => {
+  const handleReject = useCallback(() => {
     if (!rejectionReason.trim()) {
       alert("Please provide a reason for rejection");
       return;
     }
     onReject(rejectionReason);
-  };
+  }, [rejectionReason, onReject]);
 
-  const riskAssessment = getRiskLevel();
-  const impact = calculateImpact();
+  const riskAssessment = getRiskLevel;
+  const impact = calculatedImpact;
   const currentApprover = approvers[approvalLevel];
 
   return (
@@ -380,28 +403,35 @@ export function DiscountApproval({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <p className="text-2xl font-bold text-red-600">
-                      ${impact.discountAmount.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-600">Revenue Loss</p>
+                {isCalculating ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                    <span>Calculating financial impact...</span>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center p-4 bg-red-50 rounded-lg">
+                      <p className="text-2xl font-bold text-red-600">
+                        ${impact.discountAmount.toLocaleString()}
+                      </p>
+                      <p className="text-sm text-gray-600">Revenue Loss</p>
+                    </div>
 
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <p className="text-2xl font-bold text-orange-600">
-                      {impact.marginImpact.toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-gray-600">Margin Impact</p>
-                  </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <p className="text-2xl font-bold text-orange-600">
+                        {impact.marginImpact.toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-600">Margin Impact</p>
+                    </div>
 
-                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                    <p className="text-2xl font-bold text-yellow-600">
-                      {impact.revenueImpact.toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-gray-600">Revenue Impact</p>
+                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {impact.revenueImpact.toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-600">Revenue Impact</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -730,4 +760,26 @@ export function DiscountApproval({
       </CardContent>
     </Card>
   );
-}
+};
+
+// Export memoized component with error boundary
+export const DiscountApproval = withComponentErrorBoundary(
+  React.memo(DiscountApprovalComponent, (prevProps, nextProps) => {
+    // Custom comparison function for memo
+    return (
+      prevProps.basePrice === nextProps.basePrice &&
+      prevProps.requestedPrice === nextProps.requestedPrice &&
+      prevProps.discountPercentage === nextProps.discountPercentage &&
+      prevProps.reason === nextProps.reason &&
+      prevProps.customerName === nextProps.customerName &&
+      prevProps.projectMargin === nextProps.projectMargin &&
+      prevProps.competitorPrice === nextProps.competitorPrice &&
+      prevProps.urgency === nextProps.urgency &&
+      JSON.stringify(prevProps.customerHistory) ===
+        JSON.stringify(nextProps.customerHistory)
+    );
+  }),
+  "DiscountApproval",
+);
+
+DiscountApproval.displayName = "DiscountApproval";

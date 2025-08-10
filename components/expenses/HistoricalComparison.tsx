@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -105,7 +105,7 @@ const SERVICE_NAMES: Record<string, string> = {
   DC: "Deck Cleaning",
 };
 
-export function HistoricalComparison({
+export const HistoricalComparison = React.memo(function HistoricalComparison({
   currentCosts,
   buildingType,
   services,
@@ -125,7 +125,7 @@ export function HistoricalComparison({
     loadHistoricalData();
   }, [buildingType, services, location, timeframe]);
 
-  const loadHistoricalData = async () => {
+  const loadHistoricalData = useCallback(async () => {
     setLoading(true);
 
     // Mock historical data - replace with actual API call
@@ -290,7 +290,7 @@ export function HistoricalComparison({
     setFilteredProjects(similar);
     setHistoricalData(data);
     setLoading(false);
-  };
+  }, [buildingType, services, location]);
 
   if (loading) {
     return (
@@ -314,64 +314,76 @@ export function HistoricalComparison({
     );
   }
 
-  // Calculate variance from historical averages
-  const variance = {
-    equipment:
-      ((currentCosts.equipment - historicalData.averageCosts.equipment) /
-        historicalData.averageCosts.equipment) *
-      100,
-    materials:
-      ((currentCosts.materials - historicalData.averageCosts.materials) /
-        historicalData.averageCosts.materials) *
-      100,
-    labor:
-      ((currentCosts.labor - historicalData.averageCosts.labor) /
-        historicalData.averageCosts.labor) *
-      100,
-    other:
-      ((currentCosts.other - historicalData.averageCosts.other) /
-        historicalData.averageCosts.other) *
-      100,
-    total:
-      ((currentCosts.total - historicalData.averageCosts.total) /
-        historicalData.averageCosts.total) *
-      100,
-  };
+  // Calculate variance from historical averages - memoized
+  const variance = useMemo(
+    () => ({
+      equipment:
+        ((currentCosts.equipment - historicalData.averageCosts.equipment) /
+          historicalData.averageCosts.equipment) *
+        100,
+      materials:
+        ((currentCosts.materials - historicalData.averageCosts.materials) /
+          historicalData.averageCosts.materials) *
+        100,
+      labor:
+        ((currentCosts.labor - historicalData.averageCosts.labor) /
+          historicalData.averageCosts.labor) *
+        100,
+      other:
+        ((currentCosts.other - historicalData.averageCosts.other) /
+          historicalData.averageCosts.other) *
+        100,
+      total:
+        ((currentCosts.total - historicalData.averageCosts.total) /
+          historicalData.averageCosts.total) *
+        100,
+    }),
+    [currentCosts, historicalData?.averageCosts],
+  );
 
-  const currentPerSqft = sqft > 0 ? currentCosts.total / sqft : 0;
-  const perSqftVariance =
-    currentPerSqft > 0
-      ? ((currentPerSqft - historicalData.averageCosts.perSqft) /
-          historicalData.averageCosts.perSqft) *
-        100
-      : 0;
+  const currentPerSqft = useMemo(
+    () => (sqft > 0 ? currentCosts.total / sqft : 0),
+    [sqft, currentCosts.total],
+  );
+  const perSqftVariance = useMemo(
+    () =>
+      currentPerSqft > 0 && historicalData
+        ? ((currentPerSqft - historicalData.averageCosts.perSqft) /
+            historicalData.averageCosts.perSqft) *
+          100
+        : 0,
+    [currentPerSqft, historicalData?.averageCosts.perSqft],
+  );
 
-  const getVarianceColor = (value: number): string => {
+  const getVarianceColor = useCallback((value: number): string => {
     if (value > 15) return "text-red-600";
     if (value > 5) return "text-orange-600";
     if (value < -15) return "text-green-600";
     if (value < -5) return "text-blue-600";
     return "text-gray-900";
-  };
+  }, []);
 
-  const getVarianceIcon = (value: number) => {
+  const getVarianceIcon = useCallback((value: number) => {
     if (Math.abs(value) < 5) return null;
     return value > 0 ? (
       <TrendingUp className="w-4 h-4" />
     ) : (
       <TrendingDown className="w-4 h-4" />
     );
-  };
+  }, []);
 
-  const getBenchmarkLevel = (perSqft: number): string => {
-    if (perSqft < historicalData.benchmarks.low) return "Below Market";
-    if (perSqft < historicalData.benchmarks.average) return "Low";
-    if (perSqft < historicalData.benchmarks.high) return "Average";
-    if (perSqft < historicalData.benchmarks.premium) return "High";
-    return "Premium";
-  };
+  const getBenchmarkLevel = useCallback(
+    (perSqft: number): string => {
+      if (perSqft < historicalData.benchmarks.low) return "Below Market";
+      if (perSqft < historicalData.benchmarks.average) return "Low";
+      if (perSqft < historicalData.benchmarks.high) return "Average";
+      if (perSqft < historicalData!.benchmarks.premium) return "High";
+      return "Premium";
+    },
+    [historicalData],
+  );
 
-  const benchmarkColor = (level: string): string => {
+  const benchmarkColor = useCallback((level: string): string => {
     switch (level) {
       case "Below Market":
         return "bg-green-100 text-green-700";
@@ -386,7 +398,7 @@ export function HistoricalComparison({
       default:
         return "bg-gray-100 text-gray-700";
     }
-  };
+  }, []);
 
   return (
     <Card className="w-full">
@@ -647,4 +659,4 @@ export function HistoricalComparison({
       </CardContent>
     </Card>
   );
-}
+});

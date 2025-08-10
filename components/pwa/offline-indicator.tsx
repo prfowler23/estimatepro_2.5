@@ -58,11 +58,15 @@ export const OfflineIndicator: React.FC = () => {
 
     // Update pending actions periodically
     const interval = setInterval(() => {
+      // Only update if the component is still mounted
       setPendingActions(offlineManager.getPendingActions());
     }, 5000);
 
     return () => {
-      unsubscribe();
+      // Ensure proper cleanup
+      if (unsubscribe && typeof unsubscribe === "function") {
+        unsubscribe();
+      }
       clearInterval(interval);
     };
   }, []);

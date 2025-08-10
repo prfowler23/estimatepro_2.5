@@ -200,11 +200,11 @@ export async function POST(request: NextRequest) {
     }
 
     const response: AssistantResponse = {
-      response: result.data.response,
+      response: result.data?.response || "No response generated",
       conversationId: savedConversation?.id || conversationId,
       mode,
       usage: {
-        tokensUsed: result.data.tokensUsed,
+        tokensUsed: result.data?.tokensUsed,
         message: "AI assistant response generated successfully",
       },
     };

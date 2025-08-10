@@ -1,9 +1,58 @@
-import { AIService } from "@/lib/services/ai-service";
 import {
   createMockEstimate,
   createMockService,
   createMockUser,
 } from "@/__tests__/test-utils";
+
+jest.mock("@/lib/services/ai-service", () => ({
+  AIService: {
+    analyzeBuilding: jest.fn().mockResolvedValue({
+      findings: {
+        surfaceArea: 5000,
+        windowCount: 50,
+        stories: 2,
+      },
+      confidence: 0.95,
+      fileId: "test-file-id",
+    }),
+
+    extractContactInfo: jest.fn().mockResolvedValue({
+      customer: {
+        name: "John Doe",
+        email: "john@example.com",
+        phone: "123-456-7890",
+        address: "123 Main St",
+      },
+    }),
+
+    recommendServices: jest.fn().mockResolvedValue(["WC", "PW", "SW"]),
+
+    validateScope: jest.fn().mockResolvedValue({
+      isValid: true,
+      confidence: 0.95,
+      warnings: ["Consider safety equipment for high floors"],
+    }),
+
+    calculateConfidenceScore: jest.fn().mockReturnValue(0.95),
+
+    findSimilarProjects: jest.fn().mockResolvedValue(null),
+
+    mergeAnalysisResults: jest.fn().mockReturnValue({
+      analysisType: "facade",
+      findings: {
+        surfaceArea: 5100,
+        recommendations: ["WC", "PW"],
+      },
+    }),
+
+    analyzeFacadeComprehensive: jest.fn().mockResolvedValue({
+      measurements: { total_facade_area: 5000 },
+      materials: { primary: "glass" },
+    }),
+  },
+}));
+
+import { AIService } from "@/lib/services/ai-service";
 
 // Mock fetch globally
 global.fetch = jest.fn();

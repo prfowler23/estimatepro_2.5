@@ -37,6 +37,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AIMetricsData, AI_CONSTANTS } from "@/lib/types/ai-types";
+import { logger } from "@/lib/utils/logger";
 
 export function AIMetricsDashboard() {
   const [metrics, setMetrics] = useState<AIMetricsData | null>(null);
@@ -53,7 +54,7 @@ export function AIMetricsDashboard() {
       const data = await response.json();
       setMetrics(data);
     } catch (error) {
-      console.error("Error fetching metrics:", error);
+      logger.error("Error fetching metrics:", error);
     } finally {
       setLoading(false);
     }
@@ -100,7 +101,7 @@ export function AIMetricsDashboard() {
       // Clean up
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error exporting metrics:", error);
+      logger.error("Error exporting metrics:", error);
     }
   };
 

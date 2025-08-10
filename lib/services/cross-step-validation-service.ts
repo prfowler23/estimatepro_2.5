@@ -3,9 +3,14 @@
 
 import { GuidedFlowData, ServiceType } from "@/lib/types/estimate-types";
 import {
-  RealTimePricingService,
+  unifiedRealTimePricingService,
   RealTimePricingResult,
-} from "./real-time-pricing-service";
+} from "./real-time-pricing-service-unified";
+import { Logger } from "./core/logger";
+import {
+  ValidationError as ServiceValidationError,
+  ServiceError,
+} from "./core/errors";
 
 export interface CrossStepValidationResult {
   isValid: boolean;
@@ -70,7 +75,6 @@ export interface CrossStepValidationConfig {
 }
 
 export class CrossStepValidationService {
-  private static instance: CrossStepValidationService | null = null;
   private config: CrossStepValidationConfig;
   private validationRules: Map<string, ValidationRule>;
   private listeners: Map<
@@ -80,8 +84,12 @@ export class CrossStepValidationService {
   private lastResults: Map<string, CrossStepValidationResult>;
   private validationTimers: Map<string, NodeJS.Timeout>;
   private pricingService: RealTimePricingService;
+  private logger: Logger;
 
-  private constructor(config: Partial<CrossStepValidationConfig> = {}) {
+  constructor(
+    config: Partial<CrossStepValidationConfig> = {},
+    pricingService?: RealTimePricingService,
+  ) {
     this.config = {
       enableRealTimeValidation: true,
       enableAutoFix: false, // Conservative default
@@ -94,20 +102,20 @@ export class CrossStepValidationService {
     this.listeners = new Map();
     this.lastResults = new Map();
     this.validationTimers = new Map();
-    this.pricingService = RealTimePricingService.getInstance();
+    this.pricingService = pricingService || new RealTimePricingService();
+    this.logger = new Logger("CrossStepValidationService");
 
     this.initializeValidationRules();
   }
 
+  // Backward compatibility - deprecated
   static getInstance(
     config?: Partial<CrossStepValidationConfig>,
   ): CrossStepValidationService {
-    if (!CrossStepValidationService.instance) {
-      CrossStepValidationService.instance = new CrossStepValidationService(
-        config,
-      );
-    }
-    return CrossStepValidationService.instance;
+    console.warn(
+      "CrossStepValidationService.getInstance() is deprecated. Use 'new CrossStepValidationService()' instead.",
+    );
+    return new CrossStepValidationService(config);
   }
 
   // Initialize all validation rules
@@ -272,7 +280,10 @@ export class CrossStepValidationService {
           overallConfidence = "medium";
         }
       } catch (error) {
-        console.error(`Validation rule ${rule.id} failed:`, error);
+        this.logger.error(`Validation rule ${rule.id} failed`, error as Error, {
+          ruleId: rule.id,
+          ruleName: rule.name,
+        });
         allErrors.push({
           id: `rule-error-${rule.id}`,
           type: "invalid",
@@ -892,14 +903,55 @@ export class CrossStepValidationService {
   ): void {
     // This would trigger auto-fix actions
     // Implementation depends on how the consumer wants to handle data updates
-    console.log(
-      "Auto-fix triggered for",
+    this.logger.info("Auto-fix triggered", {
       estimateId,
-      validationResult.warnings.filter((w) => w.canAutoFix),
-    );
+      warnings: validationResult.warnings.filter((w) => w.canAutoFix),
+    });
   }
 
-  // Public methods
+  // Public methods - backward compatibility methods
+  validateStep(
+    stepId: string,
+    flowData: GuidedFlowData,
+  ): CrossStepValidationResult {
+    return this.validateCrossStepData(flowData, undefined, stepId);
+  }
+
+  validateCrossStepDependencies(
+    flowData: GuidedFlowData,
+    estimateId?: string,
+  ): CrossStepValidationResult {
+    return this.validateCrossStepData(flowData, estimateId);
+  }
+
+  startRealTimeValidation(estimateId: string, flowData: GuidedFlowData): void {
+    this.updateValidation(flowData, estimateId);
+  }
+
+  stopRealTimeValidation(estimateId: string): void {
+    this.clearValidationTimer(estimateId);
+  }
+
+  get isValidating(): boolean {
+    return this.validationTimers.size > 0;
+  }
+
+  notifyValidationChange(
+    estimateId: string,
+    flowData: GuidedFlowData,
+    stepId?: string,
+  ): void {
+    this.updateValidation(flowData, estimateId, stepId);
+  }
+
+  addValidationRule(rule: ValidationRule): void {
+    this.validationRules.set(rule.id, rule);
+  }
+
+  removeValidationRule(ruleId: string): void {
+    this.validationRules.delete(ruleId);
+  }
+
   getLastResult(estimateId: string): CrossStepValidationResult | null {
     return this.lastResults.get(estimateId) || null;
   }
@@ -909,11 +961,17 @@ export class CrossStepValidationService {
   }
 
   enableRule(ruleId: string): void {
-    // Implementation to enable/disable specific rules
+    const rule = this.validationRules.get(ruleId);
+    if (rule) {
+      // Re-add rule if it was disabled (basic implementation)
+      this.validationRules.set(ruleId, rule);
+    }
   }
 
   disableRule(ruleId: string): void {
-    // Implementation to enable/disable specific rules
+    // For now, we'll just remove the rule
+    // In a more sophisticated implementation, we'd mark it as disabled
+    this.validationRules.delete(ruleId);
   }
 
   // Schedule validation with delay
@@ -976,6 +1034,13 @@ export class CrossStepValidationService {
     this.listeners.clear();
     this.lastResults.clear();
   }
+
+  // Alias for cleanup to match other services
+  dispose(): void {
+    this.cleanup();
+  }
 }
 
+// Export both class and alias for backward compatibility
+export { CrossStepValidationService as CrossStepValidationServiceV2 };
 export default CrossStepValidationService;

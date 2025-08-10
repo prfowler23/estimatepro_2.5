@@ -8,7 +8,7 @@ import { withAuditLogging } from "@/lib/audit/audit-middleware";
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -85,7 +85,7 @@ async function handleGET(request: NextRequest) {
 
 async function handlePOST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

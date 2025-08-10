@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,7 +40,7 @@ interface SoftWashingFormProps {
   onCancel: () => void;
 }
 
-export function SoftWashingForm({ onSubmit, onCancel }: SoftWashingFormProps) {
+const SoftWashingFormBase = ({ onSubmit, onCancel }: SoftWashingFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -533,4 +534,17 @@ export function SoftWashingForm({ onSubmit, onCancel }: SoftWashingFormProps) {
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const SoftWashingForm = React.memo(
+  SoftWashingFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+SoftWashingForm.displayName = "SoftWashingForm";

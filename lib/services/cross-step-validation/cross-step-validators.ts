@@ -5,9 +5,9 @@
 
 import { GuidedFlowData, ServiceType } from "@/lib/types/estimate-types";
 import {
-  RealTimePricingService,
+  RealTimePricingServiceV2 as RealTimePricingService,
   RealTimePricingResult,
-} from "../real-time-pricing-service";
+} from "../real-time-pricing-service-v2";
 import {
   CrossStepValidationResult,
   ValidationWarning,

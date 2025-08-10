@@ -118,7 +118,7 @@ async function getMonthlyRevenue(
   // Group by month and calculate metrics
   const monthlyMap = new Map<string, { revenue: number; estimates: number }>();
 
-  data?.forEach((estimate) => {
+  data?.forEach((estimate: any) => {
     const month = new Date(estimate.created_at).toISOString().slice(0, 7); // YYYY-MM
     const current = monthlyMap.get(month) || { revenue: 0, estimates: 0 };
 
@@ -180,7 +180,7 @@ async function getServiceMetrics(
     }
   >();
 
-  data?.forEach((service) => {
+  data?.forEach((service: any) => {
     const current = serviceMap.get(service.service_id) || {
       serviceName: service.service_name,
       totalRevenue: 0,
@@ -212,7 +212,7 @@ async function getServiceMetrics(
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

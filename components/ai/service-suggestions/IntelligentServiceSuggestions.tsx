@@ -1,7 +1,7 @@
 // Refactored intelligent service suggestions component
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
@@ -15,6 +15,8 @@ import {
   AIExtractedDataSchema,
   ServiceSuggestionSchema,
 } from "@/lib/ai/ai-input-validation";
+import { logger } from "@/lib/utils/logger";
+import { useDebouncedValue } from "../shared/hooks";
 
 interface IntelligentServiceSuggestionsProps {
   flowData: GuidedFlowData;
@@ -24,13 +26,13 @@ interface IntelligentServiceSuggestionsProps {
   className?: string;
 }
 
-export function IntelligentServiceSuggestions({
+const IntelligentServiceSuggestionsComponent = ({
   flowData,
   currentServices,
   onAcceptSuggestion,
   onRejectSuggestion,
   className = "",
-}: IntelligentServiceSuggestionsProps) {
+}: IntelligentServiceSuggestionsProps) => {
   const [suggestions, setSuggestions] = useState<ServiceSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [acceptedSuggestions, setAcceptedSuggestions] = useState<
@@ -40,15 +42,13 @@ export function IntelligentServiceSuggestions({
     Set<ServiceType>
   >(new Set());
 
-  // Generate suggestions based on current flow data
-  useEffect(() => {
-    generateSuggestions();
-  }, [flowData, currentServices]);
+  // Debounce flowData to avoid excessive re-generations
+  const debouncedFlowData = useDebouncedValue(flowData, 500);
 
-  const generateSuggestions = async () => {
+  const generateSuggestions = useCallback(async () => {
     // Add safety guard for undefined flowData
     if (!flowData) {
-      console.warn("IntelligentServiceSuggestions: flowData is undefined");
+      logger.warn("IntelligentServiceSuggestions: flowData is undefined");
       return;
     }
 
@@ -63,14 +63,14 @@ export function IntelligentServiceSuggestions({
     );
 
     if (!validation.success) {
-      console.error("Invalid AI extracted data:", validation.error);
+      logger.error("Invalid AI extracted data:", validation.error);
       return;
     }
 
     setIsLoading(true);
     try {
       const rawSuggestions = await generateIntelligentSuggestions(
-        flowData,
+        debouncedFlowData,
         currentServices,
       );
 
@@ -84,30 +84,47 @@ export function IntelligentServiceSuggestions({
 
       setSuggestions(validSuggestions);
     } catch (error) {
-      console.error("Failed to generate service suggestions:", error);
+      logger.error("Failed to generate service suggestions:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [debouncedFlowData, currentServices]);
 
-  const handleAcceptSuggestion = (serviceType: string) => {
-    const typedServiceType = serviceType as ServiceType;
-    setAcceptedSuggestions((prev) => new Set([...prev, typedServiceType]));
-    onAcceptSuggestion(typedServiceType);
-  };
+  // Generate suggestions when dependencies change
+  useEffect(() => {
+    if (debouncedFlowData?.initialContact?.aiExtractedData) {
+      generateSuggestions();
+    }
+  }, [debouncedFlowData, currentServices, generateSuggestions]);
 
-  const handleRejectSuggestion = (serviceType: string) => {
-    const typedServiceType = serviceType as ServiceType;
-    setRejectedSuggestions((prev) => new Set([...prev, typedServiceType]));
-    onRejectSuggestion(typedServiceType);
-  };
+  const handleAcceptSuggestion = useCallback(
+    (serviceType: string) => {
+      const typedServiceType = serviceType as ServiceType;
+      setAcceptedSuggestions((prev) => new Set([...prev, typedServiceType]));
+      onAcceptSuggestion(typedServiceType);
+    },
+    [onAcceptSuggestion],
+  );
 
-  // Filter out already selected, accepted, or rejected services
-  const visibleSuggestions = suggestions.filter(
-    (suggestion) =>
-      !currentServices.includes(suggestion.serviceType) &&
-      !acceptedSuggestions.has(suggestion.serviceType) &&
-      !rejectedSuggestions.has(suggestion.serviceType),
+  const handleRejectSuggestion = useCallback(
+    (serviceType: string) => {
+      const typedServiceType = serviceType as ServiceType;
+      setRejectedSuggestions((prev) => new Set([...prev, typedServiceType]));
+      onRejectSuggestion(typedServiceType);
+    },
+    [onRejectSuggestion],
+  );
+
+  // Memoize filtered suggestions
+  const visibleSuggestions = useMemo(
+    () =>
+      suggestions.filter(
+        (suggestion) =>
+          !currentServices.includes(suggestion.serviceType) &&
+          !acceptedSuggestions.has(suggestion.serviceType) &&
+          !rejectedSuggestions.has(suggestion.serviceType),
+      ),
+    [suggestions, currentServices, acceptedSuggestions, rejectedSuggestions],
   );
 
   if (isLoading) {
@@ -175,6 +192,23 @@ export function IntelligentServiceSuggestions({
       </div>
     </Card>
   );
-}
+};
+
+// Export with memo for performance optimization
+export const IntelligentServiceSuggestions = memo(
+  IntelligentServiceSuggestionsComponent,
+  (prevProps, nextProps) => {
+    // Custom comparison to avoid unnecessary re-renders
+    return (
+      prevProps.className === nextProps.className &&
+      prevProps.currentServices.length === nextProps.currentServices.length &&
+      prevProps.currentServices.every(
+        (service, index) => service === nextProps.currentServices[index],
+      ) &&
+      JSON.stringify(prevProps.flowData?.initialContact?.aiExtractedData) ===
+        JSON.stringify(nextProps.flowData?.initialContact?.aiExtractedData)
+    );
+  },
+);
 
 export default IntelligentServiceSuggestions;

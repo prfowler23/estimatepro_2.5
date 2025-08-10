@@ -4,6 +4,7 @@
 import { LRUCache } from "lru-cache";
 // import { Redis } from 'ioredis'; // Optional Redis dependency - install with: npm install ioredis
 import { createClient } from "@/lib/supabase/client";
+import { CompressionUtils, CompressionMetrics } from "./compression-utils";
 
 // Cache configuration
 export interface CacheConfig {
@@ -99,11 +100,22 @@ export class CacheManager {
   private metrics: CacheMetrics;
   private invalidationStrategies: Map<string, InvalidationStrategy> = new Map();
   private compressionEnabled: boolean;
+  private compressionUtils: CompressionUtils;
+  private cacheHitRatios: Map<string, { hits: number; misses: number }> =
+    new Map();
+  private cacheSizeAlerts: { threshold: number; callback?: () => void } = {
+    threshold: 0.9,
+  };
 
   private constructor(config: CacheConfig = DEFAULT_CONFIG) {
     this.config = config;
     this.metrics = { ...DEFAULT_CONFIG.metrics! };
     this.compressionEnabled = config.enableCompression;
+    this.compressionUtils = new CompressionUtils({
+      threshold: config.compressionThreshold,
+      algorithm: "gzip",
+      level: 6,
+    });
 
     // Initialize memory cache
     this.memoryCache = new LRUCache<string, CacheEntry>({
@@ -199,29 +211,42 @@ export class CacheManager {
   }
 
   // Compress data if enabled
-  private async compressData(data: any): Promise<string> {
-    if (!this.compressionEnabled) return JSON.stringify(data);
-
-    const jsonString = JSON.stringify(data);
-    if (jsonString.length < this.config.compressionThreshold) {
-      return jsonString;
+  private async compressData(data: any): Promise<{
+    data: Buffer | string;
+    compressed: boolean;
+    metrics?: CompressionMetrics;
+  }> {
+    if (!this.compressionEnabled) {
+      return {
+        data: JSON.stringify(data),
+        compressed: false,
+      };
     }
 
-    // Use compression library (would need to install)
-    // For now, return as-is
-    return jsonString;
+    if (!this.compressionUtils.shouldCompress(data)) {
+      return {
+        data: JSON.stringify(data),
+        compressed: false,
+      };
+    }
+
+    return this.compressionUtils.compress(data);
   }
 
   // Decompress data if needed
   private async decompressData(
-    data: string,
+    data: Buffer | string,
     compressed: boolean = false,
   ): Promise<any> {
-    if (!compressed) return JSON.parse(data);
+    if (!compressed) {
+      if (typeof data === "string") {
+        return JSON.parse(data);
+      }
+      return data;
+    }
 
-    // Use decompression library (would need to install)
-    // For now, parse as-is
-    return JSON.parse(data);
+    const decompressed = await this.compressionUtils.decompress(data);
+    return JSON.parse(decompressed);
   }
 
   // Get from cache
@@ -236,13 +261,12 @@ export class CacheManager {
       const memoryEntry = this.memoryCache.get(key);
       if (memoryEntry) {
         const data = await this.decompressData(
-          typeof memoryEntry.data === "string"
-            ? memoryEntry.data
-            : JSON.stringify(memoryEntry.data),
+          memoryEntry.data,
           memoryEntry.compressed,
         );
 
         this.metrics.hits++;
+        this.updateHitRatio(key, true);
         this.updateMetrics();
         this.recordResponseTime(Date.now() - startTime);
         return data;
@@ -253,17 +277,13 @@ export class CacheManager {
         const redisEntry = await this.redisClient.get(key);
         if (redisEntry) {
           const entry: CacheEntry = JSON.parse(redisEntry);
-          const data = await this.decompressData(
-            typeof entry.data === "string"
-              ? entry.data
-              : JSON.stringify(entry.data),
-            entry.compressed,
-          );
+          const data = await this.decompressData(entry.data, entry.compressed);
 
           // Store in memory cache for faster access
           this.memoryCache.set(key, entry);
 
           this.metrics.hits++;
+          this.updateHitRatio(key, true);
           this.updateMetrics();
           this.recordResponseTime(Date.now() - startTime);
           return data;
@@ -271,6 +291,7 @@ export class CacheManager {
       }
 
       this.metrics.misses++;
+      this.updateHitRatio(key, false);
       this.updateMetrics();
       return null;
     } catch (error) {
@@ -290,17 +311,18 @@ export class CacheManager {
     const cacheTtl = ttl || this.config.ttl;
 
     try {
-      const compressedData = await this.compressData(data);
+      const compressionResult = await this.compressData(data);
       const entry: CacheEntry = {
-        data: compressedData,
+        data: compressionResult.data,
         timestamp,
         ttl: cacheTtl,
         version: cacheKey.version || "1.0",
         tags: this.getTagsForKey(cacheKey),
-        compressed:
-          this.compressionEnabled &&
-          compressedData.length >= this.config.compressionThreshold,
-        metadata: cacheKey.metadata,
+        compressed: compressionResult.compressed,
+        metadata: {
+          ...cacheKey.metadata,
+          compressionMetrics: compressionResult.metrics,
+        },
       };
 
       // Store in memory cache
@@ -503,10 +525,122 @@ export class CacheManager {
     this.metrics.hitRate =
       this.metrics.hits / (this.metrics.hits + this.metrics.misses) || 0;
     this.metrics.memory = this.memoryCache.calculatedSize || 0;
+
+    // Check cache size and trigger alert if needed
+    this.checkCacheSizeAlert();
+  }
+
+  private updateHitRatio(key: string, isHit: boolean): void {
+    const pattern = key.split(":")[0];
+    if (!this.cacheHitRatios.has(pattern)) {
+      this.cacheHitRatios.set(pattern, { hits: 0, misses: 0 });
+    }
+    const ratio = this.cacheHitRatios.get(pattern)!;
+    if (isHit) {
+      ratio.hits++;
+    } else {
+      ratio.misses++;
+    }
+  }
+
+  private checkCacheSizeAlert(): void {
+    const usage = this.metrics.size / this.config.maxSize;
+    if (usage > this.cacheSizeAlerts.threshold) {
+      console.warn(
+        `Cache size alert: ${(usage * 100).toFixed(1)}% of max capacity`,
+      );
+      if (this.cacheSizeAlerts.callback) {
+        this.cacheSizeAlerts.callback();
+      }
+    }
+  }
+
+  // Set cache size alert threshold and callback
+  setCacheSizeAlert(threshold: number, callback?: () => void): void {
+    this.cacheSizeAlerts = { threshold, callback };
+  }
+
+  // Get hit ratios per key pattern
+  getHitRatios(): Map<string, { ratio: number; hits: number; misses: number }> {
+    const ratios = new Map<
+      string,
+      { ratio: number; hits: number; misses: number }
+    >();
+    this.cacheHitRatios.forEach((stats, pattern) => {
+      const total = stats.hits + stats.misses;
+      ratios.set(pattern, {
+        ratio: total > 0 ? stats.hits / total : 0,
+        hits: stats.hits,
+        misses: stats.misses,
+      });
+    });
+    return ratios;
   }
 
   private recordResponseTime(time: number): void {
     this.metrics.avgResponseTime = (this.metrics.avgResponseTime + time) / 2;
+  }
+
+  // Tiered caching strategy
+  async getTiered<T>(cacheKey: CacheKey): Promise<T | null> {
+    // L1: Memory cache
+    const memoryResult = await this.getFromMemory<T>(cacheKey);
+    if (memoryResult !== null) return memoryResult;
+
+    // L2: Redis cache
+    const redisResult = await this.getFromRedis<T>(cacheKey);
+    if (redisResult !== null) {
+      // Promote to memory cache
+      await this.setToMemory(cacheKey, redisResult);
+      return redisResult;
+    }
+
+    // L3: Database (not implemented here - would be in service layer)
+    return null;
+  }
+
+  private async getFromMemory<T>(cacheKey: CacheKey): Promise<T | null> {
+    const key = this.generateKey(cacheKey);
+    const entry = this.memoryCache.get(key);
+    if (!entry) return null;
+
+    try {
+      return await this.decompressData(entry.data, entry.compressed);
+    } catch (error) {
+      console.error("Memory cache decompression error:", error);
+      return null;
+    }
+  }
+
+  private async getFromRedis<T>(cacheKey: CacheKey): Promise<T | null> {
+    if (!this.redisClient) return null;
+
+    const key = this.generateKey(cacheKey);
+    try {
+      const redisEntry = await this.redisClient.get(key);
+      if (!redisEntry) return null;
+
+      const entry: CacheEntry = JSON.parse(redisEntry);
+      return await this.decompressData(entry.data, entry.compressed);
+    } catch (error) {
+      console.error("Redis cache error:", error);
+      return null;
+    }
+  }
+
+  private async setToMemory<T>(cacheKey: CacheKey, data: T): Promise<void> {
+    const key = this.generateKey(cacheKey);
+    const compressionResult = await this.compressData(data);
+    const entry: CacheEntry = {
+      data: compressionResult.data,
+      timestamp: Date.now(),
+      ttl: this.config.ttl,
+      version: cacheKey.version || "1.0",
+      tags: this.getTagsForKey(cacheKey),
+      compressed: compressionResult.compressed,
+      metadata: compressionResult.metrics,
+    };
+    this.memoryCache.set(key, entry);
   }
 }
 

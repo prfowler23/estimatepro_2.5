@@ -1,83 +1,66 @@
-import React, { useState } from "react";
-import { Button, Card } from "@/components/ui";
+import React, { useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Ruler, Check, X } from "lucide-react";
+import { Point, Scale, ScaleSetterProps } from "./types";
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface ScaleSetterProps {
-  onScaleSet: (pixelsPerFoot: number) => void;
-  currentScale?: number;
-  isActive?: boolean;
-  onActivate?: () => void;
-  onDeactivate?: () => void;
-}
-
-export function ScaleSetter({
-  onScaleSet,
-  currentScale,
-  isActive = false,
-  onActivate,
-  onDeactivate,
-}: ScaleSetterProps) {
+export function ScaleSetter({ scale, onScaleChange }: ScaleSetterProps) {
   const [isSettingScale, setIsSettingScale] = useState(false);
   const [referenceLength, setReferenceLength] = useState(10);
   const [pixelLength, setPixelLength] = useState(0);
   const [scalePoints, setScalePoints] = useState<Point[]>([]);
   const [measurementComplete, setMeasurementComplete] = useState(false);
 
-  const startScaleSetting = () => {
+  const startScaleSetting = useCallback(() => {
     setIsSettingScale(true);
     setScalePoints([]);
     setPixelLength(0);
     setMeasurementComplete(false);
-    onActivate?.();
-  };
+  }, []);
 
-  const cancelScaleSetting = () => {
+  const cancelScaleSetting = useCallback(() => {
     setIsSettingScale(false);
     setScalePoints([]);
     setPixelLength(0);
     setMeasurementComplete(false);
-    onDeactivate?.();
-  };
+  }, []);
 
-  const handleScaleClick = (point: Point) => {
-    if (!isSettingScale) return;
+  const handleScaleClick = useCallback(
+    (point: Point) => {
+      if (!isSettingScale) return;
 
-    if (scalePoints.length === 0) {
-      setScalePoints([point]);
-    } else if (scalePoints.length === 1) {
-      const distance = Math.sqrt(
-        Math.pow(point.x - scalePoints[0].x, 2) +
-          Math.pow(point.y - scalePoints[0].y, 2),
-      );
+      if (scalePoints.length === 0) {
+        setScalePoints([point]);
+      } else if (scalePoints.length === 1) {
+        const distance = Math.sqrt(
+          Math.pow(point.x - scalePoints[0].x, 2) +
+            Math.pow(point.y - scalePoints[0].y, 2),
+        );
 
-      setPixelLength(distance);
-      setScalePoints([...scalePoints, point]);
-      setMeasurementComplete(true);
-    }
-  };
+        setPixelLength(distance);
+        setScalePoints([...scalePoints, point]);
+        setMeasurementComplete(true);
+      }
+    },
+    [isSettingScale, scalePoints],
+  );
 
-  const confirmScale = () => {
+  const confirmScale = useCallback(() => {
     if (pixelLength > 0 && referenceLength > 0) {
       const pixelsPerFoot = pixelLength / referenceLength;
-      onScaleSet(pixelsPerFoot);
+      onScaleChange({ pixelsPerFoot });
       setIsSettingScale(false);
       setScalePoints([]);
       setPixelLength(0);
       setMeasurementComplete(false);
-      onDeactivate?.();
     }
-  };
+  }, [pixelLength, referenceLength, onScaleChange]);
 
-  const resetMeasurement = () => {
+  const resetMeasurement = useCallback(() => {
     setScalePoints([]);
     setPixelLength(0);
     setMeasurementComplete(false);
-  };
+  }, []);
 
   // Handler exposed through props
 
@@ -89,13 +72,13 @@ export function ScaleSetter({
       </h3>
 
       {/* Current Scale Display */}
-      {currentScale && !isSettingScale && (
+      {scale && !isSettingScale && (
         <div className="mb-3 p-2 bg-green-50 rounded">
           <p className="text-sm text-green-700">
-            Current scale: {currentScale.toFixed(2)} pixels per foot
+            Current scale: {scale.pixelsPerFoot.toFixed(2)} pixels per foot
           </p>
           <p className="text-xs text-green-600">
-            1 foot = {currentScale.toFixed(1)} pixels
+            1 foot = {scale.pixelsPerFoot.toFixed(1)} pixels
           </p>
         </div>
       )}
@@ -212,7 +195,7 @@ export function ScaleSetter({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onScaleSet(10)}
+              onClick={() => onScaleChange({ pixelsPerFoot: 10 })}
               className="text-xs"
             >
               1&quot; = 10&apos;
@@ -220,7 +203,7 @@ export function ScaleSetter({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onScaleSet(20)}
+              onClick={() => onScaleChange({ pixelsPerFoot: 20 })}
               className="text-xs"
             >
               1&quot; = 5&apos;
@@ -228,7 +211,7 @@ export function ScaleSetter({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onScaleSet(5)}
+              onClick={() => onScaleChange({ pixelsPerFoot: 5 })}
               className="text-xs"
             >
               1&quot; = 20&apos;
@@ -236,7 +219,7 @@ export function ScaleSetter({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onScaleSet(50)}
+              onClick={() => onScaleChange({ pixelsPerFoot: 50 })}
               className="text-xs"
             >
               1&quot; = 2&apos;
@@ -246,15 +229,4 @@ export function ScaleSetter({
       )}
     </Card>
   );
-}
-
-// Hook for parent components to handle scale setting clicks
-export function useScaleSetting(scaleSetterRef: React.RefObject<any>) {
-  const handleCanvasClick = (point: Point) => {
-    if (scaleSetterRef.current) {
-      scaleSetterRef.current.handleClick(point);
-    }
-  };
-
-  return { handleCanvasClick };
 }

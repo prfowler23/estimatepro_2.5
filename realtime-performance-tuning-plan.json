@@ -1,0 +1,3931 @@
+{
+  "timestamp": "2025-08-08T15:57:29.644Z",
+  "summary": {
+    "totalServices": 134,
+    "optimizationTargets": 119,
+    "criticalPriority": 3,
+    "highPriority": 7,
+    "cachingOpportunities": 77,
+    "memoryOptimizations": 0,
+    "estimatedImprovement": 22
+  },
+  "optimizationTargets": [
+    {
+      "file": "components/pdf/pdf-processor.tsx",
+      "service": {
+        "file": "components/pdf/pdf-processor.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 0,
+        "stateComplexity": 14,
+        "memoryUsage": 2524,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 10
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 0ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "14 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "critical",
+      "estimatedImpact": 75
+    },
+    {
+      "file": "components/pwa/pwa-status.tsx",
+      "service": {
+        "file": "components/pwa/pwa-status.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": true,
+        "updateFrequency": 0,
+        "stateComplexity": 14,
+        "memoryUsage": 2224,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 10
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 0ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "14 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "critical",
+      "estimatedImpact": 75
+    },
+    {
+      "file": "components/ui/mobile/MobilePhotoCapture.tsx",
+      "service": {
+        "file": "components/ui/mobile/MobilePhotoCapture.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 0,
+        "stateComplexity": 14,
+        "memoryUsage": 2824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 10
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 0ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "14 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "critical",
+      "estimatedImpact": 75
+    },
+    {
+      "file": "lib/services/analytics-websocket-service.ts",
+      "service": {
+        "file": "lib/services/analytics-websocket-service.ts",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": true,
+        "hasSubscription": true,
+        "updateFrequency": 2,
+        "stateComplexity": 1,
+        "memoryUsage": 1824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 8
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 2ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "high",
+      "estimatedImpact": 55
+    },
+    {
+      "file": "lib/services/session-recovery-service.ts",
+      "service": {
+        "file": "lib/services/session-recovery-service.ts",
+        "type": ["session", "autosave"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 60,
+        "stateComplexity": 8,
+        "memoryUsage": 1774,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 8
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 60ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "high",
+      "estimatedImpact": 55
+    },
+    {
+      "file": "hooks/use-facade-analysis-enhanced.ts",
+      "service": {
+        "file": "hooks/use-facade-analysis-enhanced.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 10,
+        "stateComplexity": 3,
+        "memoryUsage": 1474,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 8
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 10ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "high",
+      "estimatedImpact": 55
+    },
+    {
+      "file": "hooks/use-facade-analysis-form.ts",
+      "service": {
+        "file": "hooks/use-facade-analysis-form.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 10,
+        "stateComplexity": 4,
+        "memoryUsage": 2174,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 8
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 10ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "high",
+      "estimatedImpact": 55
+    },
+    {
+      "file": "components/ai/PredictiveInput.tsx",
+      "service": {
+        "file": "components/ai/PredictiveInput.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1,
+        "stateComplexity": 10,
+        "memoryUsage": 1924,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 6
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 1ms",
+          "recommendation": "Implement debouncing or throttling"
+        }
+      ],
+      "priority": "high",
+      "estimatedImpact": 40
+    },
+    {
+      "file": "components/pricing/ManualPriceOverride.tsx",
+      "service": {
+        "file": "components/pricing/ManualPriceOverride.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 100,
+        "stateComplexity": 11,
+        "memoryUsage": 2474,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 7
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "11 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "high",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/ui/accessibility-utils.tsx",
+      "service": {
+        "file": "components/ui/accessibility-utils.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 50,
+        "stateComplexity": 10,
+        "memoryUsage": 2174,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 9
+      },
+      "bottlenecks": [
+        {
+          "type": "high-frequency-updates",
+          "severity": "high",
+          "description": "Updates every 50ms",
+          "recommendation": "Implement debouncing or throttling"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "high",
+      "estimatedImpact": 55
+    },
+    {
+      "file": "lib/services/session-recovery-service-client.ts",
+      "service": {
+        "file": "lib/services/session-recovery-service-client.ts",
+        "type": ["session"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 5000,
+        "stateComplexity": 20,
+        "memoryUsage": 1274,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "hooks/use-audit.ts",
+      "service": {
+        "file": "hooks/use-audit.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": true,
+        "updateFrequency": 100,
+        "stateComplexity": 6,
+        "memoryUsage": 1274,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 4
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "hooks/use-monitoring.ts",
+      "service": {
+        "file": "hooks/use-monitoring.ts",
+        "type": ["live"],
+        "hasWebSocket": true,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 20,
+        "memoryUsage": 3174,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "hooks/use-offline.ts",
+      "service": {
+        "file": "hooks/use-offline.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": true,
+        "updateFrequency": 1000,
+        "stateComplexity": 20,
+        "memoryUsage": 2824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "hooks/useAnalytics.ts",
+      "service": {
+        "file": "hooks/useAnalytics.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 12,
+        "memoryUsage": 1924,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "12 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "hooks/useAnalyticsWebSocket.ts",
+      "service": {
+        "file": "hooks/useAnalyticsWebSocket.ts",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": true,
+        "hasSubscription": true,
+        "updateFrequency": 3000,
+        "stateComplexity": 13,
+        "memoryUsage": 2024,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "13 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "hooks/useNavigationState.ts",
+      "service": {
+        "file": "hooks/useNavigationState.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 100,
+        "stateComplexity": 7,
+        "memoryUsage": 1474,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 4
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "hooks/useSessionRecovery.ts",
+      "service": {
+        "file": "hooks/useSessionRecovery.ts",
+        "type": ["session", "autosave"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 20,
+        "memoryUsage": 2974,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/analytics/AdvancedFilteringPersonalization.tsx",
+      "service": {
+        "file": "components/analytics/AdvancedFilteringPersonalization.tsx",
+        "type": ["live"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 13,
+        "memoryUsage": 2624,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "13 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/analytics/UnifiedAnalyticsDashboard.tsx",
+      "service": {
+        "file": "components/analytics/UnifiedAnalyticsDashboard.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 14,
+        "memoryUsage": 2674,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "14 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/collaboration/CollaborationProvider.tsx",
+      "service": {
+        "file": "components/collaboration/CollaborationProvider.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 15,
+        "memoryUsage": 2724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "15 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/drone/drone-dashboard.tsx",
+      "service": {
+        "file": "components/drone/drone-dashboard.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 12,
+        "memoryUsage": 2524,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "12 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/error/SmartErrorNotification.tsx",
+      "service": {
+        "file": "components/error/SmartErrorNotification.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 300,
+        "stateComplexity": 10,
+        "memoryUsage": 1874,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 4
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/Measurements.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/steps/Measurements.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 2000,
+        "stateComplexity": 15,
+        "memoryUsage": 2874,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "15 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/MeasurementsWithFacade.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/steps/MeasurementsWithFacade.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 2000,
+        "stateComplexity": 19,
+        "memoryUsage": 3074,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "19 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/UnifiedPricing.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/steps/UnifiedPricing.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 19,
+        "memoryUsage": 3024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 6
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "19 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/integrations/webhook-manager-v2.tsx",
+      "service": {
+        "file": "components/integrations/webhook-manager-v2.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 13,
+        "memoryUsage": 1924,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 6
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "13 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/integrations/webhook-manager.tsx",
+      "service": {
+        "file": "components/integrations/webhook-manager.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 15,
+        "memoryUsage": 2024,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "15 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/pwa/install-prompt.tsx",
+      "service": {
+        "file": "components/pwa/install-prompt.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 10000,
+        "stateComplexity": 12,
+        "memoryUsage": 2674,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "12 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/pwa/offline-indicator.tsx",
+      "service": {
+        "file": "components/pwa/offline-indicator.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": true,
+        "updateFrequency": 5000,
+        "stateComplexity": 11,
+        "memoryUsage": 2274,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "11 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/ui/focus-management.tsx",
+      "service": {
+        "file": "components/ui/focus-management.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 13,
+        "memoryUsage": 2524,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 5
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "13 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/ui/screen-reader-enhancements.tsx",
+      "service": {
+        "file": "components/ui/screen-reader-enhancements.tsx",
+        "type": ["live"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 18,
+        "memoryUsage": 2474,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 6
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "18 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        },
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 35
+    },
+    {
+      "file": "components/ui/standardized-notifications.tsx",
+      "service": {
+        "file": "components/ui/standardized-notifications.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 300,
+        "stateComplexity": 7,
+        "memoryUsage": 2024,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 4
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "medium",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/analytics/analytics-insights-service.ts",
+      "service": {
+        "file": "lib/services/analytics/analytics-insights-service.ts",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 2,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/analytics/analytics-stats-service.ts",
+      "service": {
+        "file": "lib/services/analytics/analytics-stats-service.ts",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 1,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/analytics-api-service.ts",
+      "service": {
+        "file": "lib/services/analytics-api-service.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 4,
+        "memoryUsage": 1824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/analytics-personalization-service.ts",
+      "service": {
+        "file": "lib/services/analytics-personalization-service.ts",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 2,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/auto-save/auto-save-conflict-resolver.ts",
+      "service": {
+        "file": "lib/services/auto-save/auto-save-conflict-resolver.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/auto-save/auto-save-persistence-engine.ts",
+      "service": {
+        "file": "lib/services/auto-save/auto-save-persistence-engine.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1224,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/auto-save/auto-save-state-manager.ts",
+      "service": {
+        "file": "lib/services/auto-save/auto-save-state-manager.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 3,
+        "memoryUsage": 1624,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/auto-save/auto-save-version-controller.ts",
+      "service": {
+        "file": "lib/services/auto-save/auto-save-version-controller.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/auto-save/index.ts",
+      "service": {
+        "file": "lib/services/auto-save/index.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/auto-save-service.ts",
+      "service": {
+        "file": "lib/services/auto-save-service.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 3,
+        "memoryUsage": 1824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/core/base-service.ts",
+      "service": {
+        "file": "lib/services/core/base-service.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 1,
+        "memoryUsage": 1574,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/cross-step-validation/cross-step-validators.ts",
+      "service": {
+        "file": "lib/services/cross-step-validation/cross-step-validators.ts",
+        "type": ["pricing"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/cross-step-validation/index.ts",
+      "service": {
+        "file": "lib/services/cross-step-validation/index.ts",
+        "type": ["pricing"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": true,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/cross-step-validation/validation-rules-engine.ts",
+      "service": {
+        "file": "lib/services/cross-step-validation/validation-rules-engine.ts",
+        "type": ["pricing"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 1,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/equipment-materials-service.ts",
+      "service": {
+        "file": "lib/services/equipment-materials-service.ts",
+        "type": ["pricing"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/external-bi-integration-service.ts",
+      "service": {
+        "file": "lib/services/external-bi-integration-service.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 4,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/monitoring-service.ts",
+      "service": {
+        "file": "lib/services/monitoring-service.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 10,
+        "memoryUsage": 1824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/optimized-query-service.ts",
+      "service": {
+        "file": "lib/services/optimized-query-service.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 1,
+        "memoryUsage": 1774,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/performance-optimization-service.ts",
+      "service": {
+        "file": "lib/services/performance-optimization-service.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 3,
+        "memoryUsage": 1574,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "lib/services/photo-service.ts",
+      "service": {
+        "file": "lib/services/photo-service.ts",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "hooks/use-performance.ts",
+      "service": {
+        "file": "hooks/use-performance.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": true,
+        "updateFrequency": 5000,
+        "stateComplexity": 20,
+        "memoryUsage": 3224,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "hooks/useAutoSave.ts",
+      "service": {
+        "file": "hooks/useAutoSave.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 3000,
+        "stateComplexity": 20,
+        "memoryUsage": 2624,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "hooks/useAutoScroll.ts",
+      "service": {
+        "file": "hooks/useAutoScroll.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 10,
+        "memoryUsage": 1674,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "hooks/useDebounce.ts",
+      "service": {
+        "file": "hooks/useDebounce.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 14,
+        "memoryUsage": 2174,
+        "hasErrorHandling": false,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 4
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "14 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "hooks/useErrorHandler.ts",
+      "service": {
+        "file": "hooks/useErrorHandler.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 500,
+        "stateComplexity": 9,
+        "memoryUsage": 1824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "hooks/usePWAStatus.ts",
+      "service": {
+        "file": "hooks/usePWAStatus.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": true,
+        "updateFrequency": 1000,
+        "stateComplexity": 18,
+        "memoryUsage": 2824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "18 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "hooks/useRealTimePricing.ts",
+      "service": {
+        "file": "hooks/useRealTimePricing.ts",
+        "type": ["pricing", "live"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": true,
+        "updateFrequency": 1000,
+        "stateComplexity": 20,
+        "memoryUsage": 2674,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "hooks/useSmartAutoSave.ts",
+      "service": {
+        "file": "hooks/useSmartAutoSave.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 2000,
+        "stateComplexity": 20,
+        "memoryUsage": 3074,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "components/ai/AIAnalyticsDashboard.tsx",
+      "service": {
+        "file": "components/ai/AIAnalyticsDashboard.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1224,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ai/AIMetricsDashboard.tsx",
+      "service": {
+        "file": "components/ai/AIMetricsDashboard.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 7,
+        "memoryUsage": 1774,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ai/facade-analyzer/WindowsAnalysis.tsx",
+      "service": {
+        "file": "components/ai/facade-analyzer/WindowsAnalysis.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ai/photo-upload-analysis.tsx",
+      "service": {
+        "file": "components/ai/photo-upload-analysis.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 8,
+        "memoryUsage": 2324,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ai/shared/hooks.ts",
+      "service": {
+        "file": "components/ai/shared/hooks.ts",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 60000,
+        "stateComplexity": 20,
+        "memoryUsage": 3174,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "20 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "components/analytics/AnalyticsDashboard.tsx",
+      "service": {
+        "file": "components/analytics/AnalyticsDashboard.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 9,
+        "memoryUsage": 2274,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/analytics/ConsolidatedAnalyticsDashboard.tsx",
+      "service": {
+        "file": "components/analytics/ConsolidatedAnalyticsDashboard.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 14,
+        "memoryUsage": 2674,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "14 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "components/analytics/ExportDialog.tsx",
+      "service": {
+        "file": "components/analytics/ExportDialog.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 8,
+        "memoryUsage": 2424,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/analytics/InsightPanel.tsx",
+      "service": {
+        "file": "components/analytics/InsightPanel.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 3,
+        "memoryUsage": 1824,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/analytics/UserPerformanceTable.tsx",
+      "service": {
+        "file": "components/analytics/UserPerformanceTable.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 4,
+        "memoryUsage": 1424,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/auth/two-factor-setup.tsx",
+      "service": {
+        "file": "components/auth/two-factor-setup.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 5000,
+        "stateComplexity": 10,
+        "memoryUsage": 2274,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/biofilm-removal-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/biofilm-removal-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/final-clean-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/final-clean-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/frame-restoration-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/frame-restoration-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/glass-restoration-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/glass-restoration-form.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/granite-reconditioning-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/granite-reconditioning-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/high-dusting-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/high-dusting-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/parking-deck-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/parking-deck-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/pressure-wash-seal-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/pressure-wash-seal-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/pressure-washing-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/pressure-washing-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/soft-washing-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/soft-washing-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/forms/window-cleaning-form.tsx",
+      "service": {
+        "file": "components/calculator/forms/window-cleaning-form.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 1,
+        "memoryUsage": 1624,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/calculator/service-calculator.tsx",
+      "service": {
+        "file": "components/calculator/service-calculator.tsx",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": true,
+        "updateFrequency": 1000,
+        "stateComplexity": 7,
+        "memoryUsage": 1624,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/collaboration/CollaborationDemo.tsx",
+      "service": {
+        "file": "components/collaboration/CollaborationDemo.tsx",
+        "type": ["live"],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": true,
+        "updateFrequency": 1000,
+        "stateComplexity": 4,
+        "memoryUsage": 1924,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/collaboration/CollaborativeField.tsx",
+      "service": {
+        "file": "components/collaboration/CollaborativeField.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 11,
+        "memoryUsage": 2374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "11 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "components/collaboration/CollaborativeStepExample.tsx",
+      "service": {
+        "file": "components/collaboration/CollaborativeStepExample.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 3,
+        "memoryUsage": 1224,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/collaboration/CollaboratorAvatars.tsx",
+      "service": {
+        "file": "components/collaboration/CollaboratorAvatars.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 2024,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/collaboration/RealTimeChangeIndicator.tsx",
+      "service": {
+        "file": "components/collaboration/RealTimeChangeIndicator.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 2000,
+        "stateComplexity": 5,
+        "memoryUsage": 1874,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/drone/error-boundary.tsx",
+      "service": {
+        "file": "components/drone/error-boundary.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 1,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/error/EnhancedErrorDisplay.tsx",
+      "service": {
+        "file": "components/error/EnhancedErrorDisplay.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 7,
+        "memoryUsage": 1574,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/error/ErrorRecoveryDemo.tsx",
+      "service": {
+        "file": "components/error/ErrorRecoveryDemo.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 4,
+        "memoryUsage": 1574,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/error-handling/base-error-boundary.tsx",
+      "service": {
+        "file": "components/error-handling/base-error-boundary.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 2,
+        "memoryUsage": 1724,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/error-handling/error-provider.tsx",
+      "service": {
+        "file": "components/error-handling/error-provider.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 3,
+        "memoryUsage": 1374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/estimation/guided-flow/AutoSaveStatusDisplay.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/AutoSaveStatusDisplay.tsx",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/estimation/guided-flow/RealTimeCostBreakdown.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/RealTimeCostBreakdown.tsx",
+        "type": ["pricing", "live"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": true,
+        "updateFrequency": 1000,
+        "stateComplexity": 8,
+        "memoryUsage": 1624,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/estimation/guided-flow/components/AutoSaveStatusDisplay.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/components/AutoSaveStatusDisplay.tsx",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1524,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/estimation/guided-flow/components/index.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/components/index.tsx",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/estimation/guided-flow/index.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/index.tsx",
+        "type": ["pricing", "session", "autosave", "live"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 13,
+        "memoryUsage": 2124,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "13 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/ProjectSetup.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/steps/ProjectSetup.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1500,
+        "stateComplexity": 17,
+        "memoryUsage": 3074,
+        "hasErrorHandling": true,
+        "hasRateLimiting": true,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "complex-state",
+          "severity": "medium",
+          "description": "17 state variables",
+          "recommendation": "Consider state normalization or decomposition"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 20
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/Summary.tsx",
+      "service": {
+        "file": "components/estimation/guided-flow/steps/Summary.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 9,
+        "memoryUsage": 2374,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/facade-analysis/facade-error-boundary.tsx",
+      "service": {
+        "file": "components/facade-analysis/facade-error-boundary.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 3000,
+        "stateComplexity": 0,
+        "memoryUsage": 1074,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/help/InteractiveTutorial.tsx",
+      "service": {
+        "file": "components/help/InteractiveTutorial.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 2000,
+        "stateComplexity": 10,
+        "memoryUsage": 1674,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/layout/mobile-bottom-nav.tsx",
+      "service": {
+        "file": "components/layout/mobile-bottom-nav.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 4,
+        "memoryUsage": 1274,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/monitoring/monitoring-dashboard.tsx",
+      "service": {
+        "file": "components/monitoring/monitoring-dashboard.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1924,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/monitoring/sentry-error-boundary.tsx",
+      "service": {
+        "file": "components/monitoring/sentry-error-boundary.tsx",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1024,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/optimization/RoutePreloader.tsx",
+      "service": {
+        "file": "components/optimization/RoutePreloader.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 6,
+        "memoryUsage": 1974,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/performance/performance-dashboard.tsx",
+      "service": {
+        "file": "components/performance/performance-dashboard.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 5,
+        "memoryUsage": 1424,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/settings/settings-content.tsx",
+      "service": {
+        "file": "components/settings/settings-content.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 5000,
+        "stateComplexity": 8,
+        "memoryUsage": 2074,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/SaveExitButton.tsx",
+      "service": {
+        "file": "components/ui/SaveExitButton.tsx",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 2,
+        "memoryUsage": 1224,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/SessionRecoveryModal.tsx",
+      "service": {
+        "file": "components/ui/SessionRecoveryModal.tsx",
+        "type": ["session", "autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1524,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/button.tsx",
+      "service": {
+        "file": "components/ui/button.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 600,
+        "stateComplexity": 7,
+        "memoryUsage": 1674,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": true,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/error-alert.tsx",
+      "service": {
+        "file": "components/ui/error-alert.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 2000,
+        "stateComplexity": 2,
+        "memoryUsage": 1974,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/mobile/hooks/useAIAnalysis.ts",
+      "service": {
+        "file": "components/ui/mobile/hooks/useAIAnalysis.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 3,
+        "memoryUsage": 1824,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/mobile/hooks/usePhotoProcessor.ts",
+      "service": {
+        "file": "components/ui/mobile/hooks/usePhotoProcessor.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 2000,
+        "stateComplexity": 2,
+        "memoryUsage": 1274,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/notification-demo.tsx",
+      "service": {
+        "file": "components/ui/notification-demo.tsx",
+        "type": ["autosave"],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 0,
+        "memoryUsage": 1174,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": true,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/performance-utils.ts",
+      "service": {
+        "file": "components/ui/performance-utils.ts",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": true,
+        "hasSubscription": false,
+        "updateFrequency": 30000,
+        "stateComplexity": 2,
+        "memoryUsage": 1874,
+        "hasErrorHandling": false,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 3
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/ui/toast/toast-provider.tsx",
+      "service": {
+        "file": "components/ui/toast/toast-provider.tsx",
+        "type": [],
+        "hasWebSocket": false,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 2,
+        "memoryUsage": 1274,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    },
+    {
+      "file": "components/weather/enhanced-weather-display.tsx",
+      "service": {
+        "file": "components/weather/enhanced-weather-display.tsx",
+        "type": [],
+        "hasWebSocket": true,
+        "hasPolling": false,
+        "hasSubscription": false,
+        "updateFrequency": 1000,
+        "stateComplexity": 7,
+        "memoryUsage": 2224,
+        "hasErrorHandling": true,
+        "hasRateLimiting": false,
+        "hasDataValidation": false,
+        "hasConflictResolution": false,
+        "performanceRisk": 2
+      },
+      "bottlenecks": [
+        {
+          "type": "no-rate-limiting",
+          "severity": "medium",
+          "description": "No rate limiting or throttling detected",
+          "recommendation": "Add throttling/debouncing for updates"
+        }
+      ],
+      "priority": "low",
+      "estimatedImpact": 15
+    }
+  ],
+  "cachingStrategy": {
+    "temporal": {
+      "description": "Time-based caching for frequently updated data",
+      "implementation": "Redis with short TTL (100-1000ms)",
+      "useCase": "Real-time pricing calculations"
+    },
+    "delta": {
+      "description": "Delta compression for state updates",
+      "implementation": "Track and transmit only changed properties",
+      "useCase": "Complex state objects with partial updates"
+    },
+    "sliding": {
+      "description": "Sliding window cache for time-series data",
+      "implementation": "Maintain fixed-size buffer with oldest data expiration",
+      "useCase": "Pricing history and trend analysis"
+    },
+    "predictive": {
+      "description": "Predictive prefetching based on usage patterns",
+      "implementation": "ML-based prediction of likely next requests",
+      "useCase": "User workflow optimization"
+    }
+  },
+  "stateOptimizations": [],
+  "connectionOptimizations": [
+    {
+      "file": "lib/services/analytics/analytics-insights-service.ts",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism",
+        "Implement connection pooling"
+      ],
+      "priority": "high"
+    },
+    {
+      "file": "lib/services/analytics/analytics-stats-service.ts",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism",
+        "Implement connection pooling"
+      ],
+      "priority": "high"
+    },
+    {
+      "file": "lib/services/analytics-personalization-service.ts",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "lib/services/analytics-service.ts",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism",
+        "Implement connection pooling"
+      ],
+      "priority": "high"
+    },
+    {
+      "file": "lib/services/analytics-websocket-service.ts",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": ["Auto-reconnection", "Heartbeat mechanism"],
+      "recommendations": ["Implement connection pooling"],
+      "priority": "high"
+    },
+    {
+      "file": "lib/services/monitoring-service.ts",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "lib/services/photo-service.ts",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "hooks/use-monitoring.ts",
+      "connectionTypes": ["websocket", "polling"],
+      "currentOptimizations": ["Auto-reconnection"],
+      "recommendations": ["Implement heartbeat/ping mechanism"],
+      "priority": "medium"
+    },
+    {
+      "file": "hooks/useAnalyticsWebSocket.ts",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": ["Auto-reconnection"],
+      "recommendations": ["Implement heartbeat/ping mechanism"],
+      "priority": "medium"
+    },
+    {
+      "file": "hooks/useAutoSave.ts",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "hooks/usePWAStatus.ts",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "hooks/useSmartAutoSave.ts",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "components/ai/AIAnalyticsDashboard.tsx",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "components/ai/AIErrorRecovery.tsx",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "components/ai/AIMetricsDashboard.tsx",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "components/ai/facade-analyzer/WindowsAnalysis.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism",
+        "Implement connection pooling"
+      ],
+      "priority": "high"
+    },
+    {
+      "file": "components/ai/photo-upload-analysis.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/ai/shared/hooks.ts",
+      "connectionTypes": ["polling"],
+      "currentOptimizations": [],
+      "recommendations": ["Add automatic reconnection logic"],
+      "priority": "medium"
+    },
+    {
+      "file": "components/analytics/ConsolidatedAnalyticsDashboard.tsx",
+      "connectionTypes": ["websocket", "polling"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/analytics/ExportDialog.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/analytics/InsightPanel.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/analytics/UnifiedAnalyticsDashboard.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/analytics/UserPerformanceTable.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/calculator/forms/glass-restoration-form.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/collaboration/CollaborationDemo.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/settings/settings-content.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    },
+    {
+      "file": "components/weather/enhanced-weather-display.tsx",
+      "connectionTypes": ["websocket"],
+      "currentOptimizations": [],
+      "recommendations": [
+        "Add automatic reconnection logic",
+        "Implement heartbeat/ping mechanism"
+      ],
+      "priority": "medium"
+    }
+  ],
+  "memoryOptimizations": [
+    {
+      "file": "hooks/use-monitoring.ts",
+      "currentUsage": 3174,
+      "optimizations": [
+        "Implement object pooling for frequently created objects",
+        "Add memory cleanup in component unmount",
+        "Use WeakMap/WeakSet for temporary references",
+        "Implement data structure size limits"
+      ],
+      "estimatedSaving": 952
+    },
+    {
+      "file": "hooks/use-performance.ts",
+      "currentUsage": 3224,
+      "optimizations": [
+        "Implement object pooling for frequently created objects",
+        "Add memory cleanup in component unmount",
+        "Use WeakMap/WeakSet for temporary references",
+        "Implement data structure size limits"
+      ],
+      "estimatedSaving": 967
+    },
+    {
+      "file": "hooks/useSmartAutoSave.ts",
+      "currentUsage": 3074,
+      "optimizations": [
+        "Implement object pooling for frequently created objects",
+        "Add memory cleanup in component unmount",
+        "Use WeakMap/WeakSet for temporary references",
+        "Implement data structure size limits"
+      ],
+      "estimatedSaving": 922
+    },
+    {
+      "file": "components/ai/shared/hooks.ts",
+      "currentUsage": 3174,
+      "optimizations": [
+        "Implement object pooling for frequently created objects",
+        "Add memory cleanup in component unmount",
+        "Use WeakMap/WeakSet for temporary references",
+        "Implement data structure size limits"
+      ],
+      "estimatedSaving": 952
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/MeasurementsWithFacade.tsx",
+      "currentUsage": 3074,
+      "optimizations": [
+        "Implement object pooling for frequently created objects",
+        "Add memory cleanup in component unmount",
+        "Use WeakMap/WeakSet for temporary references",
+        "Implement data structure size limits"
+      ],
+      "estimatedSaving": 922
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/ProjectSetup.tsx",
+      "currentUsage": 3074,
+      "optimizations": [
+        "Implement object pooling for frequently created objects",
+        "Add memory cleanup in component unmount",
+        "Use WeakMap/WeakSet for temporary references",
+        "Implement data structure size limits"
+      ],
+      "estimatedSaving": 922
+    },
+    {
+      "file": "components/estimation/guided-flow/steps/UnifiedPricing.tsx",
+      "currentUsage": 3024,
+      "optimizations": [
+        "Implement object pooling for frequently created objects",
+        "Add memory cleanup in component unmount",
+        "Use WeakMap/WeakSet for temporary references",
+        "Implement data structure size limits"
+      ],
+      "estimatedSaving": 907
+    }
+  ],
+  "implementationPlan": {
+    "phase1": {
+      "name": "Critical Performance Fixes (Week 1)",
+      "priority": "critical",
+      "tasks": [
+        "Implement debouncing for high-frequency updates (<100ms)",
+        "Add memory leak fixes for unbounded arrays and timers",
+        "Optimize state management in complex components",
+        "Add rate limiting to prevent performance degradation"
+      ],
+      "estimatedImpact": "40-60% performance improvement for critical services"
+    },
+    "phase2": {
+      "name": "Caching & Connection Optimization (Week 2-3)",
+      "priority": "high",
+      "tasks": [
+        "Implement temporal caching for real-time pricing",
+        "Add delta compression for state updates",
+        "Optimize WebSocket connection management",
+        "Implement sliding window caches for time-series data"
+      ],
+      "estimatedImpact": "25-40% additional performance improvement"
+    },
+    "phase3": {
+      "name": "Advanced Optimizations (Week 4-5)",
+      "priority": "medium",
+      "tasks": [
+        "Add predictive prefetching for user workflows",
+        "Implement advanced memory optimization strategies",
+        "Set up real-time performance monitoring",
+        "Fine-tune auto-save frequencies based on user patterns"
+      ],
+      "estimatedImpact": "15-25% additional optimization plus monitoring"
+    }
+  },
+  "performanceTargets": {
+    "responseTime": {
+      "realTimePricing": "Target: <50ms calculation time",
+      "sessionRecovery": "Target: <200ms recovery initialization",
+      "autoSave": "Target: <100ms save operation"
+    },
+    "memoryUsage": {
+      "target": "Reduce memory usage by 30% through optimization",
+      "monitoring": "Set up alerts for >10MB per real-time service"
+    },
+    "updateFrequency": {
+      "target": "Optimize update frequencies to balance responsiveness and performance",
+      "thresholds": "Critical: <100ms, Warning: <500ms, Optimal: 500-2000ms"
+    },
+    "caching": {
+      "hitRatio": "Target: >80% cache hit ratio for pricing calculations",
+      "latency": "Target: <10ms cache retrieval time"
+    }
+  }
+}

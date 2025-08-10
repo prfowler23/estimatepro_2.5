@@ -1,0 +1,548 @@
+/**
+ * Mobile Performance Adaptive CSS
+ * 
+ * Advanced CSS system that responds to mobile performance optimizer classes
+ * and provides adaptive styling based on device capabilities and conditions.
+ * 
+ * Features:
+ * - Device tier-specific optimizations
+ * - Battery-aware performance modes
+ * - Network condition adaptations
+ * - Memory pressure handling
+ * - Data saver mode support
+ * 
+ * Part of Phase 4 Priority 3: Mobile Performance & Core Web Vitals
+ */
+
+/* CSS Custom Properties for Mobile Performance */
+:root {
+  --mobile-transition-duration: 200ms;
+  --mobile-animation-duration: 300ms;
+  --mobile-blur-radius: 8px;
+  --mobile-shadow-opacity: 0.1;
+  --mobile-transform-scale: 1.02;
+  --mobile-image-quality: var(--image-quality, 0.8);
+  --mobile-lazy-threshold: var(--lazy-loading-threshold, 300px);
+  --mobile-concurrent-requests: var(--max-concurrent-requests, 6);
+
+  /* Core Web Vitals optimized values */
+  --mobile-lcp-target: 2500ms;
+  --mobile-fid-target: 100ms;
+  --mobile-cls-target: 0.1;
+  --mobile-fcp-target: 1800ms;
+  --mobile-ttfb-target: 600ms;
+}
+
+/* Base Performance Optimizations */
+* {
+  /* Optimize GPU layer creation */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+
+  /* Optimize touch interactions */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  /* Optimize text rendering */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Critical CSS for mobile performance */
+.mobile-performance-critical {
+  /* Prioritize critical rendering path */
+  contain: layout style paint;
+  will-change: auto;
+
+  /* Optimize reflows and repaints */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Adaptive Animations Based on Device Tier */
+.mobile-animation {
+  animation-duration: var(--mobile-animation-duration);
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.mobile-transition {
+  transition-duration: var(--mobile-transition-duration);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Low-End Device Optimizations */
+.low-end-device * {
+  /* Disable all animations and transitions */
+  animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  transition-delay: 0ms !important;
+
+  /* Disable expensive CSS properties */
+  backdrop-filter: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+
+  /* Optimize transforms */
+  transform: none !important;
+  will-change: auto !important;
+}
+
+.low-end-device .blur-effect {
+  backdrop-filter: none !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.low-end-device .gradient-bg {
+  background: solid !important;
+  background-image: none !important;
+}
+
+.low-end-device .shadow-effect {
+  box-shadow: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Mid-Range Device Optimizations */
+.mid-range-device .mobile-animation {
+  animation-duration: calc(var(--mobile-animation-duration) * 0.7);
+}
+
+.mid-range-device .mobile-transition {
+  transition-duration: calc(var(--mobile-transition-duration) * 0.7);
+}
+
+.mid-range-device .blur-effect {
+  backdrop-filter: blur(calc(var(--mobile-blur-radius) * 0.5));
+}
+
+/* High-End Device Enhancements */
+.high-end-device .mobile-animation {
+  animation-duration: var(--mobile-animation-duration);
+}
+
+.high-end-device .enhanced-blur {
+  backdrop-filter: blur(var(--mobile-blur-radius));
+}
+
+.high-end-device .enhanced-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, var(--mobile-shadow-opacity));
+}
+
+/* Battery Saver Mode */
+.battery-saver-mode * {
+  /* Aggressive power saving */
+  animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  transition-delay: 0ms !important;
+
+  /* Disable expensive visual effects */
+  backdrop-filter: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  will-change: auto !important;
+
+  /* Reduce opacity for power saving */
+  opacity: 0.9;
+}
+
+.battery-saver-mode .video-element,
+.battery-saver-mode .canvas-element {
+  /* Pause non-critical media */
+  animation-play-state: paused !important;
+}
+
+.battery-saver-mode .background-image {
+  /* Remove background images to save battery */
+  background-image: none !important;
+  background-color: var(--bg-base) !important;
+}
+
+/* Data Saver Mode */
+.data-saver-mode * {
+  /* Disable animations to save data */
+  animation-duration: 0ms !important;
+  transition-duration: 0ms !important;
+
+  /* Disable background images */
+  background-image: none !important;
+}
+
+.data-saver-mode .image-placeholder {
+  /* Show placeholders instead of images */
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.data-saver-mode .video-element {
+  /* Hide videos in data saver mode */
+  display: none !important;
+}
+
+/* Memory Pressure Handling */
+.memory-pressure-high * {
+  /* Reduce memory usage */
+  will-change: auto !important;
+  contain: layout style paint;
+
+  /* Simplify gradients */
+  background-image: none !important;
+
+  /* Disable transform layers */
+  transform: none !important;
+}
+
+.memory-pressure-high .lazy-load {
+  /* More aggressive lazy loading */
+  loading: lazy;
+  decoding: async;
+}
+
+/* Network-Aware Optimizations */
+.slow-network * {
+  /* Optimize for slow connections */
+  animation-duration: 0ms !important;
+  transition-duration: 0ms !important;
+
+  /* Disable prefetching */
+  link-prefetch: none;
+}
+
+.slow-network .image-optimized {
+  /* Use lowest quality images */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+}
+
+.fast-network .image-optimized {
+  /* Use high quality images */
+  image-rendering: -webkit-optimize-quality;
+  image-rendering: smooth;
+}
+
+/* Thermal State Optimizations */
+.thermal-critical * {
+  /* Emergency thermal throttling */
+  animation-duration: 0ms !important;
+  transition-duration: 0ms !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Touch Interaction Optimizations */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+
+  /* Fast touch response */
+  cursor: pointer;
+
+  /* Haptic feedback preparation */
+  position: relative;
+  overflow: hidden;
+}
+
+.touch-target::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.3s ease,
+    height 0.3s ease,
+    opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.touch-target:active::before {
+  width: 100px;
+  height: 100px;
+  opacity: 0.1;
+}
+
+/* Disable ripple effect on low-end devices */
+.low-end-device .touch-target::before,
+.battery-saver-mode .touch-target::before,
+.data-saver-mode .touch-target::before {
+  display: none;
+}
+
+/* Adaptive Image Loading */
+.mobile-image {
+  /* Progressive image loading */
+  image-rendering: auto;
+  loading: lazy;
+  decoding: async;
+
+  /* Prevent layout shift */
+  aspect-ratio: var(--image-aspect-ratio, 16/9);
+  object-fit: cover;
+
+  /* Optimize for mobile */
+  max-width: 100%;
+  height: auto;
+}
+
+.mobile-image[data-quality="low"] {
+  image-rendering: pixelated;
+  filter: blur(0.5px);
+}
+
+.mobile-image[data-quality="high"] {
+  image-rendering: -webkit-optimize-quality;
+}
+
+/* Lazy Loading Enhancements */
+.lazy-load-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.lazy-load-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.lazy-loaded .lazy-load-placeholder {
+  opacity: 0;
+  animation: none;
+}
+
+/* Performance-Aware Scrolling */
+.mobile-scroll {
+  /* Optimize scrolling performance */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+
+  /* GPU acceleration for smooth scrolling */
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+.low-end-device .mobile-scroll {
+  scroll-behavior: auto;
+  will-change: auto;
+}
+
+/* Viewport Optimizations */
+.mobile-viewport {
+  /* Optimize for mobile viewports */
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height */
+
+  /* Prevent overscroll */
+  overscroll-behavior: none;
+
+  /* Optimize touch interactions */
+  touch-action: pan-x pan-y;
+}
+
+/* Content Visibility Optimizations */
+.mobile-content {
+  /* Use content-visibility for performance */
+  content-visibility: auto;
+  contain-intrinsic-size: 300px;
+}
+
+.above-fold {
+  /* Critical above-fold content */
+  content-visibility: visible;
+  contain: none;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+  .mobile-performance-critical {
+    /* Enhance contrast for accessibility */
+    border: 2px solid currentColor;
+    background-color: canvas;
+    color: canvastext;
+  }
+}
+
+/* Animation Keyframes */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Performance-Aware Media Queries */
+@media (hover: hover) and (pointer: fine) {
+  /* Desktop-like interactions */
+  .touch-target:hover {
+    transform: scale(var(--mobile-transform-scale));
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  /* Touch-only devices */
+  .touch-target {
+    /* Larger touch targets */
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* CPU-Intensive Animation Guards */
+.high-cpu-usage * {
+  /* Reduce CPU-intensive animations */
+  animation-duration: calc(var(--mobile-animation-duration) * 2) !important;
+  transition-duration: calc(var(--mobile-transition-duration) * 1.5) !important;
+
+  /* Disable complex transforms */
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Memory-Efficient Layouts */
+.memory-efficient {
+  /* Use CSS Grid for efficient layouts */
+  display: grid;
+  contain: layout style;
+
+  /* Avoid complex nesting */
+  isolation: isolate;
+}
+
+.memory-efficient > * {
+  /* Contain children */
+  contain: layout style paint;
+}
+
+/* Critical Resource Priority */
+.critical-resource {
+  /* Mark as critical for loading priority */
+  fetchpriority: high;
+  importance: high;
+
+  /* Prevent layout shift */
+  aspect-ratio: var(--aspect-ratio);
+  contain-intrinsic-size: var(--intrinsic-size);
+}
+
+/* Utility Classes */
+.mobile-hidden {
+  display: none !important;
+}
+
+.mobile-visible {
+  display: block !important;
+}
+
+.mobile-flex {
+  display: flex !important;
+}
+
+.mobile-grid {
+  display: grid !important;
+}
+
+/* Performance Debugging Classes */
+.debug-performance * {
+  outline: 1px solid red;
+}
+
+.debug-performance [will-change] {
+  outline: 2px solid orange;
+}
+
+.debug-performance [style*="transform"] {
+  outline: 2px solid yellow;
+}
+
+/* Responsive Breakpoints for Mobile Performance */
+@media (max-width: 480px) {
+  :root {
+    --mobile-transition-duration: 150ms;
+    --mobile-animation-duration: 200ms;
+    --mobile-blur-radius: 4px;
+  }
+}
+
+@media (max-width: 320px) {
+  :root {
+    --mobile-transition-duration: 100ms;
+    --mobile-animation-duration: 150ms;
+    --mobile-blur-radius: 2px;
+  }
+
+  /* Ultra-small screens - aggressive optimization */
+  * {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+  }
+}

@@ -9,7 +9,7 @@ import { z } from "zod";
 // GET /api/facade-analysis?estimate_id=xyz - Get by estimate ID
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 // POST /api/facade-analysis - Create a new facade analysis
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

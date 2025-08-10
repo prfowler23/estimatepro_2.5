@@ -91,7 +91,7 @@ async function getEventMetrics(
 
 async function handlePOST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -147,24 +147,19 @@ async function handlePOST(request: NextRequest) {
   }
 }
 
-// Cached event metrics function
-const getCachedEventMetrics = serverCached(
-  analyticsEventCache,
-  (userId: string | undefined, eventName: string | undefined, days: number) =>
-    getServerCacheKey.analyticsEvent(userId || "all", eventName, days),
-  5 * 60 * 1000, // 5 minutes TTL
-)(async function _getCachedEventMetrics(
-  supabase: any,
+// Get event metrics directly (skipping cache due to client passing complexity)
+async function getCachedEventMetrics(
   userId: string | undefined,
   eventName: string | undefined,
   days: number,
 ) {
+  const supabase = await createClient();
   return await getEventMetrics(supabase, userId, eventName, days);
-});
+}
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -190,7 +185,6 @@ async function handleGET(request: NextRequest) {
     const includeOthers = searchParams.get("include_others") === "true";
 
     const metrics = await getCachedEventMetrics(
-      supabase,
       includeOthers ? undefined : user.id,
       eventName || undefined,
       days,

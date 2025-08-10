@@ -1,79 +1,24 @@
 import { GuidedFlowData } from "@/lib/types/estimate-types";
+import {
+  UserExperience,
+  HelpContext,
+  HelpTrigger,
+  HelpContent,
+  InteractiveTutorial,
+  TutorialStep,
+} from "./help-types";
+import { HelpCache, helpContentCache, tutorialCache } from "./help-performance";
+import { getHelpConfig } from "./help-config";
 
-export interface UserExperience {
-  experienceLevel: "novice" | "intermediate" | "expert";
-  role: "estimator" | "manager" | "admin";
-  preferences?: {
-    showDetailedHelp?: boolean;
-    enableTutorials?: boolean;
-    helpAnimations?: boolean;
-  };
-}
-
-export interface HelpContext {
-  stepId: string;
-  stepNumber: number;
-  fieldId?: string;
-  hasErrors?: boolean;
-  formState?: "empty" | "partial" | "complete";
-  userBehavior?: {
-    timeOnStep?: number;
-    errorCount?: number;
-    hesitationIndicators?: string[];
-  };
-}
-
-export interface HelpTrigger {
-  type:
-    | "onLoad"
-    | "onError"
-    | "onHesitation"
-    | "onEmpty"
-    | "onFocus"
-    | "onTimeout";
-  condition?: string;
-  delay?: number;
-  priority: number;
-}
-
-export interface HelpContent {
-  id: string;
-  title: string;
-  content: string;
-  type: "tooltip" | "panel" | "tutorial" | "video" | "demo";
-  triggers: HelpTrigger[];
-  audience: ("novice" | "intermediate" | "expert")[];
-  context: Partial<HelpContext>;
-  priority: number;
-  tags: string[];
-  lastUpdated: string;
-  analytics?: {
-    views: number;
-    helpful: number;
-    notHelpful: number;
-  };
-}
-
-export interface InteractiveTutorial {
-  id: string;
-  title: string;
-  description: string;
-  steps: TutorialStep[];
-  prerequisites?: string[];
-  estimatedTime: number;
-  difficulty: "beginner" | "intermediate" | "advanced";
-}
-
-export interface TutorialStep {
-  id: string;
-  title: string;
-  content: string;
-  targetElement?: string;
-  position?: "top" | "bottom" | "left" | "right" | "center";
-  action?: "click" | "type" | "scroll" | "wait";
-  validation?: string;
-  nextCondition?: string;
-}
+// Re-export types for backward compatibility
+export type {
+  UserExperience,
+  HelpContext,
+  HelpTrigger,
+  HelpContent,
+  InteractiveTutorial,
+  TutorialStep,
+};
 
 export class HelpContextEngine {
   private static helpDatabase: Map<string, HelpContent> = new Map();
@@ -96,6 +41,15 @@ export class HelpContextEngine {
     userProfile: UserExperience,
     flowData?: GuidedFlowData,
   ): HelpContent[] {
+    // Create cache key based on context and user profile
+    const cacheKey = `contextual_${context.stepId}_${userProfile.experienceLevel}_${context.formState || "unknown"}`;
+
+    // Check cache first
+    const cached = helpContentCache.get(cacheKey);
+    if (cached) {
+      return cached as HelpContent[];
+    }
+
     const relevantHelp: HelpContent[] = [];
 
     for (const [, helpContent] of this.helpDatabase) {
@@ -105,7 +59,7 @@ export class HelpContextEngine {
     }
 
     // Sort by priority and user experience level
-    return relevantHelp.sort((a, b) => {
+    const result = relevantHelp.sort((a, b) => {
       const priorityDiff = b.priority - a.priority;
       if (priorityDiff !== 0) return priorityDiff;
 
@@ -118,6 +72,11 @@ export class HelpContextEngine {
 
       return 0;
     });
+
+    // Cache the result
+    helpContentCache.set(cacheKey, result);
+
+    return result;
   }
 
   /**
@@ -128,6 +87,15 @@ export class HelpContextEngine {
     userProfile: UserExperience,
     flowData: GuidedFlowData,
   ): HelpContent[] {
+    // Create cache key
+    const cacheKey = `suggestions_${context.stepId}_${userProfile.experienceLevel}_${context.formState || "unknown"}`;
+
+    // Check cache
+    const cached = helpContentCache.get(cacheKey);
+    if (cached) {
+      return cached as HelpContent[];
+    }
+
     const suggestions: HelpContent[] = [];
 
     // Analyze form completeness
@@ -160,7 +128,12 @@ export class HelpContextEngine {
       ...this.getExperienceLevelSuggestions(context, userProfile, flowData),
     );
 
-    return suggestions.slice(0, 5); // Limit to top 5 suggestions
+    const result = suggestions.slice(0, 5); // Limit to top 5 suggestions
+
+    // Cache the result
+    helpContentCache.set(cacheKey, result);
+
+    return result;
   }
 
   /**
@@ -170,6 +143,15 @@ export class HelpContextEngine {
     context: HelpContext,
     userProfile: UserExperience,
   ): InteractiveTutorial[] {
+    // Create cache key
+    const cacheKey = `tutorials_${context.stepId}_${userProfile.experienceLevel}`;
+
+    // Check cache
+    const cached = tutorialCache.get(cacheKey);
+    if (cached) {
+      return cached as InteractiveTutorial[];
+    }
+
     const tutorials: InteractiveTutorial[] = [];
 
     for (const [, tutorial] of this.tutorialDatabase) {
@@ -190,6 +172,11 @@ export class HelpContextEngine {
         difficultyOrder.indexOf(b.difficulty)
       );
     });
+
+    // Cache the result
+    tutorialCache.set(cacheKey, tutorials);
+
+    return tutorials;
   }
 
   /**

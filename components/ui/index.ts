@@ -119,3 +119,157 @@ export {
   type NotificationSeverity,
   type NotificationPosition,
 } from "./standardized-notifications";
+
+// Performance-optimized lazy-loaded components
+// These components are automatically code-split for better bundle optimization
+export {
+  LazyFocusManager,
+  LazyFocusIndicator,
+  LazyAccessibilityAnnouncer,
+  preloadFocusManagement,
+  useProgressiveFocusManagement,
+  type FocusManagerProps,
+  type FocusIndicatorProps,
+  type AccessibilityAnnouncerProps,
+} from "./focus-management-lazy";
+export {
+  MobilePhotoCaptureWrapper as MobilePhotoCapture,
+  MobilePhotoCapturePreload,
+  type MobilePhotoCaptureProps,
+  type CapturedPhoto,
+} from "./mobile/MobilePhotoCaptureLazy";
+
+// High-performance animation utilities with tree-shaking support
+// Individual functions are exported for optimal bundle size
+export {
+  easings,
+  durations,
+  transitions,
+  fadeVariants,
+  slideVariants,
+  scaleVariants,
+  staggerContainer,
+  interactionVariants,
+  loadingVariants,
+  pulseVariants,
+  modalVariants,
+  overlayVariants,
+  listItemVariants,
+  notificationVariants,
+  presets,
+  viewportOptions,
+  getAnimationConfig,
+  createResponsiveAnimation,
+  createStaggerAnimation,
+  createEntranceAnimation,
+  createAnimationCleanup,
+  type AnimationPreset,
+  type EasingType,
+  type DurationType,
+  type TransitionType,
+} from "./animation-utils";
+
+// Error handling utilities for consistent error management
+export {
+  createUIError,
+  handleError,
+  registerErrorHandler,
+  getRecentErrors,
+  clearErrorHistory,
+  EnhancedErrorBoundary,
+  useErrorHandler,
+  useErrorRecovery,
+  withErrorHandling,
+  createNetworkError,
+  createValidationError,
+  type UIError,
+  type ErrorContext,
+  type ErrorSeverity,
+  type ErrorCategory,
+  type ErrorHandler,
+  type EnhancedErrorBoundaryProps,
+} from "./error-handling-utils";
+
+// Performance monitoring utilities for component optimization
+export {
+  recordMetric,
+  measureTime,
+  measureTimeAsync,
+  usePerformanceMetrics,
+  getMetrics,
+  getPerformanceStats,
+  clearMetrics,
+  updateThresholds,
+  setPerformanceMonitoring,
+  recordMemoryUsage,
+  recordNetworkMetric,
+  createProfilerCallback,
+  withPerformanceMonitoring,
+  checkPerformanceBudget,
+  DEFAULT_THRESHOLDS,
+  DEFAULT_BUDGET,
+  type PerformanceMetric,
+  type PerformanceThresholds,
+  type PerformanceBudget,
+} from "./performance-utils";
+
+// Accessibility utilities for WCAG AA compliance and screen reader support
+export {
+  useAriaDescription,
+  useAnnouncer,
+  useKeyboardNavigation,
+  useFocusManagement,
+  useReducedMotion,
+  LiveRegion,
+  SkipLink,
+  accessibilityUtils,
+  withAccessibility,
+  type LiveRegionPoliteness,
+  type AnnouncementOptions,
+  type NavigationDirection,
+  type FocusOptions,
+  type LiveRegionProps,
+  type SkipLinkProps,
+} from "./accessibility-utils";
+
+// Screen reader enhancements and specialized accessibility components
+export {
+  ScreenReaderProvider,
+  useScreenReader,
+  Landmark,
+  ProgressAnnouncer,
+  ContentAnnouncer,
+  LoadingAnnouncer,
+  FormFieldAnnouncer,
+  NavigationAnnouncer,
+  type ScreenReaderProviderProps,
+  type LandmarkProps,
+  type ProgressAnnouncerProps,
+  type ContentAnnouncerProps,
+  type LoadingAnnouncerProps,
+  type FormFieldAnnouncerProps,
+  type NavigationAnnouncerProps,
+} from "./screen-reader-enhancements";
+
+// Enhanced TypeScript utilities for better developer experience
+export {
+  isComponentSize,
+  isComponentVariant,
+  isComponentState,
+  type ComponentSize,
+  type ComponentVariant,
+  type ComponentState,
+  type AccessibilityProps,
+  type PerformanceProps,
+  type AnimationProps,
+  type EnhancedComponentProps,
+  type ExtractVariantProps,
+  type CombineProps,
+  type PolymorphicProps,
+  type ForwardRefComponent,
+  type CompoundComponent,
+  type EnhancedEventHandlers,
+  type ValidationProps,
+  type LoadingProps,
+  type IndustrialTheme,
+} from "./types";

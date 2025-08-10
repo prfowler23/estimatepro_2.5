@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -39,7 +40,7 @@ interface FinalCleanFormProps {
   onCancel: () => void;
 }
 
-export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
+const FinalCleanFormBase = ({ onSubmit, onCancel }: FinalCleanFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -445,4 +446,17 @@ export function FinalCleanForm({ onSubmit, onCancel }: FinalCleanFormProps) {
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const FinalCleanForm = React.memo(
+  FinalCleanFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+FinalCleanForm.displayName = "FinalCleanForm";

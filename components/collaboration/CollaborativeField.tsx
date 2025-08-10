@@ -177,13 +177,16 @@ export function CollaborativeField({
     if (isLocked) {
       classes += " cursor-not-allowed opacity-60";
     } else if (isBeingEdited && !isFocused) {
-      classes += " border-yellow-300 bg-yellow-50";
+      classes +=
+        " border-warning-300 bg-warning-50 dark:border-warning-400/30 dark:bg-warning-900/20";
     } else if (isFocused) {
-      classes += " border-blue-500 ring-1 ring-blue-500";
+      classes += " border-primary-action ring-1 ring-primary-action";
     } else if (fieldConflicts.length > 0) {
-      classes += " border-red-500 bg-red-50";
+      classes +=
+        " border-error-500 bg-error-50 dark:border-error-400 dark:bg-error-900/20";
     } else if (recentChanges.length > 0) {
-      classes += " border-green-300 bg-green-50";
+      classes +=
+        " border-success-300 bg-success-50 dark:border-success-400/30 dark:bg-success-900/20";
     }
 
     return classes;
@@ -256,7 +259,9 @@ export function CollaborativeField({
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium">
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && (
+              <span className="text-error-500 dark:text-error-400 ml-1">*</span>
+            )}
           </label>
 
           {showCollaborationInfo && (
@@ -288,14 +293,14 @@ export function CollaborativeField({
                   {activeFieldUsers.slice(0, 3).map((user) => (
                     <div
                       key={user.userId}
-                      className="w-5 h-5 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center text-xs text-white font-medium"
+                      className="w-5 h-5 rounded-full bg-primary-action border-2 border-bg-base flex items-center justify-center text-xs text-text-inverted font-medium"
                       title={`${user.userName} is ${isFocused && user.userId === activeUsers.find((u) => u.userId === user.userId)?.userId ? "editing" : "viewing"}`}
                     >
                       {user.userName.charAt(0).toUpperCase()}
                     </div>
                   ))}
                   {activeFieldUsers.length > 3 && (
-                    <div className="w-5 h-5 rounded-full bg-gray-500 border-2 border-white flex items-center justify-center text-xs text-white font-medium">
+                    <div className="w-5 h-5 rounded-full bg-text-muted border-2 border-bg-base flex items-center justify-center text-xs text-text-inverted font-medium">
                       +{activeFieldUsers.length - 3}
                     </div>
                   )}
@@ -304,7 +309,7 @@ export function CollaborativeField({
 
               {/* Update indicator */}
               {isUpdating && (
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <div className="w-2 h-2 bg-primary-action rounded-full animate-pulse" />
               )}
             </div>
           )}
@@ -344,7 +349,7 @@ export function CollaborativeField({
 
       {/* Editing notification */}
       {isBeingEdited && !isFocused && activeFieldUsers.length > 0 && (
-        <div className="text-xs text-yellow-700 bg-yellow-100 p-2 rounded border border-yellow-200">
+        <div className="text-xs text-warning-700 dark:text-warning-300 bg-warning-100 dark:bg-warning-900/20 p-2 rounded border border-warning-200 dark:border-warning-400/30">
           <div className="flex items-center gap-1">
             <Edit3 className="w-3 h-3" />
             <span>
@@ -358,7 +363,7 @@ export function CollaborativeField({
       {showCollaborationInfo &&
         recentChanges.length > 0 &&
         !fieldConflicts.length && (
-          <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border">
+          <div className="text-xs text-text-secondary bg-bg-subtle p-2 rounded border border-border-primary">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               <span>
@@ -366,7 +371,7 @@ export function CollaborativeField({
                 {new Date(recentChanges[0].timestamp).toLocaleTimeString()}
               </span>
               {recentChanges.length > 1 && (
-                <span className="text-gray-500">
+                <span className="text-text-muted">
                   (+{recentChanges.length - 1} more)
                 </span>
               )}

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -38,10 +39,10 @@ interface PressureWashSealFormProps {
   onCancel: () => void;
 }
 
-export function PressureWashSealForm({
+const PressureWashSealFormBase = ({
   onSubmit,
   onCancel,
-}: PressureWashSealFormProps) {
+}: PressureWashSealFormProps) => {
   const [calculation, setCalculation] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -493,4 +494,17 @@ export function PressureWashSealForm({
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for better performance
+export const PressureWashSealForm = React.memo(
+  PressureWashSealFormBase,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onCancel === nextProps.onCancel
+    );
+  },
+);
+
+PressureWashSealForm.displayName = "PressureWashSealForm";

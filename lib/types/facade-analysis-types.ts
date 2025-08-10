@@ -1,3 +1,72 @@
+/**
+ * Manual adjustments made to facade analysis results
+ */
+export interface FacadeAnalysisAdjustments {
+  measurements?: {
+    total_facade_sqft?: number;
+    total_glass_sqft?: number;
+    building_height_feet?: number;
+  };
+  materials?: {
+    overrides: Array<{
+      original_type: string;
+      corrected_type: string;
+      sqft: number;
+      reason: string;
+    }>;
+  };
+  ground_surfaces?: {
+    sidewalk_sqft?: number;
+    parking_sqft?: number;
+    loading_dock_sqft?: number;
+  };
+  complexity_override?: "simple" | "moderate" | "complex";
+  notes?: string;
+  adjusted_by: string;
+  adjusted_at: string;
+}
+
+/**
+ * Image metadata for facade analysis
+ */
+export interface FacadeImageMetadata {
+  capture_date?: string;
+  camera_settings?: {
+    focal_length?: number;
+    aperture?: string;
+    iso?: number;
+  };
+  weather_conditions?: string;
+  lighting_conditions?: "natural" | "artificial" | "mixed";
+  distance_from_building?: number;
+  photographer?: string;
+  processing_notes?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Properties for detected elements
+ */
+export interface DetectedElementProperties {
+  // Window properties
+  window_type?: "single" | "double" | "storefront" | "curtain_wall";
+  frame_material?: "aluminum" | "wood" | "vinyl" | "steel";
+
+  // Door properties
+  door_type?: "entrance" | "service" | "emergency" | "loading";
+
+  // Material zone properties
+  material_condition?: "excellent" | "good" | "fair" | "poor";
+  cleaning_difficulty?: 1 | 2 | 3 | 4 | 5;
+
+  // Covered area properties
+  coverage_type?: "awning" | "canopy" | "overhang" | "balcony";
+
+  // General properties
+  accessibility?: "easy" | "moderate" | "difficult" | "dangerous";
+  [key: string]: unknown;
+}
+
 export interface FacadeAnalysis {
   id: string;
   estimate_id: string;
@@ -39,7 +108,7 @@ export interface FacadeAnalysis {
   ai_model_version: string;
   image_sources: ImageSource[];
   validation_notes: string;
-  manual_adjustments: Record<string, any>;
+  manual_adjustments: FacadeAnalysisAdjustments;
 
   // Flags
   requires_field_verification: boolean;
@@ -58,6 +127,7 @@ export interface FacadeMaterial {
     | "glass"
     | "other";
   sqft: number;
+  estimated_sqft?: number; // Optional estimated square footage
   percentage: number;
   confidence: number;
   location?: string;
@@ -81,7 +151,7 @@ export interface FacadeAnalysisImage {
   ai_analysis_results: AIAnalysisResult;
   detected_elements: DetectedElement[];
   confidence_scores: Record<string, number>;
-  metadata: Record<string, any>;
+  metadata: FacadeImageMetadata;
 }
 
 export interface AIAnalysisResult {
@@ -107,7 +177,7 @@ export interface DetectedElement {
     height: number;
   };
   confidence: number;
-  properties?: Record<string, any>;
+  properties?: DetectedElementProperties;
 }
 
 export interface FacadeAnalysisAIResponse {

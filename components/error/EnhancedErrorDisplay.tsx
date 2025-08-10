@@ -27,6 +27,11 @@ import {
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
+import {
+  sanitizeUserMessage,
+  sanitizeTechnicalDetails,
+  shouldShowTechnicalDetails,
+} from "@/lib/utils/error-sanitization";
 
 interface EnhancedErrorDisplayProps {
   errorMessage: ErrorMessage;
@@ -176,7 +181,9 @@ export function EnhancedErrorDisplay({
               </div>
             </div>
 
-            <p className="text-gray-700 mb-4">{errorMessage.userFriendly}</p>
+            <p className="text-gray-700 mb-4">
+              {sanitizeUserMessage(errorMessage.userFriendly)}
+            </p>
 
             {/* Recovery Status */}
             {isRecovering && (

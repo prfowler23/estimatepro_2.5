@@ -8,7 +8,7 @@ import { withAuditLogging } from "@/lib/audit/audit-middleware";
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -90,7 +90,7 @@ async function handleGET(request: NextRequest) {
 async function handlePOST(request: NextRequest) {
   try {
     const auditSystem = AuditSystem.getInstance();
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -211,7 +211,7 @@ async function handlePOST(request: NextRequest) {
 
 async function handleDELETE(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -232,7 +232,7 @@ async function handleDELETE(request: NextRequest) {
 
     if (action === "purge_expired") {
       // Purge expired audit events
-      const purgedCount = await auditSystem.purgeExpiredEvents();
+      const purgedCount = await AuditSystem.purgeExpiredEvents();
 
       return NextResponse.json({
         purged_count: purgedCount,

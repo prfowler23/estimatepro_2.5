@@ -75,6 +75,60 @@ jest.mock("jose", () => ({
   })),
 }));
 
+// Mock focus-management globally
+jest.mock("@/components/ui/focus-management", () => ({
+  FocusManager: ({ children }) => children,
+  useFocusManager: () => ({
+    registerFocusable: jest.fn(),
+    unregisterFocusable: jest.fn(),
+    focusNext: jest.fn(),
+    focusPrevious: jest.fn(),
+    focusFirst: jest.fn(),
+    focusLast: jest.fn(),
+    trapFocus: jest.fn(() => jest.fn()),
+    announceToScreenReader: jest.fn(),
+    currentFocusId: null,
+  }),
+  useFocusable: () => ({ current: null }),
+}));
+
+// Note: @/hooks/use-toast doesn't exist, hook is at @/components/ui/use-toast
+
+// Mock use-toast from components/ui location as well
+jest.mock("@/components/ui/use-toast", () => ({
+  useToast: () => ({
+    toast: jest.fn(),
+    dismiss: jest.fn(),
+    toasts: [],
+  }),
+  toast: jest.fn(),
+}));
+
+// Mock fetch globally for services that use it
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: () => Promise.resolve({ data: {} }),
+    text: () => Promise.resolve(""),
+    blob: () => Promise.resolve(new Blob()),
+    headers: new Headers(),
+  }),
+);
+
+// Mock monitoring service specifically
+jest.mock("@/lib/services/monitoring-service", () => ({
+  MonitoringService: jest.fn().mockImplementation(() => ({
+    getMetrics: jest.fn().mockResolvedValue({
+      current: { cpu: 50, memory: 60, disk: 70 },
+      health: { status: "healthy", checks: [] },
+    }),
+    submitMetric: jest.fn().mockResolvedValue(undefined),
+    cleanup: jest.fn(),
+  })),
+}));
+
 // Mock @supabase/ssr
 jest.mock("@supabase/ssr", () => ({
   createServerClient: jest.fn(() => ({

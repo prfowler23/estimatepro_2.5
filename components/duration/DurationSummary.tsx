@@ -8,69 +8,8 @@ import { DurationBreakdown } from "./components/DurationBreakdown";
 import { WeatherRiskAssessment } from "./components/WeatherRiskAssessment";
 import { CriticalPathAnalysis } from "./components/CriticalPathAnalysis";
 import { ProjectConfidence } from "./components/ProjectConfidence";
-
-interface ServiceDuration {
-  service: string;
-  serviceName?: string;
-  baseDuration: number;
-  weatherImpact: number;
-  finalDuration: number;
-  confidence: "high" | "medium" | "low";
-  dependencies: string[];
-}
-
-interface TimelineEntry {
-  service: string;
-  startDate: Date;
-  endDate: Date;
-  duration: number;
-  dependencies: string[];
-  weatherRisk: "low" | "medium" | "high";
-  isOnCriticalPath: boolean;
-}
-
-interface Timeline {
-  entries: TimelineEntry[];
-  totalDuration: number;
-  criticalPath: string[];
-}
-
-interface WeatherImpact {
-  riskLevel: "low" | "medium" | "high";
-  delayDays: number;
-  confidence: number;
-}
-
-interface WeatherAnalysis {
-  location: string;
-  riskScore: number;
-  forecast: {
-    recommendations: string[];
-  };
-  serviceImpacts: Record<string, WeatherImpact>;
-}
-
-interface DurationSummaryProps {
-  serviceDurations: ServiceDuration[];
-  totalDuration: number;
-  weatherAnalysis: WeatherAnalysis;
-  timeline: Timeline;
-  confidence?: number;
-}
-
-const SERVICE_NAMES: Record<string, string> = {
-  WC: "Window Cleaning",
-  GR: "Glass Restoration",
-  BWP: "Building Wash (Pressure)",
-  BWS: "Building Wash (Soft)",
-  HBW: "High-Rise Building Wash",
-  PWF: "Pressure Wash (Flat)",
-  HFS: "Hard Floor Scrubbing",
-  PC: "Parking Cleaning",
-  PWP: "Parking Pressure Wash",
-  IW: "Interior Wall Cleaning",
-  DC: "Deck Cleaning",
-};
+import type { DurationSummaryProps } from "./types";
+import { getConfidenceColor, getRiskLabel } from "./constants";
 
 export const DurationSummary = memo(function DurationSummary({
   serviceDurations,
@@ -161,24 +100,6 @@ export const DurationSummary = memo(function DurationSummary({
       lowConfidenceServices,
     };
   }, [serviceDurations, timeline.criticalPath, timeline.entries]);
-
-  const getConfidenceColor = (conf: number): string => {
-    if (conf >= 80) return "text-green-600";
-    if (conf >= 60) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getWeatherRiskColor = (risk: number): string => {
-    if (risk < 0.3) return "bg-green-500";
-    if (risk < 0.6) return "bg-yellow-500";
-    return "bg-red-500";
-  };
-
-  const getWeatherRiskLabel = (risk: number): string => {
-    if (risk < 0.3) return "Low Risk";
-    if (risk < 0.6) return "Medium Risk";
-    return "High Risk";
-  };
 
   const { startDate, endDate } = timelineData;
   const {

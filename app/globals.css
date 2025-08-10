@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile Performance Optimization CSS */
+@import "../styles/mobile-performance.css";
+@import "../styles/mobile-performance-adaptive.css";
+
 @layer base {
   :root {
     /* Professional Color Palette - Enhanced with Gradients & Accents */

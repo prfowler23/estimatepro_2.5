@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface Props {
   children?: ReactNode;
@@ -24,17 +25,32 @@ export class DashboardErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log to error tracking service
-    console.error("Dashboard Error:", {
-      error: error.toString(),
+    const errorData = {
+      message: error.toString(),
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    // Only log to console in development
+    if (process.env.NODE_ENV === "development") {
+      console.error("Dashboard Error:", errorData);
+    }
 
     // In production, send to error tracking
-    if (process.env.NODE_ENV === "production") {
-      // TODO: Implement error tracking service
-      // logToSentry(error, errorInfo);
+    if (
+      process.env.NODE_ENV === "production" &&
+      typeof window !== "undefined"
+    ) {
+      // Send to Sentry if available
+      if (window.Sentry?.captureException) {
+        window.Sentry.captureException(error, {
+          contexts: {
+            react: {
+              componentStack: errorInfo.componentStack,
+            },
+          },
+        });
+      }
     }
   }
 
@@ -43,8 +59,14 @@ export class DashboardErrorBoundary extends Component<Props, State> {
   };
 
   private sanitizeErrorMessage = (message: string): string => {
-    // Basic sanitization to prevent XSS
-    // In production, consider using a library like DOMPurify
+    // Use DOMPurify for proper XSS prevention
+    if (typeof window !== "undefined") {
+      return DOMPurify.sanitize(message, {
+        ALLOWED_TAGS: [],
+        KEEP_CONTENT: true,
+      });
+    }
+    // Fallback for SSR
     return message
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -63,9 +85,9 @@ export class DashboardErrorBoundary extends Component<Props, State> {
         <Card className="my-4">
           <CardContent className="py-8">
             <div className="flex flex-col items-center justify-center text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-red-500" />
+              <AlertCircle className="h-12 w-12 text-text-error" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-text-primary mb-2">
                   Something went wrong
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-md">

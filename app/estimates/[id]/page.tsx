@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { QuotePDFGenerator } from "@/lib/pdf/generator";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -175,6 +174,8 @@ function EstimateDetailContent() {
     if (!estimate) return;
 
     try {
+      // Defer heavy PDF generator until user requests it
+      const { QuotePDFGenerator } = await import("@/lib/pdf/generator");
       await QuotePDFGenerator.downloadQuotePDF(estimate);
     } catch (error) {
       console.error("Error generating PDF:", error);

@@ -2,8 +2,11 @@ import { z } from "zod";
 import { toolSchemas, ToolName, ToolParameters } from "./tool-definitions";
 import { FacadeAnalysisService } from "@/lib/services/facade-analysis-service";
 import { CalculatorService } from "@/lib/services/calculator-service";
-import { EstimateService } from "@/lib/services/estimate-service";
-import { WeatherService } from "@/lib/services/weather-service";
+import {
+  unifiedEstimateService,
+  UnifiedEstimateService,
+} from "@/lib/services/estimate-service-unified";
+import { WeatherService } from "@/lib/weather/weather-service";
 import { RiskAssessmentService } from "@/lib/services/risk-assessment-service";
 import { AIService } from "@/lib/services/ai-service";
 import { securityScanner } from "@/lib/ai/ai-security";
@@ -19,7 +22,7 @@ export interface ToolExecutionResult<T = any> {
 export class ToolExecutor {
   private facadeService: FacadeAnalysisService;
   private calculatorService: CalculatorService;
-  private estimateService: EstimateService;
+  private estimateService: UnifiedEstimateService;
   private weatherService: WeatherService;
   private riskService: RiskAssessmentService;
   private aiService: AIService;
@@ -27,7 +30,7 @@ export class ToolExecutor {
   constructor() {
     this.facadeService = new FacadeAnalysisService();
     this.calculatorService = new CalculatorService();
-    this.estimateService = new EstimateService();
+    this.estimateService = unifiedEstimateService;
     this.weatherService = new WeatherService();
     this.riskService = new RiskAssessmentService();
     this.aiService = new AIService();

@@ -14,9 +14,14 @@ const recommendationSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  let user: any = null;
+
   try {
     // Authenticate request
-    const { user, error: authError } = await authenticateRequest(request);
+    const { user: authUser, error: authError } =
+      await authenticateRequest(request);
+    user = authUser;
+
     if (authError || !user) {
       return ErrorResponses.unauthorized(authError || "Unauthorized");
     }

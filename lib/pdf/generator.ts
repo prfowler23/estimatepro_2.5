@@ -1,29 +1,28 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { SERVICE_TYPES } from "@/lib/calculations/constants";
-import { Database } from "@/types/supabase";
+import {
+  EstimateData,
+  EstimateService,
+  PDFErrorCode,
+  PDFProcessingError,
+} from "./types";
+import { PDF_GENERATION, PDF_ERRORS } from "./constants";
 
-type EstimateData = Database["public"]["Tables"]["estimates"]["Row"] & {
-  estimate_number?: string;
-  services: EstimateService[];
-};
-
-interface EstimateService {
-  service_type: string;
-  area_sqft: number | null;
-  glass_sqft?: number | null;
-  price: number;
-  labor_hours: number | null;
-  setup_hours?: number | null;
-  rig_hours?: number | null;
-  total_hours: number | null;
-  crew_size: number | null;
-  equipment_type?: string | null;
-  equipment_days?: number | null;
-  equipment_cost?: number | null;
-  calculation_details?: any;
+// Add proper types for jsPDF autotable
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
 }
 
+/**
+ * EstimatePDFGenerator - Generates professional PDF estimates for building services
+ * @class
+ */
 export class EstimatePDFGenerator {
   private doc: jsPDF;
   private pageWidth: number;
@@ -33,57 +32,83 @@ export class EstimatePDFGenerator {
   constructor() {
     this.doc = new jsPDF();
     this.pageWidth = this.doc.internal.pageSize.getWidth();
-    this.margin = 20;
+    this.margin = PDF_GENERATION.PAGE.MARGIN;
     this.currentY = this.margin;
   }
 
-  private addHeader() {
+  /**
+   * Adds company header with logo and contact information
+   * @private
+   */
+  private addHeader(): void {
+    const { COLORS, COMPANY, LOGO, FONTS } = PDF_GENERATION;
+
     // Company Logo Area (placeholder)
-    this.doc.setFillColor(59, 130, 246); // Blue color
-    this.doc.rect(this.margin, this.currentY, 60, 30, "F");
+    this.doc.setFillColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
+    this.doc.rect(this.margin, this.currentY, LOGO.WIDTH, LOGO.HEIGHT, "F");
 
     // Company Name in Logo Area
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFontSize(16);
+    this.doc.setTextColor(COLORS.WHITE.r, COLORS.WHITE.g, COLORS.WHITE.b);
+    this.doc.setFontSize(FONTS.LARGE);
     this.doc.setFont(undefined, "bold");
-    this.doc.text("EstimatePro", this.margin + 5, this.currentY + 12);
-    this.doc.setFontSize(10);
+    this.doc.text(
+      COMPANY.NAME,
+      this.margin + LOGO.TEXT_OFFSET_X,
+      this.currentY + LOGO.TEXT_OFFSET_Y_PRIMARY,
+    );
+    this.doc.setFontSize(FONTS.SMALL);
     this.doc.setFont(undefined, "normal");
-    this.doc.text("Building Services", this.margin + 5, this.currentY + 20);
-    this.doc.text("Estimation", this.margin + 5, this.currentY + 26);
+    this.doc.text(
+      COMPANY.TAGLINE,
+      this.margin + LOGO.TEXT_OFFSET_X,
+      this.currentY + LOGO.TEXT_OFFSET_Y_SECONDARY,
+    );
+    this.doc.text(
+      COMPANY.SUBTITLE,
+      this.margin + LOGO.TEXT_OFFSET_X,
+      this.currentY + LOGO.TEXT_OFFSET_Y_TERTIARY,
+    );
 
     // Company Contact Info
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFontSize(10);
+    this.doc.setTextColor(COLORS.BLACK.r, COLORS.BLACK.g, COLORS.BLACK.b);
+    this.doc.setFontSize(FONTS.SMALL);
     this.doc.setFont(undefined, "normal");
     const contactInfo = [
-      "Professional Building Services",
-      "Phone: (555) 123-4567",
-      "Email: estimates@estimatepro.com",
-      "www.estimatepro.com",
+      COMPANY.FULL_NAME,
+      `Phone: ${COMPANY.PHONE}`,
+      `Email: ${COMPANY.EMAIL}`,
+      COMPANY.WEBSITE,
     ];
 
     contactInfo.forEach((line, index) => {
       this.doc.text(
         line,
         this.pageWidth - this.margin - 50,
-        this.currentY + 8 + index * 5,
+        this.currentY +
+          PDF_GENERATION.SPACING.SMALL_GAP +
+          index * PDF_GENERATION.SPACING.LINE_HEIGHT,
       );
     });
 
-    this.currentY += 40;
+    this.currentY += PDF_GENERATION.SPACING.HEADER_HEIGHT;
   }
 
-  private addEstimateHeader(estimate: EstimateData) {
+  /**
+   * Adds estimate header with title and metadata
+   * @private
+   */
+  private addEstimateHeader(estimate: EstimateData): void {
+    const { COLORS, FONTS, DOCUMENT, SPACING } = PDF_GENERATION;
+
     // Estimate Title
-    this.doc.setFontSize(24);
+    this.doc.setFontSize(FONTS.TITLE);
     this.doc.setFont(undefined, "bold");
-    this.doc.setTextColor(59, 130, 246);
-    this.doc.text("ESTIMATE", this.margin, this.currentY);
+    this.doc.setTextColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
+    this.doc.text(DOCUMENT.ESTIMATE_TITLE, this.margin, this.currentY);
 
     // Estimate Number
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 0, 0);
+    this.doc.setFontSize(FONTS.NORMAL);
+    this.doc.setTextColor(COLORS.BLACK.r, COLORS.BLACK.g, COLORS.BLACK.b);
     this.doc.setFont(undefined, "normal");
     this.doc.text(
       `Estimate #: ${estimate.estimate_number}`,
@@ -101,22 +126,27 @@ export class EstimatePDFGenerator {
       this.currentY + 9,
     );
 
-    this.currentY += 20;
+    this.currentY += SPACING.SECTION_GAP;
   }
 
-  private addCustomerInfo(estimate: EstimateData) {
+  /**
+   * Adds customer and building information in two columns
+   * @private
+   */
+  private addCustomerInfo(estimate: EstimateData): void {
+    const { COLORS, FONTS, DOCUMENT, SPACING } = PDF_GENERATION;
     const leftColumn = this.margin;
     const rightColumn = this.pageWidth / 2 + 10;
 
     // Bill To Section
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(FONTS.SECTION_HEADER);
     this.doc.setFont(undefined, "bold");
-    this.doc.setTextColor(59, 130, 246);
-    this.doc.text("BILL TO:", leftColumn, this.currentY);
+    this.doc.setTextColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
+    this.doc.text(DOCUMENT.BILL_TO_LABEL, leftColumn, this.currentY);
 
-    this.doc.setFontSize(11);
+    this.doc.setFontSize(FONTS.BODY);
     this.doc.setFont(undefined, "normal");
-    this.doc.setTextColor(0, 0, 0);
+    this.doc.setTextColor(COLORS.BLACK.r, COLORS.BLACK.g, COLORS.BLACK.b);
 
     const customerLines = [
       estimate.customer_name,
@@ -126,18 +156,22 @@ export class EstimatePDFGenerator {
     ].filter(Boolean);
 
     customerLines.forEach((line, index) => {
-      this.doc.text(line, leftColumn, this.currentY + 8 + index * 6);
+      this.doc.text(
+        line,
+        leftColumn,
+        this.currentY + SPACING.SMALL_GAP + index * SPACING.LINE_SPACING,
+      );
     });
 
     // Building Info Section
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(FONTS.SECTION_HEADER);
     this.doc.setFont(undefined, "bold");
-    this.doc.setTextColor(59, 130, 246);
-    this.doc.text("PROJECT LOCATION:", rightColumn, this.currentY);
+    this.doc.setTextColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
+    this.doc.text(DOCUMENT.PROJECT_LOCATION_LABEL, rightColumn, this.currentY);
 
-    this.doc.setFontSize(11);
+    this.doc.setFontSize(FONTS.BODY);
     this.doc.setFont(undefined, "normal");
-    this.doc.setTextColor(0, 0, 0);
+    this.doc.setTextColor(COLORS.BLACK.r, COLORS.BLACK.g, COLORS.BLACK.b);
 
     const buildingLines = [
       estimate.building_name,
@@ -150,20 +184,36 @@ export class EstimatePDFGenerator {
     ].filter(Boolean);
 
     buildingLines.forEach((line, index) => {
-      this.doc.text(line, rightColumn, this.currentY + 8 + index * 6);
+      this.doc.text(
+        line,
+        rightColumn,
+        this.currentY + SPACING.SMALL_GAP + index * SPACING.LINE_SPACING,
+      );
     });
 
     this.currentY +=
-      Math.max(customerLines.length, buildingLines.length) * 6 + 20;
+      Math.max(customerLines.length, buildingLines.length) *
+        SPACING.LINE_SPACING +
+      SPACING.SECTION_GAP;
   }
 
-  private addServicesTable(estimate: EstimateData) {
+  /**
+   * Adds services table with detailed breakdown
+   * @private
+   */
+  private addServicesTable(estimate: EstimateData): void {
+    const { COLORS, FONTS, DOCUMENT, SPACING, TABLE } = PDF_GENERATION;
+
     // Services Header
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(FONTS.SECTION_HEADER);
     this.doc.setFont(undefined, "bold");
-    this.doc.setTextColor(59, 130, 246);
-    this.doc.text("SERVICES BREAKDOWN", this.margin, this.currentY);
-    this.currentY += 10;
+    this.doc.setTextColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
+    this.doc.text(
+      DOCUMENT.SERVICES_BREAKDOWN_LABEL,
+      this.margin,
+      this.currentY,
+    );
+    this.currentY += SPACING.MEDIUM_GAP;
 
     // Prepare table data
     const tableData = estimate.services.map((service) => {
@@ -172,7 +222,7 @@ export class EstimatePDFGenerator {
         service.service_type;
 
       let areaDescription = "";
-      if (service.area_sqft > 0) {
+      if (service.area_sqft && service.area_sqft > 0) {
         areaDescription += `${service.area_sqft.toLocaleString()} sq ft`;
       }
       if (service.glass_sqft && service.glass_sqft > 0) {
@@ -183,7 +233,7 @@ export class EstimatePDFGenerator {
       const laborDescription =
         `${service.total_hours.toFixed(1)} hrs total\n` +
         `(${service.labor_hours.toFixed(1)} labor + ${service.setup_hours.toFixed(1)} setup` +
-        `${service.rig_hours > 0 ? ` + ${service.rig_hours.toFixed(1)} rig` : ""})`;
+        `${service.rig_hours && service.rig_hours > 0 ? ` + ${service.rig_hours.toFixed(1)} rig` : ""})`;
 
       const equipmentDescription = service.equipment_type || "None";
 
@@ -198,7 +248,7 @@ export class EstimatePDFGenerator {
     });
 
     // Add table
-    (this.doc as any).autoTable({
+    this.doc.autoTable({
       startY: this.currentY,
       head: [
         ["Service", "Area/Units", "Labor Hours", "Crew", "Equipment", "Price"],
@@ -206,30 +256,38 @@ export class EstimatePDFGenerator {
       body: tableData,
       theme: "grid",
       headStyles: {
-        fillColor: [59, 130, 246],
-        textColor: [255, 255, 255],
+        fillColor: [COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b],
+        textColor: [COLORS.WHITE.r, COLORS.WHITE.g, COLORS.WHITE.b],
         fontStyle: "bold",
-        fontSize: 10,
+        fontSize: FONTS.SMALL,
       },
       bodyStyles: {
-        fontSize: 9,
-        cellPadding: 3,
+        fontSize: FONTS.FINE_PRINT,
+        cellPadding: TABLE.CELL_PADDING,
       },
       columnStyles: {
-        0: { cellWidth: 35 }, // Service
-        1: { cellWidth: 30 }, // Area
-        2: { cellWidth: 30 }, // Hours
-        3: { cellWidth: 20 }, // Crew
-        4: { cellWidth: 30 }, // Equipment
-        5: { cellWidth: 25, halign: "right" }, // Price
+        0: { cellWidth: TABLE.COLUMNS.SERVICE.width },
+        1: { cellWidth: TABLE.COLUMNS.AREA.width },
+        2: { cellWidth: TABLE.COLUMNS.HOURS.width },
+        3: { cellWidth: TABLE.COLUMNS.CREW.width },
+        4: { cellWidth: TABLE.COLUMNS.EQUIPMENT.width },
+        5: {
+          cellWidth: TABLE.COLUMNS.PRICE.width,
+          halign: TABLE.COLUMNS.PRICE.align,
+        },
       },
       margin: { left: this.margin, right: this.margin },
     });
 
-    this.currentY = (this.doc as any).lastAutoTable.finalY + 10;
+    this.currentY = this.doc.lastAutoTable.finalY + SPACING.MEDIUM_GAP;
   }
 
-  private addTotals(estimate: EstimateData) {
+  /**
+   * Adds pricing totals section
+   * @private
+   */
+  private addTotals(estimate: EstimateData): void {
+    const { COLORS, FONTS, SPACING } = PDF_GENERATION;
     const totalEquipmentCost = estimate.services.reduce(
       (sum, service) => sum + (service.equipment_cost || 0),
       0,
@@ -239,7 +297,7 @@ export class EstimatePDFGenerator {
     const valueAlign = this.pageWidth - this.margin - 10;
 
     // Subtotal
-    this.doc.setFontSize(11);
+    this.doc.setFontSize(FONTS.BODY);
     this.doc.setFont(undefined, "normal");
     this.doc.text("Services Subtotal:", rightAlign, this.currentY);
     this.doc.text(
@@ -248,7 +306,7 @@ export class EstimatePDFGenerator {
       this.currentY,
       { align: "right" },
     );
-    this.currentY += 8;
+    this.currentY += SPACING.SMALL_GAP;
 
     // Equipment if any
     if (totalEquipmentCost > 0) {
@@ -259,7 +317,7 @@ export class EstimatePDFGenerator {
         this.currentY,
         { align: "right" },
       );
-      this.currentY += 8;
+      this.currentY += SPACING.SMALL_GAP;
     }
 
     // Line
@@ -270,12 +328,12 @@ export class EstimatePDFGenerator {
       this.pageWidth - this.margin,
       this.currentY,
     );
-    this.currentY += 8;
+    this.currentY += SPACING.SMALL_GAP;
 
     // Total
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(FONTS.SECTION_HEADER);
     this.doc.setFont(undefined, "bold");
-    this.doc.setTextColor(59, 130, 246);
+    this.doc.setTextColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
     this.doc.text("TOTAL:", rightAlign, this.currentY);
     this.doc.text(
       `$${(estimate.total_price + totalEquipmentCost).toLocaleString()}`,
@@ -283,21 +341,27 @@ export class EstimatePDFGenerator {
       this.currentY,
       { align: "right" },
     );
-    this.currentY += 15;
+    this.currentY += SPACING.LARGE_GAP;
   }
 
-  private addNotes(estimate: EstimateData) {
+  /**
+   * Adds notes section if notes exist
+   * @private
+   */
+  private addNotes(estimate: EstimateData): void {
     if (!estimate.notes) return;
 
-    this.doc.setFontSize(14);
-    this.doc.setFont(undefined, "bold");
-    this.doc.setTextColor(59, 130, 246);
-    this.doc.text("NOTES:", this.margin, this.currentY);
-    this.currentY += 8;
+    const { COLORS, FONTS, DOCUMENT, SPACING } = PDF_GENERATION;
 
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(FONTS.SECTION_HEADER);
+    this.doc.setFont(undefined, "bold");
+    this.doc.setTextColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
+    this.doc.text(DOCUMENT.NOTES_LABEL, this.margin, this.currentY);
+    this.currentY += SPACING.SMALL_GAP;
+
+    this.doc.setFontSize(FONTS.SMALL);
     this.doc.setFont(undefined, "normal");
-    this.doc.setTextColor(0, 0, 0);
+    this.doc.setTextColor(COLORS.BLACK.r, COLORS.BLACK.g, COLORS.BLACK.b);
 
     // Split notes into lines that fit the page width
     const maxWidth = this.pageWidth - this.margin * 2;
@@ -305,94 +369,172 @@ export class EstimatePDFGenerator {
 
     noteLines.forEach((line: string) => {
       this.doc.text(line, this.margin, this.currentY);
-      this.currentY += 5;
+      this.currentY += SPACING.LINE_HEIGHT;
     });
 
-    this.currentY += 10;
+    this.currentY += SPACING.MEDIUM_GAP;
   }
 
-  private addTerms() {
-    this.doc.setFontSize(14);
+  /**
+   * Adds terms and conditions section
+   * @private
+   */
+  private addTerms(): void {
+    const { COLORS, FONTS, DOCUMENT, SPACING, TERMS } = PDF_GENERATION;
+
+    this.doc.setFontSize(FONTS.SECTION_HEADER);
     this.doc.setFont(undefined, "bold");
-    this.doc.setTextColor(59, 130, 246);
-    this.doc.text("TERMS & CONDITIONS:", this.margin, this.currentY);
-    this.currentY += 8;
+    this.doc.setTextColor(COLORS.PRIMARY.r, COLORS.PRIMARY.g, COLORS.PRIMARY.b);
+    this.doc.text(DOCUMENT.TERMS_LABEL, this.margin, this.currentY);
+    this.currentY += SPACING.SMALL_GAP;
 
-    const terms = [
-      "• Estimate valid for 30 days from date issued",
-      "• Payment terms: Net 30 days",
-      "• All work performed during normal business hours unless otherwise specified",
-      "• Additional charges may apply for work outside normal scope",
-      "• Customer responsible for providing safe access to work areas",
-      "• Weather delays may affect project timeline",
-      "• Final pricing subject to site inspection and access verification",
-    ];
-
-    this.doc.setFontSize(9);
+    this.doc.setFontSize(FONTS.FINE_PRINT);
     this.doc.setFont(undefined, "normal");
-    this.doc.setTextColor(0, 0, 0);
+    this.doc.setTextColor(COLORS.BLACK.r, COLORS.BLACK.g, COLORS.BLACK.b);
 
-    terms.forEach((term) => {
+    TERMS.forEach((term) => {
       this.doc.text(term, this.margin, this.currentY);
-      this.currentY += 5;
+      this.currentY += SPACING.LINE_HEIGHT;
     });
 
-    this.currentY += 10;
+    this.currentY += SPACING.MEDIUM_GAP;
   }
 
-  private addFooter() {
+  /**
+   * Adds footer with signature area and contact information
+   * @private
+   */
+  private addFooter(): void {
+    const { COLORS, FONTS, DOCUMENT, COMPANY } = PDF_GENERATION;
     const pageHeight = this.doc.internal.pageSize.getHeight();
-    const footerY = pageHeight - 30;
+    const footerY = pageHeight - PDF_GENERATION.PAGE.FOOTER_HEIGHT;
 
     // Signature area
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(FONTS.SMALL);
     this.doc.setFont(undefined, "normal");
-    this.doc.text("Customer Approval:", this.margin, footerY);
+    this.doc.text(DOCUMENT.CUSTOMER_APPROVAL_LABEL, this.margin, footerY);
     this.doc.line(this.margin + 35, footerY, this.margin + 100, footerY);
-    this.doc.text("Date:", this.margin + 110, footerY);
+    this.doc.text(DOCUMENT.DATE_LABEL, this.margin + 110, footerY);
     this.doc.line(this.margin + 125, footerY, this.margin + 170, footerY);
 
     // Contact info
-    this.doc.setFontSize(8);
-    this.doc.setTextColor(100, 100, 100);
+    this.doc.setFontSize(FONTS.FOOTER);
+    this.doc.setTextColor(COLORS.GRAY.r, COLORS.GRAY.g, COLORS.GRAY.b);
     this.doc.text(
-      "Questions? Contact us at estimates@estimatepro.com or (555) 123-4567",
+      `Questions? Contact us at ${COMPANY.EMAIL} or ${COMPANY.PHONE}`,
       this.pageWidth / 2,
       pageHeight - 15,
       { align: "center" },
     );
   }
 
+  /**
+   * Generates a complete estimate PDF
+   * @param estimate - The estimate data to generate PDF from
+   * @returns The generated jsPDF document
+   * @throws {PDFProcessingError} If PDF generation fails
+   */
   public generateEstimatePDF(estimate: EstimateData): jsPDF {
-    this.addHeader();
-    this.addEstimateHeader(estimate);
-    this.addCustomerInfo(estimate);
-    this.addServicesTable(estimate);
-    this.addTotals(estimate);
-    this.addNotes(estimate);
-    this.addTerms();
-    this.addFooter();
+    try {
+      // Validate estimate data
+      if (!estimate) {
+        throw new PDFProcessingError(
+          PDF_ERRORS.INVALID_ESTIMATE_DATA,
+          PDFErrorCode.GENERATION_FAILED,
+        );
+      }
 
-    return this.doc;
+      if (!estimate.services || estimate.services.length === 0) {
+        throw new PDFProcessingError(
+          PDF_ERRORS.NO_SERVICES,
+          PDFErrorCode.GENERATION_FAILED,
+        );
+      }
+
+      this.addHeader();
+      this.addEstimateHeader(estimate);
+      this.addCustomerInfo(estimate);
+      this.addServicesTable(estimate);
+      this.addTotals(estimate);
+      this.addNotes(estimate);
+      this.addTerms();
+      this.addFooter();
+
+      return this.doc;
+    } catch (error) {
+      if (error instanceof PDFProcessingError) {
+        throw error;
+      }
+      throw new PDFProcessingError(
+        PDF_ERRORS.GENERATION_FAILED,
+        PDFErrorCode.GENERATION_FAILED,
+        error,
+      );
+    }
   }
 
+  /**
+   * Downloads an estimate PDF to the user's device
+   * @param estimate - The estimate data to generate PDF from
+   * @throws {PDFProcessingError} If PDF generation or download fails
+   */
   public static async downloadEstimatePDF(
     estimate: EstimateData,
   ): Promise<void> {
-    const generator = new EstimatePDFGenerator();
-    const pdf = generator.generateEstimatePDF(estimate);
+    try {
+      const generator = new EstimatePDFGenerator();
+      const pdf = generator.generateEstimatePDF(estimate);
 
-    const filename = `Estimate_${estimate.estimate_number.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
-    pdf.save(filename);
+      const safeEstimateNumber = estimate.estimate_number.replace(
+        /[^a-zA-Z0-9]/g,
+        "_",
+      );
+      const filename = `Estimate_${safeEstimateNumber}.pdf`;
+
+      if (filename.length > PDF_GENERATION.VALIDATION.MAX_FILENAME_LENGTH) {
+        throw new PDFProcessingError(
+          "Filename too long",
+          PDFErrorCode.GENERATION_FAILED,
+        );
+      }
+
+      pdf.save(filename);
+    } catch (error) {
+      if (error instanceof PDFProcessingError) {
+        throw error;
+      }
+      throw new PDFProcessingError(
+        PDF_ERRORS.GENERATION_FAILED,
+        PDFErrorCode.GENERATION_FAILED,
+        error,
+      );
+    }
   }
 
+  /**
+   * Generates an estimate PDF and returns it as a Blob
+   * @param estimate - The estimate data to generate PDF from
+   * @returns A Blob containing the PDF data
+   * @throws {PDFProcessingError} If PDF generation fails
+   */
   public static async getEstimatePDFBlob(
     estimate: EstimateData,
   ): Promise<Blob> {
-    const generator = new EstimatePDFGenerator();
-    const pdf = generator.generateEstimatePDF(estimate);
+    try {
+      const generator = new EstimatePDFGenerator();
+      const pdf = generator.generateEstimatePDF(estimate);
 
-    return pdf.output("blob");
+      return pdf.output("blob");
+    } catch (error) {
+      if (error instanceof PDFProcessingError) {
+        throw error;
+      }
+      throw new PDFProcessingError(
+        PDF_ERRORS.GENERATION_FAILED,
+        PDFErrorCode.GENERATION_FAILED,
+        error,
+      );
+    }
   }
 }
 
