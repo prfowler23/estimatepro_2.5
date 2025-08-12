@@ -21,12 +21,7 @@ const PDFProcessRequestSchema = z.object({
   imageDensity: z.number().min(72).max(300).default(150),
 });
 
-async function processPDFHandler(
-  request: NextRequest,
-  context: {
-    params?: Promise<Record<string, string>>;
-  },
-) {
+async function processPDFHandler(request: NextRequest) {
   try {
     const supabase = createClient();
     const { data: user } = await supabase.auth.getUser();

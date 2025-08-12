@@ -2,7 +2,7 @@
 // Provides real-time analytics data streaming with React integration
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getAnalyticsWebSocketService } from "@/lib/services/analytics-websocket-service";
+import { unifiedAnalyticsService } from "@/lib/services/analytics-service-unified";
 
 interface UseAnalyticsWebSocketOptions {
   metrics: string[];
@@ -52,7 +52,7 @@ export function useAnalyticsWebSocket(
   >("disconnected");
   const [error, setError] = useState<string | null>(null);
 
-  const wsServiceRef = useRef(getAnalyticsWebSocketService());
+  const wsServiceRef = useRef(unifiedAnalyticsService);
   const subscriptionIdRef = useRef<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 

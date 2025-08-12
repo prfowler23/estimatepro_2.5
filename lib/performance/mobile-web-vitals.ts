@@ -149,7 +149,6 @@ export class MobileWebVitalsMonitor {
     this.deviceCapabilities = this.detectDeviceCapabilities();
     this.networkCondition = this.detectNetworkCondition();
     this.performanceBudget = this.getPerformanceBudget();
-    this.initializeMonitoring();
   }
 
   /**
@@ -371,6 +370,18 @@ export class MobileWebVitalsMonitor {
    * Detect device capabilities for performance adaptation
    */
   private detectDeviceCapabilities(): DeviceCapabilities {
+    // Return safe defaults for server-side rendering
+    if (typeof window === "undefined") {
+      return {
+        isMobile: false,
+        isLowEnd: false,
+        hardwareConcurrency: 4,
+        memory: 4,
+        platform: "unknown",
+        maxTouchPoints: 0,
+      };
+    }
+
     const isMobile = window.innerWidth < 768;
     const memory = (navigator as any).deviceMemory || 4; // Default 4GB
     const hardwareConcurrency = navigator.hardwareConcurrency || 4;
@@ -392,6 +403,16 @@ export class MobileWebVitalsMonitor {
    * Detect current network conditions
    */
   private detectNetworkCondition(): NetworkCondition {
+    // Return safe defaults for server-side rendering
+    if (typeof navigator === "undefined") {
+      return {
+        effectiveType: "4g",
+        downlink: 10,
+        rtt: 100,
+        saveData: false,
+      };
+    }
+
     if ("connection" in navigator) {
       const connection = (navigator as any).connection;
       return {

@@ -1,5 +1,5 @@
 import { config } from "./index";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/universal-client";
 
 export interface StartupValidationResult {
   isValid: boolean;
@@ -103,7 +103,8 @@ export class StartupValidator {
     "connected" | "disconnected" | "error"
   > {
     try {
-      // Test basic connection
+      // Test basic connection using universal client
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("estimates")
         .select("count")
@@ -138,8 +139,9 @@ export class StartupValidator {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Test Supabase connection
+    // Test Supabase connection using universal client
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.auth.getSession();
       if (error) {
         warnings.push(`Supabase auth warning: ${error.message}`);

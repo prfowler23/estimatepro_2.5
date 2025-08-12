@@ -1,4 +1,4 @@
-import { SessionRecoveryService } from "@/lib/services/session-recovery-service";
+import { SessionRecoveryServiceClient as SessionRecoveryService } from "@/lib/services/session-recovery-service-client";
 import { mockSessionRecoveryService } from "@/__tests__/mocks/services";
 import { createClient } from "@/lib/supabase/universal-client";
 import { withDatabaseRetry } from "@/lib/utils/retry-logic";
@@ -182,11 +182,7 @@ describe("SessionRecoveryService", () => {
     });
 
     it("should accept custom options", async () => {
-      await SessionRecoveryService.initialize({
-        maxDraftAge: 48,
-        maxRecoveryAttempts: 5,
-        autoCleanupEnabled: false,
-      });
+      await SessionRecoveryService.initialize();
 
       // Verify options are applied (would need to access private properties in real implementation)
       expect(mockAddEventListener).toHaveBeenCalled();
@@ -203,7 +199,6 @@ describe("SessionRecoveryService", () => {
         "test-estimate-id",
         mockGuidedFlowData as any,
         "measurements",
-        "auto-save",
       );
 
       expect(result).toBe(true);

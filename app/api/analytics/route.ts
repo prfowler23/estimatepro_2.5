@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       // Use unified analytics service
       const analyticsService = unifiedAnalyticsService;
 
-      const analytics = await analyticsService.getAnalyticsMetrics({
+      const analytics = await analyticsService.getWorkflowAnalytics({
         startDate: params.startDate ? new Date(params.startDate) : undefined,
         endDate: params.endDate ? new Date(params.endDate) : undefined,
         userIds: params.userId

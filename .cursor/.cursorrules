@@ -2,24 +2,25 @@
 # Comprehensive Cursor AI Rules and Guidelines
 
 ## PROJECT OVERVIEW
-EstimatePro is a comprehensive Next.js 14 application designed for building services contractors with:
-- 11 specialized service calculators (Window Cleaning, Pressure Washing, Soft Washing, Biofilm Removal, Glass Restoration, Frame Restoration, High Dusting, Final Clean, Granite Reconditioning, Pressure Wash & Seal, Parking Deck)
-- 9 specialized AI endpoints for comprehensive analysis (photo analysis, document extraction, contact extraction, competitive intelligence, risk assessment, auto-quote generation, follow-up automation)
-- Guided estimation workflow with AI assistance and validation
-- Canvas drawing tools for interactive area measurement and takeoff
-- Weather integration for project scheduling and risk factors
-- Analytics dashboard with performance metrics and business insights
-- Enterprise-grade features with transaction support and error handling
+EstimatePro is a comprehensive Next.js 15 application designed for building services contractors with:
+- 11 specialized service calculators (Window Cleaning, Pressure Washing, Soft Washing, Biofilm Removal, Glass Restoration, Frame Restoration, High Dusting, Final Clean, Granite Reconditioning, Pressure Wash & Seal, Parking Deck, AI Facade Analysis)
+- 15 specialized AI endpoints for comprehensive analysis (photo/facade analysis, document extraction, auto-quotes, risk assessment, conversations, analytics, contact extraction, follow-up automation, competitive intelligence)
+- Guided estimation workflow with real-time pricing and session recovery
+- 3D visualization and drone integration for building modeling and aerial inspection
+- Progressive Web App capabilities with offline functionality and background sync
+- Performance optimization achieving 70-90% improvement through multi-layer caching
+- Enterprise-grade features with transaction support, advanced error monitoring, and intelligent error recovery
 
 ## TECHNOLOGY STACK
-- Frontend: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- Frontend: Next.js 15 (App Router), TypeScript, Tailwind CSS, Framer Motion
 - Backend: Next.js API Routes, Supabase (PostgreSQL with RLS)
-- AI: OpenAI GPT-4 Vision, comprehensive AI ecosystem
+- AI: OpenAI GPT-4 Vision, comprehensive AI ecosystem with 15 endpoints
 - State: Zustand stores, React Query (@tanstack/react-query), React Context
 - Forms: React Hook Form + Zod validation
-- UI: shadcn/ui components (Radix UI), Lucide icons, Framer Motion
-- Database: Supabase with Row Level Security, transaction support
-- File Processing: jsPDF, React PDF, XLSX, html2canvas
+- UI: shadcn/ui components (Radix UI), Lucide icons, industrial design system
+- Database: Supabase with Row Level Security, transaction support, ACID compliance
+- Processing: jsPDF, React PDF, XLSX, html2canvas, Sentry (error tracking)
+- PWA: Service Workers, Background Sync, Push Notifications
 - Email: Resend API
 - Testing: Jest, React Testing Library
 - Deployment: Vercel, Supabase hosting
@@ -297,17 +298,23 @@ export function QuoteForm() {
 ## AI INTEGRATION GUIDELINES
 
 ### Comprehensive AI Ecosystem
-The platform features 9 specialized AI endpoints for intelligent automation:
+The platform features 15 specialized AI endpoints for intelligent automation:
 
 1. **Enhanced Photo Analysis** (`/api/ai/enhanced-photo-analysis`): Advanced building analysis with GPT-4 Vision
-2. **Facade Analyzer** (`/api/ai/analyze-facade`): Specialized facade condition assessment
+2. **Facade Analysis** (`/api/ai/facade-analysis`): Specialized facade condition assessment
 3. **Document Extraction** (`/api/ai/extract-documents`): Extracts scope details from RFPs, emails, and documents
 4. **Contact Information Extraction** (`/api/ai/extract-contact-info`): Automated contact data parsing
 5. **Auto Quote Generation** (`/api/ai/auto-quote`): Fully automated estimate creation from minimal input
-6. **Competitive Intelligence** (`/api/ai/competitive-intelligence`): Market analysis and competitive positioning
-7. **Risk Assessment** (`/api/ai/risk-assessment`): Automated project risk evaluation
-8. **Follow-up Automation** (`/api/ai/follow-up-automation`): Intelligent client communication management
-9. **AI Assistant** (`/api/ai/assistant`): General-purpose AI assistance
+6. **Auto Estimate Generation** (`/api/ai/auto-estimate`): Automated estimate generation
+7. **Competitive Intelligence** (`/api/ai/competitive-intelligence`): Market analysis and competitive positioning
+8. **Risk Assessment** (`/api/ai/risk-assessment`): Automated project risk evaluation
+9. **Follow-up Automation** (`/api/ai/follow-up-automation`): Intelligent client communication management
+10. **AI Assistant** (`/api/ai/assistant`): General-purpose AI assistance with chat interface
+11. **Conversations** (`/api/ai/conversations`): AI conversation management and history
+12. **Analytics** (`/api/ai/analytics`): AI-powered analytics and insights
+13. **Metrics** (`/api/ai/metrics`): AI usage metrics and tracking
+14. **Usage Tracking** (`/api/ai/usage`): AI usage monitoring and optimization
+15. **Analyze Facade** (`/api/ai/analyze-facade`): Facade analysis endpoint
 
 ### AI Configuration & Performance
 - **AI Configuration Management**: Centralized AI settings with `ai-config.ts`
@@ -613,7 +620,7 @@ export function App() {
 ## CALCULATION-SPECIFIC RULES
 
 The platform includes 11 specialized calculators for different building services:
-1. Window Cleaning, 2. Pressure Washing, 3. Soft Washing, 4. Biofilm Removal, 5. Glass Restoration, 6. Frame Restoration, 7. High Dusting, 8. Final Clean, 9. Granite Reconditioning, 10. Pressure Wash & Seal, 11. Parking Deck
+1. Window Cleaning, 2. Pressure Washing, 3. Soft Washing, 4. Biofilm Removal, 5. Glass Restoration, 6. Frame Restoration, 7. High Dusting, 8. Final Clean, 9. Granite Reconditioning, 10. Pressure Wash & Seal, 11. Parking Deck, 12. AI Facade Analysis
 
 ### Calculator Implementation Rules:
 1. **Rate sources**: Always reference where rates come from in constants

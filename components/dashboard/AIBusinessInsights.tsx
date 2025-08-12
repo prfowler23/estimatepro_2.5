@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, Clock, Target, Zap, Bot } from "lucide-react";
 import type { AnalyticsData } from "@/lib/analytics/data";
-import { AnalyticsMetricsService } from "@/lib/services/analytics-metrics-service";
+import { UnifiedAnalyticsService } from "@/lib/services/analytics-service-unified";
 
 interface AIBusinessInsightsProps {
   data: AnalyticsData | null;
@@ -10,9 +10,9 @@ interface AIBusinessInsightsProps {
 
 export const AIBusinessInsights: React.FC<AIBusinessInsightsProps> = React.memo(
   ({ data }) => {
-    // Calculate metrics using the service with memoization
+    // Calculate metrics using the unified service with memoization
     const metrics = useMemo(
-      () => AnalyticsMetricsService.calculateAIMetrics(data),
+      () => UnifiedAnalyticsService.calculateAIMetrics(data),
       [data],
     );
     return (

@@ -249,7 +249,10 @@ export function Navigation() {
                     <div className="ml-8 mt-2 space-y-1">
                       {item.dropdown.map((dropdownItem) => {
                         const DropdownIcon = dropdownItem.icon;
-                        const dropdownIsActive = dropdownItem.href === pathname;
+                        const dropdownIsActive = isItemActive({
+                          ...dropdownItem,
+                          dropdown: undefined,
+                        });
                         return (
                           <Link
                             key={dropdownItem.id}

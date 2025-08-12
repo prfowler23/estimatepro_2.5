@@ -1,4 +1,4 @@
-import { EstimateBusinessService } from "@/lib/services/estimate-service";
+import { estimateService } from "@/lib/services/estimate-service-unified";
 import { mockEstimateBusinessService } from "@/__tests__/mocks/services";
 import { createClient } from "@/lib/supabase/universal-client";
 import {
@@ -7,11 +7,11 @@ import {
   createMockUser,
 } from "@/__tests__/test-utils";
 
-jest.mock("@/lib/services/estimate-service", () => ({
-  EstimateBusinessService: {
+jest.mock("@/lib/services/estimate-service-unified", () => ({
+  estimateService: {
     validateEstimate: jest.fn().mockReturnValue({ isValid: true, errors: [] }),
     createEstimate: jest.fn().mockResolvedValue("new-estimate-id"),
-    getEstimateById: jest.fn().mockResolvedValue({
+    getEstimate: jest.fn().mockResolvedValue({
       id: "test-id",
       customer_name: "Test Customer",
     }),
@@ -29,8 +29,11 @@ jest.mock("@/lib/services/estimate-service", () => ({
       if (hours >= 1) return `${hours} hours`;
       return `${hours * 60} minutes`;
     }),
-    getServiceDisplayName: jest.fn().mockImplementation((code) => {
-      const names = { WC: "Window Cleaning", PW: "Pressure Washing" };
+    getServiceDisplayName: jest.fn().mockImplementation((code: string) => {
+      const names: Record<string, string> = {
+        WC: "Window Cleaning",
+        PW: "Pressure Washing",
+      };
       return names[code] || code;
     }),
     getAllEstimates: jest.fn().mockResolvedValue({
@@ -142,7 +145,7 @@ describe("EstimateBusinessService", () => {
         ],
       };
 
-      const result = EstimateBusinessService.validateEstimate(validParams);
+      const result = estimateService.validateEstimate(validParams);
 
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -159,7 +162,7 @@ describe("EstimateBusinessService", () => {
         services: [],
       };
 
-      const result = EstimateBusinessService.validateEstimate(invalidParams);
+      const result = estimateService.validateEstimate(invalidParams);
 
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
@@ -244,7 +247,7 @@ describe("EstimateBusinessService", () => {
         ],
       };
 
-      const result = await EstimateBusinessService.createEstimate(params);
+      const result = await estimateService.createEstimate(params);
 
       expect(result).toBe(mockEstimate.id);
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("estimates");
@@ -266,13 +269,11 @@ describe("EstimateBusinessService", () => {
         services: [],
       };
 
-      await expect(
-        EstimateBusinessService.createEstimate(params),
-      ).rejects.toThrow();
+      await expect(estimateService.createEstimate(params)).rejects.toThrow();
     });
   });
 
-  describe("getEstimateById", () => {
+  describe("getEstimate", () => {
     it("should retrieve an estimate by ID", async () => {
       const mockEstimate = createMockEstimate();
       const mockDbEstimate = {
@@ -293,7 +294,7 @@ describe("EstimateBusinessService", () => {
         error: null,
       });
 
-      const result = await EstimateBusinessService.getEstimate("test-id");
+      const result = await estimateService.getEstimate("test-id");
 
       expect(result).toBeTruthy();
       expect(result!.id).toBe(mockEstimate.id);
@@ -311,7 +312,7 @@ describe("EstimateBusinessService", () => {
           error: { code: "PGRST116" },
         });
 
-      const result = await EstimateBusinessService.getEstimate("non-existent");
+      const result = await estimateService.getEstimate("non-existent");
 
       expect(result).toBeNull();
     });
@@ -350,10 +351,7 @@ describe("EstimateBusinessService", () => {
       };
       mockSupabaseClient.from.mockReturnValue(mockChain);
 
-      const result = await EstimateBusinessService.updateEstimate(
-        "test-id",
-        updates,
-      );
+      const result = await estimateService.updateEstimate("test-id", updates);
 
       expect(result).toBe(true);
     });
@@ -365,9 +363,9 @@ describe("EstimateBusinessService", () => {
         error: null,
       });
 
-      await expect(
-        EstimateBusinessService.deleteEstimate("test-id"),
-      ).resolves.toBe(true);
+      await expect(estimateService.deleteEstimate("test-id")).resolves.toBe(
+        true,
+      );
     });
   });
 
@@ -379,7 +377,7 @@ describe("EstimateBusinessService", () => {
         error: null,
       });
 
-      const result = await EstimateBusinessService.updateEstimateStatus(
+      const result = await estimateService.updateEstimateStatus(
         "test-id",
         "sent",
       );
@@ -455,7 +453,7 @@ describe("EstimateBusinessService", () => {
         },
       ];
 
-      const result = EstimateBusinessService.calculateEstimateTotal(services);
+      const result = estimateService.calculateEstimateTotal(services);
 
       expect(result).toBe(1000);
     });
@@ -528,8 +526,7 @@ describe("EstimateBusinessService", () => {
         },
       ];
 
-      const result =
-        EstimateBusinessService.calculateEstimateDuration(services);
+      const result = estimateService.calculateEstimateDuration(services);
 
       expect(result).toBe(4); // Max of 4 and 3
     });
@@ -537,7 +534,7 @@ describe("EstimateBusinessService", () => {
 
   describe("generateEstimateNumber", () => {
     it("should generate unique estimate number", () => {
-      const estimateNumber = EstimateBusinessService.generateEstimateNumber();
+      const estimateNumber = estimateService.generateEstimateNumber();
 
       expect(estimateNumber).toMatch(/^EST-\d{4}\d{2}\d{2}-\d{3}$/);
     });
@@ -576,10 +573,7 @@ describe("EstimateBusinessService", () => {
         },
       ];
 
-      const score = EstimateBusinessService.determineComplexityScore(
-        services,
-        10,
-      );
+      const score = estimateService.determineComplexityScore(services, 10);
 
       expect(score).toBeGreaterThan(0);
       expect(score).toBeLessThanOrEqual(10);
@@ -605,7 +599,7 @@ describe("EstimateBusinessService", () => {
         },
       ];
 
-      const adjustment = EstimateBusinessService.calculateRiskAdjustment(
+      const adjustment = estimateService.calculateRiskAdjustment(
         services,
         25, // High building
       );
@@ -631,10 +625,7 @@ describe("EstimateBusinessService", () => {
         },
       ];
 
-      const adjustment = EstimateBusinessService.calculateRiskAdjustment(
-        services,
-        5,
-      );
+      const adjustment = estimateService.calculateRiskAdjustment(services, 5);
 
       expect(adjustment).toBeGreaterThan(1.0);
     });
@@ -642,25 +633,25 @@ describe("EstimateBusinessService", () => {
 
   describe("formatCurrency", () => {
     it("should format currency correctly", () => {
-      const formatted = EstimateBusinessService.formatCurrency(1234.56);
+      const formatted = estimateService.formatCurrency(1234.56);
       expect(formatted).toBe("$1,234.56");
     });
   });
 
   describe("formatDuration", () => {
     it("should format hours correctly", () => {
-      expect(EstimateBusinessService.formatDuration(8)).toBe("1 day");
-      expect(EstimateBusinessService.formatDuration(1)).toBe("1 hours");
-      expect(EstimateBusinessService.formatDuration(0.5)).toBe("30 minutes");
+      expect(estimateService.formatDuration(8)).toBe("1 day");
+      expect(estimateService.formatDuration(1)).toBe("1 hours");
+      expect(estimateService.formatDuration(0.5)).toBe("30 minutes");
     });
   });
 
   describe("getServiceDisplayName", () => {
     it("should return correct display names", () => {
-      expect(EstimateBusinessService.getServiceDisplayName("WC")).toBe(
+      expect(estimateService.getServiceDisplayName("WC")).toBe(
         "Window Cleaning",
       );
-      expect(EstimateBusinessService.getServiceDisplayName("PW")).toBe(
+      expect(estimateService.getServiceDisplayName("PW")).toBe(
         "Pressure Washing",
       );
     });
@@ -700,8 +691,7 @@ describe("EstimateBusinessService", () => {
         count: 2,
       });
 
-      const result = await EstimateBusinessService.getAllEstimates({
-        userId: "test-user",
+      const result = await estimateService.getAllEstimates({
         status: "draft",
         limit: 10,
       });

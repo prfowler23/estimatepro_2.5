@@ -15,41 +15,43 @@ describe("Service Infrastructure", () => {
     });
 
     it("should import estimate service without errors", async () => {
-      const { EstimateBusinessService } = await import(
-        "@/lib/services/estimate-service"
+      const { unifiedEstimateService } = await import(
+        "@/lib/services/estimate-service-unified"
       );
-      expect(EstimateBusinessService).toBeDefined();
+      expect(unifiedEstimateService).toBeDefined();
       expect(
-        typeof EstimateBusinessService === "object" ||
-          typeof EstimateBusinessService === "function",
+        typeof unifiedEstimateService === "object" ||
+          typeof unifiedEstimateService === "function",
       ).toBe(true);
     });
 
     it("should import session recovery service without errors", async () => {
-      const { SessionRecoveryService } = await import(
-        "@/lib/services/session-recovery-service"
+      const { unifiedWorkflowService } = await import(
+        "@/lib/services/workflow-service-unified"
       );
-      expect(SessionRecoveryService).toBeDefined();
+      expect(unifiedWorkflowService).toBeDefined();
       expect(
-        typeof SessionRecoveryService === "object" ||
-          typeof SessionRecoveryService === "function",
+        typeof unifiedWorkflowService === "object" ||
+          typeof unifiedWorkflowService === "function",
       ).toBe(true);
     });
 
     it("should import cross-step validation service without errors", async () => {
-      const { CrossStepValidationService } = await import(
-        "@/lib/services/cross-step-validation-service"
+      const { unifiedWorkflowService } = await import(
+        "@/lib/services/workflow-service-unified"
       );
-      expect(CrossStepValidationService).toBeDefined();
+      expect(unifiedWorkflowService).toBeDefined();
       expect(
-        typeof CrossStepValidationService === "object" ||
-          typeof CrossStepValidationService === "function",
+        typeof unifiedWorkflowService === "object" ||
+          typeof unifiedWorkflowService === "function",
       ).toBe(true);
     });
 
     it("should import monitoring service without errors", async () => {
       try {
-        const module = await import("@/lib/services/monitoring-service");
+        const module = await import(
+          "@/lib/services/monitoring-service-unified"
+        );
         expect(module).toBeDefined();
         // monitoringService might be undefined if not exported correctly, just check the module loads
       } catch (error) {
@@ -68,22 +70,22 @@ describe("Service Infrastructure", () => {
     });
 
     it("should have properly typed estimate service methods", async () => {
-      const { EstimateBusinessService } = await import(
-        "@/lib/services/estimate-service"
+      const { unifiedEstimateService } = await import(
+        "@/lib/services/estimate-service-unified"
       );
-      expect(typeof EstimateBusinessService.validateEstimate).toBe("function");
-      expect(typeof EstimateBusinessService.createEstimate).toBe("function");
+      expect(typeof unifiedEstimateService.validateEstimate).toBe("function");
+      expect(typeof unifiedEstimateService.createEstimate).toBe("function");
       // calculateEstimateTotal is private, skip this check
-      expect(typeof EstimateBusinessService.validateEstimate).toBe("function");
+      expect(typeof unifiedEstimateService.validateEstimate).toBe("function");
     });
 
     it("should have properly typed session recovery methods", async () => {
-      const { SessionRecoveryService } = await import(
-        "@/lib/services/session-recovery-service"
+      const { unifiedWorkflowService } = await import(
+        "@/lib/services/workflow-service-unified"
       );
-      expect(typeof SessionRecoveryService.initialize).toBe("function");
-      expect(typeof SessionRecoveryService.saveDraft).toBe("function");
-      expect(typeof SessionRecoveryService.getRecoverableSessions).toBe(
+      expect(typeof unifiedWorkflowService.initialize).toBe("function");
+      expect(typeof unifiedWorkflowService.saveDraft).toBe("function");
+      expect(typeof unifiedWorkflowService.getRecoverableSessions).toBe(
         "function",
       );
     });

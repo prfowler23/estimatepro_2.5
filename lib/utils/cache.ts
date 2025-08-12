@@ -480,3 +480,16 @@ export function deduplicate<T>(key: string, fn: () => Promise<T>): Promise<T> {
   pendingRequests.set(key, promise);
   return promise;
 }
+
+/**
+ * Factory function to create cache instances with optional configuration
+ */
+export function createCache<T = CacheValue>(options?: {
+  defaultTTL?: number;
+  maxSize?: number;
+}): SimpleCache<T> {
+  return new SimpleCache<T>(
+    options?.defaultTTL ?? CACHE_CONFIG.DEFAULT_TTL,
+    options?.maxSize ?? CACHE_CONFIG.MAX_CACHE_SIZE,
+  );
+}

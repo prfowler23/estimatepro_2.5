@@ -181,7 +181,13 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={data.revenue.monthly}>
+              <AreaChart
+                data={
+                  Array.isArray(data.revenue.monthly)
+                    ? data.revenue.monthly
+                    : []
+                }
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={formatCurrency} />
@@ -213,7 +219,13 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.revenue.monthly}>
+              <BarChart
+                data={
+                  Array.isArray(data.revenue.monthly)
+                    ? data.revenue.monthly
+                    : []
+                }
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -239,7 +251,11 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={data.revenue.breakdown}
+                  data={
+                    Array.isArray(data.revenue.breakdown)
+                      ? data.revenue.breakdown
+                      : []
+                  }
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -250,7 +266,10 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
                   fill="#8884d8"
                   dataKey="revenue"
                 >
-                  {data.revenue.breakdown.map((entry, index) => (
+                  {(Array.isArray(data.revenue.breakdown)
+                    ? data.revenue.breakdown
+                    : []
+                  ).map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -276,49 +295,51 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {data.services.slice(0, 5).map((service, index) => (
-                <div
-                  key={service.serviceType}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-sm font-semibold">
-                      {index + 1}
+              {(Array.isArray(data.services) ? data.services : [])
+                .slice(0, 5)
+                .map((service, index) => (
+                  <div
+                    key={service.serviceType}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-sm font-semibold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium">{service.serviceType}</p>
+                        <p className="text-sm text-gray-500">
+                          {service.totalEstimates} estimates •{" "}
+                          {formatPercentage(service.conversionRate)} conversion
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{service.serviceType}</p>
-                      <p className="text-sm text-gray-500">
-                        {service.totalEstimates} estimates •{" "}
-                        {formatPercentage(service.conversionRate)} conversion
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        {formatCurrency(service.totalRevenue)}
                       </p>
+                      <div className="flex items-center">
+                        {service.trend === "up" && (
+                          <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+                        )}
+                        {service.trend === "down" && (
+                          <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
+                        )}
+                        <span
+                          className={`text-xs ${
+                            service.trend === "up"
+                              ? "text-green-600"
+                              : service.trend === "down"
+                                ? "text-red-600"
+                                : "text-gray-500"
+                          }`}
+                        >
+                          {formatPercentage(Math.abs(service.monthlyGrowth))}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      {formatCurrency(service.totalRevenue)}
-                    </p>
-                    <div className="flex items-center">
-                      {service.trend === "up" && (
-                        <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
-                      )}
-                      {service.trend === "down" && (
-                        <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
-                      )}
-                      <span
-                        className={`text-xs ${
-                          service.trend === "up"
-                            ? "text-green-600"
-                            : service.trend === "down"
-                              ? "text-red-600"
-                              : "text-gray-500"
-                        }`}
-                      >
-                        {formatPercentage(Math.abs(service.monthlyGrowth))}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -367,7 +388,10 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
             {/* Customer Type Breakdown */}
             <div className="space-y-3">
               <h4 className="font-medium text-sm">Customer Types</h4>
-              {data.customers.customersByType.map((type) => (
+              {(Array.isArray(data.customers.customersByType)
+                ? data.customers.customersByType
+                : []
+              ).map((type) => (
                 <div
                   key={type.type}
                   className="flex items-center justify-between"
@@ -404,7 +428,11 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
                 <Tooltip />
                 <Funnel
                   dataKey="count"
-                  data={data.conversion.funnel}
+                  data={
+                    Array.isArray(data.conversion.funnel)
+                      ? data.conversion.funnel
+                      : []
+                  }
                   isAnimationActive
                   fill="#3B82F6"
                 >
@@ -414,7 +442,10 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
             </ResponsiveContainer>
 
             <div className="mt-4 space-y-2">
-              {data.conversion.funnel.map((stage, index) => (
+              {(Array.isArray(data.conversion.funnel)
+                ? data.conversion.funnel
+                : []
+              ).map((stage, index) => (
                 <div
                   key={stage.stage}
                   className="flex items-center justify-between text-sm"
@@ -443,47 +474,52 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.customers.topCustomers.slice(0, 6).map((customer, index) => (
-              <div
-                key={`${customer.name}-${customer.company}`}
-                className="p-4 border rounded-lg"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-semibold">
-                      {index + 1}
+            {(Array.isArray(data.customers.topCustomers)
+              ? data.customers.topCustomers
+              : []
+            )
+              .slice(0, 6)
+              .map((customer, index) => (
+                <div
+                  key={`${customer.name}-${customer.company}`}
+                  className="p-4 border rounded-lg"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-semibold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{customer.name}</p>
+                        {customer.company && (
+                          <p className="text-xs text-gray-500">
+                            {customer.company}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{customer.name}</p>
-                      {customer.company && (
-                        <p className="text-xs text-gray-500">
-                          {customer.company}
-                        </p>
-                      )}
+                    <Award className="h-4 w-4 text-yellow-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>Revenue:</span>
+                      <span className="font-medium">
+                        {formatCurrency(customer.totalRevenue)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Quotes:</span>
+                      <span>{customer.totalQuotes}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Last Quote:</span>
+                      <span>
+                        {new Date(customer.lastQuote).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
-                  <Award className="h-4 w-4 text-yellow-500" />
                 </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span>Revenue:</span>
-                    <span className="font-medium">
-                      {formatCurrency(customer.totalRevenue)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Quotes:</span>
-                    <span>{customer.totalQuotes}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Last Quote:</span>
-                    <span>
-                      {new Date(customer.lastQuote).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>

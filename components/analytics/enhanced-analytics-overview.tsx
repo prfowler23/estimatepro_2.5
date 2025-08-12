@@ -55,7 +55,7 @@ import {
 } from "lucide-react";
 import { AnalyticsData } from "@/lib/analytics/data";
 import { useState, useCallback } from "react";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 
 interface AnalyticsOverviewProps {
   data: AnalyticsData;
@@ -120,12 +120,39 @@ export function AnalyticsOverview({ data }: AnalyticsOverviewProps) {
     document.body.removeChild(link);
   }, []);
 
-  const exportToExcel = useCallback((dataToExport: any[], filename: string) => {
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Data");
-    XLSX.writeFile(wb, `${filename}.xlsx`);
-  }, []);
+  const exportToExcel = useCallback(
+    async (dataToExport: any[], filename: string) => {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Data");
+
+      if (dataToExport.length > 0) {
+        // Add headers
+        const headers = Object.keys(dataToExport[0]);
+        worksheet.addRow(headers);
+
+        // Add data rows
+        dataToExport.forEach((row) => {
+          worksheet.addRow(Object.values(row));
+        });
+      }
+
+      // Generate buffer and download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${filename}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    },
+    [],
+  );
 
   const convertToCSV = (data: any[]) => {
     if (!data.length) return "";

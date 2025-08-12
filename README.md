@@ -1,38 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EstimatePro - AI-Powered Building Services Estimation Platform
 
-## Getting Started
+Next.js 15 application for building services contractors with AI-enhanced workflows, real-time pricing, session recovery, 11 service calculators, 3D visualization, drone integration, and PWA capabilities.
 
-First, run the development server:
+## Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment (see CLAUDE.md for full configuration)
+cp .env.example .env.local
+
+# Initialize database
+npm run setup-db
+npm run migrate
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **15 AI Endpoints** - Photo analysis, document extraction, auto-quotes, competitive intelligence
+- **11 Service Calculators** - Real-time calculations for window cleaning, pressure washing, etc.
+- **3D/Drone Integration** - Building modeling, aerial inspection, flight planning
+- **Progressive Web App** - Offline functionality, background sync, native experience
+- **Real-Time Systems** - Live pricing, session recovery, smart auto-save
 
-## Learn More
+## Documentation
 
-To learn more about Next.js, take a look at the following resources:
+📖 **[CLAUDE.md](./CLAUDE.md)** - Complete project documentation, setup, and architecture  
+🎨 **[Theme Guide](./docs/THEME_GUIDE.md)** - Design system and UI guidelines  
+⚙️ **[Development Guide](./docs/DEVELOPMENT_GUIDE.md)** - Development workflows and best practices
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Technology Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Frontend:** Next.js 15, TypeScript, Tailwind CSS, React Hook Form + Zod, Zustand, React Query  
+**Backend:** Supabase (PostgreSQL, Auth, RLS), OpenAI GPT-4, AccuWeather API  
+**Processing:** jsPDF, React PDF, XLSX, html2canvas, Sentry
 
-## Deploy on Vercel
+## Development Commands
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# MANDATORY before commits
+npm run fmt && npm run lint && npm run typecheck
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Development
+npm run dev                    # Start with hot reload
+npm run build && npm run start # Test production build
 
-# estimatepro_2.5
+# Database
+node scripts/setup-basic-schema.js    # Initialize schema
+node scripts/run-migration.js         # Run migrations
+node scripts/production-check.js      # Verify setup
+```
+
+## Project Status
+
+**Active Development** - Production-ready core features with ongoing enhancements  
+**Completed:** Service calculators, AI endpoints, real-time systems, PWA capabilities, performance optimization (70-90% improvement)
+
+For complete setup instructions, architecture details, and development guidelines, see **[CLAUDE.md](./CLAUDE.md)**.

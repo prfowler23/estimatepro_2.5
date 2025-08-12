@@ -13,7 +13,7 @@ import {
   CrossStepValidationService,
   CrossStepValidationResult,
   CrossStepValidationConfig,
-} from "@/lib/services/cross-step-validation-service";
+} from "@/lib/services/workflow-service-unified";
 
 export interface UseRealTimePricingOptions {
   estimateId: string;

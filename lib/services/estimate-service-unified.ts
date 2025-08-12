@@ -24,6 +24,10 @@ import {
 } from "@/lib/utils/null-safety";
 import { invalidateCache } from "@/lib/utils/cache";
 import {
+  unifiedCache,
+  CachingUtils,
+} from "@/lib/optimization/cache-coordinator";
+import {
   Estimate,
   EstimateService as EstimateServiceType,
   ServiceCalculationResult,
@@ -241,7 +245,7 @@ export class EstimateService extends BaseService {
   /**
    * Generate unique estimate number
    */
-  private generateEstimateNumber(): string {
+  public generateEstimateNumber(): string {
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `EST-${timestamp}-${random}`;
@@ -250,7 +254,7 @@ export class EstimateService extends BaseService {
   /**
    * Calculate total estimate price
    */
-  private calculateEstimateTotal(services: EstimateServiceType[]): number {
+  public calculateEstimateTotal(services: EstimateServiceType[]): number {
     return services.reduce((total, service) => {
       const serviceTotal =
         safeNumber(service.unitPrice) * safeNumber(service.quantity);
@@ -267,7 +271,7 @@ export class EstimateService extends BaseService {
   /**
    * Calculate complexity score
    */
-  private determineComplexityScore(
+  public determineComplexityScore(
     services: EstimateServiceType[],
     buildingHeight: number,
   ): number {
@@ -296,7 +300,7 @@ export class EstimateService extends BaseService {
   /**
    * Calculate risk adjustment factor
    */
-  private calculateRiskAdjustment(
+  public calculateRiskAdjustment(
     services: EstimateServiceType[],
     buildingHeight: number,
   ): number {
@@ -421,8 +425,8 @@ export class EstimateService extends BaseService {
         );
       }
 
-      // Clear cache
-      this.clearCache("estimates");
+      // Clear unified cache
+      await CachingUtils.estimates.invalidate();
 
       // Publish event
       try {
@@ -449,9 +453,8 @@ export class EstimateService extends BaseService {
    * Get estimate by ID with services
    */
   async getEstimate(estimateId: string): Promise<Estimate | null> {
-    // Check cache first
-    const cacheKey = this.generateCacheKey("estimate", estimateId);
-    const cached = this.getCached<Estimate>(cacheKey);
+    // Check unified cache first
+    const cached = await CachingUtils.estimates.get(estimateId);
     if (cached) return cached;
 
     return await this.withDatabase(async () => {
@@ -484,8 +487,8 @@ export class EstimateService extends BaseService {
         throw new DatabaseError("Failed to get estimate", estimateError);
       }
 
-      // Cache the result
-      this.setCached(cacheKey, estimate);
+      // Cache the result with unified cache
+      await CachingUtils.estimates.set(estimateId, estimate);
 
       return estimate;
     }, "getEstimate");
@@ -812,6 +815,134 @@ export class EstimateService extends BaseService {
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
+  }
+
+  // Utility methods for testing and helper functionality
+  public formatCurrency(amount: number): string {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  }
+
+  public formatDuration(hours: number): string {
+    if (hours >= 8) {
+      const days = Math.floor(hours / 8);
+      const remainingHours = hours % 8;
+      return remainingHours > 0
+        ? `${days} day${days > 1 ? "s" : ""}, ${remainingHours} hour${remainingHours > 1 ? "s" : ""}`
+        : `${days} day${days > 1 ? "s" : ""}`;
+    }
+    if (hours >= 1) {
+      return `${hours} hour${hours > 1 ? "s" : ""}`;
+    }
+    return `${Math.round(hours * 60)} minute${Math.round(hours * 60) > 1 ? "s" : ""}`;
+  }
+
+  public getServiceDisplayName(serviceCode: ServiceType): string {
+    const serviceNames: Record<ServiceType, string> = {
+      WC: "Window Cleaning",
+      PW: "Pressure Washing",
+      SW: "Soft Washing",
+      BF: "Biofilm Removal",
+      GR: "Glass Restoration",
+      FR: "Frame Restoration",
+      HD: "High Dusting",
+      FC: "Final Clean",
+      GRC: "Granite Reconditioning",
+      PWS: "Pressure Wash & Seal",
+      PD: "Parking Deck",
+      GC: "General Cleaning",
+    };
+    return serviceNames[serviceCode] || serviceCode;
+  }
+
+  public calculateEstimateDuration(services: EstimateServiceType[]): number {
+    if (!services || services.length === 0) return 0;
+
+    // Calculate total duration considering overlapping services
+    let totalDuration = 0;
+    let maxDuration = 0;
+
+    for (const service of services) {
+      const duration = safeNumber(service.duration, 0);
+      totalDuration += duration;
+      maxDuration = Math.max(maxDuration, duration);
+    }
+
+    // Account for parallel work - use max duration rather than total
+    // Add 20% for coordination overhead
+    return Math.max(totalDuration * 0.7, maxDuration) * 1.2;
+  }
+
+  public async getAllEstimates(options?: {
+    limit?: number;
+    offset?: number;
+    status?: EstimateStatus;
+    sortBy?: string;
+  }): Promise<{
+    estimates: Estimate[];
+    total: number;
+    hasMore: boolean;
+  }> {
+    return await withDatabaseRetry(async () => {
+      const supabase = createClient();
+      const { data: user } = await supabase.auth.getUser();
+
+      if (!user.user) {
+        throw new Error("User not authenticated");
+      }
+
+      let query = supabase
+        .from("estimates")
+        .select("*", { count: "exact" })
+        .eq("user_id", user.user.id);
+
+      // Apply filters
+      if (options?.status) {
+        query = query.eq("status", options.status);
+      }
+
+      // Apply sorting
+      const sortBy = options?.sortBy || "updated_at";
+      query = query.order(sortBy, { ascending: false });
+
+      // Apply pagination
+      const limit = options?.limit || 10;
+      const offset = options?.offset || 0;
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      // Transform database records to Estimate objects
+      const estimates: Estimate[] = (data || []).map((row) => ({
+        id: row.id,
+        customerName: safeString(row.customer_name, ""),
+        customerEmail: safeString(row.customer_email, ""),
+        customerPhone: safeString(row.customer_phone, ""),
+        buildingName: safeString(row.building_name, ""),
+        buildingAddress: safeString(row.building_address, ""),
+        buildingHeightStories: safeNumber(row.building_height_stories, 1),
+        buildingType: safeString(row.building_type, "commercial"),
+        status: (row.status as EstimateStatus) || "draft",
+        notes: safeString(row.notes, ""),
+        services: withDefaultArray(row.services, []),
+        createdAt: new Date(row.created_at || Date.now()),
+        updatedAt: new Date(row.updated_at || Date.now()),
+      }));
+
+      return {
+        estimates,
+        total: count || 0,
+        hasMore: offset + limit < (count || 0),
+      };
+    }, "getAllEstimates");
   }
 }
 

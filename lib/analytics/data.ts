@@ -309,12 +309,8 @@ export class AnalyticsService {
   static async getRevenueData(): Promise<RevenueData> {
     const supabase = createClient();
     try {
-      // Monthly data now available via /api/analytics/metrics?metric=monthly_revenue
-      const monthlyData = {
-        startDate: new Date(),
-        endDate: new Date(),
-        months: [],
-      };
+      // Generate monthly revenue data for the last 12 months
+      const monthlyData: MonthlyRevenue[] = await this.getMonthlyRevenueData();
 
       // Service revenue breakdown
       const { data: serviceData } = await supabase
@@ -782,6 +778,54 @@ export class AnalyticsService {
         .slice(0, 10); // Top 10 locations
     } catch (error) {
       console.error("Error fetching conversion by location:", error);
+      return [];
+    }
+  }
+
+  // Get monthly revenue data for the last 12 months
+  private static async getMonthlyRevenueData(): Promise<MonthlyRevenue[]> {
+    const supabase = createClient();
+    try {
+      const now = new Date();
+      const months: MonthlyRevenue[] = [];
+
+      // Get last 12 months
+      for (let i = 11; i >= 0; i--) {
+        const monthStart = startOfMonth(subMonths(now, i));
+        const monthEnd = endOfMonth(monthStart);
+
+        const { data: estimates } = await supabase
+          .from("estimates")
+          .select("total_price")
+          .eq("status", "approved")
+          .gte("created_at", monthStart.toISOString())
+          .lte("created_at", monthEnd.toISOString());
+
+        const { count: estimateCount } = await supabase
+          .from("estimates")
+          .select("*", { count: "exact", head: true })
+          .gte("created_at", monthStart.toISOString())
+          .lte("created_at", monthEnd.toISOString());
+
+        const revenue =
+          estimates?.reduce(
+            (sum, estimate) => sum + (estimate.total_price || 0),
+            0,
+          ) || 0;
+        const avgValue =
+          estimateCount && estimateCount > 0 ? revenue / estimateCount : 0;
+
+        months.push({
+          month: format(monthStart, "MMM"),
+          revenue,
+          estimates: estimateCount || 0,
+          avgValue,
+        });
+      }
+
+      return months;
+    } catch (error) {
+      console.error("Error fetching monthly revenue data:", error);
       return [];
     }
   }

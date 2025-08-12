@@ -32,11 +32,11 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  RealTimePricingService,
+  UnifiedRealTimePricingService as RealTimePricingService,
   RealTimePricingResult,
   ServicePricingBreakdown,
   PricingAdjustment,
-} from "@/lib/services/real-time-pricing-service-v2";
+} from "@/lib/services/real-time-pricing-service-unified";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 import { CalculatorService } from "@/lib/services/calculator-service";
 

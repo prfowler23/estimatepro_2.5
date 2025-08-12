@@ -14,7 +14,7 @@ export async function GET(
 
     // Fetch estimate using the business service
     const { id } = await params;
-    const estimate = await unifiedEstimateService.getEstimateById(id);
+    const estimate = await unifiedEstimateService.getEstimate(id);
 
     if (!estimate) {
       return NextResponse.json(

@@ -7,7 +7,7 @@ import {
   AutoSaveState,
   AutoSaveConfig,
   ConflictResolution,
-} from "@/lib/services/auto-save-service";
+} from "@/lib/services/workflow-service-unified";
 import { GuidedFlowData } from "@/lib/types/estimate-types";
 
 export interface UseAutoSaveOptions {

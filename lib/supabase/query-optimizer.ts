@@ -157,7 +157,7 @@ export class QueryOptimizer {
     executionTime: number;
   }> {
     const startTime = Date.now();
-    const queryId = this.generateQueryId("SELECT", table, options);
+    const queryId = this.generateQueryId("SELECT", String(table), options);
 
     // Check cache first if enabled
     if (options.useCache !== false && this.cacheConfig.enabled) {
@@ -168,7 +168,7 @@ export class QueryOptimizer {
         const executionTime = Date.now() - startTime;
         this.recordMetrics({
           queryId,
-          sql: this.buildSelectSQL(table, options),
+          sql: this.buildSelectSQL(table as string, options),
           parameters: Object.values(options.where || {}),
           executionTime,
           rowsAffected: cachedResult.length,
@@ -188,7 +188,7 @@ export class QueryOptimizer {
 
     try {
       // Build optimized query
-      let query = this.client.from(table);
+      let query = this.client.from(table as any);
 
       // Apply select fields
       if (options.select) {
@@ -217,19 +217,21 @@ export class QueryOptimizer {
         }
       }
 
-      // Apply pagination
-      if (options.limit) {
-        query = query.limit(options.limit);
-      }
-      if (options.offset) {
-        query = query.range(
+      // Apply pagination and execute query
+      let result;
+      if (options.limit && options.offset) {
+        result = await (query as any).range(
           options.offset,
-          options.offset + (options.limit || 1000) - 1,
+          options.offset + options.limit - 1,
         );
+      } else if (options.limit) {
+        result = await (query as any).limit(options.limit);
+      } else {
+        result = await query;
       }
 
       // Execute query with performance monitoring
-      const { data, error } = await query;
+      const { data, error } = result;
       const executionTime = Date.now() - startTime;
 
       // Cache successful results
@@ -251,7 +253,7 @@ export class QueryOptimizer {
       // Record performance metrics
       this.recordMetrics({
         queryId,
-        sql: this.buildSelectSQL(table, options),
+        sql: this.buildSelectSQL(table as string, options),
         parameters: Object.values(options.where || {}),
         executionTime,
         rowsAffected: data?.length,
@@ -276,7 +278,7 @@ export class QueryOptimizer {
       const executionTime = Date.now() - startTime;
       this.recordMetrics({
         queryId,
-        sql: this.buildSelectSQL(table, options),
+        sql: this.buildSelectSQL(table as string, options),
         parameters: Object.values(options.where || {}),
         executionTime,
         fromCache: false,
@@ -313,7 +315,7 @@ export class QueryOptimizer {
     batchCount?: number;
   }> {
     const startTime = Date.now();
-    const queryId = this.generateQueryId("INSERT", table, options);
+    const queryId = this.generateQueryId("INSERT", String(table), options);
 
     try {
       const records = Array.isArray(data) ? data : [data];
@@ -331,14 +333,14 @@ export class QueryOptimizer {
       }
 
       // Single batch insertion
-      let query = this.client.from(table).insert(records);
+      let query = this.client.from(table as any).insert(records);
 
       if (options.returning) {
-        query = query.select(options.returning);
+        query = (query as any).select(options.returning);
       }
 
       if (options.onConflict) {
-        query = query.onConflict(options.onConflict);
+        query = (query as any).onConflict(options.onConflict);
       }
 
       const { data: result, error } = await query;
@@ -405,14 +407,14 @@ export class QueryOptimizer {
     rowsAffected: number;
   }> {
     const startTime = Date.now();
-    const queryId = this.generateQueryId("UPDATE", table, {
+    const queryId = this.generateQueryId("UPDATE", String(table), {
       data,
       where,
       options,
     });
 
     try {
-      let query = this.client.from(table).update(data);
+      let query = this.client.from(table as any).update(data);
 
       // Apply WHERE conditions
       for (const [key, value] of Object.entries(where)) {
@@ -424,7 +426,7 @@ export class QueryOptimizer {
       }
 
       if (options.returning) {
-        query = query.select(options.returning);
+        query = (query as any).select(options.returning);
       }
 
       const { data: result, error, count } = await query;
@@ -490,10 +492,13 @@ export class QueryOptimizer {
     rowsAffected: number;
   }> {
     const startTime = Date.now();
-    const queryId = this.generateQueryId("DELETE", table, { where, options });
+    const queryId = this.generateQueryId("DELETE", String(table), {
+      where,
+      options,
+    });
 
     try {
-      let query = this.client.from(table).delete();
+      let query = this.client.from(table as any).delete();
 
       // Apply WHERE conditions
       for (const [key, value] of Object.entries(where)) {
@@ -505,7 +510,7 @@ export class QueryOptimizer {
       }
 
       if (options.returning) {
-        query = query.select(options.returning);
+        query = (query as any).select(options.returning);
       }
 
       const { data, error, count } = await query;
@@ -573,7 +578,9 @@ export class QueryOptimizer {
     executionTime: number;
   }> {
     const startTime = Date.now();
-    const queryId = this.generateQueryId("RPC", functionName, { parameters });
+    const queryId = this.generateQueryId("RPC", String(functionName), {
+      parameters,
+    });
 
     // Check cache first if enabled
     if (options.useCache !== false && this.cacheConfig.enabled) {
@@ -602,7 +609,10 @@ export class QueryOptimizer {
     }
 
     try {
-      const { data, error } = await this.client.rpc(functionName, parameters);
+      const { data, error } = await this.client.rpc(
+        functionName as any,
+        parameters,
+      );
       const executionTime = Date.now() - startTime;
 
       // Cache successful results
@@ -761,7 +771,7 @@ export class QueryOptimizer {
       const batch = batches[i];
 
       try {
-        let query = this.client.from(table).insert(batch);
+        let query = this.client.from(table as any).insert(batch);
 
         if (options.returning) {
           query = query.select(options.returning) as any;
@@ -832,7 +842,7 @@ export class QueryOptimizer {
   }
 
   private buildSelectSQL<T extends TableName>(table: T, options: any): string {
-    let sql = `SELECT ${options.select || "*"} FROM ${table}`;
+    let sql = `SELECT ${options.select || "*"} FROM ${String(table)}`;
 
     if (options.where) {
       const conditions = Object.keys(options.where)

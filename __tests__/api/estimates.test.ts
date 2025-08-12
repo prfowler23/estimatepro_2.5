@@ -1,6 +1,6 @@
 import { GET, POST } from "@/app/api/estimates/route";
 import { NextRequest } from "next/server";
-import EstimateBusinessService from "@/lib/services/estimate-service";
+import { unifiedEstimateService as EstimateBusinessService } from "@/lib/services/estimate-service-unified";
 import { getHandler, postHandler } from "@/lib/api/api-handler";
 import { createMockEstimate, createMockUser } from "@/__tests__/test-utils";
 

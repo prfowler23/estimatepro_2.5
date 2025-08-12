@@ -7,10 +7,7 @@ import {
   withWriteRateLimit,
 } from "@/lib/middleware/rate-limit-middleware";
 
-async function syncHandler(
-  request: NextRequest,
-  context: { params?: Promise<Record<string, string>> },
-) {
+async function syncHandler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const direction =

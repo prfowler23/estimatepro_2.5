@@ -312,6 +312,46 @@ export class SessionRecoveryServiceClient {
       clearInterval(this.checkInterval);
     }
   }
+
+  // Static methods for backward compatibility with tests
+  static initialize() {
+    return sessionRecoveryServiceClient.initialize();
+  }
+
+  static saveDraft(
+    estimateId: string,
+    data: Partial<GuidedFlowData>,
+    step?: string,
+  ) {
+    return sessionRecoveryServiceClient.saveDraft(estimateId, data, step);
+  }
+
+  static getRecoverableSessions() {
+    return sessionRecoveryServiceClient.getRecoverableSessions();
+  }
+
+  static recoverSession(
+    sessionId: string,
+    options?: { mergeStrategy?: "newest" | "mostComplete" | "manual" },
+  ) {
+    return sessionRecoveryServiceClient.recoverSession(sessionId, options);
+  }
+
+  static getRecoveryState() {
+    return sessionRecoveryServiceClient.getRecoveryState();
+  }
+
+  static deleteDraft(sessionId: string) {
+    return sessionRecoveryServiceClient.deleteDraft(sessionId);
+  }
+
+  static cleanupExpiredDrafts() {
+    return sessionRecoveryServiceClient.cleanupExpiredDrafts();
+  }
+
+  static hasUnsavedChanges() {
+    return sessionRecoveryServiceClient.hasUnsavedChanges();
+  }
 }
 
 // Export singleton instance for client-side use

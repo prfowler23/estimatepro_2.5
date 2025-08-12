@@ -114,19 +114,129 @@ global.fetch = jest.fn(() =>
     text: () => Promise.resolve(""),
     blob: () => Promise.resolve(new Blob()),
     headers: new Headers(),
+    clone: jest.fn(),
   }),
 );
 
-// Mock monitoring service specifically
-jest.mock("@/lib/services/monitoring-service", () => ({
-  MonitoringService: jest.fn().mockImplementation(() => ({
-    getMetrics: jest.fn().mockResolvedValue({
-      current: { cpu: 50, memory: 60, disk: 70 },
-      health: { status: "healthy", checks: [] },
+// Mock real-time-pricing-service-unified
+jest.mock("@/lib/services/real-time-pricing-service-unified", () => ({
+  UnifiedRealTimePricingService: jest.fn().mockImplementation(() => ({
+    calculateRealTimePricing: jest.fn().mockReturnValue({
+      totalCost: 5000,
+      confidence: "high",
+      missingData: [],
+      breakdown: [],
+      metadata: {},
     }),
-    submitMetric: jest.fn().mockResolvedValue(undefined),
+    subscribeToChanges: jest.fn(),
+    unsubscribeFromChanges: jest.fn(),
     cleanup: jest.fn(),
   })),
+}));
+
+// Mock unified services specifically
+jest.mock("@/lib/services/workflow-service-unified", () => ({
+  unifiedWorkflowService: {
+    validateStep: jest.fn().mockReturnValue({
+      isValid: true,
+      errors: [],
+      warnings: [],
+      suggestions: [],
+      blockedSteps: [],
+      confidence: "high",
+      lastValidated: new Date(),
+    }),
+    validateCrossStepDependencies: jest.fn().mockReturnValue({
+      isValid: true,
+      warnings: [],
+      errors: [],
+      suggestions: [],
+      blockedSteps: [],
+      confidence: "high",
+      lastValidated: new Date(),
+    }),
+    startRealTimeValidation: jest.fn(),
+    stopRealTimeValidation: jest.fn(),
+    subscribe: jest.fn(),
+    notifyValidationChange: jest.fn(),
+    addValidationRule: jest.fn(),
+    removeValidationRule: jest.fn(),
+    isValidating: false,
+    cleanup: jest.fn(),
+  },
+  AutoSaveService: jest.fn().mockImplementation(() => ({
+    enableAutoSave: jest.fn(),
+    disableAutoSave: jest.fn(),
+    saveNow: jest.fn().mockResolvedValue({ success: true }),
+    getStatus: jest
+      .fn()
+      .mockReturnValue({ isEnabled: true, lastSave: new Date() }),
+    cleanup: jest.fn(),
+  })),
+}));
+
+// Mock analytics-service-unified
+jest.mock("@/lib/services/analytics-service-unified", () => ({
+  UnifiedAnalyticsService: {
+    calculateAIMetrics: jest.fn().mockReturnValue({
+      totalRequests: 100,
+      successRate: 0.95,
+      averageResponseTime: 1200,
+      costPer1000: 2.5,
+      modelsUsed: ["gpt-4-turbo"],
+      errorRate: 0.05,
+      tokens: {
+        input: 10000,
+        output: 5000,
+        total: 15000,
+      },
+    }),
+    trackEvent: jest.fn().mockResolvedValue(undefined),
+    getMetrics: jest.fn().mockResolvedValue({
+      events: [],
+      summary: { totalEvents: 0, uniqueUsers: 0 },
+    }),
+    cleanup: jest.fn(),
+  },
+}));
+
+// Mock estimate-service-unified
+jest.mock("@/lib/services/estimate-service-unified", () => ({
+  unifiedEstimateService: {
+    createEstimate: jest.fn().mockResolvedValue({
+      id: "test-estimate-123",
+      status: "draft",
+      totalCost: 5000,
+    }),
+    updateEstimate: jest.fn().mockResolvedValue({ success: true }),
+    deleteEstimate: jest.fn().mockResolvedValue({ success: true }),
+    getEstimate: jest.fn().mockResolvedValue({
+      id: "test-estimate-123",
+      status: "draft",
+      totalCost: 5000,
+    }),
+    validateEstimate: jest.fn().mockReturnValue({
+      isValid: true,
+      errors: [],
+      warnings: [],
+    }),
+    cleanup: jest.fn(),
+  },
+}));
+
+// Mock resource-service-unified
+jest.mock("@/lib/services/resource-service-unified", () => ({
+  unifiedResourceService: {
+    getResourceStatus: jest.fn().mockReturnValue({
+      cpu: 50,
+      memory: 60,
+      disk: 70,
+      network: 80,
+    }),
+    optimizeResources: jest.fn().mockResolvedValue({ success: true }),
+    monitorPerformance: jest.fn(),
+    cleanup: jest.fn(),
+  },
 }));
 
 // Mock @supabase/ssr
