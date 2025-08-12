@@ -12,7 +12,7 @@ async function handleGET(
   context?: { params?: { id: string } },
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -77,7 +77,7 @@ async function handlePOST(
   context?: { params?: { id: string } },
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

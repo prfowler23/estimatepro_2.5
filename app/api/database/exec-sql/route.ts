@@ -86,7 +86,7 @@ async function logSqlExecution(
 
 async function handlePOST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -201,7 +201,7 @@ const getCachedSqlExecutionHistory = serverCached(
 // GET endpoint to retrieve execution history
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

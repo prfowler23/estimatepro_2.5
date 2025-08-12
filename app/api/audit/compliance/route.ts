@@ -232,7 +232,8 @@ async function handleDELETE(request: NextRequest) {
 
     if (action === "purge_expired") {
       // Purge expired audit events
-      const purgedCount = await AuditSystem.purgeExpiredEvents();
+      const auditSystem = AuditSystem.getInstance();
+      const purgedCount = await auditSystem.purgeExpiredEvents();
 
       return NextResponse.json({
         purged_count: purgedCount,

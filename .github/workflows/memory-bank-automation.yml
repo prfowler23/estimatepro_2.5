@@ -1,0 +1,413 @@
+name: Memory Bank Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches: [main, develop]
+
+  push:
+    branches: [main, develop]
+
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+  schedule:
+    # Run pattern analysis daily at 2 AM UTC
+    - cron: "0 2 * * *"
+
+  workflow_dispatch:
+    inputs:
+      sync_type:
+        description: "Type of memory bank sync to perform"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - full
+          - context_only
+          - progress_only
+          - patterns_only
+          - rules_only
+
+jobs:
+  memory-bank-update:
+    name: Update Memory Bank
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Need previous commit for diff analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run setup-memory-bank || true  # Don't fail if script doesn't exist yet
+
+      - name: Analyze changes
+        id: analyze
+        run: |
+          echo "Analyzing changes for memory bank update..."
+
+          # Get changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          fi
+
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Analyze change types
+          ARCHITECTURE_CHANGES=$(echo "$CHANGED_FILES" | grep -E "(lib/services|components|app|pages)/" | wc -l)
+          TEST_CHANGES=$(echo "$CHANGED_FILES" | grep -E "\.(test|spec)\.(ts|tsx|js|jsx)$" | wc -l)
+          CONFIG_CHANGES=$(echo "$CHANGED_FILES" | grep -E "(package\.json|tsconfig\.json|next\.config\.|tailwind\.config\.)" | wc -l)
+
+          echo "architecture_changes=$ARCHITECTURE_CHANGES" >> $GITHUB_OUTPUT
+          echo "test_changes=$TEST_CHANGES" >> $GITHUB_OUTPUT
+          echo "config_changes=$CONFIG_CHANGES" >> $GITHUB_OUTPUT
+
+          # Determine update type
+          if [ $ARCHITECTURE_CHANGES -gt 0 ]; then
+            echo "update_type=architecture" >> $GITHUB_OUTPUT
+          elif [ $TEST_CHANGES -gt 0 ]; then
+            echo "update_type=testing" >> $GITHUB_OUTPUT
+          else
+            echo "update_type=general" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update Memory Bank - PR Context
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        run: |
+          echo "🔄 Updating memory bank for PR creation..."
+
+          # Create PR context data
+          cat > pr_context.json << EOF
+          {
+            "title": "${{ github.event.pull_request.title }}",
+            "description": "${{ github.event.pull_request.body }}",
+            "branch": "${{ github.event.pull_request.head.ref }}",
+            "author": "${{ github.event.pull_request.user.login }}",
+            "files": [$(echo '${{ steps.analyze.outputs.changed_files }}' | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
+            "architecture_changes": ${{ steps.analyze.outputs.architecture_changes }},
+            "test_changes": ${{ steps.analyze.outputs.test_changes }}
+          }
+          EOF
+
+          # Execute memory bank update
+          node -e "
+            const fs = require('fs');
+            const prData = JSON.parse(fs.readFileSync('pr_context.json', 'utf8'));
+            
+            // Simulate memory bank update (replace with actual service call)
+            console.log('📝 Updating activeContext.md with PR data...');
+            console.log('PR Title:', prData.title);
+            console.log('Files changed:', prData.files.length);
+            console.log('Architecture changes:', prData.architecture_changes);
+            
+            // TODO: Integrate with actual memory-bank-automation-service
+          "
+
+      - name: Update Memory Bank - Architecture Changes
+        if: steps.analyze.outputs.architecture_changes > 0
+        run: |
+          echo "🏗️ Updating memory bank for architecture changes..."
+
+          # Create architecture change data
+          cat > arch_context.json << EOF
+          {
+            "type": "dependency_updated",
+            "files": [$(echo '${{ steps.analyze.outputs.changed_files }}' | grep -E "(lib/services|components|app|pages)/" | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
+            "description": "CI/CD detected architecture changes",
+            "impact": "medium",
+            "pr_number": "${{ github.event.number }}",
+            "commit_sha": "${{ github.sha }}"
+          }
+          EOF
+
+          node -e "
+            const fs = require('fs');
+            const archData = JSON.parse(fs.readFileSync('arch_context.json', 'utf8'));
+            
+            console.log('📝 Updating systemPatterns.md with architecture changes...');
+            console.log('Change type:', archData.type);
+            console.log('Files affected:', archData.files.length);
+            console.log('Impact level:', archData.impact);
+            
+            // TODO: Integrate with actual memory-bank-automation-service
+          "
+
+      - name: Commit Memory Bank Updates
+        if: github.event_name == 'pull_request'
+        run: |
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Check for changes in memory bank
+          if [ -d "memory-bank" ] && git diff --quiet memory-bank/; then
+            echo "ℹ️ No memory bank changes to commit"
+          else
+            echo "📝 Committing memory bank updates..."
+            git add memory-bank/ || true
+            git commit -m "feat: automated memory bank update for PR #${{ github.event.number }}
+            
+            🤖 Generated with Memory Bank Automation
+            
+            Co-Authored-By: GitHub Action <action@github.com>" || echo "No changes to commit"
+            
+            # Push changes back to PR branch (if this is a PR)
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              git push origin HEAD:${{ github.event.pull_request.head.ref }} || echo "Push failed (may be protected)"
+            fi
+          fi
+
+  test-completion-tracking:
+    name: Track Test Completion
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'cancelled'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: ./test-results
+        continue-on-error: true
+
+      - name: Update Progress Tracking
+        run: |
+          echo "🧪 Updating memory bank for test completion..."
+
+          # Parse test results (if available)
+          if [ -f "test-results/jest-results.json" ]; then
+            TEST_DATA=$(cat test-results/jest-results.json)
+          else
+            # Default test data for tracking
+            TEST_DATA=$(cat << EOF
+          {
+            "totalTests": 0,
+            "passedTests": 0,
+            "failedTests": 0,
+            "coverage": 0,
+            "duration": 0,
+            "testFiles": [],
+            "workflow_conclusion": "${{ github.event.workflow_run.conclusion }}"
+          }
+          EOF
+          )
+          fi
+
+          echo "$TEST_DATA" > test_context.json
+
+          node -e "
+            const fs = require('fs');
+            const testData = JSON.parse(fs.readFileSync('test_context.json', 'utf8'));
+            
+            console.log('📝 Updating progress.md with test results...');
+            console.log('Tests passed:', testData.passedTests);
+            console.log('Tests failed:', testData.failedTests);
+            console.log('Workflow conclusion:', testData.workflow_conclusion);
+            
+            // TODO: Integrate with actual memory-bank-automation-service
+          "
+
+      - name: Commit Progress Updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          if [ -d "memory-bank" ] && ! git diff --quiet memory-bank/progress.md; then
+            git add memory-bank/progress.md
+            git commit -m "feat: automated progress tracking update
+            
+            🤖 Generated with Memory Bank Automation
+            Test completion: ${{ github.event.workflow_run.conclusion }}
+            
+            Co-Authored-By: GitHub Action <action@github.com>"
+            git push || echo "Push failed (may be protected)"
+          fi
+
+  pattern-analysis:
+    name: Pattern Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && contains(github.event.inputs.sync_type, 'patterns'))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50 # Get more history for pattern analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze Error Patterns
+        run: |
+          echo "🔍 Analyzing error patterns for linting rules..."
+
+          # Analyze recent commits for error patterns
+          ERROR_PATTERNS=$(git log --since="7 days ago" --grep="fix:" --grep="bug:" --oneline | head -10)
+
+          # Check for common issues in codebase
+          MEMORY_LEAKS=$(grep -r "addEventListener" --include="*.ts" --include="*.tsx" src/ | grep -v "removeEventListener" | wc -l)
+          UNSAFE_TYPES=$(grep -r "any\|unknown" --include="*.ts" --include="*.tsx" src/ | wc -l)
+          DIRECT_API_CALLS=$(grep -r "fetch.*api" --include="*.ts" --include="*.tsx" src/ | grep -v "service" | wc -l)
+
+          cat > error_patterns.json << EOF
+          {
+            "analysis_date": "$(date -Iseconds)",
+            "patterns": [
+              {
+                "pattern": "addEventListener without removeEventListener",
+                "frequency": $MEMORY_LEAKS,
+                "severity": "high",
+                "suggested_rule": "memory-cleanup-required"
+              },
+              {
+                "pattern": "unsafe type usage (any/unknown)",
+                "frequency": $UNSAFE_TYPES,
+                "severity": "medium", 
+                "suggested_rule": "strict-type-safety"
+              },
+              {
+                "pattern": "direct API calls bypassing service layer",
+                "frequency": $DIRECT_API_CALLS,
+                "severity": "high",
+                "suggested_rule": "service-layer-validation"
+              }
+            ],
+            "recent_fixes": [$(echo "$ERROR_PATTERNS" | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
+            "confidence": 85
+          }
+          EOF
+
+          echo "📊 Pattern analysis results:"
+          cat error_patterns.json | jq .
+
+      - name: Update Linting Rules
+        run: |
+          echo "📝 Updating .clinerules with detected patterns..."
+
+          node -e "
+            const fs = require('fs');
+            const patterns = JSON.parse(fs.readFileSync('error_patterns.json', 'utf8'));
+            
+            console.log('🔧 Processing', patterns.patterns.length, 'error patterns');
+            patterns.patterns.forEach(pattern => {
+              if (pattern.frequency > 3) {
+                console.log('⚠️  High frequency pattern:', pattern.pattern);
+                console.log('   Suggested rule:', pattern.suggested_rule);
+              }
+            });
+            
+            // TODO: Integrate with actual linting rule generation
+          "
+
+      - name: Commit Rule Updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          if [ -d "memory-bank" ] && ! git diff --quiet memory-bank/.clinerules; then
+            git add memory-bank/.clinerules
+            git commit -m "feat: automated linting rule updates from pattern analysis
+            
+            🤖 Generated with Memory Bank Automation
+            Patterns analyzed: $(date)
+            
+            Co-Authored-By: GitHub Action <action@github.com>"
+            git push || echo "Push failed (may be protected)"
+          fi
+
+  manual-sync:
+    name: Manual Memory Bank Sync
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Perform Manual Sync
+        run: |
+          echo "🔄 Performing manual memory bank sync: ${{ github.event.inputs.sync_type }}"
+
+          case "${{ github.event.inputs.sync_type }}" in
+            "full")
+              echo "📝 Full synchronization of all memory bank files"
+              # TODO: Implement full sync
+              ;;
+            "context_only")
+              echo "📝 Context-only synchronization"
+              # TODO: Implement context sync
+              ;;
+            "progress_only")
+              echo "📝 Progress tracking synchronization"
+              # TODO: Implement progress sync
+              ;;
+            "patterns_only")
+              echo "📝 Architecture patterns synchronization"
+              # TODO: Implement pattern sync
+              ;;
+            "rules_only")
+              echo "📝 Linting rules synchronization"
+              # TODO: Implement rules sync
+              ;;
+          esac
+
+      - name: Commit Manual Sync
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          if [ -d "memory-bank" ] && ! git diff --quiet memory-bank/; then
+            git add memory-bank/
+            git commit -m "feat: manual memory bank sync (${{ github.event.inputs.sync_type }})
+            
+            🤖 Generated with Memory Bank Automation
+            Triggered by: ${{ github.actor }}
+            Sync type: ${{ github.event.inputs.sync_type }}
+            
+            Co-Authored-By: GitHub Action <action@github.com>"
+            git push
+          fi

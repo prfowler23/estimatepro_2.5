@@ -31,7 +31,7 @@ const IncomingWebhookSchema = z.object({
 async function handlePOST(request: NextRequest) {
   const auditSystem = AuditSystem.getInstance();
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const source = searchParams.get("source") as WebhookSource;
     const token = searchParams.get("token");
@@ -217,7 +217,7 @@ async function processIncomingWebhook(
   webhookData: z.infer<typeof IncomingWebhookSchema>,
   token: string,
 ): Promise<{ success: boolean; error?: string; result?: any }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     switch (source) {

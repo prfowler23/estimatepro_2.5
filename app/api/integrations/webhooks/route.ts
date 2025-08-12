@@ -33,7 +33,7 @@ const WebhookUpdateSchema = z.object({
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -94,7 +94,7 @@ async function handleGET(request: NextRequest) {
 
 async function handlePOST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -154,7 +154,7 @@ async function handlePOST(request: NextRequest) {
 
 async function handlePUT(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -229,7 +229,7 @@ async function handlePUT(request: NextRequest) {
 
 async function handleDELETE(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

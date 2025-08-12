@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: user } = await supabase.auth.getUser();
 
     if (!user.user) {
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "initiate") {
       // Get authenticated user
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data: user } = await supabase.auth.getUser();
 
       if (!user.user) {
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "disconnect") {
       // Disconnect QuickBooks integration
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data: user } = await supabase.auth.getUser();
 
       if (!user.user) {
@@ -267,7 +267,7 @@ async function buildAuthorizationUrl(userId: string): Promise<string> {
 
   // Generate and store CSRF state token
   const state = crypto.randomUUID();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Store state with expiration (5 minutes)
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();

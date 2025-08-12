@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     let dbStatus = "healthy";
     try {
       const { createClient } = await import("@/lib/supabase/universal-client");
-      const supabase = createClient();
+      const supabase = await createClient();
       const { error } = await supabase
         .from("profiles")
         .select("id")
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 export async function HEAD(request: NextRequest) {
   try {
     const { createClient } = await import("@/lib/supabase/universal-client");
-    const supabase = createClient();
+    const supabase = await createClient();
     await supabase.from("profiles").select("id").limit(1);
 
     return new NextResponse(null, {

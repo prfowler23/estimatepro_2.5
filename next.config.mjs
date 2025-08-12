@@ -39,10 +39,10 @@ const nextConfig = {
   },
   // Enable error reporting to catch TypeScript and ESLint errors
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Compiler optimizations
   compiler: {

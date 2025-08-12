@@ -32,7 +32,10 @@ const AnalyticsRequestSchema = z.object({
     .default("detailed"),
 });
 
-async function handleGET(request: NextRequest) {
+async function handleGET(
+  request: NextRequest,
+  context: { params?: Promise<Record<string, string>> },
+) {
   try {
     // Authenticate the request
     const { user, error: authError } = await authenticateRequest(request);
@@ -149,7 +152,10 @@ async function handleGET(request: NextRequest) {
   }
 }
 
-async function handlePOST(request: NextRequest) {
+async function handlePOST(
+  request: NextRequest,
+  context: { params?: Promise<Record<string, string>> },
+) {
   try {
     // Authenticate the request
     const { user, error: authError } = await authenticateRequest(request);

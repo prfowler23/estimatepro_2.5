@@ -69,7 +69,7 @@ const ErrorReportSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await req.json();
 
     // Validate request body
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { searchParams } = new URL(req.url);
 
     // Get user information

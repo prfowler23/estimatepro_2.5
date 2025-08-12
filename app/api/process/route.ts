@@ -23,7 +23,7 @@ const PDFProcessRequestSchema = z.object({
 
 async function processPDFHandler(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: user } = await supabase.auth.getUser();
 
     if (!user.user) {
@@ -216,7 +216,7 @@ async function processPDFHandler(request: NextRequest) {
 // Search in PDF endpoint
 async function searchPDFHandler(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: user } = await supabase.auth.getUser();
 
     if (!user.user) {
@@ -270,7 +270,7 @@ async function searchPDFHandler(request: NextRequest) {
 // Extract text from page range endpoint
 async function extractTextHandler(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: user } = await supabase.auth.getUser();
 
     if (!user.user) {

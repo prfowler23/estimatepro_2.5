@@ -17,7 +17,7 @@ async function syncHandler(request: NextRequest) {
         | "bidirectional") || "bidirectional";
     const force = searchParams.get("force") === "true";
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: user } = await supabase.auth.getUser();
 
     if (!user.user) {

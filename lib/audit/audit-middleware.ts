@@ -345,10 +345,16 @@ export async function auditMiddleware(
 
 // Higher-order function to wrap API handlers with audit logging
 export function withAuditLogging(
-  handler: (request: NextRequest) => Promise<NextResponse>,
+  handler: (
+    request: NextRequest,
+    context?: { params?: Promise<Record<string, string>> },
+  ) => Promise<NextResponse>,
   config?: Partial<AuditMiddlewareConfig>,
 ) {
-  return async (request: NextRequest): Promise<NextResponse> => {
+  return async (
+    request: NextRequest,
+    context?: { params?: Promise<Record<string, string>> },
+  ): Promise<NextResponse> => {
     const mergedConfig = { ...DEFAULT_CONFIG, ...config };
     const { logRequest, logResponse } = await auditMiddleware(
       request,
@@ -360,7 +366,7 @@ export function withAuditLogging(
       await logRequest();
 
       // Execute the handler
-      const response = await handler(request);
+      const response = await handler(request, context);
 
       // Log the response
       await logResponse(response);

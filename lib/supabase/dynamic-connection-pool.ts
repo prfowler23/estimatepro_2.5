@@ -1002,8 +1002,8 @@ export class DynamicSupabaseConnectionPool {
         connection.client.from("profiles").select("id").limit(1),
         // Auth verification
         connection.client.auth.getSession(),
-        // Simple database function test
-        connection.client.rpc("version"), // Built-in Postgres function
+        // Simple database function test (using a known function)
+        connection.client.rpc("get_app_version"),
       ]);
 
       const checkLatency = Date.now() - checkStart;

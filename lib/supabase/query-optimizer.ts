@@ -168,7 +168,7 @@ export class QueryOptimizer {
         const executionTime = Date.now() - startTime;
         this.recordMetrics({
           queryId,
-          sql: this.buildSelectSQL(table as string, options),
+          sql: this.buildSelectSQL(table, options),
           parameters: Object.values(options.where || {}),
           executionTime,
           rowsAffected: cachedResult.length,
@@ -192,18 +192,18 @@ export class QueryOptimizer {
 
       // Apply select fields
       if (options.select) {
-        query = query.select(options.select);
+        query = query.select(options.select) as any;
       } else {
-        query = query.select("*");
+        query = query.select("*") as any;
       }
 
       // Apply WHERE conditions with prepared statement optimization
       if (options.where) {
         for (const [key, value] of Object.entries(options.where)) {
           if (Array.isArray(value)) {
-            query = query.in(key, value);
+            query = (query as any).in(key, value);
           } else {
-            query = query.eq(key, value);
+            query = (query as any).eq(key, value);
           }
         }
       }
@@ -211,7 +211,7 @@ export class QueryOptimizer {
       // Apply ordering
       if (options.orderBy) {
         for (const order of options.orderBy) {
-          query = query.order(order.column, {
+          query = (query as any).order(order.column, {
             ascending: order.ascending ?? true,
           });
         }

@@ -356,6 +356,49 @@ bash scripts/production-verify.sh        # Production readiness
 
 **Active:** TypeScript migration, Next.js 15 compatibility, schema refinements
 
+## Memory Bank MCP Server - Automated Maintenance
+
+**Purpose:** Automated maintenance workflows for the Memory Bank MCP server to ensure context consistency and system awareness.
+
+### Automated Trigger Conditions
+
+Set up these workflow conditions to maintain memory bank synchronization:
+
+| Trigger Event            | Action                   | Target File         | Purpose                                                |
+| ------------------------ | ------------------------ | ------------------- | ------------------------------------------------------ |
+| **PR Creation**          | Update activeContext.md  | `activeContext.md`  | Capture current development context and feature scope  |
+| **Test Completion**      | Update progress.md       | `progress.md`       | Document testing milestones and validation status      |
+| **Error Patterns**       | Update .clinerules       | `.clinerules`       | Refine linting rules based on recurring issues         |
+| **Feature Completion**   | Full memory bank sync    | All memory files    | Comprehensive context update across all domains        |
+| **Architecture Changes** | Update systemPatterns.md | `systemPatterns.md` | Document architectural decisions and pattern evolution |
+
+### Implementation Strategy
+
+**Workflow Integration:**
+
+- **CI/CD Pipeline**: Integrate memory bank updates into build process
+- **Git Hooks**: Automatic triggers on commit, push, and merge events
+- **Testing Framework**: Memory bank validation as part of test suite
+- **Development Workflow**: Context updates during feature development cycles
+
+**Memory Bank Files Structure:**
+
+```
+memory-bank/
+├── activeContext.md      # Current development context
+├── progress.md          # Testing and feature milestones
+├── systemPatterns.md    # Architecture patterns and decisions
+├── .clinerules          # Dynamic linting rule updates
+└── sync-metadata.json   # Automation tracking and timestamps
+```
+
+**Automation Benefits:**
+
+- **Context Consistency**: Automatic synchronization prevents memory drift
+- **Development Efficiency**: Reduced manual memory management overhead
+- **Pattern Recognition**: Automated capture of recurring development patterns
+- **Quality Assurance**: Continuous validation of memory bank accuracy
+
 ## Contributing & Resources
 
 **Code Quality:** Run linting → Ensure tests pass → Follow patterns  

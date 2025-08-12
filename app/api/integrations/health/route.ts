@@ -7,7 +7,7 @@ import { integrationManager } from "@/lib/integrations/integration-framework";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

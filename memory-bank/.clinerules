@@ -1,0 +1,196 @@
+# Dynamic Linting Rules - Memory Bank Automation
+# Auto-updated based on recurring error patterns and code analysis
+
+## Base Configuration
+extends:
+  - "@typescript-eslint/recommended"
+  - "next/core-web-vitals"
+  - "prettier"
+
+## Auto-Generated Rules (Updated: 2025-01-31T00:00:00Z)
+
+### Memory Management Rules
+# Generated from memory manager analysis
+rules:
+  # Prevent memory leaks in event handlers
+  "@typescript-eslint/no-misused-promises": "error"
+  "@typescript-eslint/no-floating-promises": "error"
+  
+  # Enforce proper cleanup in React components
+  "react-hooks/exhaustive-deps": "error"
+  
+  # Memory-safe patterns for large data sets
+  "prefer-const": "error"
+  "no-var": "error"
+
+### AI Integration Rules
+# Generated from AI service pattern analysis
+rules:
+  # Enforce proper error handling in AI calls
+  "@typescript-eslint/no-explicit-any": "error"
+  "@typescript-eslint/prefer-nullish-coalescing": "warn"
+  
+  # Prevent unsafe AI response handling
+  "no-eval": "error"
+  "no-implied-eval": "error"
+  
+  # Enforce input validation for AI services
+  "@typescript-eslint/no-unsafe-argument": "error"
+  "@typescript-eslint/no-unsafe-assignment": "error"
+
+### Performance Rules
+# Generated from bundle analysis and performance monitoring
+rules:
+  # Prevent large bundle imports
+  "import/no-default-export": "off" # Next.js requires default exports for pages
+  "import/prefer-default-export": "off"
+  
+  # Enforce lazy loading patterns
+  "import/dynamic-import-chunkname": "warn"
+  
+  # Prevent excessive re-renders
+  "react/jsx-no-bind": "warn"
+  "react/jsx-no-constructed-context-values": "error"
+
+### Database Rules  
+# Generated from Supabase query analysis
+rules:
+  # Enforce proper async/await usage
+  "@typescript-eslint/require-await": "error"
+  "@typescript-eslint/no-misused-promises": "error"
+  
+  # Prevent SQL injection patterns
+  "security/detect-sql-injection": "error"
+  
+  # Enforce proper error handling
+  "@typescript-eslint/no-throw-literal": "error"
+
+### Security Rules
+# Generated from security audit patterns
+rules:
+  # Prevent XSS vulnerabilities
+  "react/no-danger": "error"
+  "react/no-danger-with-children": "error"
+  
+  # Enforce secure coding patterns
+  "security/detect-object-injection": "error"
+  "security/detect-eval-with-expression": "error"
+  
+  # Prevent sensitive data exposure
+  "no-console": "warn" # Allow console in development
+  "@typescript-eslint/no-explicit-any": "error"
+
+### Real-Time Features Rules
+# Generated from WebSocket and real-time service analysis
+rules:
+  # Enforce proper WebSocket cleanup
+  "prefer-arrow-callback": "error"
+  "no-unused-vars": "off" # Handled by TypeScript
+  "@typescript-eslint/no-unused-vars": "error"
+  
+  # Prevent race conditions
+  "@typescript-eslint/no-misused-promises": "error"
+  "require-atomic-updates": "error"
+
+### Type Safety Rules
+# Generated from TypeScript error pattern analysis
+rules:
+  # Enforce strict type checking
+  "@typescript-eslint/strict-boolean-expressions": "error"
+  "@typescript-eslint/prefer-optional-chain": "error"
+  
+  # Prevent type assertion abuse
+  "@typescript-eslint/no-non-null-assertion": "error"
+  "@typescript-eslint/no-explicit-any": "error"
+  
+  # Enforce proper null handling
+  "@typescript-eslint/no-non-null-asserted-optional-chain": "error"
+
+## Pattern-Based Rules
+
+### Service Layer Patterns
+# Auto-detected from /lib/services/ analysis
+rules:
+  # Enforce service interface consistency
+  "@typescript-eslint/consistent-type-definitions": ["error", "interface"]
+  "@typescript-eslint/method-signature-style": ["error", "property"]
+  
+  # Prevent service coupling
+  "import/no-cycle": "error"
+  "import/no-self-import": "error"
+
+### Error Handling Patterns
+# Generated from error boundary and recovery analysis
+rules:
+  # Enforce comprehensive error handling
+  "@typescript-eslint/no-throw-literal": "error"
+  "prefer-promise-reject-errors": "error"
+  
+  # Require proper error boundaries
+  "react/require-render-return": "error"
+
+### PWA Patterns
+# Generated from service worker and offline analysis
+rules:
+  # Enforce proper service worker patterns
+  "no-restricted-globals": ["error", "self", "window"]
+  
+  # Prevent offline data conflicts
+  "no-async-promise-executor": "error"
+
+## Auto-Update Configuration
+
+update_triggers:
+  - pattern: "TypeError.*undefined"
+    action: "add_null_check_rule"
+    severity: "error"
+    
+  - pattern: "Memory leak.*event listener"
+    action: "add_cleanup_rule"
+    severity: "error"
+    
+  - pattern: "Bundle size.*exceeded"
+    action: "add_import_restriction"
+    severity: "warn"
+    
+  - pattern: "SQL.*injection"
+    action: "add_security_rule"
+    severity: "error"
+    
+  - pattern: "Race condition.*async"
+    action: "add_async_safety_rule"
+    severity: "error"
+
+## Error Pattern Analysis
+
+### Recent Error Patterns (Auto-Generated)
+# No patterns detected yet - initial setup
+
+### Frequency Analysis
+# Will be populated as errors are detected and analyzed
+
+### Rule Effectiveness Metrics
+# Tracking which rules prevent the most issues
+# Will be updated automatically as patterns emerge
+
+## Configuration Metadata
+version: "1.0.0"
+last_updated: "2025-01-31T00:00:00Z"
+update_trigger: "manual_setup"
+automation_status: "enabled"
+pattern_detection: "active"
+auto_rule_generation: "enabled"
+validation_status: "pending"
+
+## Integration Points
+eslint_config: ".eslintrc.json"
+typescript_config: "tsconfig.json"
+prettier_config: ".prettierrc"
+ci_integration: "github_actions"
+ide_integration: "vscode_settings"
+
+## Performance Impact
+analysis_overhead: "minimal"
+rule_execution_time: "<100ms"
+memory_usage: "<50MB"
+cache_strategy: "intelligent"

@@ -90,7 +90,7 @@ async function notifySupport(
 
 async function handlePOST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -194,7 +194,7 @@ const getCachedIssueReports = serverCached(
 
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

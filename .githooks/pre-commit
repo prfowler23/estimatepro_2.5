@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Pre-commit hook for Memory Bank automation
+# This hook triggers memory bank updates before commits are made
+
+set -e
+
+echo "🔄 Pre-commit: Memory Bank automation check..."
+
+# Check if memory bank automation service exists
+if [ ! -f "lib/services/memory-bank-automation-service.ts" ]; then
+    echo "⚠️  Memory bank automation service not found, skipping automation"
+    exit 0
+fi
+
+# Check if this is a significant commit (not just formatting/docs)
+STAGED_FILES=$(git diff --cached --name-only)
+SIGNIFICANT_CHANGES=false
+
+# Check for significant changes that should trigger memory bank updates
+for file in $STAGED_FILES; do
+    case "$file" in
+        lib/services/*|components/*|app/*|hooks/*|types/*)
+            SIGNIFICANT_CHANGES=true
+            break
+            ;;
+        *.ts|*.tsx)
+            if [[ $file != *".test."* ]] && [[ $file != *".spec."* ]]; then
+                SIGNIFICANT_CHANGES=true
+                break
+            fi
+            ;;
+    esac
+done
+
+if [ "$SIGNIFICANT_CHANGES" = false ]; then
+    echo "ℹ️  No significant changes detected, skipping memory bank update"
+    exit 0
+fi
+
+echo "📝 Detecting architecture changes for memory bank update..."
+
+# Analyze staged changes
+ARCHITECTURE_CHANGES=$(echo "$STAGED_FILES" | grep -E "(lib/services|components|app|pages)/" | wc -l)
+CONFIG_CHANGES=$(echo "$STAGED_FILES" | grep -E "(package\.json|tsconfig\.json|next\.config\.|tailwind\.config\.)" | wc -l)
+API_CHANGES=$(echo "$STAGED_FILES" | grep -E "app/api/" | wc -l)
+
+# Create temporary context file
+cat > .memory-bank-context.json << EOF
+{
+    "trigger": "pre_commit",
+    "timestamp": "$(date -Iseconds)",
+    "staged_files": [$(echo "$STAGED_FILES" | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
+    "change_analysis": {
+        "architecture_changes": $ARCHITECTURE_CHANGES,
+        "config_changes": $CONFIG_CHANGES,
+        "api_changes": $API_CHANGES,
+        "significant_changes": true
+    },
+    "commit_context": {
+        "author": "$(git config user.name)",
+        "email": "$(git config user.email)",
+        "branch": "$(git branch --show-current)"
+    }
+}
+EOF
+
+# Run memory bank update if Node.js and dependencies are available
+if command -v node >/dev/null 2>&1 && [ -f "package.json" ]; then
+    echo "🔄 Updating memory bank with pre-commit context..."
+    
+    # Simple memory bank update (replace with actual service integration)
+    node -e "
+        const fs = require('fs');
+        try {
+            const context = JSON.parse(fs.readFileSync('.memory-bank-context.json', 'utf8'));
+            console.log('📝 Memory bank context prepared:');
+            console.log('  - Architecture changes:', context.change_analysis.architecture_changes);
+            console.log('  - Files staged:', context.staged_files.length);
+            console.log('  - Branch:', context.commit_context.branch);
+            
+            // TODO: Integrate with actual memory-bank-automation-service
+            // const { updateMemoryBankForCommit } = require('./lib/services/memory-bank-automation-service');
+            // await updateMemoryBankForCommit(context);
+            
+        } catch (error) {
+            console.log('⚠️  Memory bank update skipped:', error.message);
+        }
+    " 2>/dev/null || echo "⚠️  Node.js execution failed, memory bank update skipped"
+else
+    echo "⚠️  Node.js not available, memory bank update skipped"
+fi
+
+# Clean up temporary file
+rm -f .memory-bank-context.json
+
+echo "✅ Pre-commit hook completed"
+exit 0

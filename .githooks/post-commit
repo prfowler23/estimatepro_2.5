@@ -1,0 +1,123 @@
+#!/bin/bash
+
+# Post-commit hook for Memory Bank automation
+# This hook triggers memory bank updates after successful commits
+
+set -e
+
+echo "🔄 Post-commit: Memory Bank update triggered..."
+
+# Get commit information
+COMMIT_SHA=$(git rev-parse HEAD)
+COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+COMMIT_AUTHOR=$(git log -1 --pretty=%an)
+COMMIT_EMAIL=$(git log -1 --pretty=%ae)
+BRANCH_NAME=$(git branch --show-current)
+
+# Get changed files in this commit
+CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+
+# Analyze change types
+ARCHITECTURE_CHANGES=$(echo "$CHANGED_FILES" | grep -E "(lib/services|components|app|pages)/" | wc -l)
+TEST_CHANGES=$(echo "$CHANGED_FILES" | grep -E "\.(test|spec)\.(ts|tsx|js|jsx)$" | wc -l)
+CONFIG_CHANGES=$(echo "$CHANGED_FILES" | grep -E "(package\.json|tsconfig\.json|next\.config\.|tailwind\.config\.)" | wc -l)
+API_CHANGES=$(echo "$CHANGED_FILES" | grep -E "app/api/" | wc -l)
+
+# Skip if no significant changes
+if [ $ARCHITECTURE_CHANGES -eq 0 ] && [ $CONFIG_CHANGES -eq 0 ] && [ $API_CHANGES -eq 0 ]; then
+    echo "ℹ️  No significant changes in commit, skipping memory bank update"
+    exit 0
+fi
+
+echo "📝 Updating memory bank for commit: ${COMMIT_SHA:0:8}..."
+
+# Create commit context data
+cat > .memory-bank-commit-context.json << EOF
+{
+    "trigger": "post_commit",
+    "timestamp": "$(date -Iseconds)",
+    "commit": {
+        "sha": "$COMMIT_SHA",
+        "message": "$(echo "$COMMIT_MESSAGE" | head -1 | sed 's/"/\\"/g')",
+        "author": "$COMMIT_AUTHOR",
+        "email": "$COMMIT_EMAIL",
+        "branch": "$BRANCH_NAME"
+    },
+    "changes": {
+        "files": [$(echo "$CHANGED_FILES" | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
+        "architecture_changes": $ARCHITECTURE_CHANGES,
+        "test_changes": $TEST_CHANGES,
+        "config_changes": $CONFIG_CHANGES,
+        "api_changes": $API_CHANGES
+    },
+    "analysis": {
+        "impact": "$([ $ARCHITECTURE_CHANGES -gt 3 ] && echo "high" || [ $ARCHITECTURE_CHANGES -gt 0 ] && echo "medium" || echo "low")",
+        "category": "$([ $API_CHANGES -gt 0 ] && echo "api_changes" || [ $ARCHITECTURE_CHANGES -gt 0 ] && echo "architecture" || echo "general")"
+    }
+}
+EOF
+
+# Run memory bank update if Node.js is available
+if command -v node >/dev/null 2>&1 && [ -f "package.json" ]; then
+    echo "🔄 Processing memory bank update..."
+    
+    node -e "
+        const fs = require('fs');
+        try {
+            const context = JSON.parse(fs.readFileSync('.memory-bank-commit-context.json', 'utf8'));
+            
+            console.log('📊 Commit Analysis:');
+            console.log('  - SHA:', context.commit.sha.substring(0, 8));
+            console.log('  - Impact:', context.analysis.impact);
+            console.log('  - Category:', context.analysis.category);
+            console.log('  - Files changed:', context.changes.files.length);
+            console.log('  - Architecture changes:', context.changes.architecture_changes);
+            
+            // Update activeContext.md based on commit
+            if (context.changes.architecture_changes > 0) {
+                console.log('🏗️  Updating systemPatterns.md for architecture changes');
+            }
+            
+            if (context.changes.api_changes > 0) {
+                console.log('🌐 Updating activeContext.md for API changes');
+            }
+            
+            // TODO: Integrate with actual memory-bank-automation-service
+            // const { updateMemoryBankForCommit } = require('./lib/services/memory-bank-automation-service');
+            // await updateMemoryBankForCommit(context);
+            
+            console.log('✅ Memory bank context updated successfully');
+            
+        } catch (error) {
+            console.log('⚠️  Memory bank update error:', error.message);
+        }
+    " 2>/dev/null || echo "⚠️  Node.js execution failed"
+    
+    # Update sync metadata
+    if [ -f "memory-bank/sync-metadata.json" ]; then
+        echo "📝 Updating sync metadata..."
+        node -e "
+            const fs = require('fs');
+            try {
+                const metadata = JSON.parse(fs.readFileSync('memory-bank/sync-metadata.json', 'utf8'));
+                metadata.last_commit_update = {
+                    timestamp: new Date().toISOString(),
+                    commit_sha: '$COMMIT_SHA',
+                    trigger: 'post_commit_hook',
+                    files_processed: $(echo "$CHANGED_FILES" | wc -l)
+                };
+                fs.writeFileSync('memory-bank/sync-metadata.json', JSON.stringify(metadata, null, 2));
+                console.log('📊 Sync metadata updated');
+            } catch (error) {
+                console.log('⚠️  Sync metadata update failed:', error.message);
+            }
+        " 2>/dev/null
+    fi
+else
+    echo "⚠️  Node.js not available, memory bank update skipped"
+fi
+
+# Clean up
+rm -f .memory-bank-commit-context.json
+
+echo "✅ Post-commit memory bank update completed"

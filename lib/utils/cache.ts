@@ -490,6 +490,6 @@ export function createCache<T = CacheValue>(options?: {
 }): SimpleCache<T> {
   return new SimpleCache<T>(
     options?.defaultTTL ?? CACHE_CONFIG.DEFAULT_TTL,
-    options?.maxSize ?? CACHE_CONFIG.MAX_CACHE_SIZE,
+    options?.maxSize ?? (CACHE_CONFIG.MAX_CACHE_SIZE as number),
   );
 }

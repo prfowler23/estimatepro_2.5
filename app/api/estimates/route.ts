@@ -4,6 +4,8 @@ import { getHandler, postHandler } from "@/lib/api/api-handler";
 import { estimateSchema } from "@/lib/schemas/api-validation";
 import { z } from "zod";
 import { ErrorResponses, logApiError } from "@/lib/api/error-responses";
+// Define expected status values since EstimateStatus is not exported from supabase types
+type EstimateStatus = "draft" | "sent" | "approved" | "rejected";
 
 // Query parameters schema for GET requests
 const getEstimatesQuerySchema = z.object({
@@ -37,9 +39,7 @@ async function handleGET(context: any) {
   const result = await unifiedEstimateService.getAllEstimates({
     limit,
     offset,
-    status: status as any,
-    search,
-    userId: user.id,
+    status: status as EstimateStatus,
   });
 
   return {

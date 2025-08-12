@@ -49,7 +49,7 @@ async function recordHelpInteraction(
 
 async function handlePOST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -142,7 +142,7 @@ const getHelpAnalytics = serverCached(
 // GET endpoint for retrieving help analytics
 async function handleGET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

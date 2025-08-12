@@ -212,13 +212,13 @@ export class SupabaseClientFactory {
       };
 
       queryBuilder.insert = (...args: any[]) => {
-        const result = originalInsert(...args);
+        const result = originalInsert.apply(queryBuilder, args);
         this.trackQueryPerformance("INSERT", table, context, startTime);
         return result;
       };
 
       queryBuilder.update = (...args: any[]) => {
-        const result = originalUpdate(...args);
+        const result = originalUpdate.apply(queryBuilder, args);
         this.trackQueryPerformance("UPDATE", table, context, startTime);
         return result;
       };
